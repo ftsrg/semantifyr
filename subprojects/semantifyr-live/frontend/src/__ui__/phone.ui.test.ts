@@ -38,7 +38,7 @@ function penDigitizer(): void {
 async function ready(page: Page): Promise<void> {
   await expect.poll(async () => {
     return phone(page).lines.innerText()
-  }).toContain('package')
+  }).toContain('class')
 }
 
 describe('the phone', () => {
@@ -66,7 +66,7 @@ describe('the phone', () => {
   })
 
   test('opens the menu as a sheet, and a model is chosen from its chooser', async ({ ui }) => {
-    const page = await ui.open('/language/intersection', PHONE)
+    const page = await ui.open('/language/modeling-and-verification', PHONE)
     await ready(page)
 
     await page.getByRole('button', { name: 'Menu' }).click()
@@ -92,7 +92,7 @@ describe('touch input', () => {
     ['tablet', TABLET],
   ] as const) {
     test(`locks the model of the ${shell} until Edit is pressed, and again when Done`, async ({ ui }) => {
-      const page = await ui.open('/language/intersection', viewport)
+      const page = await ui.open('/language/modeling-and-verification', viewport)
       await ready(page)
 
       await phone(page).lines.tap()

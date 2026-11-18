@@ -11,6 +11,7 @@ path = [
     "subprojects/website/static/**",
     "subprojects/backends/theta/*/src/main/java/**/*.java",
     "subprojects/backends/*/*-backend/src/test/resources/captured/**",
+    "subprojects/benchmark/src/test/resources/runexec/**",
     "subprojects/semantifyr-vscode-server/**",
     "**/package.json",
     "**/tsconfig*.json",

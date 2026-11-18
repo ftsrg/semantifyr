@@ -11,14 +11,15 @@ import { verdictWords } from '@semantifyr/editor-common/terms';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import CaseVerdict from '../components/CaseVerdict';
-import type { ServedText } from '../components/LiveEmbed';
+import type { PageModel } from '../components/LiveEmbed';
 
 // Goal: a page shows a case's verdict as its manifest expects it, in live's word and mark, and a case the manifest lacks fails the page
 
-const EXAMPLE: ServedText = {
+const EXAMPLE: PageModel = {
   language: 'oxsts',
-  id: 'lights',
+  file: 'oxsts-test-models/tutorial/lights.semantifyr',
   text: '',
+  compressedModel: '',
   verdicts: {
     NeverBothGreen: 'Passed',
     GreenOnlyWhileRed: 'Failed',
@@ -40,6 +41,6 @@ describe('CaseVerdict', () => {
   it('refuses a case its manifest does not have', () => {
     expect(() => {
       render(<CaseVerdict example={EXAMPLE} name="NeverBothRed" />);
-    }).toThrow('The manifest beside /language/lights has no case NeverBothRed');
+    }).toThrow('The manifest beside oxsts-test-models/tutorial/lights.semantifyr has no case NeverBothRed');
   });
 });

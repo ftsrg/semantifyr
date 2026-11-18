@@ -89,113 +89,6 @@
  },
  "sessionInfo": null,
  "documents": {
-  "86d3c06b56f09c61": {
-   "diagnostics": [],
-   "cases": [
-    {
-     "id": "example::trafficlight::hierarchy::LightCanTurnGreen",
-     "label": "example::trafficlight::hierarchy::LightCanTurnGreen",
-     "location": {
-      "uri": "file:///workspace/snippet.semantifyr",
-      "range": {
-       "start": {
-        "line": 197,
-        "character": 6
-       },
-       "end": {
-        "line": 197,
-        "character": 23
-       }
-      }
-     }
-    },
-    {
-     "id": "example::trafficlight::hierarchy::NeverBothGreen",
-     "label": "example::trafficlight::hierarchy::NeverBothGreen",
-     "location": {
-      "uri": "file:///workspace/snippet.semantifyr",
-      "range": {
-       "start": {
-        "line": 215,
-        "character": 6
-       },
-       "end": {
-        "line": 215,
-        "character": 20
-       }
-      }
-     }
-    },
-    {
-     "id": "example::trafficlight::hierarchy::NeverGreenInStandby",
-     "label": "example::trafficlight::hierarchy::NeverGreenInStandby",
-     "location": {
-      "uri": "file:///workspace/snippet.semantifyr",
-      "range": {
-       "start": {
-        "line": 234,
-        "character": 6
-       },
-       "end": {
-        "line": 234,
-        "character": 25
-       }
-      }
-     }
-    },
-    {
-     "id": "example::trafficlight::hierarchy::GreenLampOnlyInGreen",
-     "label": "example::trafficlight::hierarchy::GreenLampOnlyInGreen",
-     "location": {
-      "uri": "file:///workspace/snippet.semantifyr",
-      "range": {
-       "start": {
-        "line": 252,
-        "character": 6
-       },
-       "end": {
-        "line": 252,
-        "character": 26
-       }
-      }
-     }
-    },
-    {
-     "id": "example::trafficlight::hierarchy::NoStandbyWithoutPause",
-     "label": "example::trafficlight::hierarchy::NoStandbyWithoutPause",
-     "location": {
-      "uri": "file:///workspace/snippet.semantifyr",
-      "range": {
-       "start": {
-        "line": 270,
-        "character": 6
-       },
-       "end": {
-        "line": 270,
-        "character": 27
-       }
-      }
-     }
-    },
-    {
-     "id": "example::trafficlight::hierarchy::EmergencyStopsTraffic",
-     "label": "example::trafficlight::hierarchy::EmergencyStopsTraffic",
-     "location": {
-      "uri": "file:///workspace/snippet.semantifyr",
-      "range": {
-       "start": {
-        "line": 289,
-        "character": 6
-       },
-       "end": {
-        "line": 289,
-        "character": 27
-       }
-      }
-     }
-    }
-   ]
-  },
   "f8a718be4188751d": {
    "diagnostics": [
     {
@@ -270,34 +163,29 @@
     }
    ]
   },
-  "15e45323db9f6633": {
+  "b4bc6c6bcc212341": {
    "diagnostics": [],
    "cases": [
     {
-     "id": "example::trafficlight::onelight::TrafficLight",
-     "label": "example::trafficlight::onelight::TrafficLight",
+     "id": "NorthCanTurnGreen",
+     "label": "NorthCanTurnGreen",
      "location": {
       "uri": "file:///workspace/snippet.semantifyr",
       "range": {
        "start": {
-        "line": 13,
+        "line": 44,
         "character": 6
        },
        "end": {
-        "line": 13,
-        "character": 18
+        "line": 44,
+        "character": 23
        }
       }
      }
-    }
-   ]
-  },
-  "7c2b72f5ec78b092": {
-   "diagnostics": [],
-   "cases": [
+    },
     {
-     "id": "example::trafficlight::intersection::NeverBothGreen",
-     "label": "example::trafficlight::intersection::NeverBothGreen",
+     "id": "NeverBothGreen",
+     "label": "NeverBothGreen",
      "location": {
       "uri": "file:///workspace/snippet.semantifyr",
       "range": {
@@ -313,34 +201,17 @@
      }
     },
     {
-     "id": "example::trafficlight::intersection::EastCanTurnGreen",
-     "label": "example::trafficlight::intersection::EastCanTurnGreen",
+     "id": "NorthGreenOnlyWhileEastRed",
+     "label": "NorthGreenOnlyWhileEastRed",
      "location": {
       "uri": "file:///workspace/snippet.semantifyr",
       "range": {
        "start": {
-        "line": 64,
+        "line": 58,
         "character": 6
        },
        "end": {
-        "line": 64,
-        "character": 22
-       }
-      }
-     }
-    },
-    {
-     "id": "example::trafficlight::intersection::NorthGreenOnlyWhileEastRed",
-     "label": "example::trafficlight::intersection::NorthGreenOnlyWhileEastRed",
-     "location": {
-      "uri": "file:///workspace/snippet.semantifyr",
-      "range": {
-       "start": {
-        "line": 77,
-        "character": 6
-       },
-       "end": {
-        "line": 77,
+        "line": 58,
         "character": 32
        }
       }
@@ -348,95 +219,304 @@
     }
    ]
   },
-  "66436215b70a887b": {
+  "fae98c02be184a78": {
    "diagnostics": [],
    "cases": [
     {
-     "id": "example::trafficlight::greentime::NorthCanTurnYellow",
-     "label": "example::trafficlight::greentime::NorthCanTurnYellow",
+     "id": "NorthCanTurnGreen",
+     "label": "NorthCanTurnGreen",
      "location": {
       "uri": "file:///workspace/snippet.semantifyr",
       "range": {
        "start": {
-        "line": 60,
+        "line": 152,
         "character": 6
        },
        "end": {
-        "line": 60,
+        "line": 152,
+        "character": 23
+       }
+      }
+     }
+    },
+    {
+     "id": "NeverBothGreen",
+     "label": "NeverBothGreen",
+     "location": {
+      "uri": "file:///workspace/snippet.semantifyr",
+      "range": {
+       "start": {
+        "line": 159,
+        "character": 6
+       },
+       "end": {
+        "line": 159,
+        "character": 20
+       }
+      }
+     }
+    },
+    {
+     "id": "NorthGreenOnlyWhileEastRed",
+     "label": "NorthGreenOnlyWhileEastRed",
+     "location": {
+      "uri": "file:///workspace/snippet.semantifyr",
+      "range": {
+       "start": {
+        "line": 166,
+        "character": 6
+       },
+       "end": {
+        "line": 166,
+        "character": 32
+       }
+      }
+     }
+    },
+    {
+     "id": "PedestriansCanWalk",
+     "label": "PedestriansCanWalk",
+     "location": {
+      "uri": "file:///workspace/snippet.semantifyr",
+      "range": {
+       "start": {
+        "line": 173,
+        "character": 6
+       },
+       "end": {
+        "line": 173,
         "character": 24
        }
       }
      }
     },
     {
-     "id": "example::trafficlight::greentime::NorthGreenForThreeSteps",
-     "label": "example::trafficlight::greentime::NorthGreenForThreeSteps",
+     "id": "WalkOnlyWhileEastRed",
+     "label": "WalkOnlyWhileEastRed",
      "location": {
       "uri": "file:///workspace/snippet.semantifyr",
       "range": {
        "start": {
-        "line": 73,
+        "line": 180,
         "character": 6
        },
        "end": {
-        "line": 73,
-        "character": 29
+        "line": 180,
+        "character": 26
        }
       }
      }
     }
    ]
   },
-  "5f75504cf4d17e9c": {
+  "652663247ed0944c": {
    "diagnostics": [],
    "cases": [
     {
-     "id": "example::trafficlight::library::LightCanTurnYellow",
-     "label": "example::trafficlight::library::LightCanTurnYellow",
+     "id": "NorthCanTurnGreen",
+     "label": "NorthCanTurnGreen",
      "location": {
       "uri": "file:///workspace/snippet.semantifyr",
       "range": {
        "start": {
-        "line": 109,
+        "line": 187,
         "character": 6
        },
        "end": {
-        "line": 109,
+        "line": 187,
+        "character": 23
+       }
+      }
+     }
+    },
+    {
+     "id": "NeverBothGreen",
+     "label": "NeverBothGreen",
+     "location": {
+      "uri": "file:///workspace/snippet.semantifyr",
+      "range": {
+       "start": {
+        "line": 194,
+        "character": 6
+       },
+       "end": {
+        "line": 194,
+        "character": 20
+       }
+      }
+     }
+    },
+    {
+     "id": "NorthGreenOnlyWhileEastRed",
+     "label": "NorthGreenOnlyWhileEastRed",
+     "location": {
+      "uri": "file:///workspace/snippet.semantifyr",
+      "range": {
+       "start": {
+        "line": 201,
+        "character": 6
+       },
+       "end": {
+        "line": 201,
+        "character": 32
+       }
+      }
+     }
+    },
+    {
+     "id": "PedestriansCanWalk",
+     "label": "PedestriansCanWalk",
+     "location": {
+      "uri": "file:///workspace/snippet.semantifyr",
+      "range": {
+       "start": {
+        "line": 208,
+        "character": 6
+       },
+       "end": {
+        "line": 208,
         "character": 24
        }
       }
      }
     },
     {
-     "id": "example::trafficlight::library::PedestriansCanWalk",
-     "label": "example::trafficlight::library::PedestriansCanWalk",
+     "id": "WalkOnlyWhileEastRed",
+     "label": "WalkOnlyWhileEastRed",
      "location": {
       "uri": "file:///workspace/snippet.semantifyr",
       "range": {
        "start": {
-        "line": 126,
+        "line": 215,
         "character": 6
        },
        "end": {
-        "line": 126,
+        "line": 215,
+        "character": 26
+       }
+      }
+     }
+    }
+   ]
+  },
+  "6f7494eec4b1e1e0": {
+   "diagnostics": [],
+   "cases": [
+    {
+     "id": "NorthCanTurnGreen",
+     "label": "NorthCanTurnGreen",
+     "location": {
+      "uri": "file:///workspace/snippet.semantifyr",
+      "range": {
+       "start": {
+        "line": 178,
+        "character": 6
+       },
+       "end": {
+        "line": 178,
+        "character": 23
+       }
+      }
+     }
+    },
+    {
+     "id": "NeverBothGreen",
+     "label": "NeverBothGreen",
+     "location": {
+      "uri": "file:///workspace/snippet.semantifyr",
+      "range": {
+       "start": {
+        "line": 185,
+        "character": 6
+       },
+       "end": {
+        "line": 185,
+        "character": 20
+       }
+      }
+     }
+    },
+    {
+     "id": "NorthGreenOnlyWhileEastRed",
+     "label": "NorthGreenOnlyWhileEastRed",
+     "location": {
+      "uri": "file:///workspace/snippet.semantifyr",
+      "range": {
+       "start": {
+        "line": 192,
+        "character": 6
+       },
+       "end": {
+        "line": 192,
+        "character": 32
+       }
+      }
+     }
+    },
+    {
+     "id": "PedestriansCanWalk",
+     "label": "PedestriansCanWalk",
+     "location": {
+      "uri": "file:///workspace/snippet.semantifyr",
+      "range": {
+       "start": {
+        "line": 199,
+        "character": 6
+       },
+       "end": {
+        "line": 199,
         "character": 24
        }
       }
      }
     },
     {
-     "id": "example::trafficlight::library::WalkOnlyWhileRed",
-     "label": "example::trafficlight::library::WalkOnlyWhileRed",
+     "id": "WalkOnlyWhileEastRed",
+     "label": "WalkOnlyWhileEastRed",
      "location": {
       "uri": "file:///workspace/snippet.semantifyr",
       "range": {
        "start": {
-        "line": 143,
+        "line": 206,
         "character": 6
        },
        "end": {
-        "line": 143,
-        "character": 22
+        "line": 206,
+        "character": 26
+       }
+      }
+     }
+    },
+    {
+     "id": "NorthGreenForThreeSteps",
+     "label": "NorthGreenForThreeSteps",
+     "location": {
+      "uri": "file:///workspace/snippet.semantifyr",
+      "range": {
+       "start": {
+        "line": 213,
+        "character": 6
+       },
+       "end": {
+        "line": 213,
+        "character": 29
+       }
+      }
+     }
+    },
+    {
+     "id": "NorthCanTurnYellow",
+     "label": "NorthCanTurnYellow",
+     "location": {
+      "uri": "file:///workspace/snippet.semantifyr",
+      "range": {
+       "start": {
+        "line": 245,
+        "character": 6
+       },
+       "end": {
+        "line": 245,
+        "character": 24
        }
       }
      }
@@ -447,2914 +527,1922 @@
    "diagnostics": [],
    "cases": []
   },
-  "e15fde16516337c4": {
+  "2a262318d2e2be12": {
    "diagnostics": []
   },
-  "3060439823cc25fd": {
+  "9e08777ee4427e14": {
    "diagnostics": []
   },
-  "48cb2b53cf1dacac": {
+  "16cab778edcc608d": {
    "diagnostics": []
   }
  },
  "results": {
-  "example::trafficlight::intersection::NeverBothGreen": {
+  "NorthGreenOnlyWhileEastRed": {
    "status": "passed",
+   "backendId": "theta:cegar-expl",
    "portfolioId": "smart",
-   "report": {
-    "version": 2,
-    "kind": "run",
-    "verificationCase": "example::trafficlight::intersection::NeverBothGreen",
-    "portfolioId": "smart",
-    "optimization": {
-     "enabled": [
-      "ExpressionSimplification",
-      "OperationFlattening",
-      "RedundantOperationRemoval",
-      "AssumeFalsePropagation",
-      "ConstantVariableSubstitution",
-      "CopyPropagation",
-      "DeadStoreElimination",
-      "DeadCodeRemoval",
-      "VariableLiveness"
-     ]
-    },
-    "timeout": "PT5M",
-    "result": {
-     "metadata": {
-      "backendId": "uppaal:over-approximation",
-      "startedAt": "2026-11-17T23:51:12.624505839Z"
-     },
-     "verdict": "Passed",
-     "soundness": "OverApproximating",
-     "isTrusted": true,
-     "metrics": {
-      "totalDuration": "PT0.871356889S",
-      "backend": {
-       "preparationDuration": "PT0.000688113S",
-       "verificationDuration": "PT0.264032336S",
-       "backAnnotationDuration": "PT0S"
-      },
-      "verifier": {
-       "compilationDuration": "PT0.052632475S",
-       "compilation": {
-        "createDuration": "PT0.008186531S",
-        "instantiationDuration": "PT0.006762517S",
-        "inliningDuration": "PT0.017662600S",
-        "flatteningDuration": "PT0.020020827S",
-        "inliningOptimization": {
-         "duration": "PT0.002100323S",
-         "passes": [
-          {
-           "name": "OperationCallInlining",
-           "duration": "PT0.000719564S",
-           "runs": 5,
-           "firings": 2
-          },
-          {
-           "name": "ExpressionSimplificationPass",
-           "duration": "PT0.000555574S",
-           "runs": 3,
-           "firings": 2
-          },
-          {
-           "name": "OperationFlatteningPass",
-           "duration": "PT0.000220213S",
-           "runs": 3,
-           "firings": 0
-          },
-          {
-           "name": "RedundantOperationRemovalPass",
-           "duration": "PT0.000201607S",
-           "runs": 3,
-           "firings": 0
-          },
-          {
-           "name": "AssumeFalsePropagationPass",
-           "duration": "PT0.000189614S",
-           "runs": 3,
-           "firings": 0
-          },
-          {
-           "name": "PropertyExpressionNormalization",
-           "duration": "PT0.000013672S",
-           "runs": 1,
-           "firings": 0
-          }
-         ],
-         "analyses": []
-        },
-        "flatteningOptimization": {
-         "duration": "PT0.003158252S",
-         "passes": [
-          {
-           "name": "ExpressionSimplificationPass",
-           "duration": "PT0.000194846S",
-           "runs": 1,
-           "firings": 0
-          },
-          {
-           "name": "OperationFlatteningPass",
-           "duration": "PT0.000080673S",
-           "runs": 1,
-           "firings": 0
-          },
-          {
-           "name": "RedundantOperationRemovalPass",
-           "duration": "PT0.000111296S",
-           "runs": 1,
-           "firings": 0
-          },
-          {
-           "name": "AssumeFalsePropagationPass",
-           "duration": "PT0.000098817S",
-           "runs": 1,
-           "firings": 0
-          },
-          {
-           "name": "ConstantVariableSubstitutionPass",
-           "duration": "PT0.000462423S",
-           "runs": 1,
-           "firings": 0
-          },
-          {
-           "name": "CopyPropagationPass",
-           "duration": "PT0.001148607S",
-           "runs": 1,
-           "firings": 0
-          },
-          {
-           "name": "DeadStoreEliminationPass",
-           "duration": "PT0.000076118S",
-           "runs": 1,
-           "firings": 0
-          },
-          {
-           "name": "DeadCodeRemovalPass",
-           "duration": "PT0.000543335S",
-           "runs": 1,
-           "firings": 0
-          },
-          {
-           "name": "VariableLivenessPass",
-           "duration": "PT0.000307612S",
-           "runs": 1,
-           "firings": 0
-          }
-         ],
-         "analyses": [
-          {
-           "name": "ConstantValueAnalysis",
-           "duration": "PT0.000394085S",
-           "computations": 1
-          },
-          {
-           "name": "ReachingDefinitionsAnalysis",
-           "duration": "PT0.001121502S",
-           "computations": 1
-          },
-          {
-           "name": "ConeOfInfluenceAnalysis",
-           "duration": "PT0.000492761S",
-           "computations": 1
-          }
-         ]
-        },
-        "inputSize": {
-         "variables": 1,
-         "operations": 25,
-         "expressions": 75
-        },
-        "inlinedSize": {
-         "variables": 2,
-         "operations": 31,
-         "expressions": 102
-        },
-        "flattenedSize": {
-         "variables": 4,
-         "operations": 31,
-         "expressions": 56
-        }
+   "metrics": {
+    "totalDuration": "PT7.874176692S",
+    "preparationDuration": "PT0.066318077S",
+    "verificationDuration": "PT6.806261618S",
+    "backAnnotationDuration": "PT0S",
+    "compilation": {
+     "createDuration": "PT0.005280465S",
+     "instantiationDuration": "PT0.005714717S",
+     "inliningDuration": "PT0.015905934S",
+     "flatteningDuration": "PT0.0272175S",
+     "inliningOptimization": {
+      "duration": "PT0.000774661S",
+      "passes": [
+       {
+        "name": "OperationCallInlining",
+        "duration": "PT0.000193481S",
+        "runs": 2,
+        "firings": 0
        },
-       "backAnnotationDuration": "PT0S",
-       "portfolioDuration": "PT0.870428827S"
-      }
+       {
+        "name": "ExpressionSimplificationPass",
+        "duration": "PT0.000208229S",
+        "runs": 1,
+        "firings": 0
+       },
+       {
+        "name": "OperationFlatteningPass",
+        "duration": "PT0.000076315S",
+        "runs": 1,
+        "firings": 0
+       },
+       {
+        "name": "RedundantOperationRemovalPass",
+        "duration": "PT0.000074076S",
+        "runs": 1,
+        "firings": 0
+       },
+       {
+        "name": "AssumeFalsePropagationPass",
+        "duration": "PT0.00006832S",
+        "runs": 1,
+        "firings": 0
+       },
+       {
+        "name": "PropertyExpressionNormalization",
+        "duration": "PT0.00001694S",
+        "runs": 1,
+        "firings": 0
+       }
+      ],
+      "analyses": []
      },
-     "message": null
-    },
-    "trace": null
+     "flatteningOptimization": {
+      "duration": "PT0.00649451S",
+      "passes": [
+       {
+        "name": "ExpressionSimplificationPass",
+        "duration": "PT0.000220566S",
+        "runs": 1,
+        "firings": 0
+       },
+       {
+        "name": "OperationFlatteningPass",
+        "duration": "PT0.000989357S",
+        "runs": 1,
+        "firings": 0
+       },
+       {
+        "name": "RedundantOperationRemovalPass",
+        "duration": "PT0.000095574S",
+        "runs": 1,
+        "firings": 0
+       },
+       {
+        "name": "AssumeFalsePropagationPass",
+        "duration": "PT0.00006728S",
+        "runs": 1,
+        "firings": 0
+       },
+       {
+        "name": "ConstantVariableSubstitutionPass",
+        "duration": "PT0.001310895S",
+        "runs": 1,
+        "firings": 0
+       },
+       {
+        "name": "CopyPropagationPass",
+        "duration": "PT0.001861709S",
+        "runs": 1,
+        "firings": 0
+       },
+       {
+        "name": "DeadStoreEliminationPass",
+        "duration": "PT0.000079294S",
+        "runs": 1,
+        "firings": 0
+       },
+       {
+        "name": "DeadCodeRemovalPass",
+        "duration": "PT0.00076341S",
+        "runs": 1,
+        "firings": 0
+       },
+       {
+        "name": "VariableLivenessPass",
+        "duration": "PT0.000918096S",
+        "runs": 1,
+        "firings": 0
+       }
+      ],
+      "analyses": [
+       {
+        "name": "ConstantValueAnalysis",
+        "duration": "PT0.00116483S",
+        "computations": 1
+       },
+       {
+        "name": "ReachingDefinitionsAnalysis",
+        "duration": "PT0.001827162S",
+        "computations": 1
+       },
+       {
+        "name": "ConeOfInfluenceAnalysis",
+        "duration": "PT0.000699328S",
+        "computations": 1
+       }
+      ]
+     },
+     "inputSize": {
+      "variables": 4,
+      "operations": 23,
+      "expressions": 69
+     },
+     "inlinedSize": {
+      "variables": 4,
+      "operations": 24,
+      "expressions": 72
+     },
+     "flattenedSize": {
+      "variables": 4,
+      "operations": 24,
+      "expressions": 56
+     }
+    }
    }
   },
-  "example::trafficlight::intersection::NorthGreenOnlyWhileEastRed": {
+  "NorthCanTurnGreen": {
    "status": "passed",
+   "backendId": "theta:cegar-expl",
    "portfolioId": "smart",
-   "report": {
-    "version": 2,
-    "kind": "run",
-    "verificationCase": "example::trafficlight::intersection::NorthGreenOnlyWhileEastRed",
-    "portfolioId": "smart",
-    "optimization": {
-     "enabled": [
-      "ExpressionSimplification",
-      "OperationFlattening",
-      "RedundantOperationRemoval",
-      "AssumeFalsePropagation",
-      "ConstantVariableSubstitution",
-      "CopyPropagation",
-      "DeadStoreElimination",
-      "DeadCodeRemoval",
-      "VariableLiveness"
+   "metrics": {
+    "totalDuration": "PT8.055529304S",
+    "preparationDuration": "PT0.11935339S",
+    "verificationDuration": "PT7.420962939S",
+    "backAnnotationDuration": "PT0.025206442S",
+    "compilation": {
+     "createDuration": "PT0.013308487S",
+     "instantiationDuration": "PT0.005306055S",
+     "inliningDuration": "PT0.013851573S",
+     "flatteningDuration": "PT0.077341361S",
+     "inliningOptimization": {
+      "duration": "PT0.000974986S",
+      "passes": [
+       {
+        "name": "OperationCallInlining",
+        "duration": "PT0.000161988S",
+        "runs": 2,
+        "firings": 0
+       },
+       {
+        "name": "ExpressionSimplificationPass",
+        "duration": "PT0.000505102S",
+        "runs": 1,
+        "firings": 0
+       },
+       {
+        "name": "OperationFlatteningPass",
+        "duration": "PT0.000081111S",
+        "runs": 1,
+        "firings": 0
+       },
+       {
+        "name": "RedundantOperationRemovalPass",
+        "duration": "PT0.000068875S",
+        "runs": 1,
+        "firings": 0
+       },
+       {
+        "name": "AssumeFalsePropagationPass",
+        "duration": "PT0.000064956S",
+        "runs": 1,
+        "firings": 0
+       },
+       {
+        "name": "PropertyExpressionNormalization",
+        "duration": "PT0.000013963S",
+        "runs": 1,
+        "firings": 0
+       }
+      ],
+      "analyses": []
+     },
+     "flatteningOptimization": {
+      "duration": "PT0.006884375S",
+      "passes": [
+       {
+        "name": "ExpressionSimplificationPass",
+        "duration": "PT0.000202794S",
+        "runs": 1,
+        "firings": 0
+       },
+       {
+        "name": "OperationFlatteningPass",
+        "duration": "PT0.000076226S",
+        "runs": 1,
+        "firings": 0
+       },
+       {
+        "name": "RedundantOperationRemovalPass",
+        "duration": "PT0.000074116S",
+        "runs": 1,
+        "firings": 0
+       },
+       {
+        "name": "AssumeFalsePropagationPass",
+        "duration": "PT0.000062046S",
+        "runs": 1,
+        "firings": 0
+       },
+       {
+        "name": "ConstantVariableSubstitutionPass",
+        "duration": "PT0.000826815S",
+        "runs": 1,
+        "firings": 0
+       },
+       {
+        "name": "CopyPropagationPass",
+        "duration": "PT0.004073571S",
+        "runs": 1,
+        "firings": 0
+       },
+       {
+        "name": "DeadStoreEliminationPass",
+        "duration": "PT0.00008016S",
+        "runs": 1,
+        "firings": 0
+       },
+       {
+        "name": "DeadCodeRemovalPass",
+        "duration": "PT0.000735614S",
+        "runs": 1,
+        "firings": 0
+       },
+       {
+        "name": "VariableLivenessPass",
+        "duration": "PT0.000538572S",
+        "runs": 1,
+        "firings": 0
+       }
+      ],
+      "analyses": [
+       {
+        "name": "ConstantValueAnalysis",
+        "duration": "PT0.000744701S",
+        "computations": 1
+       },
+       {
+        "name": "ReachingDefinitionsAnalysis",
+        "duration": "PT0.004049749S",
+        "computations": 1
+       },
+       {
+        "name": "ConeOfInfluenceAnalysis",
+        "duration": "PT0.000676035S",
+        "computations": 1
+       }
+      ]
+     },
+     "inputSize": {
+      "variables": 4,
+      "operations": 23,
+      "expressions": 69
+     },
+     "inlinedSize": {
+      "variables": 4,
+      "operations": 24,
+      "expressions": 67
+     },
+     "flattenedSize": {
+      "variables": 4,
+      "operations": 24,
+      "expressions": 52
+     }
+    }
+   },
+   "trace": {
+    "callTrace": {
+     "initializedStep": {
+      "traces": []
+     },
+     "steps": [
+      {
+       "traces": []
+      }
      ]
     },
-    "timeout": "PT5M",
-    "result": {
-     "metadata": {
-      "backendId": "uppaal:over-approximation",
-      "startedAt": "2026-11-17T23:51:12.636131624Z"
-     },
-     "verdict": "Passed",
-     "soundness": "OverApproximating",
-     "isTrusted": true,
-     "metrics": {
-      "totalDuration": "PT0.879096871S",
-      "backend": {
-       "preparationDuration": "PT0.017488170S",
-       "verificationDuration": "PT0.305039525S",
-       "backAnnotationDuration": "PT0S"
-      },
-      "verifier": {
-       "compilationDuration": "PT0.063646419S",
-       "compilation": {
-        "createDuration": "PT0.018899566S",
-        "instantiationDuration": "PT0.005911766S",
-        "inliningDuration": "PT0.027509927S",
-        "flatteningDuration": "PT0.011325160S",
-        "inliningOptimization": {
-         "duration": "PT0.002153619S",
-         "passes": [
-          {
-           "name": "OperationCallInlining",
-           "duration": "PT0.000423090S",
-           "runs": 5,
-           "firings": 2
-          },
-          {
-           "name": "ExpressionSimplificationPass",
-           "duration": "PT0.000372838S",
-           "runs": 2,
-           "firings": 1
-          },
-          {
-           "name": "OperationFlatteningPass",
-           "duration": "PT0.000848452S",
-           "runs": 2,
-           "firings": 0
-          },
-          {
-           "name": "RedundantOperationRemovalPass",
-           "duration": "PT0.000207106S",
-           "runs": 2,
-           "firings": 0
-          },
-          {
-           "name": "AssumeFalsePropagationPass",
-           "duration": "PT0.000163098S",
-           "runs": 2,
-           "firings": 0
-          },
-          {
-           "name": "PropertyExpressionNormalization",
-           "duration": "PT0.000013364S",
-           "runs": 1,
-           "firings": 0
-          }
-         ],
-         "analyses": []
-        },
-        "flatteningOptimization": {
-         "duration": "PT0.002727460S",
-         "passes": [
-          {
-           "name": "ExpressionSimplificationPass",
-           "duration": "PT0.000178800S",
-           "runs": 1,
-           "firings": 0
-          },
-          {
-           "name": "OperationFlatteningPass",
-           "duration": "PT0.000057858S",
-           "runs": 1,
-           "firings": 0
-          },
-          {
-           "name": "RedundantOperationRemovalPass",
-           "duration": "PT0.000076609S",
-           "runs": 1,
-           "firings": 0
-          },
-          {
-           "name": "AssumeFalsePropagationPass",
-           "duration": "PT0.000090531S",
-           "runs": 1,
-           "firings": 0
-          },
-          {
-           "name": "ConstantVariableSubstitutionPass",
-           "duration": "PT0.000287767S",
-           "runs": 1,
-           "firings": 0
-          },
-          {
-           "name": "CopyPropagationPass",
-           "duration": "PT0.001020325S",
-           "runs": 1,
-           "firings": 0
-          },
-          {
-           "name": "DeadStoreEliminationPass",
-           "duration": "PT0.000055573S",
-           "runs": 1,
-           "firings": 0
-          },
-          {
-           "name": "DeadCodeRemovalPass",
-           "duration": "PT0.000543069S",
-           "runs": 1,
-           "firings": 0
-          },
-          {
-           "name": "VariableLivenessPass",
-           "duration": "PT0.000325068S",
-           "runs": 1,
-           "firings": 0
-          }
-         ],
-         "analyses": [
-          {
-           "name": "ConstantValueAnalysis",
-           "duration": "PT0.000229899S",
-           "computations": 1
-          },
-          {
-           "name": "ReachingDefinitionsAnalysis",
-           "duration": "PT0.001004215S",
-           "computations": 1
-          },
-          {
-           "name": "ConeOfInfluenceAnalysis",
-           "duration": "PT0.000500409S",
-           "computations": 1
-          }
-         ]
-        },
-        "inputSize": {
-         "variables": 1,
-         "operations": 25,
-         "expressions": 75
-        },
-        "inlinedSize": {
-         "variables": 2,
-         "operations": 31,
-         "expressions": 102
-        },
-        "flattenedSize": {
-         "variables": 4,
-         "operations": 31,
-         "expressions": 56
-        }
+    "witnessState": {
+     "initializedStep": {
+      "values": [
+       {
+        "variable": "root.north",
+        "value": "LightColor::Red"
        },
-       "backAnnotationDuration": "PT0S",
-       "portfolioDuration": "PT0.878563651S"
-      }
+       {
+        "variable": "root.east",
+        "value": "LightColor::Red"
+       },
+       {
+        "variable": "root.northCarWaiting",
+        "value": "false"
+       },
+       {
+        "variable": "root.eastCarWaiting",
+        "value": "false"
+       }
+      ]
      },
-     "message": null
+     "steps": [
+      {
+       "values": [
+        {
+         "variable": "root.north",
+         "value": "LightColor::Green"
+        },
+        {
+         "variable": "root.east",
+         "value": "LightColor::Red"
+        },
+        {
+         "variable": "root.northCarWaiting",
+         "value": "true"
+        }
+       ]
+      }
+     ]
     },
-    "trace": null
+    "witnessUri": "file:///workspace/.artifacts/snippet.NorthCanTurnGreen/witness.semantifyr"
    }
   },
-  "example::trafficlight::intersection::EastCanTurnGreen": {
+  "NeverBothGreen": {
    "status": "passed",
+   "backendId": "theta:bounded-kinduction",
    "portfolioId": "smart",
-   "report": {
-    "version": 2,
-    "kind": "run",
-    "verificationCase": "example::trafficlight::intersection::EastCanTurnGreen",
-    "portfolioId": "smart",
-    "optimization": {
-     "enabled": [
-      "ExpressionSimplification",
-      "OperationFlattening",
-      "RedundantOperationRemoval",
-      "AssumeFalsePropagation",
-      "ConstantVariableSubstitution",
-      "CopyPropagation",
-      "DeadStoreElimination",
-      "DeadCodeRemoval",
-      "VariableLiveness"
-     ]
-    },
-    "timeout": "PT5M",
-    "result": {
-     "metadata": {
-      "backendId": "uppaal:default",
-      "startedAt": "2026-11-17T23:51:12.635987222Z"
-     },
-     "verdict": "Passed",
-     "soundness": "UnderApproximating",
-     "isTrusted": true,
-     "metrics": {
-      "totalDuration": "PT0.893859166S",
-      "backend": {
-       "preparationDuration": "PT0.007707784S",
-       "verificationDuration": "PT0.319643585S",
-       "backAnnotationDuration": "PT0.000753678S"
-      },
-      "verifier": {
-       "compilationDuration": "PT0.061428059S",
-       "compilation": {
-        "createDuration": "PT0.020731392S",
-        "instantiationDuration": "PT0.004770197S",
-        "inliningDuration": "PT0.016033804S",
-        "flatteningDuration": "PT0.019892666S",
-        "inliningOptimization": {
-         "duration": "PT0.001022593S",
-         "passes": [
-          {
-           "name": "OperationCallInlining",
-           "duration": "PT0.000421483S",
-           "runs": 5,
-           "firings": 2
-          },
-          {
-           "name": "ExpressionSimplificationPass",
-           "duration": "PT0.000189620S",
-           "runs": 1,
-           "firings": 0
-          },
-          {
-           "name": "OperationFlatteningPass",
-           "duration": "PT0.000088161S",
-           "runs": 1,
-           "firings": 0
-          },
-          {
-           "name": "RedundantOperationRemovalPass",
-           "duration": "PT0.000123054S",
-           "runs": 1,
-           "firings": 0
-          },
-          {
-           "name": "AssumeFalsePropagationPass",
-           "duration": "PT0.000097505S",
-           "runs": 1,
-           "firings": 0
-          },
-          {
-           "name": "PropertyExpressionNormalization",
-           "duration": "PT0.000010710S",
-           "runs": 1,
-           "firings": 0
-          }
-         ],
-         "analyses": []
-        },
-        "flatteningOptimization": {
-         "duration": "PT0.009886225S",
-         "passes": [
-          {
-           "name": "ExpressionSimplificationPass",
-           "duration": "PT0.006998923S",
-           "runs": 1,
-           "firings": 0
-          },
-          {
-           "name": "OperationFlatteningPass",
-           "duration": "PT0.000115886S",
-           "runs": 1,
-           "firings": 0
-          },
-          {
-           "name": "RedundantOperationRemovalPass",
-           "duration": "PT0.000099880S",
-           "runs": 1,
-           "firings": 0
-          },
-          {
-           "name": "AssumeFalsePropagationPass",
-           "duration": "PT0.000097034S",
-           "runs": 1,
-           "firings": 0
-          },
-          {
-           "name": "ConstantVariableSubstitutionPass",
-           "duration": "PT0.000360203S",
-           "runs": 1,
-           "firings": 0
-          },
-          {
-           "name": "CopyPropagationPass",
-           "duration": "PT0.000999692S",
-           "runs": 1,
-           "firings": 0
-          },
-          {
-           "name": "DeadStoreEliminationPass",
-           "duration": "PT0.000076345S",
-           "runs": 1,
-           "firings": 0
-          },
-          {
-           "name": "DeadCodeRemovalPass",
-           "duration": "PT0.000565312S",
-           "runs": 1,
-           "firings": 0
-          },
-          {
-           "name": "VariableLivenessPass",
-           "duration": "PT0.000285066S",
-           "runs": 1,
-           "firings": 0
-          }
-         ],
-         "analyses": [
-          {
-           "name": "ConstantValueAnalysis",
-           "duration": "PT0.000291742S",
-           "computations": 1
-          },
-          {
-           "name": "ReachingDefinitionsAnalysis",
-           "duration": "PT0.000979062S",
-           "computations": 1
-          },
-          {
-           "name": "ConeOfInfluenceAnalysis",
-           "duration": "PT0.000525530S",
-           "computations": 1
-          }
-         ]
-        },
-        "inputSize": {
-         "variables": 1,
-         "operations": 25,
-         "expressions": 75
-        },
-        "inlinedSize": {
-         "variables": 2,
-         "operations": 31,
-         "expressions": 95
-        },
-        "flattenedSize": {
-         "variables": 4,
-         "operations": 31,
-         "expressions": 52
-        }
+   "metrics": {
+    "totalDuration": "PT8.061990636S",
+    "preparationDuration": "PT0.136395754S",
+    "verificationDuration": "PT7.284376418S",
+    "backAnnotationDuration": "PT0S",
+    "compilation": {
+     "createDuration": "PT0.071749693S",
+     "instantiationDuration": "PT0.01010607S",
+     "inliningDuration": "PT0.024411862S",
+     "flatteningDuration": "PT0.017363782S",
+     "inliningOptimization": {
+      "duration": "PT0.001368087S",
+      "passes": [
+       {
+        "name": "OperationCallInlining",
+        "duration": "PT0.000189358S",
+        "runs": 2,
+        "firings": 0
        },
-       "backAnnotationDuration": "PT0.014586316S",
-       "portfolioDuration": "PT0.878864038S"
-      }
-     },
-     "message": null
-    },
-    "trace": {
-     "root": "root",
-     "transitions": [
-      {
-       "transition": "example::trafficlight::intersection::TrafficLight::main",
-       "parameters": []
-      }
-     ],
-     "variables": [
-      {
-       "variable": "root.intersection.north.color",
-       "type": {
-        "kind": "enum",
-        "name": "example::trafficlight::intersection::LightColor"
+       {
+        "name": "ExpressionSimplificationPass",
+        "duration": "PT0.000530562S",
+        "runs": 3,
+        "firings": 2
        },
-       "slot": null
-      },
-      {
-       "variable": "root.intersection.east.color",
-       "type": {
-        "kind": "enum",
-        "name": "example::trafficlight::intersection::LightColor"
+       {
+        "name": "OperationFlatteningPass",
+        "duration": "PT0.00017818S",
+        "runs": 3,
+        "firings": 0
        },
-       "slot": null
-      }
-     ],
-     "initial": {
-      "state": 0,
-      "calls": []
-     },
-     "states": [
-      {
-       "values": {
-        "root.intersection.north.color": "Red",
-        "root.intersection.east.color": "Red"
+       {
+        "name": "RedundantOperationRemovalPass",
+        "duration": "PT0.00015171S",
+        "runs": 3,
+        "firings": 0
+       },
+       {
+        "name": "AssumeFalsePropagationPass",
+        "duration": "PT0.000139616S",
+        "runs": 3,
+        "firings": 0
+       },
+       {
+        "name": "PropertyExpressionNormalization",
+        "duration": "PT0.000012233S",
+        "runs": 1,
+        "firings": 0
        }
-      },
-      {
-       "values": {
-        "root.intersection.north.color": "Red",
-        "root.intersection.east.color": "Green"
+      ],
+      "analyses": []
+     },
+     "flatteningOptimization": {
+      "duration": "PT0.005256969S",
+      "passes": [
+       {
+        "name": "ExpressionSimplificationPass",
+        "duration": "PT0.000221515S",
+        "runs": 1,
+        "firings": 0
+       },
+       {
+        "name": "OperationFlatteningPass",
+        "duration": "PT0.000079029S",
+        "runs": 1,
+        "firings": 0
+       },
+       {
+        "name": "RedundantOperationRemovalPass",
+        "duration": "PT0.000080764S",
+        "runs": 1,
+        "firings": 0
+       },
+       {
+        "name": "AssumeFalsePropagationPass",
+        "duration": "PT0.000071674S",
+        "runs": 1,
+        "firings": 0
+       },
+       {
+        "name": "ConstantVariableSubstitutionPass",
+        "duration": "PT0.000351219S",
+        "runs": 1,
+        "firings": 0
+       },
+       {
+        "name": "CopyPropagationPass",
+        "duration": "PT0.002876789S",
+        "runs": 1,
+        "firings": 0
+       },
+       {
+        "name": "DeadStoreEliminationPass",
+        "duration": "PT0.000092727S",
+        "runs": 1,
+        "firings": 0
+       },
+       {
+        "name": "DeadCodeRemovalPass",
+        "duration": "PT0.00081199S",
+        "runs": 1,
+        "firings": 0
+       },
+       {
+        "name": "VariableLivenessPass",
+        "duration": "PT0.000524032S",
+        "runs": 1,
+        "firings": 0
        }
-      }
-     ],
-     "steps": [
-      {
-       "source": 0,
-       "target": 1,
-       "elapsed": 0,
-       "calls": [
-        {
-         "self": "root.intersection.east",
-         "transition": "example::trafficlight::intersection::TrafficLight::main",
-         "arguments": {},
-         "calls": []
-        }
-       ]
-      }
-     ],
-     "missingCalls": null
+      ],
+      "analyses": [
+       {
+        "name": "ConstantValueAnalysis",
+        "duration": "PT0.000258544S",
+        "computations": 1
+       },
+       {
+        "name": "ReachingDefinitionsAnalysis",
+        "duration": "PT0.002851941S",
+        "computations": 1
+       },
+       {
+        "name": "ConeOfInfluenceAnalysis",
+        "duration": "PT0.000747693S",
+        "computations": 1
+       }
+      ]
+     },
+     "inputSize": {
+      "variables": 4,
+      "operations": 23,
+      "expressions": 69
+     },
+     "inlinedSize": {
+      "variables": 4,
+      "operations": 24,
+      "expressions": 72
+     },
+     "flattenedSize": {
+      "variables": 4,
+      "operations": 24,
+      "expressions": 56
+     }
     }
-   },
-   "witnessUri": "file:///workspace/.artifacts/snippet.example.trafficlight.intersection.EastCanTurnGreen/witness.semantifyr"
-  },
-  "example::levelcrossing::TwoTrainsCanBeInTheCrossing": {
-   "status": "passed",
-   "portfolioId": "smart",
-   "report": {
-    "version": 2,
-    "kind": "run",
-    "verificationCase": "example::levelcrossing::TwoTrainsCanBeInTheCrossing",
-    "portfolioId": "smart",
-    "optimization": {
-     "enabled": [
-      "ExpressionSimplification",
-      "OperationFlattening",
-      "RedundantOperationRemoval",
-      "AssumeFalsePropagation",
-      "ConstantVariableSubstitution",
-      "CopyPropagation",
-      "DeadStoreElimination",
-      "DeadCodeRemoval",
-      "VariableLiveness"
-     ]
-    },
-    "timeout": "PT5M",
-    "result": {
-     "metadata": {
-      "backendId": "uppaal:default",
-      "startedAt": "2026-11-17T23:51:24.651988122Z"
-     },
-     "verdict": "Passed",
-     "soundness": "UnderApproximating",
-     "isTrusted": true,
-     "metrics": {
-      "totalDuration": "PT0.753227827S",
-      "backend": {
-       "preparationDuration": "PT0.001631727S",
-       "verificationDuration": "PT0.264034691S",
-       "backAnnotationDuration": "PT0.022526844S"
-      },
-      "verifier": {
-       "compilationDuration": "PT0.080874332S",
-       "compilation": {
-        "createDuration": "PT0.009969102S",
-        "instantiationDuration": "PT0.004729984S",
-        "inliningDuration": "PT0.024049672S",
-        "flatteningDuration": "PT0.042125574S",
-        "inliningOptimization": {
-         "duration": "PT0.001374633S",
-         "passes": [
-          {
-           "name": "OperationCallInlining",
-           "duration": "PT0.000852952S",
-           "runs": 18,
-           "firings": 15
-          },
-          {
-           "name": "ExpressionSimplificationPass",
-           "duration": "PT0.000161893S",
-           "runs": 1,
-           "firings": 0
-          },
-          {
-           "name": "OperationFlatteningPass",
-           "duration": "PT0.000070876S",
-           "runs": 1,
-           "firings": 0
-          },
-          {
-           "name": "RedundantOperationRemovalPass",
-           "duration": "PT0.000094396S",
-           "runs": 1,
-           "firings": 0
-          },
-          {
-           "name": "AssumeFalsePropagationPass",
-           "duration": "PT0.000078561S",
-           "runs": 1,
-           "firings": 0
-          },
-          {
-           "name": "PropertyExpressionNormalization",
-           "duration": "PT0.000007932S",
-           "runs": 1,
-           "firings": 0
-          }
-         ],
-         "analyses": []
-        },
-        "flatteningOptimization": {
-         "duration": "PT0.018228650S",
-         "passes": [
-          {
-           "name": "ExpressionSimplificationPass",
-           "duration": "PT0.000351965S",
-           "runs": 2,
-           "firings": 0
-          },
-          {
-           "name": "OperationFlatteningPass",
-           "duration": "PT0.000153662S",
-           "runs": 2,
-           "firings": 0
-          },
-          {
-           "name": "RedundantOperationRemovalPass",
-           "duration": "PT0.000215994S",
-           "runs": 2,
-           "firings": 0
-          },
-          {
-           "name": "AssumeFalsePropagationPass",
-           "duration": "PT0.000203478S",
-           "runs": 2,
-           "firings": 0
-          },
-          {
-           "name": "ConstantVariableSubstitutionPass",
-           "duration": "PT0.001551736S",
-           "runs": 2,
-           "firings": 0
-          },
-          {
-           "name": "CopyPropagationPass",
-           "duration": "PT0.004973217S",
-           "runs": 2,
-           "firings": 0
-          },
-          {
-           "name": "DeadStoreEliminationPass",
-           "duration": "PT0.000334921S",
-           "runs": 2,
-           "firings": 1
-          },
-          {
-           "name": "DeadCodeRemovalPass",
-           "duration": "PT0.005281403S",
-           "runs": 2,
-           "firings": 0
-          },
-          {
-           "name": "VariableLivenessPass",
-           "duration": "PT0.005001412S",
-           "runs": 2,
-           "firings": 1
-          }
-         ],
-         "analyses": [
-          {
-           "name": "ConstantValueAnalysis",
-           "duration": "PT0.001443155S",
-           "computations": 2
-          },
-          {
-           "name": "ReachingDefinitionsAnalysis",
-           "duration": "PT0.004901613S",
-           "computations": 2
-          },
-          {
-           "name": "ConeOfInfluenceAnalysis",
-           "duration": "PT0.005100197S",
-           "computations": 2
-          }
-         ]
-        },
-        "inputSize": {
-         "variables": 7,
-         "operations": 50,
-         "expressions": 121
-        },
-        "inlinedSize": {
-         "variables": 10,
-         "operations": 80,
-         "expressions": 238
-        },
-        "flattenedSize": {
-         "variables": 21,
-         "operations": 76,
-         "expressions": 157
-        }
-       },
-       "backAnnotationDuration": "PT0.003990768S",
-       "portfolioDuration": "PT0.748809717S"
-      }
-     },
-     "message": null
-    },
-    "trace": {
-     "root": "root",
-     "transitions": [
-      {
-       "transition": "example::levelcrossing::Barrier::lowerBarrier",
-       "parameters": []
-      },
-      {
-       "transition": "example::levelcrossing::Barrier::liftBarrier",
-       "parameters": []
-      },
-      {
-       "transition": "example::levelcrossing::Controller::sendLower",
-       "parameters": []
-      },
-      {
-       "transition": "example::levelcrossing::Controller::sendLift",
-       "parameters": []
-      },
-      {
-       "transition": "example::levelcrossing::Track::move",
-       "parameters": [
-        {
-         "parameter": "from",
-         "type": {
-          "kind": "enum",
-          "name": "example::levelcrossing::TrackState"
-         }
-        },
-        {
-         "parameter": "to",
-         "type": {
-          "kind": "enum",
-          "name": "example::levelcrossing::TrackState"
-         }
-        }
-       ]
-      }
-     ],
-     "variables": [
-      {
-       "variable": "root.trackA.state",
-       "type": {
-        "kind": "enum",
-        "name": "example::levelcrossing::TrackState"
-       },
-       "slot": null
-      },
-      {
-       "variable": "root.trackA.trainApproaching",
-       "type": {
-        "kind": "datatype",
-        "name": "semantifyr::bool"
-       },
-       "slot": null
-      },
-      {
-       "variable": "root.trackA.trainLeft",
-       "type": {
-        "kind": "datatype",
-        "name": "semantifyr::bool"
-       },
-       "slot": null
-      },
-      {
-       "variable": "root.trackB.state",
-       "type": {
-        "kind": "enum",
-        "name": "example::levelcrossing::TrackState"
-       },
-       "slot": null
-      },
-      {
-       "variable": "root.trackB.trainApproaching",
-       "type": {
-        "kind": "datatype",
-        "name": "semantifyr::bool"
-       },
-       "slot": null
-      },
-      {
-       "variable": "root.trackB.trainLeft",
-       "type": {
-        "kind": "datatype",
-        "name": "semantifyr::bool"
-       },
-       "slot": null
-      },
-      {
-       "variable": "root.controller.state",
-       "type": {
-        "kind": "enum",
-        "name": "example::levelcrossing::ControllerState"
-       },
-       "slot": null
-      },
-      {
-       "variable": "root.controller.lower",
-       "type": {
-        "kind": "datatype",
-        "name": "semantifyr::bool"
-       },
-       "slot": null
-      },
-      {
-       "variable": "root.controller.lift",
-       "type": {
-        "kind": "datatype",
-        "name": "semantifyr::bool"
-       },
-       "slot": null
-      }
-     ],
-     "initial": {
-      "state": 0,
-      "calls": []
-     },
-     "states": [
-      {
-       "values": {
-        "root.trackA.state": "Free",
-        "root.trackA.trainApproaching": false,
-        "root.trackA.trainLeft": false,
-        "root.trackB.state": "Free",
-        "root.trackB.trainApproaching": false,
-        "root.trackB.trainLeft": false,
-        "root.controller.state": "Idle",
-        "root.controller.lower": false,
-        "root.controller.lift": false
-       }
-      },
-      {
-       "values": {
-        "root.trackA.state": "Approaching",
-        "root.trackA.trainApproaching": true,
-        "root.trackA.trainLeft": false,
-        "root.trackB.state": "Approaching",
-        "root.trackB.trainApproaching": true,
-        "root.trackB.trainLeft": false,
-        "root.controller.state": "Idle",
-        "root.controller.lower": false,
-        "root.controller.lift": false
-       }
-      },
-      {
-       "values": {
-        "root.trackA.state": "Near",
-        "root.trackA.trainApproaching": false,
-        "root.trackA.trainLeft": false,
-        "root.trackB.state": "Near",
-        "root.trackB.trainApproaching": false,
-        "root.trackB.trainLeft": false,
-        "root.controller.state": "TrainPresent",
-        "root.controller.lower": true,
-        "root.controller.lift": false
-       }
-      },
-      {
-       "values": {
-        "root.trackA.state": "InCrossing",
-        "root.trackA.trainApproaching": false,
-        "root.trackA.trainLeft": false,
-        "root.trackB.state": "InCrossing",
-        "root.trackB.trainApproaching": false,
-        "root.trackB.trainLeft": false,
-        "root.controller.state": "TrainPresent",
-        "root.controller.lower": false,
-        "root.controller.lift": false
-       }
-      }
-     ],
-     "steps": [
-      {
-       "source": 0,
-       "target": 1,
-       "elapsed": 0,
-       "calls": [
-        {
-         "self": "root.trackA",
-         "transition": "example::levelcrossing::Track::move",
-         "arguments": {
-          "from": "Free",
-          "to": "Approaching"
-         },
-         "calls": []
-        },
-        {
-         "self": "root.trackB",
-         "transition": "example::levelcrossing::Track::move",
-         "arguments": {
-          "from": "Free",
-          "to": "Approaching"
-         },
-         "calls": []
-        }
-       ]
-      },
-      {
-       "source": 1,
-       "target": 2,
-       "elapsed": 0,
-       "calls": [
-        {
-         "self": "root.controller",
-         "transition": "example::levelcrossing::Controller::sendLower",
-         "arguments": {},
-         "calls": []
-        },
-        {
-         "self": "root.trackA",
-         "transition": "example::levelcrossing::Track::move",
-         "arguments": {
-          "from": "Approaching",
-          "to": "Near"
-         },
-         "calls": []
-        },
-        {
-         "self": "root.trackB",
-         "transition": "example::levelcrossing::Track::move",
-         "arguments": {
-          "from": "Approaching",
-          "to": "Near"
-         },
-         "calls": []
-        }
-       ]
-      },
-      {
-       "source": 2,
-       "target": 3,
-       "elapsed": 0,
-       "calls": [
-        {
-         "self": "root.barrier",
-         "transition": "example::levelcrossing::Barrier::lowerBarrier",
-         "arguments": {},
-         "calls": []
-        },
-        {
-         "self": "root.trackA",
-         "transition": "example::levelcrossing::Track::move",
-         "arguments": {
-          "from": "Near",
-          "to": "InCrossing"
-         },
-         "calls": []
-        },
-        {
-         "self": "root.trackB",
-         "transition": "example::levelcrossing::Track::move",
-         "arguments": {
-          "from": "Near",
-          "to": "InCrossing"
-         },
-         "calls": []
-        }
-       ]
-      }
-     ],
-     "missingCalls": null
-    }
-   },
-   "witnessUri": "file:///workspace/.artifacts/snippet.example.levelcrossing.TwoTrainsCanBeInTheCrossing/witness.semantifyr"
+   }
   },
   "example::levelcrossing::BarrierDownWhileTrainInCrossing": {
    "status": "failed",
+   "backendId": "theta:bounded-kinduction",
    "portfolioId": "smart",
-   "report": {
-    "version": 2,
-    "kind": "run",
-    "verificationCase": "example::levelcrossing::BarrierDownWhileTrainInCrossing",
-    "portfolioId": "smart",
-    "optimization": {
-     "enabled": [
-      "ExpressionSimplification",
-      "OperationFlattening",
-      "RedundantOperationRemoval",
-      "AssumeFalsePropagation",
-      "ConstantVariableSubstitution",
-      "CopyPropagation",
-      "DeadStoreElimination",
-      "DeadCodeRemoval",
-      "VariableLiveness"
-     ]
-    },
-    "timeout": "PT5M",
-    "result": {
-     "metadata": {
-      "backendId": "uppaal:default",
-      "startedAt": "2026-11-17T23:51:24.651988096Z"
+   "metrics": {
+    "totalDuration": "PT7.677411315S",
+    "preparationDuration": "PT0.282884549S",
+    "verificationDuration": "PT6.131776035S",
+    "backAnnotationDuration": "PT0.067278686S",
+    "compilation": {
+     "createDuration": "PT0.00907236S",
+     "instantiationDuration": "PT0.017625026S",
+     "inliningDuration": "PT0.125107527S",
+     "flatteningDuration": "PT0.068748151S",
+     "inliningOptimization": {
+      "duration": "PT0.021428129S",
+      "passes": [
+       {
+        "name": "OperationCallInlining",
+        "duration": "PT0.013260752S",
+        "runs": 18,
+        "firings": 15
+       },
+       {
+        "name": "ExpressionSimplificationPass",
+        "duration": "PT0.000985712S",
+        "runs": 3,
+        "firings": 2
+       },
+       {
+        "name": "OperationFlatteningPass",
+        "duration": "PT0.000444594S",
+        "runs": 3,
+        "firings": 0
+       },
+       {
+        "name": "RedundantOperationRemovalPass",
+        "duration": "PT0.000417819S",
+        "runs": 3,
+        "firings": 0
+       },
+       {
+        "name": "AssumeFalsePropagationPass",
+        "duration": "PT0.006122913S",
+        "runs": 3,
+        "firings": 0
+       },
+       {
+        "name": "PropertyExpressionNormalization",
+        "duration": "PT0.000017717S",
+        "runs": 1,
+        "firings": 0
+       }
+      ],
+      "analyses": []
      },
-     "verdict": "Failed",
-     "soundness": "UnderApproximating",
-     "isTrusted": true,
-     "metrics": {
-      "totalDuration": "PT0.838964855S",
-      "backend": {
-       "preparationDuration": "PT0.004293024S",
-       "verificationDuration": "PT0.304520342S",
-       "backAnnotationDuration": "PT0.024802719S"
+     "flatteningOptimization": {
+      "duration": "PT0.025510886S",
+      "passes": [
+       {
+        "name": "ExpressionSimplificationPass",
+        "duration": "PT0.00046061S",
+        "runs": 2,
+        "firings": 0
+       },
+       {
+        "name": "OperationFlatteningPass",
+        "duration": "PT0.000251336S",
+        "runs": 2,
+        "firings": 0
+       },
+       {
+        "name": "RedundantOperationRemovalPass",
+        "duration": "PT0.000249223S",
+        "runs": 2,
+        "firings": 0
+       },
+       {
+        "name": "AssumeFalsePropagationPass",
+        "duration": "PT0.000239684S",
+        "runs": 2,
+        "firings": 0
+       },
+       {
+        "name": "ConstantVariableSubstitutionPass",
+        "duration": "PT0.001337453S",
+        "runs": 2,
+        "firings": 0
+       },
+       {
+        "name": "CopyPropagationPass",
+        "duration": "PT0.014066849S",
+        "runs": 2,
+        "firings": 0
+       },
+       {
+        "name": "DeadStoreEliminationPass",
+        "duration": "PT0.000392503S",
+        "runs": 2,
+        "firings": 0
+       },
+       {
+        "name": "DeadCodeRemovalPass",
+        "duration": "PT0.004179955S",
+        "runs": 2,
+        "firings": 0
+       },
+       {
+        "name": "VariableLivenessPass",
+        "duration": "PT0.004136685S",
+        "runs": 2,
+        "firings": 1
+       }
+      ],
+      "analyses": [
+       {
+        "name": "ConstantValueAnalysis",
+        "duration": "PT0.001242273S",
+        "computations": 2
+       },
+       {
+        "name": "ReachingDefinitionsAnalysis",
+        "duration": "PT0.01398578S",
+        "computations": 2
+       },
+       {
+        "name": "ConeOfInfluenceAnalysis",
+        "duration": "PT0.003778419S",
+        "computations": 2
+       }
+      ]
+     },
+     "inputSize": {
+      "variables": 7,
+      "operations": 50,
+      "expressions": 121
+     },
+     "inlinedSize": {
+      "variables": 10,
+      "operations": 80,
+      "expressions": 244
+     },
+     "flattenedSize": {
+      "variables": 22,
+      "operations": 78,
+      "expressions": 166
+     }
+    }
+   },
+   "trace": {
+    "callTrace": {
+     "initializedStep": {
+      "traces": []
+     },
+     "steps": [
+      {
+       "traces": [
+        {
+         "self": "root.trackB",
+         "calledTransition": "example::levelcrossing::Track::move",
+         "arguments": [
+          {
+           "parameter": "from",
+           "value": "example::levelcrossing::TrackState::Free"
+          },
+          {
+           "parameter": "to",
+           "value": "example::levelcrossing::TrackState::Approaching"
+          }
+         ]
+        }
+       ]
       },
-      "verifier": {
-       "compilationDuration": "PT0.082684915S",
-       "compilation": {
-        "createDuration": "PT0.006634479S",
-        "instantiationDuration": "PT0.006336447S",
-        "inliningDuration": "PT0.030914833S",
-        "flatteningDuration": "PT0.038799156S",
-        "inliningOptimization": {
-         "duration": "PT0.002776282S",
-         "passes": [
-          {
-           "name": "OperationCallInlining",
-           "duration": "PT0.000992210S",
-           "runs": 18,
-           "firings": 15
-          },
-          {
-           "name": "ExpressionSimplificationPass",
-           "duration": "PT0.000654827S",
-           "runs": 3,
-           "firings": 2
-          },
-          {
-           "name": "OperationFlatteningPass",
-           "duration": "PT0.000318961S",
-           "runs": 3,
-           "firings": 0
-          },
-          {
-           "name": "RedundantOperationRemovalPass",
-           "duration": "PT0.000326207S",
-           "runs": 3,
-           "firings": 0
-          },
-          {
-           "name": "AssumeFalsePropagationPass",
-           "duration": "PT0.000336960S",
-           "runs": 3,
-           "firings": 0
-          },
-          {
-           "name": "PropertyExpressionNormalization",
-           "duration": "PT0.000018740S",
-           "runs": 1,
-           "firings": 0
-          }
-         ],
-         "analyses": []
+      {
+       "traces": [
+        {
+         "self": "root.controller",
+         "calledTransition": "example::levelcrossing::Controller::sendLower",
+         "arguments": []
         },
-        "flatteningOptimization": {
-         "duration": "PT0.016147035S",
-         "passes": [
+        {
+         "self": "root.trackA",
+         "calledTransition": "example::levelcrossing::Track::move",
+         "arguments": [
           {
-           "name": "ExpressionSimplificationPass",
-           "duration": "PT0.000686772S",
-           "runs": 2,
-           "firings": 0
+           "parameter": "from",
+           "value": "example::levelcrossing::TrackState::Free"
           },
           {
-           "name": "OperationFlatteningPass",
-           "duration": "PT0.000292812S",
-           "runs": 2,
-           "firings": 0
-          },
-          {
-           "name": "RedundantOperationRemovalPass",
-           "duration": "PT0.000242606S",
-           "runs": 2,
-           "firings": 0
-          },
-          {
-           "name": "AssumeFalsePropagationPass",
-           "duration": "PT0.000235536S",
-           "runs": 2,
-           "firings": 0
-          },
-          {
-           "name": "ConstantVariableSubstitutionPass",
-           "duration": "PT0.001366152S",
-           "runs": 2,
-           "firings": 0
-          },
-          {
-           "name": "CopyPropagationPass",
-           "duration": "PT0.005670840S",
-           "runs": 2,
-           "firings": 0
-          },
-          {
-           "name": "DeadStoreEliminationPass",
-           "duration": "PT0.000290720S",
-           "runs": 2,
-           "firings": 0
-          },
-          {
-           "name": "DeadCodeRemovalPass",
-           "duration": "PT0.003146154S",
-           "runs": 2,
-           "firings": 0
-          },
-          {
-           "name": "VariableLivenessPass",
-           "duration": "PT0.002108150S",
-           "runs": 2,
-           "firings": 1
-          }
-         ],
-         "analyses": [
-          {
-           "name": "ConstantValueAnalysis",
-           "duration": "PT0.001254763S",
-           "computations": 2
-          },
-          {
-           "name": "ReachingDefinitionsAnalysis",
-           "duration": "PT0.005603154S",
-           "computations": 2
-          },
-          {
-           "name": "ConeOfInfluenceAnalysis",
-           "duration": "PT0.002985434S",
-           "computations": 2
+           "parameter": "to",
+           "value": "example::levelcrossing::TrackState::Approaching"
           }
          ]
         },
-        "inputSize": {
-         "variables": 7,
-         "operations": 50,
-         "expressions": 121
-        },
-        "inlinedSize": {
-         "variables": 10,
-         "operations": 80,
-         "expressions": 244
-        },
-        "flattenedSize": {
-         "variables": 22,
-         "operations": 78,
-         "expressions": 166
+        {
+         "self": "root.trackB",
+         "calledTransition": "example::levelcrossing::Track::move",
+         "arguments": [
+          {
+           "parameter": "from",
+           "value": "example::levelcrossing::TrackState::Approaching"
+          },
+          {
+           "parameter": "to",
+           "value": "example::levelcrossing::TrackState::Near"
+          }
+         ]
         }
-       },
-       "backAnnotationDuration": "PT0.009322729S",
-       "portfolioDuration": "PT0.829175703S"
-      }
-     },
-     "message": null
-    },
-    "trace": {
-     "root": "root",
-     "transitions": [
-      {
-       "transition": "example::levelcrossing::Barrier::lowerBarrier",
-       "parameters": []
+       ]
       },
       {
-       "transition": "example::levelcrossing::Barrier::liftBarrier",
-       "parameters": []
-      },
-      {
-       "transition": "example::levelcrossing::Controller::sendLower",
-       "parameters": []
-      },
-      {
-       "transition": "example::levelcrossing::Controller::sendLift",
-       "parameters": []
-      },
-      {
-       "transition": "example::levelcrossing::Track::move",
-       "parameters": [
+       "traces": [
         {
-         "parameter": "from",
-         "type": {
-          "kind": "enum",
-          "name": "example::levelcrossing::TrackState"
-         }
+         "self": "root.barrier",
+         "calledTransition": "example::levelcrossing::Barrier::lowerBarrier",
+         "arguments": []
         },
         {
-         "parameter": "to",
-         "type": {
-          "kind": "enum",
-          "name": "example::levelcrossing::TrackState"
-         }
+         "self": "root.trackA",
+         "calledTransition": "example::levelcrossing::Track::move",
+         "arguments": [
+          {
+           "parameter": "from",
+           "value": "example::levelcrossing::TrackState::Approaching"
+          },
+          {
+           "parameter": "to",
+           "value": "example::levelcrossing::TrackState::Near"
+          }
+         ]
+        },
+        {
+         "self": "root.trackB",
+         "calledTransition": "example::levelcrossing::Track::move",
+         "arguments": [
+          {
+           "parameter": "from",
+           "value": "example::levelcrossing::TrackState::Near"
+          },
+          {
+           "parameter": "to",
+           "value": "example::levelcrossing::TrackState::InCrossing"
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "traces": [
+        {
+         "self": "root.trackA",
+         "calledTransition": "example::levelcrossing::Track::move",
+         "arguments": [
+          {
+           "parameter": "from",
+           "value": "example::levelcrossing::TrackState::Near"
+          },
+          {
+           "parameter": "to",
+           "value": "example::levelcrossing::TrackState::InCrossing"
+          }
+         ]
+        },
+        {
+         "self": "root.trackB",
+         "calledTransition": "example::levelcrossing::Track::move",
+         "arguments": [
+          {
+           "parameter": "from",
+           "value": "example::levelcrossing::TrackState::InCrossing"
+          },
+          {
+           "parameter": "to",
+           "value": "example::levelcrossing::TrackState::Free"
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "traces": [
+        {
+         "self": "root.controller",
+         "calledTransition": "example::levelcrossing::Controller::sendLift",
+         "arguments": []
+        }
+       ]
+      },
+      {
+       "traces": [
+        {
+         "self": "root.barrier",
+         "calledTransition": "example::levelcrossing::Barrier::liftBarrier",
+         "arguments": []
         }
        ]
       }
-     ],
-     "variables": [
-      {
-       "variable": "root.trackA.state",
-       "type": {
-        "kind": "enum",
-        "name": "example::levelcrossing::TrackState"
+     ]
+    },
+    "witnessState": {
+     "initializedStep": {
+      "values": [
+       {
+        "variable": "root.trackA.state",
+        "value": "example::levelcrossing::TrackState::Free"
        },
-       "slot": null
-      },
-      {
-       "variable": "root.trackA.trainApproaching",
-       "type": {
-        "kind": "datatype",
-        "name": "semantifyr::bool"
+       {
+        "variable": "root.trackA.trainApproaching",
+        "value": "false"
        },
-       "slot": null
-      },
-      {
-       "variable": "root.trackA.trainLeft",
-       "type": {
-        "kind": "datatype",
-        "name": "semantifyr::bool"
+       {
+        "variable": "root.trackA.trainLeft",
+        "value": "false"
        },
-       "slot": null
-      },
-      {
-       "variable": "root.trackB.state",
-       "type": {
-        "kind": "enum",
-        "name": "example::levelcrossing::TrackState"
+       {
+        "variable": "root.trackB.state",
+        "value": "example::levelcrossing::TrackState::Free"
        },
-       "slot": null
-      },
-      {
-       "variable": "root.trackB.trainApproaching",
-       "type": {
-        "kind": "datatype",
-        "name": "semantifyr::bool"
+       {
+        "variable": "root.trackB.trainApproaching",
+        "value": "false"
        },
-       "slot": null
-      },
-      {
-       "variable": "root.trackB.trainLeft",
-       "type": {
-        "kind": "datatype",
-        "name": "semantifyr::bool"
+       {
+        "variable": "root.trackB.trainLeft",
+        "value": "false"
        },
-       "slot": null
-      },
-      {
-       "variable": "root.controller.state",
-       "type": {
-        "kind": "enum",
-        "name": "example::levelcrossing::ControllerState"
+       {
+        "variable": "root.controller.state",
+        "value": "example::levelcrossing::ControllerState::Idle"
        },
-       "slot": null
-      },
-      {
-       "variable": "root.controller.lower",
-       "type": {
-        "kind": "datatype",
-        "name": "semantifyr::bool"
+       {
+        "variable": "root.controller.lower",
+        "value": "false"
        },
-       "slot": null
-      },
-      {
-       "variable": "root.controller.lift",
-       "type": {
-        "kind": "datatype",
-        "name": "semantifyr::bool"
+       {
+        "variable": "root.controller.lift",
+        "value": "false"
        },
-       "slot": null
-      },
-      {
-       "variable": "root.barrier.state",
-       "type": {
-        "kind": "enum",
-        "name": "example::levelcrossing::BarrierState"
-       },
-       "slot": null
-      }
-     ],
-     "initial": {
-      "state": 0,
-      "calls": []
+       {
+        "variable": "root.barrier.state",
+        "value": "example::levelcrossing::BarrierState::Up"
+       }
+      ]
      },
-     "states": [
-      {
-       "values": {
-        "root.trackA.state": "Free",
-        "root.trackA.trainApproaching": false,
-        "root.trackA.trainLeft": false,
-        "root.trackB.state": "Free",
-        "root.trackB.trainApproaching": false,
-        "root.trackB.trainLeft": false,
-        "root.controller.state": "Idle",
-        "root.controller.lower": false,
-        "root.controller.lift": false,
-        "root.barrier.state": "Up"
-       }
-      },
-      {
-       "values": {
-        "root.trackA.state": "Approaching",
-        "root.trackA.trainApproaching": true,
-        "root.trackA.trainLeft": false,
-        "root.trackB.state": "Approaching",
-        "root.trackB.trainApproaching": true,
-        "root.trackB.trainLeft": false,
-        "root.controller.state": "Idle",
-        "root.controller.lower": false,
-        "root.controller.lift": false,
-        "root.barrier.state": "Up"
-       }
-      },
-      {
-       "values": {
-        "root.trackA.state": "Near",
-        "root.trackA.trainApproaching": false,
-        "root.trackA.trainLeft": false,
-        "root.trackB.state": "Near",
-        "root.trackB.trainApproaching": false,
-        "root.trackB.trainLeft": false,
-        "root.controller.state": "TrainPresent",
-        "root.controller.lower": true,
-        "root.controller.lift": false,
-        "root.barrier.state": "Up"
-       }
-      },
-      {
-       "values": {
-        "root.trackA.state": "InCrossing",
-        "root.trackA.trainApproaching": false,
-        "root.trackA.trainLeft": false,
-        "root.trackB.state": "InCrossing",
-        "root.trackB.trainApproaching": false,
-        "root.trackB.trainLeft": false,
-        "root.controller.state": "TrainPresent",
-        "root.controller.lower": false,
-        "root.controller.lift": false,
-        "root.barrier.state": "Down"
-       }
-      },
-      {
-       "values": {
-        "root.trackA.state": "Free",
-        "root.trackA.trainApproaching": false,
-        "root.trackA.trainLeft": true,
-        "root.trackB.state": "InCrossing",
-        "root.trackB.trainApproaching": false,
-        "root.trackB.trainLeft": false,
-        "root.controller.state": "TrainPresent",
-        "root.controller.lower": false,
-        "root.controller.lift": false,
-        "root.barrier.state": "Down"
-       }
-      },
-      {
-       "values": {
-        "root.trackA.state": "Free",
-        "root.trackA.trainApproaching": false,
-        "root.trackA.trainLeft": false,
-        "root.trackB.state": "InCrossing",
-        "root.trackB.trainApproaching": false,
-        "root.trackB.trainLeft": false,
-        "root.controller.state": "Idle",
-        "root.controller.lower": false,
-        "root.controller.lift": true,
-        "root.barrier.state": "Down"
-       }
-      },
-      {
-       "values": {
-        "root.trackA.state": "Free",
-        "root.trackA.trainApproaching": false,
-        "root.trackA.trainLeft": false,
-        "root.trackB.state": "InCrossing",
-        "root.trackB.trainApproaching": false,
-        "root.trackB.trainLeft": false,
-        "root.controller.state": "Idle",
-        "root.controller.lower": false,
-        "root.controller.lift": false,
-        "root.barrier.state": "Up"
-       }
-      }
-     ],
      "steps": [
       {
-       "source": 0,
-       "target": 1,
-       "elapsed": 0,
-       "calls": [
+       "values": [
         {
-         "self": "root.trackA",
-         "transition": "example::levelcrossing::Track::move",
-         "arguments": {
-          "from": "Free",
-          "to": "Approaching"
-         },
-         "calls": []
+         "variable": "root.trackA.state",
+         "value": "example::levelcrossing::TrackState::Free"
         },
         {
-         "self": "root.trackB",
-         "transition": "example::levelcrossing::Track::move",
-         "arguments": {
-          "from": "Free",
-          "to": "Approaching"
-         },
-         "calls": []
+         "variable": "root.trackA.trainApproaching",
+         "value": "false"
+        },
+        {
+         "variable": "root.trackA.trainLeft",
+         "value": "false"
+        },
+        {
+         "variable": "root.trackB.state",
+         "value": "example::levelcrossing::TrackState::Approaching"
+        },
+        {
+         "variable": "root.trackB.trainApproaching",
+         "value": "true"
+        },
+        {
+         "variable": "root.trackB.trainLeft",
+         "value": "false"
+        },
+        {
+         "variable": "root.controller.state",
+         "value": "example::levelcrossing::ControllerState::Idle"
+        },
+        {
+         "variable": "root.controller.lower",
+         "value": "false"
+        },
+        {
+         "variable": "root.controller.lift",
+         "value": "false"
+        },
+        {
+         "variable": "root.barrier.state",
+         "value": "example::levelcrossing::BarrierState::Up"
         }
        ]
       },
       {
-       "source": 1,
-       "target": 2,
-       "elapsed": 0,
-       "calls": [
+       "values": [
         {
-         "self": "root.controller",
-         "transition": "example::levelcrossing::Controller::sendLower",
-         "arguments": {},
-         "calls": []
+         "variable": "root.trackA.state",
+         "value": "example::levelcrossing::TrackState::Approaching"
         },
         {
-         "self": "root.trackA",
-         "transition": "example::levelcrossing::Track::move",
-         "arguments": {
-          "from": "Approaching",
-          "to": "Near"
-         },
-         "calls": []
+         "variable": "root.trackA.trainApproaching",
+         "value": "true"
         },
         {
-         "self": "root.trackB",
-         "transition": "example::levelcrossing::Track::move",
-         "arguments": {
-          "from": "Approaching",
-          "to": "Near"
-         },
-         "calls": []
+         "variable": "root.trackA.trainLeft",
+         "value": "false"
+        },
+        {
+         "variable": "root.trackB.state",
+         "value": "example::levelcrossing::TrackState::Near"
+        },
+        {
+         "variable": "root.trackB.trainApproaching",
+         "value": "false"
+        },
+        {
+         "variable": "root.trackB.trainLeft",
+         "value": "false"
+        },
+        {
+         "variable": "root.controller.state",
+         "value": "example::levelcrossing::ControllerState::TrainPresent"
+        },
+        {
+         "variable": "root.controller.lower",
+         "value": "true"
+        },
+        {
+         "variable": "root.controller.lift",
+         "value": "false"
+        },
+        {
+         "variable": "root.barrier.state",
+         "value": "example::levelcrossing::BarrierState::Up"
         }
        ]
       },
       {
-       "source": 2,
-       "target": 3,
-       "elapsed": 0,
-       "calls": [
+       "values": [
         {
-         "self": "root.barrier",
-         "transition": "example::levelcrossing::Barrier::lowerBarrier",
-         "arguments": {},
-         "calls": []
+         "variable": "root.trackA.state",
+         "value": "example::levelcrossing::TrackState::Near"
         },
         {
-         "self": "root.trackA",
-         "transition": "example::levelcrossing::Track::move",
-         "arguments": {
-          "from": "Near",
-          "to": "InCrossing"
-         },
-         "calls": []
+         "variable": "root.trackA.trainApproaching",
+         "value": "false"
         },
         {
-         "self": "root.trackB",
-         "transition": "example::levelcrossing::Track::move",
-         "arguments": {
-          "from": "Near",
-          "to": "InCrossing"
-         },
-         "calls": []
+         "variable": "root.trackA.trainLeft",
+         "value": "false"
+        },
+        {
+         "variable": "root.trackB.state",
+         "value": "example::levelcrossing::TrackState::InCrossing"
+        },
+        {
+         "variable": "root.trackB.trainApproaching",
+         "value": "false"
+        },
+        {
+         "variable": "root.trackB.trainLeft",
+         "value": "false"
+        },
+        {
+         "variable": "root.controller.state",
+         "value": "example::levelcrossing::ControllerState::TrainPresent"
+        },
+        {
+         "variable": "root.controller.lower",
+         "value": "false"
+        },
+        {
+         "variable": "root.controller.lift",
+         "value": "false"
+        },
+        {
+         "variable": "root.barrier.state",
+         "value": "example::levelcrossing::BarrierState::Down"
         }
        ]
       },
       {
-       "source": 3,
-       "target": 4,
-       "elapsed": 0,
-       "calls": [
+       "values": [
         {
-         "self": "root.trackA",
-         "transition": "example::levelcrossing::Track::move",
-         "arguments": {
-          "from": "InCrossing",
-          "to": "Free"
-         },
-         "calls": []
+         "variable": "root.trackA.state",
+         "value": "example::levelcrossing::TrackState::InCrossing"
+        },
+        {
+         "variable": "root.trackA.trainApproaching",
+         "value": "false"
+        },
+        {
+         "variable": "root.trackA.trainLeft",
+         "value": "false"
+        },
+        {
+         "variable": "root.trackB.state",
+         "value": "example::levelcrossing::TrackState::Free"
+        },
+        {
+         "variable": "root.trackB.trainApproaching",
+         "value": "false"
+        },
+        {
+         "variable": "root.trackB.trainLeft",
+         "value": "true"
+        },
+        {
+         "variable": "root.controller.state",
+         "value": "example::levelcrossing::ControllerState::TrainPresent"
+        },
+        {
+         "variable": "root.controller.lower",
+         "value": "false"
+        },
+        {
+         "variable": "root.controller.lift",
+         "value": "false"
+        },
+        {
+         "variable": "root.barrier.state",
+         "value": "example::levelcrossing::BarrierState::Down"
         }
        ]
       },
       {
-       "source": 4,
-       "target": 5,
-       "elapsed": 0,
-       "calls": [
+       "values": [
         {
-         "self": "root.controller",
-         "transition": "example::levelcrossing::Controller::sendLift",
-         "arguments": {},
-         "calls": []
+         "variable": "root.trackA.state",
+         "value": "example::levelcrossing::TrackState::InCrossing"
+        },
+        {
+         "variable": "root.trackA.trainApproaching",
+         "value": "false"
+        },
+        {
+         "variable": "root.trackA.trainLeft",
+         "value": "false"
+        },
+        {
+         "variable": "root.trackB.state",
+         "value": "example::levelcrossing::TrackState::Free"
+        },
+        {
+         "variable": "root.trackB.trainApproaching",
+         "value": "false"
+        },
+        {
+         "variable": "root.trackB.trainLeft",
+         "value": "false"
+        },
+        {
+         "variable": "root.controller.state",
+         "value": "example::levelcrossing::ControllerState::Idle"
+        },
+        {
+         "variable": "root.controller.lower",
+         "value": "false"
+        },
+        {
+         "variable": "root.controller.lift",
+         "value": "true"
+        },
+        {
+         "variable": "root.barrier.state",
+         "value": "example::levelcrossing::BarrierState::Down"
         }
        ]
       },
       {
-       "source": 5,
-       "target": 6,
-       "elapsed": 0,
-       "calls": [
+       "values": [
         {
-         "self": "root.barrier",
-         "transition": "example::levelcrossing::Barrier::liftBarrier",
-         "arguments": {},
-         "calls": []
+         "variable": "root.trackA.state",
+         "value": "example::levelcrossing::TrackState::InCrossing"
+        },
+        {
+         "variable": "root.trackA.trainApproaching",
+         "value": "false"
+        },
+        {
+         "variable": "root.trackA.trainLeft",
+         "value": "false"
+        },
+        {
+         "variable": "root.trackB.state",
+         "value": "example::levelcrossing::TrackState::Free"
+        },
+        {
+         "variable": "root.trackB.trainApproaching",
+         "value": "false"
+        },
+        {
+         "variable": "root.trackB.trainLeft",
+         "value": "false"
+        },
+        {
+         "variable": "root.controller.state",
+         "value": "example::levelcrossing::ControllerState::Idle"
+        },
+        {
+         "variable": "root.controller.lower",
+         "value": "false"
+        },
+        {
+         "variable": "root.controller.lift",
+         "value": "false"
+        },
+        {
+         "variable": "root.barrier.state",
+         "value": "example::levelcrossing::BarrierState::Up"
         }
        ]
       }
-     ],
-     "missingCalls": null
+     ]
+    },
+    "witnessUri": "file:///workspace/.artifacts/snippet.example.levelcrossing.BarrierDownWhileTrainInCrossing/witness.semantifyr"
+   }
+  },
+  "example::levelcrossing::TwoTrainsCanBeInTheCrossing": {
+   "status": "passed",
+   "backendId": "theta:bounded-bmc",
+   "portfolioId": "smart",
+   "metrics": {
+    "totalDuration": "PT7.842429026S",
+    "preparationDuration": "PT0.226289938S",
+    "verificationDuration": "PT7.073855937S",
+    "backAnnotationDuration": "PT0.01437556S",
+    "compilation": {
+     "createDuration": "PT0.008749864S",
+     "instantiationDuration": "PT0.007845172S",
+     "inliningDuration": "PT0.081726819S",
+     "flatteningDuration": "PT0.09674168S",
+     "inliningOptimization": {
+      "duration": "PT0.002254077S",
+      "passes": [
+       {
+        "name": "OperationCallInlining",
+        "duration": "PT0.001257201S",
+        "runs": 18,
+        "firings": 15
+       },
+       {
+        "name": "ExpressionSimplificationPass",
+        "duration": "PT0.000351899S",
+        "runs": 1,
+        "firings": 0
+       },
+       {
+        "name": "OperationFlatteningPass",
+        "duration": "PT0.000175069S",
+        "runs": 1,
+        "firings": 0
+       },
+       {
+        "name": "RedundantOperationRemovalPass",
+        "duration": "PT0.000172963S",
+        "runs": 1,
+        "firings": 0
+       },
+       {
+        "name": "AssumeFalsePropagationPass",
+        "duration": "PT0.000158889S",
+        "runs": 1,
+        "firings": 0
+       },
+       {
+        "name": "PropertyExpressionNormalization",
+        "duration": "PT0.000023301S",
+        "runs": 1,
+        "firings": 0
+       }
+      ],
+      "analyses": []
+     },
+     "flatteningOptimization": {
+      "duration": "PT0.058350988S",
+      "passes": [
+       {
+        "name": "ExpressionSimplificationPass",
+        "duration": "PT0.000767908S",
+        "runs": 4,
+        "firings": 0
+       },
+       {
+        "name": "OperationFlatteningPass",
+        "duration": "PT0.000427914S",
+        "runs": 4,
+        "firings": 1
+       },
+       {
+        "name": "RedundantOperationRemovalPass",
+        "duration": "PT0.000528761S",
+        "runs": 4,
+        "firings": 1
+       },
+       {
+        "name": "AssumeFalsePropagationPass",
+        "duration": "PT0.000360018S",
+        "runs": 4,
+        "firings": 0
+       },
+       {
+        "name": "ConstantVariableSubstitutionPass",
+        "duration": "PT0.013796318S",
+        "runs": 4,
+        "firings": 0
+       },
+       {
+        "name": "CopyPropagationPass",
+        "duration": "PT0.024217565S",
+        "runs": 4,
+        "firings": 0
+       },
+       {
+        "name": "DeadStoreEliminationPass",
+        "duration": "PT0.000830792S",
+        "runs": 4,
+        "firings": 1
+       },
+       {
+        "name": "DeadCodeRemovalPass",
+        "duration": "PT0.004510423S",
+        "runs": 4,
+        "firings": 1
+       },
+       {
+        "name": "VariableLivenessPass",
+        "duration": "PT0.012609915S",
+        "runs": 4,
+        "firings": 1
+       }
+      ],
+      "analyses": [
+       {
+        "name": "ConstantValueAnalysis",
+        "duration": "PT0.004865249S",
+        "computations": 3
+       },
+       {
+        "name": "ReachingDefinitionsAnalysis",
+        "duration": "PT0.024065465S",
+        "computations": 3
+       },
+       {
+        "name": "ConeOfInfluenceAnalysis",
+        "duration": "PT0.003824077S",
+        "computations": 3
+       }
+      ]
+     },
+     "inputSize": {
+      "variables": 7,
+      "operations": 50,
+      "expressions": 121
+     },
+     "inlinedSize": {
+      "variables": 10,
+      "operations": 80,
+      "expressions": 238
+     },
+     "flattenedSize": {
+      "variables": 14,
+      "operations": 50,
+      "expressions": 102
+     }
     }
    },
-   "witnessUri": "file:///workspace/.artifacts/snippet.example.levelcrossing.BarrierDownWhileTrainInCrossing/witness.semantifyr"
+   "trace": {
+    "callTrace": {
+     "initializedStep": {
+      "traces": []
+     },
+     "steps": [
+      {
+       "traces": [
+        {
+         "self": "root.trackA",
+         "calledTransition": "example::levelcrossing::Track::move",
+         "arguments": [
+          {
+           "parameter": "from",
+           "value": "example::levelcrossing::TrackState::Free"
+          },
+          {
+           "parameter": "to",
+           "value": "example::levelcrossing::TrackState::Approaching"
+          }
+         ]
+        },
+        {
+         "self": "root.trackB",
+         "calledTransition": "example::levelcrossing::Track::move",
+         "arguments": [
+          {
+           "parameter": "from",
+           "value": "example::levelcrossing::TrackState::Free"
+          },
+          {
+           "parameter": "to",
+           "value": "example::levelcrossing::TrackState::Approaching"
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "traces": [
+        {
+         "self": "root.trackA",
+         "calledTransition": "example::levelcrossing::Track::move",
+         "arguments": [
+          {
+           "parameter": "from",
+           "value": "example::levelcrossing::TrackState::Approaching"
+          },
+          {
+           "parameter": "to",
+           "value": "example::levelcrossing::TrackState::Near"
+          }
+         ]
+        },
+        {
+         "self": "root.trackB",
+         "calledTransition": "example::levelcrossing::Track::move",
+         "arguments": [
+          {
+           "parameter": "from",
+           "value": "example::levelcrossing::TrackState::Approaching"
+          },
+          {
+           "parameter": "to",
+           "value": "example::levelcrossing::TrackState::Near"
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "traces": [
+        {
+         "self": "root.trackA",
+         "calledTransition": "example::levelcrossing::Track::move",
+         "arguments": [
+          {
+           "parameter": "from",
+           "value": "example::levelcrossing::TrackState::Near"
+          },
+          {
+           "parameter": "to",
+           "value": "example::levelcrossing::TrackState::InCrossing"
+          }
+         ]
+        },
+        {
+         "self": "root.trackB",
+         "calledTransition": "example::levelcrossing::Track::move",
+         "arguments": [
+          {
+           "parameter": "from",
+           "value": "example::levelcrossing::TrackState::Near"
+          },
+          {
+           "parameter": "to",
+           "value": "example::levelcrossing::TrackState::InCrossing"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    "witnessState": {
+     "initializedStep": {
+      "values": [
+       {
+        "variable": "root.trackA.state",
+        "value": "example::levelcrossing::TrackState::Free"
+       },
+       {
+        "variable": "root.trackB.state",
+        "value": "example::levelcrossing::TrackState::Free"
+       }
+      ]
+     },
+     "steps": [
+      {
+       "values": [
+        {
+         "variable": "root.trackA.state",
+         "value": "example::levelcrossing::TrackState::Approaching"
+        },
+        {
+         "variable": "root.trackB.state",
+         "value": "example::levelcrossing::TrackState::Approaching"
+        }
+       ]
+      },
+      {
+       "values": [
+        {
+         "variable": "root.trackA.state",
+         "value": "example::levelcrossing::TrackState::Near"
+        },
+        {
+         "variable": "root.trackB.state",
+         "value": "example::levelcrossing::TrackState::Near"
+        }
+       ]
+      },
+      {
+       "values": [
+        {
+         "variable": "root.trackA.state",
+         "value": "example::levelcrossing::TrackState::InCrossing"
+        },
+        {
+         "variable": "root.trackB.state",
+         "value": "example::levelcrossing::TrackState::InCrossing"
+        }
+       ]
+      }
+     ]
+    },
+    "witnessUri": "file:///workspace/.artifacts/snippet.example.levelcrossing.TwoTrainsCanBeInTheCrossing/witness.semantifyr"
+   }
   }
  },
  "validations": {
-  "file:///workspace/.artifacts/snippet.example.trafficlight.intersection.EastCanTurnGreen/witness.semantifyr": {
+  "file:///workspace/.artifacts/snippet.NorthCanTurnGreen/witness.semantifyr": {
    "status": "valid",
+   "verdict": "passed",
+   "backendId": "theta:bounded-bmc",
    "portfolioId": "smart",
-   "report": {
-    "version": 2,
-    "kind": "re-check",
-    "verificationCase": "example::trafficlight::intersection::EastCanTurnGreen",
-    "portfolioId": "smart",
-    "optimization": {
-     "enabled": [
-      "ExpressionSimplification",
-      "OperationFlattening",
-      "RedundantOperationRemoval",
-      "AssumeFalsePropagation",
-      "ConstantVariableSubstitution",
-      "CopyPropagation",
-      "DeadStoreElimination",
-      "DeadCodeRemoval",
-      "VariableLiveness"
-     ]
-    },
-    "timeout": "PT5M",
-    "result": {
-     "metadata": {
-      "backendId": "uppaal:default",
-      "startedAt": "2026-11-17T23:51:13.704933661Z"
-     },
-     "verdict": "Passed",
-     "soundness": "UnderApproximating",
-     "isTrusted": true,
-     "metrics": {
-      "totalDuration": "PT0.297529109S",
-      "backend": {
-       "preparationDuration": "PT0.001244941S",
-       "verificationDuration": "PT0.091527029S",
-       "backAnnotationDuration": "PT0.001013038S"
-      },
-      "verifier": {
-       "compilationDuration": "PT0.070443026S",
-       "compilation": {
-        "createDuration": "PT0.004751310S",
-        "instantiationDuration": "PT0.016040496S",
-        "inliningDuration": "PT0.023933904S",
-        "flatteningDuration": "PT0.025717316S",
-        "inliningOptimization": {
-         "duration": "PT0.001167703S",
-         "passes": [
-          {
-           "name": "OperationCallInlining",
-           "duration": "PT0.000447069S",
-           "runs": 5,
-           "firings": 2
-          },
-          {
-           "name": "ExpressionSimplificationPass",
-           "duration": "PT0.000234240S",
-           "runs": 1,
-           "firings": 0
-          },
-          {
-           "name": "OperationFlatteningPass",
-           "duration": "PT0.000117621S",
-           "runs": 1,
-           "firings": 0
-          },
-          {
-           "name": "RedundantOperationRemovalPass",
-           "duration": "PT0.000121154S",
-           "runs": 1,
-           "firings": 0
-          },
-          {
-           "name": "AssumeFalsePropagationPass",
-           "duration": "PT0.000107490S",
-           "runs": 1,
-           "firings": 0
-          },
-          {
-           "name": "PropertyExpressionNormalization",
-           "duration": "PT0.000008694S",
-           "runs": 1,
-           "firings": 0
-          }
-         ],
-         "analyses": []
-        },
-        "flatteningOptimization": {
-         "duration": "PT0.004457552S",
-         "passes": [
-          {
-           "name": "ExpressionSimplificationPass",
-           "duration": "PT0.000287412S",
-           "runs": 1,
-           "firings": 0
-          },
-          {
-           "name": "OperationFlatteningPass",
-           "duration": "PT0.000091463S",
-           "runs": 1,
-           "firings": 0
-          },
-          {
-           "name": "RedundantOperationRemovalPass",
-           "duration": "PT0.000105512S",
-           "runs": 1,
-           "firings": 0
-          },
-          {
-           "name": "AssumeFalsePropagationPass",
-           "duration": "PT0.000090145S",
-           "runs": 1,
-           "firings": 0
-          },
-          {
-           "name": "ConstantVariableSubstitutionPass",
-           "duration": "PT0.000682432S",
-           "runs": 1,
-           "firings": 0
-          },
-          {
-           "name": "CopyPropagationPass",
-           "duration": "PT0.001599944S",
-           "runs": 1,
-           "firings": 0
-          },
-          {
-           "name": "DeadStoreEliminationPass",
-           "duration": "PT0.000081573S",
-           "runs": 1,
-           "firings": 0
-          },
-          {
-           "name": "DeadCodeRemovalPass",
-           "duration": "PT0.000867265S",
-           "runs": 1,
-           "firings": 0
-          },
-          {
-           "name": "VariableLivenessPass",
-           "duration": "PT0.000445565S",
-           "runs": 1,
-           "firings": 0
-          }
-         ],
-         "analyses": [
-          {
-           "name": "ConstantValueAnalysis",
-           "duration": "PT0.000582251S",
-           "computations": 1
-          },
-          {
-           "name": "ReachingDefinitionsAnalysis",
-           "duration": "PT0.001546397S",
-           "computations": 1
-          },
-          {
-           "name": "ConeOfInfluenceAnalysis",
-           "duration": "PT0.000812516S",
-           "computations": 1
-          }
-         ]
-        },
-        "inputSize": {
-         "variables": 1,
-         "operations": 12,
-         "expressions": 44
-        },
-        "inlinedSize": {
-         "variables": 2,
-         "operations": 39,
-         "expressions": 130
-        },
-        "flattenedSize": {
-         "variables": 5,
-         "operations": 39,
-         "expressions": 75
-        }
+   "metrics": {
+    "totalDuration": "PT4.406911304S",
+    "preparationDuration": "PT0.23458709S",
+    "verificationDuration": "PT3.744376935S",
+    "backAnnotationDuration": "PT0.020303948S",
+    "compilation": {
+     "createDuration": "PT0.008281258S",
+     "instantiationDuration": "PT0.070058848S",
+     "inliningDuration": "PT0.065179531S",
+     "flatteningDuration": "PT0.055829989S",
+     "inliningOptimization": {
+      "duration": "PT0.000807215S",
+      "passes": [
+       {
+        "name": "OperationCallInlining",
+        "duration": "PT0.00019648S",
+        "runs": 2,
+        "firings": 0
        },
-       "backAnnotationDuration": "PT0.001296410S",
-       "portfolioDuration": "PT0.295902237S"
-      }
-     },
-     "message": null
-    },
-    "trace": {
-     "root": "root",
-     "transitions": [
-      {
-       "transition": "example::trafficlight::intersection::TrafficLight::main",
-       "parameters": []
-      }
-     ],
-     "variables": [
-      {
-       "variable": "root.intersection.north.color",
-       "type": {
-        "kind": "enum",
-        "name": "example::trafficlight::intersection::LightColor"
+       {
+        "name": "ExpressionSimplificationPass",
+        "duration": "PT0.000228461S",
+        "runs": 1,
+        "firings": 0
        },
-       "slot": null
-      },
-      {
-       "variable": "root.intersection.east.color",
-       "type": {
-        "kind": "enum",
-        "name": "example::trafficlight::intersection::LightColor"
+       {
+        "name": "OperationFlatteningPass",
+        "duration": "PT0.000099213S",
+        "runs": 1,
+        "firings": 0
        },
-       "slot": null
-      }
-     ],
-     "initial": {
-      "state": 0,
-      "calls": []
-     },
-     "states": [
-      {
-       "values": {
-        "root.intersection.north.color": "Red",
-        "root.intersection.east.color": "Red"
+       {
+        "name": "RedundantOperationRemovalPass",
+        "duration": "PT0.00009739S",
+        "runs": 1,
+        "firings": 0
+       },
+       {
+        "name": "AssumeFalsePropagationPass",
+        "duration": "PT0.000086709S",
+        "runs": 1,
+        "firings": 0
+       },
+       {
+        "name": "PropertyExpressionNormalization",
+        "duration": "PT0.000020996S",
+        "runs": 1,
+        "firings": 0
        }
-      },
-      {
-       "values": {
-        "root.intersection.north.color": "Red",
-        "root.intersection.east.color": "Green"
+      ],
+      "analyses": []
+     },
+     "flatteningOptimization": {
+      "duration": "PT0.010655201S",
+      "passes": [
+       {
+        "name": "ExpressionSimplificationPass",
+        "duration": "PT0.000224136S",
+        "runs": 1,
+        "firings": 0
+       },
+       {
+        "name": "OperationFlatteningPass",
+        "duration": "PT0.00009419S",
+        "runs": 1,
+        "firings": 0
+       },
+       {
+        "name": "RedundantOperationRemovalPass",
+        "duration": "PT0.000095076S",
+        "runs": 1,
+        "firings": 0
+       },
+       {
+        "name": "AssumeFalsePropagationPass",
+        "duration": "PT0.000085644S",
+        "runs": 1,
+        "firings": 0
+       },
+       {
+        "name": "ConstantVariableSubstitutionPass",
+        "duration": "PT0.001437294S",
+        "runs": 1,
+        "firings": 0
+       },
+       {
+        "name": "CopyPropagationPass",
+        "duration": "PT0.006171132S",
+        "runs": 1,
+        "firings": 0
+       },
+       {
+        "name": "DeadStoreEliminationPass",
+        "duration": "PT0.000142611S",
+        "runs": 1,
+        "firings": 0
+       },
+       {
+        "name": "DeadCodeRemovalPass",
+        "duration": "PT0.00140562S",
+        "runs": 1,
+        "firings": 0
+       },
+       {
+        "name": "VariableLivenessPass",
+        "duration": "PT0.000823059S",
+        "runs": 1,
+        "firings": 0
        }
-      }
-     ],
-     "steps": [
-      {
-       "source": 0,
-       "target": 1,
-       "elapsed": 0,
-       "calls": [
-        {
-         "self": "root.intersection.east",
-         "transition": "example::trafficlight::intersection::TrafficLight::main",
-         "arguments": {},
-         "calls": []
-        }
-       ]
-      }
-     ],
-     "missingCalls": null
+      ],
+      "analyses": [
+       {
+        "name": "ConstantValueAnalysis",
+        "duration": "PT0.000669441S",
+        "computations": 1
+       },
+       {
+        "name": "ReachingDefinitionsAnalysis",
+        "duration": "PT0.006136468S",
+        "computations": 1
+       },
+       {
+        "name": "ConeOfInfluenceAnalysis",
+        "duration": "PT0.001318992S",
+        "computations": 1
+       }
+      ]
+     },
+     "inputSize": {
+      "variables": 1,
+      "operations": 15,
+      "expressions": 48
+     },
+     "inlinedSize": {
+      "variables": 4,
+      "operations": 35,
+      "expressions": 106
+     },
+     "flattenedSize": {
+      "variables": 5,
+      "operations": 35,
+      "expressions": 84
+     }
     }
-   },
-   "witnessUri": "file:///workspace/.artifacts/snippet.example.trafficlight.intersection.EastCanTurnGreen/validation/witness.semantifyr"
+   }
   },
   "file:///workspace/.artifacts/snippet.example.levelcrossing.TwoTrainsCanBeInTheCrossing/witness.semantifyr": {
    "status": "valid",
+   "verdict": "passed",
+   "backendId": "theta:cegar-expl",
    "portfolioId": "smart",
-   "report": {
-    "version": 2,
-    "kind": "re-check",
-    "verificationCase": "example::levelcrossing::TwoTrainsCanBeInTheCrossing",
-    "portfolioId": "smart",
-    "optimization": {
-     "enabled": [
-      "ExpressionSimplification",
-      "OperationFlattening",
-      "RedundantOperationRemoval",
-      "AssumeFalsePropagation",
-      "ConstantVariableSubstitution",
-      "CopyPropagation",
-      "DeadStoreElimination",
-      "DeadCodeRemoval",
-      "VariableLiveness"
-     ]
-    },
-    "timeout": "PT5M",
-    "result": {
-     "metadata": {
-      "backendId": "uppaal:default",
-      "startedAt": "2026-11-17T23:51:25.692924181Z"
+   "metrics": {
+    "totalDuration": "PT6.64629781S",
+    "preparationDuration": "PT0.759379964S",
+    "verificationDuration": "PT5.660274612S",
+    "backAnnotationDuration": "PT0.029317486S",
+    "compilation": {
+     "createDuration": "PT0.017754645S",
+     "instantiationDuration": "PT0.033476411S",
+     "inliningDuration": "PT0.211822539S",
+     "flatteningDuration": "PT0.451064009S",
+     "inliningOptimization": {
+      "duration": "PT0.006724207S",
+      "passes": [
+       {
+        "name": "OperationCallInlining",
+        "duration": "PT0.004385859S",
+        "runs": 52,
+        "firings": 45
+       },
+       {
+        "name": "ExpressionSimplificationPass",
+        "duration": "PT0.000814359S",
+        "runs": 1,
+        "firings": 0
+       },
+       {
+        "name": "OperationFlatteningPass",
+        "duration": "PT0.000507609S",
+        "runs": 1,
+        "firings": 0
+       },
+       {
+        "name": "RedundantOperationRemovalPass",
+        "duration": "PT0.000406101S",
+        "runs": 1,
+        "firings": 0
+       },
+       {
+        "name": "AssumeFalsePropagationPass",
+        "duration": "PT0.000424816S",
+        "runs": 1,
+        "firings": 0
+       },
+       {
+        "name": "PropertyExpressionNormalization",
+        "duration": "PT0.000017128S",
+        "runs": 1,
+        "firings": 0
+       }
+      ],
+      "analyses": []
      },
-     "verdict": "Passed",
-     "soundness": "UnderApproximating",
-     "isTrusted": true,
-     "metrics": {
-      "totalDuration": "PT0.666102809S",
-      "backend": {
-       "preparationDuration": "PT0.004546716S",
-       "verificationDuration": "PT0.344471845S",
-       "backAnnotationDuration": "PT0.028744267S"
-      },
-      "verifier": {
-       "compilationDuration": "PT0.193400795S",
-       "compilation": {
-        "createDuration": "PT0.008965708S",
-        "instantiationDuration": "PT0.017182284S",
-        "inliningDuration": "PT0.081246404S",
-        "flatteningDuration": "PT0.086006399S",
-        "inliningOptimization": {
-         "duration": "PT0.005116483S",
-         "passes": [
-          {
-           "name": "OperationCallInlining",
-           "duration": "PT0.002625805S",
-           "runs": 52,
-           "firings": 45
-          },
-          {
-           "name": "ExpressionSimplificationPass",
-           "duration": "PT0.000934508S",
-           "runs": 1,
-           "firings": 0
-          },
-          {
-           "name": "OperationFlatteningPass",
-           "duration": "PT0.000477524S",
-           "runs": 1,
-           "firings": 0
-          },
-          {
-           "name": "RedundantOperationRemovalPass",
-           "duration": "PT0.000438924S",
-           "runs": 1,
-           "firings": 0
-          },
-          {
-           "name": "AssumeFalsePropagationPass",
-           "duration": "PT0.000421080S",
-           "runs": 1,
-           "firings": 0
-          },
-          {
-           "name": "PropertyExpressionNormalization",
-           "duration": "PT0.000020516S",
-           "runs": 1,
-           "firings": 0
-          }
-         ],
-         "analyses": []
-        },
-        "flatteningOptimization": {
-         "duration": "PT0.040797311S",
-         "passes": [
-          {
-           "name": "ExpressionSimplificationPass",
-           "duration": "PT0.000878333S",
-           "runs": 2,
-           "firings": 0
-          },
-          {
-           "name": "OperationFlatteningPass",
-           "duration": "PT0.000413118S",
-           "runs": 2,
-           "firings": 0
-          },
-          {
-           "name": "RedundantOperationRemovalPass",
-           "duration": "PT0.000413030S",
-           "runs": 2,
-           "firings": 0
-          },
-          {
-           "name": "AssumeFalsePropagationPass",
-           "duration": "PT0.000433648S",
-           "runs": 2,
-           "firings": 0
-          },
-          {
-           "name": "ConstantVariableSubstitutionPass",
-           "duration": "PT0.003417729S",
-           "runs": 2,
-           "firings": 0
-          },
-          {
-           "name": "CopyPropagationPass",
-           "duration": "PT0.018693519S",
-           "runs": 2,
-           "firings": 0
-          },
-          {
-           "name": "DeadStoreEliminationPass",
-           "duration": "PT0.000677616S",
-           "runs": 2,
-           "firings": 1
-          },
-          {
-           "name": "DeadCodeRemovalPass",
-           "duration": "PT0.009413192S",
-           "runs": 2,
-           "firings": 0
-          },
-          {
-           "name": "VariableLivenessPass",
-           "duration": "PT0.006206105S",
-           "runs": 2,
-           "firings": 1
-          }
-         ],
-         "analyses": [
-          {
-           "name": "ConstantValueAnalysis",
-           "duration": "PT0.003293166S",
-           "computations": 2
-          },
-          {
-           "name": "ReachingDefinitionsAnalysis",
-           "duration": "PT0.018586208S",
-           "computations": 2
-          },
-          {
-           "name": "ConeOfInfluenceAnalysis",
-           "duration": "PT0.008957898S",
-           "computations": 2
-          }
-         ]
-        },
-        "inputSize": {
-         "variables": 1,
-         "operations": 52,
-         "expressions": 216
-        },
-        "inlinedSize": {
-         "variables": 10,
-         "operations": 354,
-         "expressions": 1035
-        },
-        "flattenedSize": {
-         "variables": 46,
-         "operations": 342,
-         "expressions": 710
-        }
+     "flatteningOptimization": {
+      "duration": "PT0.323571645S",
+      "passes": [
+       {
+        "name": "ExpressionSimplificationPass",
+        "duration": "PT0.001659219S",
+        "runs": 4,
+        "firings": 0
        },
-       "backAnnotationDuration": "PT0.001667849S",
-       "portfolioDuration": "PT0.664188118S"
-      }
+       {
+        "name": "OperationFlatteningPass",
+        "duration": "PT0.001316379S",
+        "runs": 4,
+        "firings": 1
+       },
+       {
+        "name": "RedundantOperationRemovalPass",
+        "duration": "PT0.001998986S",
+        "runs": 4,
+        "firings": 1
+       },
+       {
+        "name": "AssumeFalsePropagationPass",
+        "duration": "PT0.001078383S",
+        "runs": 4,
+        "firings": 0
+       },
+       {
+        "name": "ConstantVariableSubstitutionPass",
+        "duration": "PT0.03941833S",
+        "runs": 4,
+        "firings": 0
+       },
+       {
+        "name": "CopyPropagationPass",
+        "duration": "PT0.17888801S",
+        "runs": 4,
+        "firings": 0
+       },
+       {
+        "name": "DeadStoreEliminationPass",
+        "duration": "PT0.005023359S",
+        "runs": 4,
+        "firings": 1
+       },
+       {
+        "name": "DeadCodeRemovalPass",
+        "duration": "PT0.036667601S",
+        "runs": 4,
+        "firings": 1
+       },
+       {
+        "name": "VariableLivenessPass",
+        "duration": "PT0.057165408S",
+        "runs": 4,
+        "firings": 1
+       }
+      ],
+      "analyses": [
+       {
+        "name": "ConstantValueAnalysis",
+        "duration": "PT0.013508133S",
+        "computations": 3
+       },
+       {
+        "name": "ReachingDefinitionsAnalysis",
+        "duration": "PT0.178712847S",
+        "computations": 3
+       },
+       {
+        "name": "ConeOfInfluenceAnalysis",
+        "duration": "PT0.031474627S",
+        "computations": 3
+       }
+      ]
      },
-     "message": null
-    },
-    "trace": {
-     "root": "root",
-     "transitions": [
-      {
-       "transition": "example::levelcrossing::Barrier::lowerBarrier",
-       "parameters": []
-      },
-      {
-       "transition": "example::levelcrossing::Barrier::liftBarrier",
-       "parameters": []
-      },
-      {
-       "transition": "example::levelcrossing::Controller::sendLower",
-       "parameters": []
-      },
-      {
-       "transition": "example::levelcrossing::Controller::sendLift",
-       "parameters": []
-      },
-      {
-       "transition": "example::levelcrossing::Track::move",
-       "parameters": [
-        {
-         "parameter": "from",
-         "type": {
-          "kind": "enum",
-          "name": "example::levelcrossing::TrackState"
-         }
-        },
-        {
-         "parameter": "to",
-         "type": {
-          "kind": "enum",
-          "name": "example::levelcrossing::TrackState"
-         }
-        }
-       ]
-      }
-     ],
-     "variables": [
-      {
-       "variable": "root.trackA.state",
-       "type": {
-        "kind": "enum",
-        "name": "example::levelcrossing::TrackState"
-       },
-       "slot": null
-      },
-      {
-       "variable": "root.trackA.trainApproaching",
-       "type": {
-        "kind": "datatype",
-        "name": "semantifyr::bool"
-       },
-       "slot": null
-      },
-      {
-       "variable": "root.trackA.trainLeft",
-       "type": {
-        "kind": "datatype",
-        "name": "semantifyr::bool"
-       },
-       "slot": null
-      },
-      {
-       "variable": "root.trackB.state",
-       "type": {
-        "kind": "enum",
-        "name": "example::levelcrossing::TrackState"
-       },
-       "slot": null
-      },
-      {
-       "variable": "root.trackB.trainApproaching",
-       "type": {
-        "kind": "datatype",
-        "name": "semantifyr::bool"
-       },
-       "slot": null
-      },
-      {
-       "variable": "root.trackB.trainLeft",
-       "type": {
-        "kind": "datatype",
-        "name": "semantifyr::bool"
-       },
-       "slot": null
-      },
-      {
-       "variable": "root.controller.state",
-       "type": {
-        "kind": "enum",
-        "name": "example::levelcrossing::ControllerState"
-       },
-       "slot": null
-      },
-      {
-       "variable": "root.controller.lower",
-       "type": {
-        "kind": "datatype",
-        "name": "semantifyr::bool"
-       },
-       "slot": null
-      },
-      {
-       "variable": "root.controller.lift",
-       "type": {
-        "kind": "datatype",
-        "name": "semantifyr::bool"
-       },
-       "slot": null
-      }
-     ],
-     "initial": {
-      "state": 0,
-      "calls": []
+     "inputSize": {
+      "variables": 1,
+      "operations": 24,
+      "expressions": 76
      },
-     "states": [
-      {
-       "values": {
-        "root.trackA.state": "Free",
-        "root.trackA.trainApproaching": false,
-        "root.trackA.trainLeft": false,
-        "root.trackB.state": "Free",
-        "root.trackB.trainApproaching": false,
-        "root.trackB.trainLeft": false,
-        "root.controller.state": "Idle",
-        "root.controller.lower": false,
-        "root.controller.lift": false
-       }
-      },
-      {
-       "values": {
-        "root.trackA.state": "Approaching",
-        "root.trackA.trainApproaching": true,
-        "root.trackA.trainLeft": false,
-        "root.trackB.state": "Approaching",
-        "root.trackB.trainApproaching": true,
-        "root.trackB.trainLeft": false,
-        "root.controller.state": "Idle",
-        "root.controller.lower": false,
-        "root.controller.lift": false
-       }
-      },
-      {
-       "values": {
-        "root.trackA.state": "Near",
-        "root.trackA.trainApproaching": false,
-        "root.trackA.trainLeft": false,
-        "root.trackB.state": "Near",
-        "root.trackB.trainApproaching": false,
-        "root.trackB.trainLeft": false,
-        "root.controller.state": "TrainPresent",
-        "root.controller.lower": true,
-        "root.controller.lift": false
-       }
-      },
-      {
-       "values": {
-        "root.trackA.state": "InCrossing",
-        "root.trackA.trainApproaching": false,
-        "root.trackA.trainLeft": false,
-        "root.trackB.state": "InCrossing",
-        "root.trackB.trainApproaching": false,
-        "root.trackB.trainLeft": false,
-        "root.controller.state": "TrainPresent",
-        "root.controller.lower": false,
-        "root.controller.lift": false
-       }
-      }
-     ],
-     "steps": [
-      {
-       "source": 0,
-       "target": 1,
-       "elapsed": 0,
-       "calls": [
-        {
-         "self": "root.trackA",
-         "transition": "example::levelcrossing::Track::move",
-         "arguments": {
-          "from": "Free",
-          "to": "Approaching"
-         },
-         "calls": []
-        },
-        {
-         "self": "root.trackB",
-         "transition": "example::levelcrossing::Track::move",
-         "arguments": {
-          "from": "Free",
-          "to": "Approaching"
-         },
-         "calls": []
-        }
-       ]
-      },
-      {
-       "source": 1,
-       "target": 2,
-       "elapsed": 0,
-       "calls": [
-        {
-         "self": "root.controller",
-         "transition": "example::levelcrossing::Controller::sendLower",
-         "arguments": {},
-         "calls": []
-        },
-        {
-         "self": "root.trackA",
-         "transition": "example::levelcrossing::Track::move",
-         "arguments": {
-          "from": "Approaching",
-          "to": "Near"
-         },
-         "calls": []
-        },
-        {
-         "self": "root.trackB",
-         "transition": "example::levelcrossing::Track::move",
-         "arguments": {
-          "from": "Approaching",
-          "to": "Near"
-         },
-         "calls": []
-        }
-       ]
-      },
-      {
-       "source": 2,
-       "target": 3,
-       "elapsed": 0,
-       "calls": [
-        {
-         "self": "root.barrier",
-         "transition": "example::levelcrossing::Barrier::lowerBarrier",
-         "arguments": {},
-         "calls": []
-        },
-        {
-         "self": "root.trackA",
-         "transition": "example::levelcrossing::Track::move",
-         "arguments": {
-          "from": "Near",
-          "to": "InCrossing"
-         },
-         "calls": []
-        },
-        {
-         "self": "root.trackB",
-         "transition": "example::levelcrossing::Track::move",
-         "arguments": {
-          "from": "Near",
-          "to": "InCrossing"
-         },
-         "calls": []
-        }
-       ]
-      }
-     ],
-     "missingCalls": null
+     "inlinedSize": {
+      "variables": 10,
+      "operations": 326,
+      "expressions": 895
+     },
+     "flattenedSize": {
+      "variables": 39,
+      "operations": 236,
+      "expressions": 475
+     }
     }
-   },
-   "witnessUri": "file:///workspace/.artifacts/snippet.example.levelcrossing.TwoTrainsCanBeInTheCrossing/validation/witness.semantifyr"
+   }
   },
   "file:///workspace/.artifacts/snippet.example.levelcrossing.BarrierDownWhileTrainInCrossing/witness.semantifyr": {
    "status": "valid",
+   "verdict": "passed",
+   "backendId": "theta:bounded-bmc",
    "portfolioId": "smart",
-   "report": {
-    "version": 2,
-    "kind": "re-check",
-    "verificationCase": "example::levelcrossing::BarrierDownWhileTrainInCrossing",
-    "portfolioId": "smart",
-    "optimization": {
-     "enabled": [
-      "ExpressionSimplification",
-      "OperationFlattening",
-      "RedundantOperationRemoval",
-      "AssumeFalsePropagation",
-      "ConstantVariableSubstitution",
-      "CopyPropagation",
-      "DeadStoreElimination",
-      "DeadCodeRemoval",
-      "VariableLiveness"
-     ]
-    },
-    "timeout": "PT5M",
-    "result": {
-     "metadata": {
-      "backendId": "uppaal:default",
-      "startedAt": "2026-11-17T23:51:26.448870329Z"
+   "metrics": {
+    "totalDuration": "PT8.895916463S",
+    "preparationDuration": "PT1.929437998S",
+    "verificationDuration": "PT7.929480152S",
+    "backAnnotationDuration": "PT0.068136265S",
+    "compilation": {
+     "createDuration": "PT0.007730862S",
+     "instantiationDuration": "PT0.06917852S",
+     "inliningDuration": "PT0.54946877S",
+     "flatteningDuration": "PT0.98886809S",
+     "inliningOptimization": {
+      "duration": "PT0.030192944S",
+      "passes": [
+       {
+        "name": "OperationCallInlining",
+        "duration": "PT0.005467967S",
+        "runs": 103,
+        "firings": 90
+       },
+       {
+        "name": "ExpressionSimplificationPass",
+        "duration": "PT0.007518483S",
+        "runs": 5,
+        "firings": 4
+       },
+       {
+        "name": "OperationFlatteningPass",
+        "duration": "PT0.005862199S",
+        "runs": 5,
+        "firings": 0
+       },
+       {
+        "name": "RedundantOperationRemovalPass",
+        "duration": "PT0.00539329S",
+        "runs": 5,
+        "firings": 0
+       },
+       {
+        "name": "AssumeFalsePropagationPass",
+        "duration": "PT0.005643799S",
+        "runs": 5,
+        "firings": 0
+       },
+       {
+        "name": "PropertyExpressionNormalization",
+        "duration": "PT0.000027542S",
+        "runs": 1,
+        "firings": 0
+       }
+      ],
+      "analyses": []
      },
-     "verdict": "Passed",
-     "soundness": "UnderApproximating",
-     "isTrusted": true,
-     "metrics": {
-      "totalDuration": "PT0.851871396S",
-      "backend": {
-       "preparationDuration": "PT0.015565178S",
-       "verificationDuration": "PT0.412251435S",
-       "backAnnotationDuration": "PT0.080564021S"
-      },
-      "verifier": {
-       "compilationDuration": "PT0.851457243S",
-       "compilation": {
-        "createDuration": "PT0.003976921S",
-        "instantiationDuration": "PT0.019167542S",
-        "inliningDuration": "PT0.310653338S",
-        "flatteningDuration": "PT0.517659442S",
-        "inliningOptimization": {
-         "duration": "PT0.020468956S",
-         "passes": [
-          {
-           "name": "OperationCallInlining",
-           "duration": "PT0.003515389S",
-           "runs": 103,
-           "firings": 90
-          },
-          {
-           "name": "ExpressionSimplificationPass",
-           "duration": "PT0.005632132S",
-           "runs": 5,
-           "firings": 4
-          },
-          {
-           "name": "OperationFlatteningPass",
-           "duration": "PT0.003637860S",
-           "runs": 5,
-           "firings": 0
-          },
-          {
-           "name": "RedundantOperationRemovalPass",
-           "duration": "PT0.003542112S",
-           "runs": 5,
-           "firings": 0
-          },
-          {
-           "name": "AssumeFalsePropagationPass",
-           "duration": "PT0.003863024S",
-           "runs": 5,
-           "firings": 0
-          },
-          {
-           "name": "PropertyExpressionNormalization",
-           "duration": "PT0.000024793S",
-           "runs": 1,
-           "firings": 0
-          }
-         ],
-         "analyses": []
-        },
-        "flatteningOptimization": {
-         "duration": "PT0.303404296S",
-         "passes": [
-          {
-           "name": "ExpressionSimplificationPass",
-           "duration": "PT0.002617151S",
-           "runs": 2,
-           "firings": 0
-          },
-          {
-           "name": "OperationFlatteningPass",
-           "duration": "PT0.001524521S",
-           "runs": 2,
-           "firings": 0
-          },
-          {
-           "name": "RedundantOperationRemovalPass",
-           "duration": "PT0.005394246S",
-           "runs": 2,
-           "firings": 0
-          },
-          {
-           "name": "AssumeFalsePropagationPass",
-           "duration": "PT0.001466405S",
-           "runs": 2,
-           "firings": 0
-          },
-          {
-           "name": "ConstantVariableSubstitutionPass",
-           "duration": "PT0.015441463S",
-           "runs": 2,
-           "firings": 0
-          },
-          {
-           "name": "CopyPropagationPass",
-           "duration": "PT0.143541854S",
-           "runs": 2,
-           "firings": 0
-          },
-          {
-           "name": "DeadStoreEliminationPass",
-           "duration": "PT0.009520667S",
-           "runs": 2,
-           "firings": 0
-          },
-          {
-           "name": "DeadCodeRemovalPass",
-           "duration": "PT0.076791950S",
-           "runs": 2,
-           "firings": 0
-          },
-          {
-           "name": "VariableLivenessPass",
-           "duration": "PT0.046674591S",
-           "runs": 2,
-           "firings": 1
-          }
-         ],
-         "analyses": [
-          {
-           "name": "ConstantValueAnalysis",
-           "duration": "PT0.015269741S",
-           "computations": 2
-          },
-          {
-           "name": "ReachingDefinitionsAnalysis",
-           "duration": "PT0.143235439S",
-           "computations": 2
-          },
-          {
-           "name": "ConeOfInfluenceAnalysis",
-           "duration": "PT0.072456830S",
-           "computations": 2
-          }
-         ]
-        },
-        "inputSize": {
-         "variables": 1,
-         "operations": 98,
-         "expressions": 411
-        },
-        "inlinedSize": {
-         "variables": 10,
-         "operations": 919,
-         "expressions": 2480
-        },
-        "flattenedSize": {
-         "variables": 83,
-         "operations": 907,
-         "expressions": 1852
-        }
+     "flatteningOptimization": {
+      "duration": "PT0.548851492S",
+      "passes": [
+       {
+        "name": "ExpressionSimplificationPass",
+        "duration": "PT0.002943966S",
+        "runs": 2,
+        "firings": 0
        },
-       "backAnnotationDuration": "PT0.004133979S",
-       "portfolioDuration": "PT0.847308902S"
-      }
+       {
+        "name": "OperationFlatteningPass",
+        "duration": "PT0.004713491S",
+        "runs": 2,
+        "firings": 0
+       },
+       {
+        "name": "RedundantOperationRemovalPass",
+        "duration": "PT0.005727756S",
+        "runs": 2,
+        "firings": 0
+       },
+       {
+        "name": "AssumeFalsePropagationPass",
+        "duration": "PT0.004076587S",
+        "runs": 2,
+        "firings": 0
+       },
+       {
+        "name": "ConstantVariableSubstitutionPass",
+        "duration": "PT0.019168475S",
+        "runs": 2,
+        "firings": 0
+       },
+       {
+        "name": "CopyPropagationPass",
+        "duration": "PT0.382034741S",
+        "runs": 2,
+        "firings": 0
+       },
+       {
+        "name": "DeadStoreEliminationPass",
+        "duration": "PT0.003936848S",
+        "runs": 2,
+        "firings": 0
+       },
+       {
+        "name": "DeadCodeRemovalPass",
+        "duration": "PT0.069544065S",
+        "runs": 2,
+        "firings": 0
+       },
+       {
+        "name": "VariableLivenessPass",
+        "duration": "PT0.056369897S",
+        "runs": 2,
+        "firings": 1
+       }
+      ],
+      "analyses": [
+       {
+        "name": "ConstantValueAnalysis",
+        "duration": "PT0.018960929S",
+        "computations": 2
+       },
+       {
+        "name": "ReachingDefinitionsAnalysis",
+        "duration": "PT0.38179569S",
+        "computations": 2
+       },
+       {
+        "name": "ConeOfInfluenceAnalysis",
+        "duration": "PT0.055756025S",
+        "computations": 2
+       }
+      ]
      },
-     "message": null
-    },
-    "trace": {
-     "root": "root",
-     "transitions": [
-      {
-       "transition": "example::levelcrossing::Barrier::lowerBarrier",
-       "parameters": []
-      },
-      {
-       "transition": "example::levelcrossing::Barrier::liftBarrier",
-       "parameters": []
-      },
-      {
-       "transition": "example::levelcrossing::Controller::sendLower",
-       "parameters": []
-      },
-      {
-       "transition": "example::levelcrossing::Controller::sendLift",
-       "parameters": []
-      },
-      {
-       "transition": "example::levelcrossing::Track::move",
-       "parameters": [
-        {
-         "parameter": "from",
-         "type": {
-          "kind": "enum",
-          "name": "example::levelcrossing::TrackState"
-         }
-        },
-        {
-         "parameter": "to",
-         "type": {
-          "kind": "enum",
-          "name": "example::levelcrossing::TrackState"
-         }
-        }
-       ]
-      }
-     ],
-     "variables": [
-      {
-       "variable": "root.trackA.state",
-       "type": {
-        "kind": "enum",
-        "name": "example::levelcrossing::TrackState"
-       },
-       "slot": null
-      },
-      {
-       "variable": "root.trackA.trainApproaching",
-       "type": {
-        "kind": "datatype",
-        "name": "semantifyr::bool"
-       },
-       "slot": null
-      },
-      {
-       "variable": "root.trackA.trainLeft",
-       "type": {
-        "kind": "datatype",
-        "name": "semantifyr::bool"
-       },
-       "slot": null
-      },
-      {
-       "variable": "root.trackB.state",
-       "type": {
-        "kind": "enum",
-        "name": "example::levelcrossing::TrackState"
-       },
-       "slot": null
-      },
-      {
-       "variable": "root.trackB.trainApproaching",
-       "type": {
-        "kind": "datatype",
-        "name": "semantifyr::bool"
-       },
-       "slot": null
-      },
-      {
-       "variable": "root.trackB.trainLeft",
-       "type": {
-        "kind": "datatype",
-        "name": "semantifyr::bool"
-       },
-       "slot": null
-      },
-      {
-       "variable": "root.controller.state",
-       "type": {
-        "kind": "enum",
-        "name": "example::levelcrossing::ControllerState"
-       },
-       "slot": null
-      },
-      {
-       "variable": "root.controller.lower",
-       "type": {
-        "kind": "datatype",
-        "name": "semantifyr::bool"
-       },
-       "slot": null
-      },
-      {
-       "variable": "root.controller.lift",
-       "type": {
-        "kind": "datatype",
-        "name": "semantifyr::bool"
-       },
-       "slot": null
-      },
-      {
-       "variable": "root.barrier.state",
-       "type": {
-        "kind": "enum",
-        "name": "example::levelcrossing::BarrierState"
-       },
-       "slot": null
-      }
-     ],
-     "initial": {
-      "state": 0,
-      "calls": []
+     "inputSize": {
+      "variables": 1,
+      "operations": 98,
+      "expressions": 411
      },
-     "states": [
-      {
-       "values": {
-        "root.trackA.state": "Free",
-        "root.trackA.trainApproaching": false,
-        "root.trackA.trainLeft": false,
-        "root.trackB.state": "Free",
-        "root.trackB.trainApproaching": false,
-        "root.trackB.trainLeft": false,
-        "root.controller.state": "Idle",
-        "root.controller.lower": false,
-        "root.controller.lift": false,
-        "root.barrier.state": "Up"
-       }
-      },
-      {
-       "values": {
-        "root.trackA.state": "Approaching",
-        "root.trackA.trainApproaching": true,
-        "root.trackA.trainLeft": false,
-        "root.trackB.state": "Approaching",
-        "root.trackB.trainApproaching": true,
-        "root.trackB.trainLeft": false,
-        "root.controller.state": "Idle",
-        "root.controller.lower": false,
-        "root.controller.lift": false,
-        "root.barrier.state": "Up"
-       }
-      },
-      {
-       "values": {
-        "root.trackA.state": "Near",
-        "root.trackA.trainApproaching": false,
-        "root.trackA.trainLeft": false,
-        "root.trackB.state": "Near",
-        "root.trackB.trainApproaching": false,
-        "root.trackB.trainLeft": false,
-        "root.controller.state": "TrainPresent",
-        "root.controller.lower": true,
-        "root.controller.lift": false,
-        "root.barrier.state": "Up"
-       }
-      },
-      {
-       "values": {
-        "root.trackA.state": "InCrossing",
-        "root.trackA.trainApproaching": false,
-        "root.trackA.trainLeft": false,
-        "root.trackB.state": "InCrossing",
-        "root.trackB.trainApproaching": false,
-        "root.trackB.trainLeft": false,
-        "root.controller.state": "TrainPresent",
-        "root.controller.lower": false,
-        "root.controller.lift": false,
-        "root.barrier.state": "Down"
-       }
-      },
-      {
-       "values": {
-        "root.trackA.state": "Free",
-        "root.trackA.trainApproaching": false,
-        "root.trackA.trainLeft": true,
-        "root.trackB.state": "InCrossing",
-        "root.trackB.trainApproaching": false,
-        "root.trackB.trainLeft": false,
-        "root.controller.state": "TrainPresent",
-        "root.controller.lower": false,
-        "root.controller.lift": false,
-        "root.barrier.state": "Down"
-       }
-      },
-      {
-       "values": {
-        "root.trackA.state": "Free",
-        "root.trackA.trainApproaching": false,
-        "root.trackA.trainLeft": false,
-        "root.trackB.state": "InCrossing",
-        "root.trackB.trainApproaching": false,
-        "root.trackB.trainLeft": false,
-        "root.controller.state": "Idle",
-        "root.controller.lower": false,
-        "root.controller.lift": true,
-        "root.barrier.state": "Down"
-       }
-      },
-      {
-       "values": {
-        "root.trackA.state": "Free",
-        "root.trackA.trainApproaching": false,
-        "root.trackA.trainLeft": false,
-        "root.trackB.state": "InCrossing",
-        "root.trackB.trainApproaching": false,
-        "root.trackB.trainLeft": false,
-        "root.controller.state": "Idle",
-        "root.controller.lower": false,
-        "root.controller.lift": false,
-        "root.barrier.state": "Up"
-       }
-      }
-     ],
-     "steps": [
-      {
-       "source": 0,
-       "target": 1,
-       "elapsed": 0,
-       "calls": [
-        {
-         "self": "root.trackA",
-         "transition": "example::levelcrossing::Track::move",
-         "arguments": {
-          "from": "Free",
-          "to": "Approaching"
-         },
-         "calls": []
-        },
-        {
-         "self": "root.trackB",
-         "transition": "example::levelcrossing::Track::move",
-         "arguments": {
-          "from": "Free",
-          "to": "Approaching"
-         },
-         "calls": []
-        }
-       ]
-      },
-      {
-       "source": 1,
-       "target": 2,
-       "elapsed": 0,
-       "calls": [
-        {
-         "self": "root.controller",
-         "transition": "example::levelcrossing::Controller::sendLower",
-         "arguments": {},
-         "calls": []
-        },
-        {
-         "self": "root.trackA",
-         "transition": "example::levelcrossing::Track::move",
-         "arguments": {
-          "from": "Approaching",
-          "to": "Near"
-         },
-         "calls": []
-        },
-        {
-         "self": "root.trackB",
-         "transition": "example::levelcrossing::Track::move",
-         "arguments": {
-          "from": "Approaching",
-          "to": "Near"
-         },
-         "calls": []
-        }
-       ]
-      },
-      {
-       "source": 2,
-       "target": 3,
-       "elapsed": 0,
-       "calls": [
-        {
-         "self": "root.barrier",
-         "transition": "example::levelcrossing::Barrier::lowerBarrier",
-         "arguments": {},
-         "calls": []
-        },
-        {
-         "self": "root.trackA",
-         "transition": "example::levelcrossing::Track::move",
-         "arguments": {
-          "from": "Near",
-          "to": "InCrossing"
-         },
-         "calls": []
-        },
-        {
-         "self": "root.trackB",
-         "transition": "example::levelcrossing::Track::move",
-         "arguments": {
-          "from": "Near",
-          "to": "InCrossing"
-         },
-         "calls": []
-        }
-       ]
-      },
-      {
-       "source": 3,
-       "target": 4,
-       "elapsed": 0,
-       "calls": [
-        {
-         "self": "root.trackA",
-         "transition": "example::levelcrossing::Track::move",
-         "arguments": {
-          "from": "InCrossing",
-          "to": "Free"
-         },
-         "calls": []
-        }
-       ]
-      },
-      {
-       "source": 4,
-       "target": 5,
-       "elapsed": 0,
-       "calls": [
-        {
-         "self": "root.controller",
-         "transition": "example::levelcrossing::Controller::sendLift",
-         "arguments": {},
-         "calls": []
-        }
-       ]
-      },
-      {
-       "source": 5,
-       "target": 6,
-       "elapsed": 0,
-       "calls": [
-        {
-         "self": "root.barrier",
-         "transition": "example::levelcrossing::Barrier::liftBarrier",
-         "arguments": {},
-         "calls": []
-        }
-       ]
-      }
-     ],
-     "missingCalls": null
+     "inlinedSize": {
+      "variables": 10,
+      "operations": 919,
+      "expressions": 2480
+     },
+     "flattenedSize": {
+      "variables": 83,
+      "operations": 907,
+      "expressions": 1852
+     }
     }
-   },
-   "witnessUri": "file:///workspace/.artifacts/snippet.example.levelcrossing.BarrierDownWhileTrainInCrossing/validation/witness.semantifyr"
+   }
   }
  },
  "reads": {
-  "file:///workspace/.artifacts/snippet.example.trafficlight.intersection.EastCanTurnGreen/witness.semantifyr": "witness of example::trafficlight::intersection::EastCanTurnGreen\n\nvar step: int := 0\n\ncontains root: example::trafficlight::intersection::EastCanTurnGreen\n\ninit {\n    assume(step == 0)\n    inline root.init()\n    assume(root.intersection.north.color == example::trafficlight::intersection::LightColor::Red)\n    assume(root.intersection.east.color == example::trafficlight::intersection::LightColor::Red)\n    step := 1\n}\n\ntran {\n    assume(step == 1)\n    inline root.main()\n    assume(root.intersection.north.color == example::trafficlight::intersection::LightColor::Red)\n    assume(root.intersection.east.color == example::trafficlight::intersection::LightColor::Green)\n    step := 2\n}\n\nprop {\n    root.prop()\n}",
-  "file:///workspace/.semantifyr/builtin/standard.semantifyr": "/*\n * SPDX-FileCopyrightText: 2025-2026 The Semantifyr Authors\n *\n * SPDX-License-Identifier: EPL-2.0\n */\n\n/*\n * The standard library, in scope in every file without an import, below the file's own package and its imports. It declares the primitive datatypes, `Anything`, the base class of every class, and the annotations the tools read.\n */\npackage semantifyr\n\n/*\n * The supertype of every type.\n */\nextern datatype any\n\n/*\n * Integer numbers.\n */\nextern datatype int\n\n/*\n * Real numbers.\n */\nextern datatype real\n\n/*\n * The Boolean values `true` and `false`.\n */\nextern datatype bool\n\n/*\n * Sequences of characters.\n */\nextern datatype string\n\n/*\n * Clocks measure time. A clock starts at 0, advances by the wait before every main step, is reset to 0 by assignment and is read only in comparisons with integers.\n */\nextern datatype clock\n\n/*\n * The implicit supertype of every class. Its `init` and its main transition do nothing, and a class that declares its own replaces them, with or without `redefine`.\n */\nclass Anything {\n    // contains children: Anything[0..*] opposite parent;\n    // container parent: Anything[0..1] opposite children;\n    /*\n     * The base main transition.\n     */\n    tran {\n    }\n\n    /*\n     * The base init transition.\n     */\n    init {\n    }\n}\n\n/*\n * Marks a class as a verification case, which the tools find and verify. The optional `summary` is the text the editors show for the case in place of its name.\n */\nannotation VerificationCase(summary: string[0..1])\n\n/*\n * Gives a verification case a category, such as `@Tag(\"slow\")`, by which the command line selects and skips cases.\n */\nannotation Tag(category: string)\n\n/*\n * Marks a variable that a backend may track from the start of its search. It is a hint for the backend's speed and changes neither the verdict nor the trace.\n */\nannotation Control\n\n/*\n * Marks a containment feature whose instance is created once in a model and shared by every instance of the class that declares the feature, instead of once for each.\n */\nannotation Shared\n\n/*\n * Marks a transition whose calls the trace lists: each call that fired, in the step it fired in, with its receiver's path from the root instance, such as `root.kitchen.lamp`, and the values of its arguments when the call fired.\n * \n * No argument of a call to a traced transition may be a record, or a real or string computed at run time.\n */\nannotation Trace\n\n/*\n * Excludes a variable from the optimizer passes that could remove or fold it, so that it stays in the model a backend receives and in the witness.\n */\nannotation NonOptimizable\n",
-  "file:///workspace/.artifacts/snippet.example.levelcrossing.BarrierDownWhileTrainInCrossing/witness.semantifyr": "witness of example::levelcrossing::BarrierDownWhileTrainInCrossing\n\nvar step: int := 0\n\ncontains root: example::levelcrossing::BarrierDownWhileTrainInCrossing\n\ninit {\n    assume(step == 0)\n    inline root.init()\n    assume(root.trackA.state == example::levelcrossing::TrackState::Free)\n    assume(root.trackA.trainApproaching == false)\n    assume(root.trackA.trainLeft == false)\n    assume(root.trackB.state == example::levelcrossing::TrackState::Free)\n    assume(root.trackB.trainApproaching == false)\n    assume(root.trackB.trainLeft == false)\n    assume(root.controller.state == example::levelcrossing::ControllerState::Idle)\n    assume(root.controller.lower == false)\n    assume(root.controller.lift == false)\n    assume(root.barrier.state == example::levelcrossing::BarrierState::Up)\n    step := 1\n}\n\ntran {\n    assume(step == 1)\n    inline root.main()\n    assume(root.trackA.state == example::levelcrossing::TrackState::Approaching)\n    assume(root.trackA.trainApproaching == true)\n    assume(root.trackA.trainLeft == false)\n    assume(root.trackB.state == example::levelcrossing::TrackState::Approaching)\n    assume(root.trackB.trainApproaching == true)\n    assume(root.trackB.trainLeft == false)\n    assume(root.controller.state == example::levelcrossing::ControllerState::Idle)\n    assume(root.controller.lower == false)\n    assume(root.controller.lift == false)\n    assume(root.barrier.state == example::levelcrossing::BarrierState::Up)\n    step := 2\n} or {\n    assume(step == 2)\n    inline root.main()\n    assume(root.trackA.state == example::levelcrossing::TrackState::Near)\n    assume(root.trackA.trainApproaching == false)\n    assume(root.trackA.trainLeft == false)\n    assume(root.trackB.state == example::levelcrossing::TrackState::Near)\n    assume(root.trackB.trainApproaching == false)\n    assume(root.trackB.trainLeft == false)\n    assume(root.controller.state == example::levelcrossing::ControllerState::TrainPresent)\n    assume(root.controller.lower == true)\n    assume(root.controller.lift == false)\n    assume(root.barrier.state == example::levelcrossing::BarrierState::Up)\n    step := 3\n} or {\n    assume(step == 3)\n    inline root.main()\n    assume(root.trackA.state == example::levelcrossing::TrackState::InCrossing)\n    assume(root.trackA.trainApproaching == false)\n    assume(root.trackA.trainLeft == false)\n    assume(root.trackB.state == example::levelcrossing::TrackState::InCrossing)\n    assume(root.trackB.trainApproaching == false)\n    assume(root.trackB.trainLeft == false)\n    assume(root.controller.state == example::levelcrossing::ControllerState::TrainPresent)\n    assume(root.controller.lower == false)\n    assume(root.controller.lift == false)\n    assume(root.barrier.state == example::levelcrossing::BarrierState::Down)\n    step := 4\n} or {\n    assume(step == 4)\n    inline root.main()\n    assume(root.trackA.state == example::levelcrossing::TrackState::Free)\n    assume(root.trackA.trainApproaching == false)\n    assume(root.trackA.trainLeft == true)\n    assume(root.trackB.state == example::levelcrossing::TrackState::InCrossing)\n    assume(root.trackB.trainApproaching == false)\n    assume(root.trackB.trainLeft == false)\n    assume(root.controller.state == example::levelcrossing::ControllerState::TrainPresent)\n    assume(root.controller.lower == false)\n    assume(root.controller.lift == false)\n    assume(root.barrier.state == example::levelcrossing::BarrierState::Down)\n    step := 5\n} or {\n    assume(step == 5)\n    inline root.main()\n    assume(root.trackA.state == example::levelcrossing::TrackState::Free)\n    assume(root.trackA.trainApproaching == false)\n    assume(root.trackA.trainLeft == false)\n    assume(root.trackB.state == example::levelcrossing::TrackState::InCrossing)\n    assume(root.trackB.trainApproaching == false)\n    assume(root.trackB.trainLeft == false)\n    assume(root.controller.state == example::levelcrossing::ControllerState::Idle)\n    assume(root.controller.lower == false)\n    assume(root.controller.lift == true)\n    assume(root.barrier.state == example::levelcrossing::BarrierState::Down)\n    step := 6\n} or {\n    assume(step == 6)\n    inline root.main()\n    assume(root.trackA.state == example::levelcrossing::TrackState::Free)\n    assume(root.trackA.trainApproaching == false)\n    assume(root.trackA.trainLeft == false)\n    assume(root.trackB.state == example::levelcrossing::TrackState::InCrossing)\n    assume(root.trackB.trainApproaching == false)\n    assume(root.trackB.trainLeft == false)\n    assume(root.controller.state == example::levelcrossing::ControllerState::Idle)\n    assume(root.controller.lower == false)\n    assume(root.controller.lift == false)\n    assume(root.barrier.state == example::levelcrossing::BarrierState::Up)\n    step := 7\n}\n\nprop {\n    !root.prop()\n}",
-  "file:///workspace/.artifacts/snippet.example.levelcrossing.TwoTrainsCanBeInTheCrossing/witness.semantifyr": "witness of example::levelcrossing::TwoTrainsCanBeInTheCrossing\n\nvar step: int := 0\n\ncontains root: example::levelcrossing::TwoTrainsCanBeInTheCrossing\n\ninit {\n    assume(step == 0)\n    inline root.init()\n    assume(root.trackA.state == example::levelcrossing::TrackState::Free)\n    assume(root.trackA.trainApproaching == false)\n    assume(root.trackA.trainLeft == false)\n    assume(root.trackB.state == example::levelcrossing::TrackState::Free)\n    assume(root.trackB.trainApproaching == false)\n    assume(root.trackB.trainLeft == false)\n    assume(root.controller.state == example::levelcrossing::ControllerState::Idle)\n    assume(root.controller.lower == false)\n    assume(root.controller.lift == false)\n    step := 1\n}\n\ntran {\n    assume(step == 1)\n    inline root.main()\n    assume(root.trackA.state == example::levelcrossing::TrackState::Approaching)\n    assume(root.trackA.trainApproaching == true)\n    assume(root.trackA.trainLeft == false)\n    assume(root.trackB.state == example::levelcrossing::TrackState::Approaching)\n    assume(root.trackB.trainApproaching == true)\n    assume(root.trackB.trainLeft == false)\n    assume(root.controller.state == example::levelcrossing::ControllerState::Idle)\n    assume(root.controller.lower == false)\n    assume(root.controller.lift == false)\n    step := 2\n} or {\n    assume(step == 2)\n    inline root.main()\n    assume(root.trackA.state == example::levelcrossing::TrackState::Near)\n    assume(root.trackA.trainApproaching == false)\n    assume(root.trackA.trainLeft == false)\n    assume(root.trackB.state == example::levelcrossing::TrackState::Near)\n    assume(root.trackB.trainApproaching == false)\n    assume(root.trackB.trainLeft == false)\n    assume(root.controller.state == example::levelcrossing::ControllerState::TrainPresent)\n    assume(root.controller.lower == true)\n    assume(root.controller.lift == false)\n    step := 3\n} or {\n    assume(step == 3)\n    inline root.main()\n    assume(root.trackA.state == example::levelcrossing::TrackState::InCrossing)\n    assume(root.trackA.trainApproaching == false)\n    assume(root.trackA.trainLeft == false)\n    assume(root.trackB.state == example::levelcrossing::TrackState::InCrossing)\n    assume(root.trackB.trainApproaching == false)\n    assume(root.trackB.trainLeft == false)\n    assume(root.controller.state == example::levelcrossing::ControllerState::TrainPresent)\n    assume(root.controller.lower == false)\n    assume(root.controller.lift == false)\n    step := 4\n}\n\nprop {\n    root.prop()\n}"
+  "file:///workspace/.artifacts/snippet.NorthCanTurnGreen/witness.semantifyr": "witness of NorthCanTurnGreen\n\nvar step: int := 0\n\ncontains root: NorthCanTurnGreen\n\ninit {\n    assume(step == 0)\n    inline root.init()\n    assume(root.north == LightColor::Red)\n    assume(root.east == LightColor::Red)\n    assume(root.northCarWaiting == false)\n    assume(root.eastCarWaiting == false)\n    step := 1\n}\n\ntran {\n    assume(step == 1)\n    inline root.main()\n    assume(root.north == LightColor::Green)\n    assume(root.east == LightColor::Red)\n    assume(root.northCarWaiting == true)\n    step := 2\n}\n\nprop {\n    root.prop()\n}",
+  "file:///workspace/.semantifyr/builtin/standard.semantifyr": "/*\n * SPDX-FileCopyrightText: 2025-2026 The Semantifyr Authors\n *\n * SPDX-License-Identifier: EPL-2.0\n */\n\n/*\n * The standard library, in scope in every file without an import, below the file's own package and its imports. It declares the primitive datatypes, `Anything`, the base class of every class, and the annotations the tools read.\n */\npackage semantifyr\n\n/*\n * The supertype of every type.\n */\nextern datatype any\n\n/*\n * Integer numbers.\n */\nextern datatype int\n\n/*\n * Real numbers.\n */\nextern datatype real\n\n/*\n * The Boolean values `true` and `false`.\n */\nextern datatype bool\n\n/*\n * Sequences of characters.\n */\nextern datatype string\n\n/*\n * The implicit supertype of every class. Its `init` and its main transition do nothing, and a class that declares its own replaces them, with or without `redefine`.\n */\nclass Anything {\n    // contains children: Anything[0..*] opposite parent;\n    // container parent: Anything[0..1] opposite children;\n    /*\n     * The base main transition.\n     */\n    tran {\n    }\n\n    /*\n     * The base init transition.\n     */\n    init {\n    }\n}\n\n/*\n * Marks a class as a verification case, which the tools find and verify. The optional `summary` is the text the editors show for the case in place of its name.\n */\nannotation VerificationCase(summary: string[0..1])\n\n/*\n * Gives a verification case a category, such as `@Tag(\"slow\")`, by which the command line selects and skips cases.\n */\nannotation Tag(category: string)\n\n/*\n * Marks a variable that a backend may track from the start of its search. It is a hint for the backend's speed and changes neither the verdict nor the trace.\n */\nannotation Control\n\n/*\n * Marks a containment feature whose instance is created once in a model and shared by every instance of the class that declares the feature, instead of once for each.\n */\nannotation Shared\n\n/*\n * Marks a transition whose calls the trace lists: each call that fired, in the step it fired in, with its receiver's path from the root instance, such as `root.kitchen.lamp`, and the values of its arguments at the call site.\n * \n * The trace records the arguments as the compiler evaluates them, so every argument of a call to a traced transition must be evaluable at compile time, and none may be a record.\n */\nannotation Trace\n\n/*\n * Marks a variable as a clock, which a backend with clocks may represent as one. Like every variable, a clock carries an initializer.\n */\nannotation Clock\n\n/*\n * Excludes a variable from the optimizer passes that could remove or fold it, so that it stays in the model a backend receives and in the witness.\n */\nannotation NonOptimizable\n",
+  "file:///workspace/.artifacts/snippet.example.levelcrossing.BarrierDownWhileTrainInCrossing/witness.semantifyr": "witness of example::levelcrossing::BarrierDownWhileTrainInCrossing\n\nvar step: int := 0\n\ncontains root: example::levelcrossing::BarrierDownWhileTrainInCrossing\n\ninit {\n    assume(step == 0)\n    inline root.init()\n    assume(root.trackA.state == example::levelcrossing::TrackState::Free)\n    assume(root.trackA.trainApproaching == false)\n    assume(root.trackA.trainLeft == false)\n    assume(root.trackB.state == example::levelcrossing::TrackState::Free)\n    assume(root.trackB.trainApproaching == false)\n    assume(root.trackB.trainLeft == false)\n    assume(root.controller.state == example::levelcrossing::ControllerState::Idle)\n    assume(root.controller.lower == false)\n    assume(root.controller.lift == false)\n    assume(root.barrier.state == example::levelcrossing::BarrierState::Up)\n    step := 1\n}\n\ntran {\n    assume(step == 1)\n    inline root.main()\n    assume(root.trackA.state == example::levelcrossing::TrackState::Free)\n    assume(root.trackA.trainApproaching == false)\n    assume(root.trackA.trainLeft == false)\n    assume(root.trackB.state == example::levelcrossing::TrackState::Approaching)\n    assume(root.trackB.trainApproaching == true)\n    assume(root.trackB.trainLeft == false)\n    assume(root.controller.state == example::levelcrossing::ControllerState::Idle)\n    assume(root.controller.lower == false)\n    assume(root.controller.lift == false)\n    assume(root.barrier.state == example::levelcrossing::BarrierState::Up)\n    step := 2\n} or {\n    assume(step == 2)\n    inline root.main()\n    assume(root.trackA.state == example::levelcrossing::TrackState::Approaching)\n    assume(root.trackA.trainApproaching == true)\n    assume(root.trackA.trainLeft == false)\n    assume(root.trackB.state == example::levelcrossing::TrackState::Near)\n    assume(root.trackB.trainApproaching == false)\n    assume(root.trackB.trainLeft == false)\n    assume(root.controller.state == example::levelcrossing::ControllerState::TrainPresent)\n    assume(root.controller.lower == true)\n    assume(root.controller.lift == false)\n    assume(root.barrier.state == example::levelcrossing::BarrierState::Up)\n    step := 3\n} or {\n    assume(step == 3)\n    inline root.main()\n    assume(root.trackA.state == example::levelcrossing::TrackState::Near)\n    assume(root.trackA.trainApproaching == false)\n    assume(root.trackA.trainLeft == false)\n    assume(root.trackB.state == example::levelcrossing::TrackState::InCrossing)\n    assume(root.trackB.trainApproaching == false)\n    assume(root.trackB.trainLeft == false)\n    assume(root.controller.state == example::levelcrossing::ControllerState::TrainPresent)\n    assume(root.controller.lower == false)\n    assume(root.controller.lift == false)\n    assume(root.barrier.state == example::levelcrossing::BarrierState::Down)\n    step := 4\n} or {\n    assume(step == 4)\n    inline root.main()\n    assume(root.trackA.state == example::levelcrossing::TrackState::InCrossing)\n    assume(root.trackA.trainApproaching == false)\n    assume(root.trackA.trainLeft == false)\n    assume(root.trackB.state == example::levelcrossing::TrackState::Free)\n    assume(root.trackB.trainApproaching == false)\n    assume(root.trackB.trainLeft == true)\n    assume(root.controller.state == example::levelcrossing::ControllerState::TrainPresent)\n    assume(root.controller.lower == false)\n    assume(root.controller.lift == false)\n    assume(root.barrier.state == example::levelcrossing::BarrierState::Down)\n    step := 5\n} or {\n    assume(step == 5)\n    inline root.main()\n    assume(root.trackA.state == example::levelcrossing::TrackState::InCrossing)\n    assume(root.trackA.trainApproaching == false)\n    assume(root.trackA.trainLeft == false)\n    assume(root.trackB.state == example::levelcrossing::TrackState::Free)\n    assume(root.trackB.trainApproaching == false)\n    assume(root.trackB.trainLeft == false)\n    assume(root.controller.state == example::levelcrossing::ControllerState::Idle)\n    assume(root.controller.lower == false)\n    assume(root.controller.lift == true)\n    assume(root.barrier.state == example::levelcrossing::BarrierState::Down)\n    step := 6\n} or {\n    assume(step == 6)\n    inline root.main()\n    assume(root.trackA.state == example::levelcrossing::TrackState::InCrossing)\n    assume(root.trackA.trainApproaching == false)\n    assume(root.trackA.trainLeft == false)\n    assume(root.trackB.state == example::levelcrossing::TrackState::Free)\n    assume(root.trackB.trainApproaching == false)\n    assume(root.trackB.trainLeft == false)\n    assume(root.controller.state == example::levelcrossing::ControllerState::Idle)\n    assume(root.controller.lower == false)\n    assume(root.controller.lift == false)\n    assume(root.barrier.state == example::levelcrossing::BarrierState::Up)\n    step := 7\n}\n\nprop {\n    !root.prop()\n}",
+  "file:///workspace/.artifacts/snippet.example.levelcrossing.TwoTrainsCanBeInTheCrossing/witness.semantifyr": "witness of example::levelcrossing::TwoTrainsCanBeInTheCrossing\n\nvar step: int := 0\n\ncontains root: example::levelcrossing::TwoTrainsCanBeInTheCrossing\n\ninit {\n    assume(step == 0)\n    inline root.init()\n    assume(root.trackA.state == example::levelcrossing::TrackState::Free)\n    assume(root.trackB.state == example::levelcrossing::TrackState::Free)\n    step := 1\n}\n\ntran {\n    assume(step == 1)\n    inline root.main()\n    assume(root.trackA.state == example::levelcrossing::TrackState::Approaching)\n    assume(root.trackB.state == example::levelcrossing::TrackState::Approaching)\n    step := 2\n} or {\n    assume(step == 2)\n    inline root.main()\n    assume(root.trackA.state == example::levelcrossing::TrackState::Near)\n    assume(root.trackB.state == example::levelcrossing::TrackState::Near)\n    step := 3\n} or {\n    assume(step == 3)\n    inline root.main()\n    assume(root.trackA.state == example::levelcrossing::TrackState::InCrossing)\n    assume(root.trackB.state == example::levelcrossing::TrackState::InCrossing)\n    step := 4\n}\n\nprop {\n    root.prop()\n}"
  },
  "verifyProgress": [
   {
    "kind": "begin",
-   "title": "Verifying class EastCanTurnGreen",
+   "title": "Verifying class TwoTrainsCanBeInTheCrossing",
    "cancellable": true,
    "message": "Initializing"
   },
   {
    "kind": "report",
-   "message": "Compiling example::trafficlight::intersection::EastCanTurnGreen"
+   "message": "Compiling example::levelcrossing::TwoTrainsCanBeInTheCrossing"
   },
   {
    "kind": "report",
-   "message": "first stage: racing 7 backend configurations within 10s"
+   "message": "racing 7 backend(s)"
   },
   {
    "kind": "report",
-   "message": "running from the first stage: racing 2 backend configurations until the case's time runs out"
-  },
-  {
-   "kind": "report",
-   "message": "first stage: result 1/7: Passed"
-  },
-  {
-   "kind": "report",
-   "message": "first stage: result 2/7: Passed"
-  },
-  {
-   "kind": "report",
-   "message": "running from the first stage: result 1/2: Passed"
+   "message": "result 1/7: Passed"
   },
   {
    "kind": "end"
@@ -3369,31 +2457,15 @@
   },
   {
    "kind": "report",
-   "message": "Compiling example::trafficlight::intersection::EastCanTurnGreen"
+   "message": "Compiling NorthCanTurnGreen"
   },
   {
    "kind": "report",
-   "message": "first stage: racing 7 backend configurations within 10s"
+   "message": "racing 7 backend(s)"
   },
   {
    "kind": "report",
-   "message": "running from the first stage: racing 2 backend configurations until the case's time runs out"
-  },
-  {
-   "kind": "report",
-   "message": "first stage: result 1/7: NotSupported"
-  },
-  {
-   "kind": "report",
-   "message": "first stage: result 2/7: Passed"
-  },
-  {
-   "kind": "report",
-   "message": "first stage: result 3/7: Passed"
-  },
-  {
-   "kind": "report",
-   "message": "running from the first stage: result 1/2: Passed"
+   "message": "result 1/7: Passed"
   },
   {
    "kind": "end"

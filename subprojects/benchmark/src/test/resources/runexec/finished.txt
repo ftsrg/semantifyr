@@ -1,0 +1,8 @@
+starttime=2026-11-17T08:39:59.123918+01:00
+returnvalue=0
+walltime=0.20866857992950827s
+cputime=0.003776s
+memory=520192B
+pressure-cpu-some=0.001636s
+pressure-io-some=0s
+pressure-memory-some=0s

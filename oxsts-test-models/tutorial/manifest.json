@@ -1,127 +1,227 @@
 {
     "models": [
         {
-            "file": "one-light.semantifyr",
+            "file": "modeling-and-verification-step1.semantifyr",
             "cases": [
-                { "name": "TrafficLight", "verdict": "Passed" }
+                { "name": "LightCanTurnGreen", "verdict": "Passed" }
             ]
         },
         {
-            "file": "intersection-step1.semantifyr",
+            "file": "modeling-and-verification-step2.semantifyr",
             "cases": [
-                { "name": "NeverBothGreen", "verdict": "Passed" },
-                { "name": "EastCanTurnGreen", "verdict": "Passed" }
+                { "name": "LightCanTurnGreen", "verdict": "Passed" },
+                { "name": "LightCanTurnYellow", "verdict": "Passed" }
             ]
         },
         {
-            "file": "intersection-step2.semantifyr",
+            "file": "modeling-and-verification-step3.semantifyr",
             "cases": [
+                { "name": "NorthCanTurnGreen", "verdict": "Passed" },
+                { "name": "NeverBothGreen", "verdict": "Failed" }
+            ]
+        },
+        {
+            "file": "modeling-and-verification-step4.semantifyr",
+            "cases": [
+                { "name": "NorthCanTurnGreen", "verdict": "Passed" },
+                { "name": "NeverBothGreen", "verdict": "Passed" }
+            ]
+        },
+        {
+            "file": "modeling-and-verification-step5.semantifyr",
+            "cases": [
+                { "name": "NorthCanTurnGreen", "verdict": "Passed" },
                 { "name": "NeverBothGreen", "verdict": "Passed" },
-                { "name": "EastCanTurnGreen", "verdict": "Passed" },
                 { "name": "NorthGreenOnlyWhileEastRed", "verdict": "Failed" }
             ]
         },
         {
-            "file": "intersection.semantifyr",
+            "file": "modeling-and-verification.semantifyr",
             "cases": [
+                { "name": "NorthCanTurnGreen", "verdict": "Passed" },
                 { "name": "NeverBothGreen", "verdict": "Passed" },
-                { "name": "EastCanTurnGreen", "verdict": "Passed" },
                 { "name": "NorthGreenOnlyWhileEastRed", "verdict": "Passed" }
             ]
         },
         {
-            "file": "green-time-step1.semantifyr",
+            "file": "semantic-libraries-step1.semantifyr",
             "cases": [
-                { "name": "NorthCanTurnYellow", "verdict": "Passed" }
+                { "name": "LightCanTurnGreen", "verdict": "Passed" }
             ]
         },
         {
-            "file": "green-time-step2.semantifyr",
+            "file": "semantic-libraries-step2.semantifyr",
             "cases": [
-                { "name": "NorthCanTurnYellow", "verdict": "Passed" },
+                { "name": "LightCanTurnGreen", "verdict": "Passed" },
+                { "name": "PedestriansCanWalk", "verdict": "Passed" }
+            ]
+        },
+        {
+            "file": "semantic-libraries-step3.semantifyr",
+            "cases": [
+                { "name": "NorthCanTurnGreen", "verdict": "Passed" },
+                { "name": "NeverBothGreen", "verdict": "Passed" },
+                { "name": "NorthGreenOnlyWhileEastRed", "verdict": "Passed" },
+                { "name": "PedestriansCanWalk", "verdict": "Passed" }
+            ]
+        },
+        {
+            "file": "semantic-libraries-step4.semantifyr",
+            "cases": [
+                { "name": "NorthCanTurnGreen", "verdict": "Passed" },
+                { "name": "NeverBothGreen", "verdict": "Passed" },
+                { "name": "NorthGreenOnlyWhileEastRed", "verdict": "Passed" },
+                { "name": "PedestriansCanWalk", "verdict": "Passed" },
+                { "name": "WalkOnlyWhileEastRed", "verdict": "Failed" }
+            ]
+        },
+        {
+            "file": "semantic-libraries.semantifyr",
+            "cases": [
+                { "name": "NorthCanTurnGreen", "verdict": "Passed" },
+                { "name": "NeverBothGreen", "verdict": "Passed" },
+                { "name": "NorthGreenOnlyWhileEastRed", "verdict": "Passed" },
+                { "name": "PedestriansCanWalk", "verdict": "Passed" },
+                { "name": "WalkOnlyWhileEastRed", "verdict": "Passed" }
+            ]
+        },
+        {
+            "file": "semantic-variants-step1.semantifyr",
+            "cases": [
+                { "name": "NorthCanTurnGreen", "verdict": "Passed" },
+                { "name": "NeverBothGreen", "verdict": "Passed" },
+                { "name": "NorthGreenOnlyWhileEastRed", "verdict": "Passed" },
+                { "name": "PedestriansCanWalk", "verdict": "Passed" },
+                { "name": "WalkOnlyWhileEastRed", "verdict": "Passed" }
+            ]
+        },
+        {
+            "file": "semantic-variants-step2.semantifyr",
+            "cases": [
+                { "name": "NorthCanTurnGreen", "verdict": "Passed" },
+                { "name": "NeverBothGreen", "verdict": "Passed" },
+                { "name": "NorthGreenOnlyWhileEastRed", "verdict": "Passed" },
+                { "name": "PedestriansCanWalk", "verdict": "Passed" },
+                { "name": "WalkOnlyWhileEastRed", "verdict": "Passed" }
+            ]
+        },
+        {
+            "file": "semantic-variants-step3.semantifyr",
+            "cases": [
+                { "name": "NorthCanTurnGreen", "verdict": "Passed" },
+                { "name": "NeverBothGreen", "verdict": "Passed" },
+                { "name": "NorthGreenOnlyWhileEastRed", "verdict": "Passed" },
+                { "name": "PedestriansCanWalk", "verdict": "Passed" },
+                { "name": "WalkOnlyWhileEastRed", "verdict": "Passed" }
+            ]
+        },
+        {
+            "file": "semantic-variants-step4.semantifyr",
+            "cases": [
+                { "name": "NorthCanTurnGreen", "verdict": "Passed" },
+                { "name": "NeverBothGreen", "verdict": "Passed" },
+                { "name": "NorthGreenOnlyWhileEastRed", "verdict": "Passed" },
+                { "name": "PedestriansCanWalk", "verdict": "Passed" },
+                { "name": "WalkOnlyWhileEastRed", "verdict": "Passed" }
+            ]
+        },
+        {
+            "file": "semantic-variants.semantifyr",
+            "cases": [
+                { "name": "NorthCanTurnGreen", "verdict": "Passed" },
+                { "name": "NeverBothGreen", "verdict": "Failed" },
+                { "name": "NorthGreenOnlyWhileEastRed", "verdict": "Failed" },
+                { "name": "PedestriansCanWalk", "verdict": "Passed" },
+                { "name": "WalkOnlyWhileEastRed", "verdict": "Failed" }
+            ]
+        },
+        {
+            "file": "extending-the-library-step1.semantifyr",
+            "cases": [
+                { "name": "NorthCanTurnGreen", "verdict": "Passed" },
+                { "name": "NeverBothGreen", "verdict": "Passed" },
+                { "name": "NorthGreenOnlyWhileEastRed", "verdict": "Passed" },
+                { "name": "PedestriansCanWalk", "verdict": "Passed" },
+                { "name": "WalkOnlyWhileEastRed", "verdict": "Passed" },
                 { "name": "NorthGreenForThreeSteps", "verdict": "Failed" }
             ]
         },
         {
-            "file": "green-time.semantifyr",
+            "file": "extending-the-library-step2.semantifyr",
             "cases": [
-                { "name": "NorthCanTurnYellow", "verdict": "Passed" },
-                { "name": "NorthGreenForThreeSteps", "verdict": "Passed" }
-            ]
-        },
-        {
-            "file": "library-step1.semantifyr",
-            "cases": [
-                { "name": "LightCanTurnYellow", "verdict": "Passed" }
-            ]
-        },
-        {
-            "file": "library-step2.semantifyr",
-            "cases": [
-                { "name": "LightCanTurnYellow", "verdict": "Passed" }
-            ]
-        },
-        {
-            "file": "library.semantifyr",
-            "cases": [
-                { "name": "LightCanTurnYellow", "verdict": "Passed" },
+                { "name": "NorthCanTurnGreen", "verdict": "Passed" },
+                { "name": "NeverBothGreen", "verdict": "Passed" },
+                { "name": "NorthGreenOnlyWhileEastRed", "verdict": "Passed" },
                 { "name": "PedestriansCanWalk", "verdict": "Passed" },
-                { "name": "WalkOnlyWhileRed", "verdict": "Passed" }
+                { "name": "WalkOnlyWhileEastRed", "verdict": "Passed" },
+                { "name": "NorthGreenForThreeSteps", "verdict": "Failed" },
+                { "name": "NorthCanTurnYellow", "verdict": "Passed" }
             ]
         },
         {
-            "file": "hierarchy-step1.semantifyr",
+            "file": "extending-the-library.semantifyr",
             "cases": [
-                { "name": "LightCanTurnGreen", "verdict": "Passed" },
+                { "name": "NorthCanTurnGreen", "verdict": "Passed" },
                 { "name": "NeverBothGreen", "verdict": "Passed" },
-                { "name": "NeverGreenInStandby", "verdict": "Failed" }
+                { "name": "NorthGreenOnlyWhileEastRed", "verdict": "Passed" },
+                { "name": "PedestriansCanWalk", "verdict": "Passed" },
+                { "name": "WalkOnlyWhileEastRed", "verdict": "Passed" },
+                { "name": "NorthGreenForThreeSteps", "verdict": "Passed" },
+                { "name": "NorthCanTurnYellow", "verdict": "Passed" }
             ]
         },
         {
-            "file": "hierarchy-step2.semantifyr",
+            "file": "extending-the-library-nested-states-step1.semantifyr",
             "cases": [
-                { "name": "LightCanTurnGreen", "verdict": "Passed" },
+                { "name": "NorthCanTurnGreen", "verdict": "Passed" },
                 { "name": "NeverBothGreen", "verdict": "Passed" },
-                { "name": "NeverGreenInStandby", "verdict": "Passed" }
+                { "name": "NorthGreenOnlyWhileEastRed", "verdict": "Passed" },
+                { "name": "PedestriansCanWalk", "verdict": "Passed" },
+                { "name": "WalkOnlyWhileEastRed", "verdict": "Passed" },
+                { "name": "NorthGreenForThreeSteps", "verdict": "Passed" },
+                { "name": "NorthCanTurnYellow", "verdict": "Passed" }
             ]
         },
         {
-            "file": "hierarchy-step3.semantifyr",
+            "file": "extending-the-library-nested-states-step2.semantifyr",
             "cases": [
-                { "name": "LightCanTurnGreen", "verdict": "Passed" },
+                { "name": "NorthCanTurnGreen", "verdict": "Passed" },
                 { "name": "NeverBothGreen", "verdict": "Passed" },
-                { "name": "NeverGreenInStandby", "verdict": "Passed" },
-                { "name": "GreenLampOnlyInGreen", "verdict": "Failed" }
+                { "name": "NorthGreenOnlyWhileEastRed", "verdict": "Passed" },
+                { "name": "PedestriansCanWalk", "verdict": "Passed" },
+                { "name": "WalkOnlyWhileEastRed", "verdict": "Passed" },
+                { "name": "NorthGreenForThreeSteps", "verdict": "Failed" },
+                { "name": "NorthCanTurnYellow", "verdict": "Passed" },
+                { "name": "NorthCanStandBy", "verdict": "Passed" },
+                { "name": "NorthNeverGreenInStandby", "verdict": "Failed" }
             ]
         },
         {
-            "file": "hierarchy-step4.semantifyr",
+            "file": "extending-the-library-nested-states.semantifyr",
             "cases": [
-                { "name": "LightCanTurnGreen", "verdict": "Passed" },
+                { "name": "NorthCanTurnGreen", "verdict": "Passed" },
                 { "name": "NeverBothGreen", "verdict": "Passed" },
-                { "name": "NeverGreenInStandby", "verdict": "Passed" },
-                { "name": "GreenLampOnlyInGreen", "verdict": "Passed" }
+                { "name": "NorthGreenOnlyWhileEastRed", "verdict": "Passed" },
+                { "name": "PedestriansCanWalk", "verdict": "Passed" },
+                { "name": "WalkOnlyWhileEastRed", "verdict": "Passed" },
+                { "name": "NorthGreenForThreeSteps", "verdict": "Passed" },
+                { "name": "NorthCanTurnYellow", "verdict": "Passed" },
+                { "name": "NorthCanStandBy", "verdict": "Passed" },
+                { "name": "NorthNeverGreenInStandby", "verdict": "Passed" }
             ]
         },
         {
-            "file": "hierarchy-step5.semantifyr",
+            "file": "extending-the-library-events.semantifyr",
             "cases": [
-                { "name": "LightCanTurnGreen", "verdict": "Passed" },
+                { "name": "NorthCanTurnGreen", "verdict": "Passed" },
                 { "name": "NeverBothGreen", "verdict": "Passed" },
-                { "name": "NeverGreenInStandby", "verdict": "Passed" },
-                { "name": "GreenLampOnlyInGreen", "verdict": "Passed" },
-                { "name": "NoStandbyWithoutPause", "verdict": "Passed" }
-            ]
-        },
-        {
-            "file": "hierarchy.semantifyr",
-            "cases": [
-                { "name": "LightCanTurnGreen", "verdict": "Passed" },
-                { "name": "NeverBothGreen", "verdict": "Passed" },
-                { "name": "NeverGreenInStandby", "verdict": "Passed" },
-                { "name": "GreenLampOnlyInGreen", "verdict": "Passed" },
-                { "name": "NoStandbyWithoutPause", "verdict": "Passed" },
-                { "name": "EmergencyStopsTraffic", "verdict": "Passed" }
+                { "name": "NorthGreenOnlyWhileEastRed", "verdict": "Passed" },
+                { "name": "PedestriansCanWalk", "verdict": "Passed" },
+                { "name": "WalkOnlyWhileEastRed", "verdict": "Passed" },
+                { "name": "NorthGreenForThreeSteps", "verdict": "Passed" },
+                { "name": "NorthCanTurnYellow", "verdict": "Passed" },
+                { "name": "NorthCanStandBy", "verdict": "Passed" },
+                { "name": "NorthNeverGreenInStandby", "verdict": "Passed" }
             ]
         },
         {

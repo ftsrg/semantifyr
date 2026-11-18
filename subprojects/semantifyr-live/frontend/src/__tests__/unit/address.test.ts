@@ -57,7 +57,7 @@ describe('an address', () => {
 
   it('says which name it did not find and what it opened in its place', async () => {
     expect(await resolved('/kerml/level-crossing')).toMatchObject({ flavor: { id: 'sysml' }, example: { id: 'level-crossing' }, problem: { kind: 'language', requested: 'kerml' } })
-    expect(await resolved('/oxsts/intersection')).toMatchObject({ flavor: { id: 'sysml' }, example: { id: 'level-crossing' }, problem: { kind: 'language', requested: 'oxsts' } })
+    expect(await resolved('/oxsts/modeling-and-verification')).toMatchObject({ flavor: { id: 'sysml' }, example: { id: 'level-crossing' }, problem: { kind: 'language', requested: 'oxsts' } })
     expect(await resolved('/language/crossroads?library=uml')).toMatchObject({ flavor: { id: 'oxsts' }, example: { id: 'level-crossing' }, problem: { kind: 'library', requested: 'uml' } })
     expect(await resolved('/gamma/level-crosing')).toMatchObject({ flavor: { id: 'gamma' }, example: { id: 'level-crossing' }, problem: { kind: 'example', requested: 'level-crosing' } })
   })
@@ -94,7 +94,7 @@ describe('an address', () => {
     const model = await encodeCompressedBase64Url('package edited')
 
     expect(await resolved(`/language#model=${model}`)).toMatchObject({ flavor: { id: 'oxsts' }, text: 'package edited', shared: true, replace: true })
-    expect(await resolved(`/language/hierarchy#model=${model}`)).toMatchObject({ example: { id: 'hierarchy' }, text: 'package edited', shared: false })
+    expect(await resolved(`/language/extending-the-library#model=${model}`)).toMatchObject({ example: { id: 'extending-the-library' }, text: 'package edited', shared: false })
     expect(await resolved('/language#model=garbled')).toMatchObject({ shared: false, text: findExample(testFlavors()[0], 'level-crossing')?.code, problem: { kind: 'model' } })
   })
 
