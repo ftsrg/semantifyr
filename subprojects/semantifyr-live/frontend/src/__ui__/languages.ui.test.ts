@@ -147,14 +147,12 @@ function stepsOf(count: number, seed: number): { step: Step, wait: number }[] {
   })
 }
 
-// the editor takes the focus once it has started, which closes a menu opened before, so a closed menu is opened again
-async function opened(trigger: Locator, content: Locator): Promise<void> {
+// a click shows its menu once the page handles it, which a busy page does after the click has returned
+async function open(trigger: Locator): Promise<void> {
+  await trigger.click()
   await expect.poll(async () => {
-    if (await trigger.getAttribute('aria-expanded') !== 'true') {
-      await trigger.click()
-    }
-    return content.count()
-  }).toBeGreaterThan(0)
+    return trigger.getAttribute('aria-expanded')
+  }).toBe('true')
 }
 
 async function take(page: Page, step: Step): Promise<void> {
@@ -167,12 +165,12 @@ async function take(page: Page, step: Step): Promise<void> {
       if (await flavour.count() === 0) {
         return
       }
-      await opened(flavour, page.getByRole('menuitem'))
+      await open(flavour)
       await page.getByRole('menuitem', { name: new RegExp(step.name) }).click()
       return
     }
     case 'example': {
-      await opened(page.locator('.example-button'), page.getByRole('menuitem'))
+      await open(page.locator('.example-button'))
       const item = page.getByRole('menuitem', { name: new RegExp(`^${step.name}`) })
       if (await item.count() === 0) {
         await page.getByRole('menuitem').first().click()
@@ -190,7 +188,7 @@ async function take(page: Page, step: Step): Promise<void> {
     }
     case 'library': {
       const documents = page.locator('.documents-group:not([aria-label="Selected case"]):not([aria-label="Model"]) .menu-item')
-      await opened(page.getByRole('button', { name: 'Read-only documents' }), documents)
+      await open(page.getByRole('button', { name: 'Read-only documents' }))
       await documents.first().click()
       return
     }
