@@ -144,13 +144,13 @@ describe('the registry\'s examples', () => {
     }
   });
 
-  it('a lesson\'s step opens by its address and the menu does not list it', () => {
-    const oxsts = findFlavor(servedLiveFlavors, 'oxsts')!;
+  it('a hidden example opens by its address and the menu does not list it', () => {
+    const sysml = findFlavor(servedLiveFlavors, 'sysml')!;
 
-    expect(findExample(oxsts, 'modeling-and-verification-step1')?.code).toContain('class LightCanTurnGreen : TrafficLight');
-    expect(listedExamples(oxsts).map((example) => {
+    expect(findExample(sysml, 'room')?.code).toContain('verification def');
+    expect(listedExamples(sysml).map((example) => {
       return example.id;
-    })).not.toContain('modeling-and-verification-step1');
+    })).not.toContain('room');
   });
 
   it('shows no description for a model whose file has no comment at its top', () => {
