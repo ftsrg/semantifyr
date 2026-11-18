@@ -126,13 +126,13 @@ jobs:
         uses: ./.github/actions/backends
       - name: Run the unit and adapter suites
         run: ./gradlew build --continue
-      - name: Publish to SonarCloud and wait for its quality gate
+      - name: Publish to SonarCloud
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: .github/scripts/sonar.sh
 
   # these legs take nothing from the Build job, so they start with the run
-  units:
+  units-windows-macos:
     name: Units and adapters (${{ matrix.os }})
     permissions:
       contents: read
@@ -156,8 +156,8 @@ jobs:
         shell: bash
         run: ./gradlew build --continue
 
-  semantics:
-    name: Semantics
+  semantic:
+    name: Semantic
     needs: build
     permissions:
       contents: read
@@ -241,7 +241,7 @@ jobs:
           - webkit
     runs-on: ubuntu-latest
     env:
-      BROWSER: ${{ matrix.browser }}
+      TEST_BROWSER: ${{ matrix.browser }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v7
@@ -260,7 +260,7 @@ jobs:
           browsers: ${{ matrix.browser }}
       - name: Run the UI suite
         # the walk takes the website the Build job made, API docs included
-        run: ./gradlew uiTest --continue -PtestBrowser="$BROWSER" -Pwebsite.apiDocs=true
+        run: ./gradlew uiTest --continue -PtestBrowser="$TEST_BROWSER" -Pwebsite.apiDocs=true
       - name: Upload the live screens
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v7
@@ -399,14 +399,14 @@ jobs:
           compression-level: 0
           retention-days: 1
 
-  # the image is pushed once every test of the run has passed, as it was when one job ran them all before the image
+  # the image is pushed once every test of the run has passed
   push-image:
     name: Push the live image
     if: ${{ inputs.publish }}
     needs:
       - units-linux
-      - units
-      - semantics
+      - units-windows-macos
+      - semantic
       - integration
       - end-to-end
       - ui

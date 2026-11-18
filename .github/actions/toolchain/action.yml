@@ -6,7 +6,7 @@ name: Toolchain
 description: Sets up Java, Gradle and Node, and on request unpacks the build cache the Build job uploaded.
 inputs:
   gradle-encryption-key:
-    description: The key of Gradle's configuration cache in the Actions cache.
+    description: The key that encrypts Gradle's configuration cache in the Actions cache.
     required: false
   build-cache:
     description: Whether the job starts from the Build job's build cache.
