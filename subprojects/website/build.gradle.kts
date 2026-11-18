@@ -6,6 +6,7 @@
 
 import com.github.gradle.node.npm.task.NpmTask
 import groovy.json.JsonSlurper
+import hu.bme.mit.semantifyr.gradle.conventions.commitHash
 import hu.bme.mit.semantifyr.gradle.conventions.javaRuntimeLibrary
 import hu.bme.mit.semantifyr.gradle.conventions.oxstsFileExtension
 import hu.bme.mit.semantifyr.gradle.conventions.readsServedExamples
@@ -287,8 +288,10 @@ fun NpmTask.configureSharedInputs() {
 val npmAssemble = tasks.register<NpmTask>("npmAssemble") {
     configureSharedInputs()
     inputs.property("liveBackendUrl", providers.environmentVariable("SEMANTIFYR_LIVE_URL").orElse(""))
-    // the deploying workflow names the commit, and its tag when it is a release; any other build describes the development branch
-    inputs.property("siteCommit", providers.environmentVariable("SEMANTIFYR_SITE_COMMIT").orElse(""))
+    val commitHash = commitHash()
+    inputs.property("siteCommit", commitHash)
+    environment.put("SEMANTIFYR_SITE_COMMIT", commitHash)
+    // the deploying workflow names its tag when it is a release
     inputs.property("siteTag", providers.environmentVariable("SEMANTIFYR_SITE_TAG").orElse(""))
     inputs.files(cliReference).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(generatedReference).withPathSensitivity(PathSensitivity.RELATIVE)

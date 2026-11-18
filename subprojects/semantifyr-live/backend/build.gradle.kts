@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
+import hu.bme.mit.semantifyr.gradle.conventions.commitHash
 import hu.bme.mit.semantifyr.gradle.conventions.semantifyrArtifact
 import java.time.Instant
 
@@ -79,10 +80,7 @@ application {
 val generateBuildInfo = tasks.register("generateBuildInfo") {
     val outputDir = layout.buildDirectory.dir("generated/buildinfo")
     val version = project.version.toString()
-    val commitHash = providers.exec {
-        commandLine("git", "rev-parse", "--short", "HEAD")
-        isIgnoreExitValue = true
-    }.standardOutput.asText.map { it.trim() }
+    val commitHash = commitHash()
     inputs.property("version", version)
     inputs.property("commitHash", commitHash)
     outputs.dir(outputDir)

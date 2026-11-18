@@ -137,7 +137,7 @@ if (liveLimitSeconds === undefined) {
   throw new Error('deploy/live/env.example sets no VERIFY_TIMEOUT_SECONDS');
 }
 
-// only the deploying workflow names the commit, and its tag when it is a release, so any other build stays cacheable
+// Gradle names the commit, and the deploying workflow its tag when it is a release
 const commit = process.env.SEMANTIFYR_SITE_COMMIT ?? '';
 const released = process.env.SEMANTIFYR_SITE_TAG === `v${version}`;
 
