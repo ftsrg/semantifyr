@@ -95,19 +95,6 @@ tasks.register("continuousIntegration") {
     )
 }
 
-tasks.register("nightly") {
-    group = "verification"
-    dependsOn(
-        suiteTasks(
-            "adapterTest",
-            "semanticTest",
-            "integrationTest",
-            "endToEndTest",
-            "nightlyTest",
-        ),
-    )
-}
-
 // the coverage of every suite that ran, over the main code of every module
 val coverageReport = tasks.register<JacocoReport>("coverageReport") {
     group = "verification"

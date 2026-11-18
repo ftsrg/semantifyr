@@ -37,11 +37,10 @@ case "$action" in
         export THETA_JAVA_OPTS="-Xss512M -Xms256M -Xmx1500M"
         .github/scripts/check-engines.sh spin nuxmv uppaal
         # half the cores at low priority keeps headroom for live; a daemon idling until the next night would hold memory
-        # fured is headless and lacks VS Code's shared libraries; CI runs it
         # sshd keeps a dropped session's command running, so the run ends itself before the job's 240 minutes; --foreground keeps a manual terminal run from stopping on SIGTTIN
         status=0
-        timeout --foreground 225m nice -n 10 taskset -c 0-3 ./gradlew --no-daemon --continue nightly \
-            -x :semantifyr-vscode:endToEndTest || status=$?
+        timeout --foreground 225m nice -n 10 taskset -c 0-3 ./gradlew --no-daemon --continue nightlyTest \
+            -PbackendRuns=4 || status=$?
         if [ "$status" -eq 124 ]; then
             echo "the nightly hit its 225 minute limit" >&2
         fi
