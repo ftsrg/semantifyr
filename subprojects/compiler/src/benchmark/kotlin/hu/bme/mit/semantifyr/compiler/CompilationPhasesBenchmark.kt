@@ -97,7 +97,11 @@ private fun relate(run: BenchmarkRun<CompilerCase, PhasesResult>, logger: Logger
     }
 }
 
-private fun phaseSeconds(run: BenchmarkRun<CompilerCase, PhasesResult>, configuration: String, phase: String): List<Double> {
+private fun phaseSeconds(
+    run: BenchmarkRun<CompilerCase, PhasesResult>,
+    configuration: String,
+    phase: String,
+): List<Double> {
     return run.repetitionsOf(configuration).mapNotNull {
         it.measuredCall?.spanSeconds(phase)
     }
