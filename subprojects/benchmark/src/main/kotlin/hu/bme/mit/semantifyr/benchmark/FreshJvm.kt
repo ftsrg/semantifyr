@@ -63,6 +63,16 @@ internal fun <R> startFreshJvm(
     } catch (exception: MeasurementFailedException) {
         return Measured(HostState(loadBefore, LoadAverage.now()), timeLimit, null, emptyList(), Failure(Stage.Measurement, exception.stackTraceToString()))
     }
+    return readFreshJvm(directory, resultSerializer, HostState(loadBefore, LoadAverage.now()), timeLimit, jvm)
+}
+
+internal fun <R> readFreshJvm(
+    directory: Path,
+    resultSerializer: KSerializer<R>,
+    hostState: HostState,
+    timeLimit: Duration?,
+    jvm: ProcessObservation,
+): Measured<R> {
     val callsFile = directory.resolve(CALLS_FILE)
     val failureFile = directory.resolve(FAILURE_FILE)
     val calls = if (callsFile.exists()) {
@@ -75,7 +85,7 @@ internal fun <R> startFreshJvm(
     } else {
         null
     }
-    return Measured(HostState(loadBefore, LoadAverage.now()), timeLimit, jvm, calls, failure)
+    return Measured(hostState, timeLimit, jvm, calls, failure)
 }
 
 object FreshJvm {
