@@ -272,6 +272,6 @@ val liveImageContext = tasks.register<Tar>("liveImageContext") {
     }
 }
 
-tasks.assemble {
+tasks.pack {
     dependsOn(liveImageContext)
 }

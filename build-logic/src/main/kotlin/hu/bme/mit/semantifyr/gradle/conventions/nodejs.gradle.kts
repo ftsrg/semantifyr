@@ -9,7 +9,7 @@ package hu.bme.mit.semantifyr.gradle.conventions
 import com.github.gradle.node.npm.proxy.ProxySettings
 
 plugins {
-    base
+    id("hu.bme.mit.semantifyr.gradle.conventions.pack")
     id("com.github.node-gradle.node")
 }
 
@@ -22,8 +22,6 @@ node {
     // CodeQL's autobuild sets empty proxy system properties, which the plugin turns into HTTPS_PROXY=http://:
     nodeProxySettings = ProxySettings.OFF
 }
-
-buildWithoutPackaging()
 
 val npmInstallServiceProvider = gradle.sharedServices.registerNpmInstallService()
 

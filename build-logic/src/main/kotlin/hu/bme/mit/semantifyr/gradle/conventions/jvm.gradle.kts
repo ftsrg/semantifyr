@@ -22,6 +22,7 @@ plugins {
     `java-test-fixtures`
     jacoco
     id("hu.bme.mit.semantifyr.gradle.conventions.formatting")
+    id("hu.bme.mit.semantifyr.gradle.conventions.pack")
     id("org.sonarqube")
 }
 
@@ -79,12 +80,8 @@ tasks.withType<Test>().matching {
     the<JacocoTaskExtension>().isEnabled = false
 }
 
-buildWithoutPackaging()
-
-// build proves every source set compiles, and the pipeline's test jobs start from the classes assemble made
-tasks.named {
-    it == "build" || it == "assemble"
-}.configureEach {
+// CI's test jobs start from the classes the Build job compiled
+tasks.assemble {
     dependsOn(
         sourceSets.map {
             it.classesTaskName

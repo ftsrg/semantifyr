@@ -4,14 +4,13 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import hu.bme.mit.semantifyr.gradle.conventions.buildWithoutPackaging
 import hu.bme.mit.semantifyr.gradle.conventions.corpusModels
 import hu.bme.mit.semantifyr.gradle.conventions.semantifyrArtifact
 import org.apache.tools.ant.taskdefs.condition.Os
 
 plugins {
-    base
     id("hu.bme.mit.semantifyr.gradle.conventions.formatting")
+    id("hu.bme.mit.semantifyr.gradle.conventions.pack")
 }
 
 val vscodeExtensions = configurations.dependencyScope("vscodeExtensions")
@@ -100,11 +99,9 @@ val prepareDockerBuild = tasks.register("prepareDockerBuild") {
     dependsOn(cloneTestModels)
 }
 
-tasks.assemble {
+tasks.pack {
     dependsOn(prepareDockerBuild)
 }
-
-buildWithoutPackaging()
 
 tasks.register<Exec>("endToEndTest") {
     group = "verification"

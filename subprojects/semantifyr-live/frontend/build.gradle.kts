@@ -329,7 +329,7 @@ tasks.register<NpmTask>("loadTest") {
 }
 
 tasks {
-    assemble {
+    pack {
         dependsOn(npmAssemble, cloneSysmlWorker)
     }
 

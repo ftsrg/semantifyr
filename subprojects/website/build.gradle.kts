@@ -466,7 +466,7 @@ tasks {
             .withPathSensitivity(PathSensitivity.RELATIVE)
     }
 
-    assemble {
+    pack {
         dependsOn(npmAssemble)
     }
 

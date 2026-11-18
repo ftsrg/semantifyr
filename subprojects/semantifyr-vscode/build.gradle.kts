@@ -150,10 +150,8 @@ tasks.register<NpmTask>("endToEndTest") {
 }
 
 tasks {
-    assemble {
-        inputs.files(cloneDistribution)
-        inputs.files(npmAssemble)
-        inputs.files(bundleExtension)
+    pack {
+        dependsOn(cloneDistribution, npmAssemble, bundleExtension)
     }
 
     check {
