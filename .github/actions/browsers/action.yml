@@ -37,5 +37,6 @@ runs:
         VERSION: ${{ steps.cache-key.outputs.version }}
       # apt leaves its lock and partial downloads readable by root alone, which the cache cannot save
       run: |
-        npx --yes "playwright@$VERSION" install --with-deps $BROWSERS
+        npm install --prefix "$RUNNER_TEMP/playwright" --no-save --ignore-scripts "playwright@$VERSION"
+        "$RUNNER_TEMP/playwright/node_modules/.bin/playwright" install --with-deps $BROWSERS
         sudo chmod -R a+rX "$HOME/.cache/apt-archives"
