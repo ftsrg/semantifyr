@@ -27,28 +27,14 @@ class SysMLTranslatingCommandsTest {
     }
 
     @Test
-    suspend fun `writes the OXSTS translation next to the model`(@TempDir directory: Path) {
+    suspend fun `the compile command translates a model through the bundled translator`(@TempDir directory: Path) {
         assumeNodeOnPath()
-        val model = tutorialModel.copyTo(directory.resolve("model").createDirectories().resolve("room.sysml"))
+        val model = copyTutorialModel(directory)
 
         val result = runSysMLCli("compile", model.toString())
 
         assertThat(result.statusCode).describedAs(result.output).isZero()
-        val target = model.resolveSibling("room.semantifyr")
-        assertThat(result.stdout).isEqualTo("Compiling $model to $target\n")
-        assertThat(target.readText()).contains("LampLitReachable")
-    }
-
-    @Test
-    suspend fun `writes the OXSTS translation to the output path`(@TempDir directory: Path) {
-        assumeNodeOnPath()
-        val model = tutorialModel.copyTo(directory.resolve("model").createDirectories().resolve("room.sysml"))
-        val target = directory.resolve("out").resolve("translated.semantifyr")
-
-        val result = runSysMLCli("compile", "-o", target.toString(), model.toString())
-
-        assertThat(result.statusCode).describedAs(result.output).isZero()
-        assertThat(target.readText()).contains("LampLitReachable")
+        assertThat(model.resolveSibling("room.semantifyr").readText()).contains("LampLitReachable")
     }
 
     @Test

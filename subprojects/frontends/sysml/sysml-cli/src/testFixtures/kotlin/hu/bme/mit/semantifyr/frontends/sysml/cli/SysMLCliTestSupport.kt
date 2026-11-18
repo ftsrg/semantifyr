@@ -8,7 +8,9 @@ package hu.bme.mit.semantifyr.frontends.sysml.cli
 
 import com.github.ajalt.clikt.testing.CliktCommandTestResult
 import com.github.ajalt.clikt.testing.test
+import com.google.inject.Module
 import hu.bme.mit.semantifyr.cli.common.execute
+import hu.bme.mit.semantifyr.frontends.sysml.wrapper.SysMLv2Compiler
 import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup
 import hu.bme.mit.semantifyr.portfolios.Portfolios
 import hu.bme.mit.semantifyr.verifier.portfolio.VerificationPortfolio
@@ -29,8 +31,18 @@ val oxstsExtensions by lazy {
 suspend fun runSysMLCli(
     vararg arguments: String,
     portfolios: List<VerificationPortfolio> = Portfolios.all,
+    compiler: SysMLv2Compiler? = null,
 ): CliktCommandTestResult {
-    val command = injector.getInstance(SemantifyrSysMLCommand::class.java)
+    val commandInjector = if (compiler == null) {
+        injector
+    } else {
+        injector.createChildInjector(
+            Module {
+                it.bind(SysMLv2Compiler::class.java).toInstance(compiler)
+            },
+        )
+    }
+    val command = commandInjector.getInstance(SemantifyrSysMLCommand::class.java)
     command.registeredSubcommands().filterIsInstance<SysMLVerifyCommand>().single().portfolios = portfolios
     return command.test(arguments.toList()) {
         command.execute(it)
