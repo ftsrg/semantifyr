@@ -156,6 +156,8 @@ try {
                 '--disable-gpu',
                 '--no-sandbox',
                 '--ozone-platform=headless',
+                // otherwise VS Code gives the extension the Java of a login shell, which need not be the one this run set up
+                '--force-disable-user-env',
                 '--user-data-dir', userDataDirectory,
                 '--extensions-dir', extensionsDirectory,
             ],
