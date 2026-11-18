@@ -140,7 +140,7 @@ describe('the starting editor', () => {
     const loaded = new Promise<void>((resolve) => {
       release = resolve
     })
-    const page = await ui.open('/language/intersection', { held: { url: '**/assets/monaco-vscode-editor-service-override*', until: loaded } })
+    const page = await ui.open('/language/modeling-and-verification', { held: { url: '**/assets/monaco-vscode-editor-service-override*', until: loaded } })
     const trigger = page.locator('.example-button')
     const inMenu = async (): Promise<boolean> => {
       return page.evaluate(() => {
