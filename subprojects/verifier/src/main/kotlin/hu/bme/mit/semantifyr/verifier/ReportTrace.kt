@@ -31,7 +31,7 @@ enum class ReportTypeKind {
 @Serializable
 data class ReportType(
     val kind: ReportTypeKind,
-    val name: String? = null,
+    val name: String,
 )
 
 @Serializable

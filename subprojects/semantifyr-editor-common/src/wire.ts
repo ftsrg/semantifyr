@@ -124,7 +124,7 @@ export type ReportTypeKind =
 
 export interface ReportType {
     kind: ReportTypeKind;
-    name: string | null;
+    name: string;
 }
 
 export interface ObservedParameter {
