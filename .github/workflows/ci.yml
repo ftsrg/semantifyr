@@ -24,99 +24,12 @@ on:
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
-permissions: {}
 env:
   CI: true
   THETA_JAVA_OPTS: -Xss512M -Xms256M -Xmx1500M
 jobs:
   build:
-    name: Build
-    permissions:
-      contents: read
-    runs-on: ubuntu-latest
-    env:
-      # the published website names its commit; every other build of it describes the development branch and stays cacheable
-      SEMANTIFYR_SITE_COMMIT: ${{ inputs.publish && github.sha || '' }}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v7
-        with:
-          fetch-depth: 0
-      - name: Set up the toolchain
-        uses: ./.github/actions/toolchain
-        with:
-          gradle-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
-      - name: Install the backends
-        uses: ./.github/actions/backends
-      - name: Run the unit and adapter suites
-        run: ./gradlew build --continue
-      - name: Publish to SonarCloud
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: .github/scripts/sonar.sh
-      - name: Pack
-        run: ./gradlew pack -Pwebsite.apiDocs=true
-      - name: Stop Gradle
-        run: ./gradlew --stop
-      # the test jobs take what this job compiled from its build cache, as a pull request's run writes no cache entry
-      - name: Pack the build cache
-        run: tar -cf "$RUNNER_TEMP/build-cache.tar" -C ~/.gradle/caches/build-cache-1 .
-      - name: Upload the build cache
-        uses: actions/upload-artifact@v7
-        with:
-          name: build-cache
-          path: ${{ runner.temp }}/build-cache.tar
-          compression-level: 0
-          retention-days: 1
-      - name: Upload GitHub Pages artifact
-        uses: actions/upload-pages-artifact@v5
-        with:
-          path: subprojects/website/build/docusaurus
-          retention-days: 90
-      - name: Upload semantifyr-cli
-        uses: actions/upload-artifact@v7
-        with:
-          name: semantifyr-cli
-          path: subprojects/semantifyr-cli/build/distributions/semantifyr-*.zip
-          if-no-files-found: error
-          compression-level: 0
-          retention-days: 90
-      - name: Upload sysml-cli
-        uses: actions/upload-artifact@v7
-        with:
-          name: sysml-cli
-          path: subprojects/frontends/sysml/sysml-cli/build/distributions/semantifyr-sysml-*.zip
-          if-no-files-found: error
-          compression-level: 0
-          retention-days: 90
-      - name: Upload gamma-cli
-        uses: actions/upload-artifact@v7
-        with:
-          name: gamma-cli
-          path: subprojects/frontends/gamma/gamma-cli/build/distributions/semantifyr-gamma-*.zip
-          if-no-files-found: error
-          compression-level: 0
-          retention-days: 90
-      - name: Upload semantifyr-vscode
-        uses: actions/upload-artifact@v7
-        with:
-          name: semantifyr-vscode
-          path: subprojects/semantifyr-vscode/build/semantifyr-*.vsix
-          if-no-files-found: error
-          compression-level: 0
-          retention-days: 90
-      - name: Upload the live image context
-        uses: actions/upload-artifact@v7
-        # a tarball, because upload-artifact drops the execute bits the image needs
-        with:
-          name: live-image-context
-          path: subprojects/semantifyr-live/backend/build/distributions/live-image-context.tar.gz
-          compression-level: 0
-          retention-days: 1
-
-  # these legs take nothing from the Build job, so they start with the run
-  units-windows-macos:
-    name: Units and adapters (${{ matrix.os }})
+    name: Build and Test (${{ matrix.os }})
     permissions:
       contents: read
     strategy:
@@ -125,6 +38,7 @@ jobs:
         os:
           - windows-latest
           - macos-latest
+          - ubuntu-latest
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout code
@@ -135,84 +49,77 @@ jobs:
         uses: ./.github/actions/toolchain
         with:
           gradle-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
-      - name: Run the unit and adapter suites
-        shell: bash
-        run: ./gradlew build --continue
-
-  semantic:
-    name: Semantic
-    needs: build
-    permissions:
-      contents: read
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v7
-        with:
-          fetch-depth: 0
-      - name: Set up the toolchain
-        uses: ./.github/actions/toolchain
-        with:
-          gradle-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
-          build-cache: true
       - name: Install the backends
+        if: ${{ runner.os == 'Linux' }}
         uses: ./.github/actions/backends
-      - name: Run the semantic suite
-        run: ./gradlew semanticTest --continue
-
-  integration:
-    name: Integration
-    needs: build
-    permissions:
-      contents: read
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v7
-        with:
-          fetch-depth: 0
-      - name: Set up the toolchain
-        uses: ./.github/actions/toolchain
-        with:
-          gradle-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
-          build-cache: true
-      - name: Install the backends
-        uses: ./.github/actions/backends
-      - name: Run the integration suite
-        run: ./gradlew integrationTest --continue
-
-  end-to-end:
-    name: End to end
-    needs: build
-    permissions:
-      contents: read
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v7
-        with:
-          fetch-depth: 0
-      - name: Set up the toolchain
-        uses: ./.github/actions/toolchain
-        with:
-          gradle-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
-          build-cache: true
-      - name: Install the backends
-        uses: ./.github/actions/backends
-      - name: Read the VS Code version of the end-to-end test
-        id: vscode
-        run: echo "version=$(jq -r '.engines.vscode | ltrimstr("^")' subprojects/semantifyr-vscode/package.json)" >> "$GITHUB_OUTPUT"
       - name: Cache the VS Code download
         uses: actions/cache@v6
         with:
           path: subprojects/semantifyr-vscode/.vscode-test/vscode-*
-          key: vscode-${{ runner.os }}-${{ steps.vscode.outputs.version }}
-      - name: Run the end-to-end suite
-        run: ./gradlew endToEndTest --continue
+          key: vscode-${{ runner.os }}-${{ hashFiles('subprojects/semantifyr-vscode/package.json') }}
+      - name: Run Build
+        run: ./gradlew build semanticTest integrationTest endToEndTest --continue
+      - name: Publish to SonarCloud
+        if: ${{ runner.os == 'Linux' }}
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: .github/scripts/sonar.sh
+      - name: Pack Distribution
+        if: ${{ runner.os == 'Linux' }}
+        run: ./gradlew pack -Pwebsite.apiDocs=true
+      - name: Upload GitHub Pages artifact
+        if: ${{ runner.os == 'Linux' }}
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: subprojects/website/build/docusaurus
+          retention-days: 90
+      - name: Upload semantifyr-cli
+        if: ${{ runner.os == 'Linux' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: semantifyr-cli
+          path: subprojects/semantifyr-cli/build/distributions/semantifyr-*.zip
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 90
+      - name: Upload sysml-cli
+        if: ${{ runner.os == 'Linux' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: sysml-cli
+          path: subprojects/frontends/sysml/sysml-cli/build/distributions/semantifyr-sysml-*.zip
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 90
+      - name: Upload gamma-cli
+        if: ${{ runner.os == 'Linux' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: gamma-cli
+          path: subprojects/frontends/gamma/gamma-cli/build/distributions/semantifyr-gamma-*.zip
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 90
+      - name: Upload semantifyr-vscode
+        if: ${{ runner.os == 'Linux' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: semantifyr-vscode
+          path: subprojects/semantifyr-vscode/build/semantifyr-*.vsix
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 90
+      - name: Upload the live image context
+        if: ${{ runner.os == 'Linux' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: live-image-context
+          path: subprojects/semantifyr-live/backend/build/distributions/live-image-context.tar.gz
+          compression-level: 0
+          retention-days: 1
 
-  ui:
-    name: UI (${{ matrix.browser }})
-    needs: build
+  ui-tests:
+    name: UI Tests (${{ matrix.browser }})
     permissions:
       contents: read
     strategy:
@@ -234,18 +141,14 @@ jobs:
         uses: ./.github/actions/toolchain
         with:
           gradle-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
-          build-cache: true
       - name: Install the browser
-        # a stuck download fails as itself rather than taking the run past its budget
         timeout-minutes: 5
         uses: ./.github/actions/browsers
         with:
           browsers: ${{ matrix.browser }}
       - name: Run the UI suite
-        # the walk takes the website the Build job made, API docs included
-        run: ./gradlew uiTest --continue -PtestBrowser="$TEST_BROWSER" -Pwebsite.apiDocs=true
+        run: ./gradlew uiTest --continue -PtestBrowser="$TEST_BROWSER"
       - name: Upload the live screens
-        if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v7
         with:
           name: live-screens-${{ matrix.browser }}
@@ -272,12 +175,13 @@ jobs:
       - name: REUSE Compliance Check
         uses: fsfe/reuse-action@676e2d560c9a403aa252096d99fcab3e1132b0f5 # v6.0.0
         with:
-          # reuse skips every directory under one named subprojects, taking it for Meson's
           args: --include-meson-subprojects lint
 
   live-image:
-    name: Live Image
-    needs: build
+    name: Build Live Image
+    needs:
+      - build
+      - ui-tests
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -288,6 +192,22 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v7
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+      - name: Install the browsers for the live flows
+        id: browsers
+        timeout-minutes: 5
+        uses: ./.github/actions/browsers
+        with:
+          browsers: chromium firefox webkit
       - name: Download the live image context
         uses: actions/download-artifact@v8
         with:
@@ -297,8 +217,6 @@ jobs:
       - name: Compute the tag
         id: tag
         run: echo "tag=$(sed -n 's/^version=//p' gradle.properties)-dev.${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
-      - name: Set up Buildx
-        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
       - name: Build
         uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
@@ -314,29 +232,15 @@ jobs:
             org.opencontainers.image.version=${{ steps.tag.outputs.tag }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-      - name: Smoke test
+      - name: Start and check the container
         env:
           TAG: ${{ steps.tag.outputs.tag }}
         run: .github/scripts/smoke-test-live-image.sh live "$IMAGE:$TAG"
-      - name: Set up Node
-        uses: actions/setup-node@v7
-        with:
-          node-version-file: .nvmrc
-          cache: npm
-          cache-dependency-path: package-lock.json
-      - name: Install dependencies
-        run: npm ci --ignore-scripts
-      - name: Verify on the image
+      - name: Smoke test
         timeout-minutes: 5
         env:
           SEMANTIFYR_LIVE_URL: http://localhost:8080
         run: npm run smoke -w @ftsrg/semantifyr-live-frontend
-      - name: Install the browsers for the live flows
-        id: browsers
-        timeout-minutes: 5
-        uses: ./.github/actions/browsers
-        with:
-          browsers: chromium firefox webkit
       - name: Run the live flows on the image on Chromium
         if: ${{ !cancelled() && steps.browsers.outcome == 'success' }}
         timeout-minutes: 15
@@ -382,17 +286,11 @@ jobs:
           compression-level: 0
           retention-days: 1
 
-  # the image is pushed once every test of the run has passed
   push-image:
-    name: Push the live image
+    name: Push Live Image
     if: ${{ inputs.publish }}
     needs:
       - build
-      - units-windows-macos
-      - semantic
-      - integration
-      - end-to-end
-      - ui
       - live-image
     runs-on: ubuntu-latest
     permissions: {}

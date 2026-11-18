@@ -2,15 +2,12 @@
 #
 # SPDX-License-Identifier: EPL-2.0
 
-name: Toolchain
-description: Sets up Java, Gradle and Node, and on request unpacks the build cache the Build job uploaded.
+name: setup-toolchain
+description: Sets up Java, Gradle and Node.
 inputs:
   gradle-encryption-key:
     description: The key that encrypts Gradle's configuration cache in the Actions cache.
     required: false
-  build-cache:
-    description: Whether the job starts from the Build job's build cache.
-    default: 'false'
 runs:
   using: composite
   steps:
@@ -29,13 +26,3 @@ runs:
         node-version-file: .nvmrc
         cache: npm
         cache-dependency-path: package-lock.json
-    - name: Download the build cache
-      if: ${{ inputs.build-cache == 'true' }}
-      uses: actions/download-artifact@v8
-      with:
-        name: build-cache
-        path: ${{ runner.temp }}
-    - name: Unpack the build cache
-      if: ${{ inputs.build-cache == 'true' }}
-      shell: sh
-      run: mkdir -p ~/.gradle/caches/build-cache-1 && tar -xf "$RUNNER_TEMP/build-cache.tar" -C ~/.gradle/caches/build-cache-1

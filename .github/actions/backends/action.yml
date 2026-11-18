@@ -2,8 +2,8 @@
 #
 # SPDX-License-Identifier: EPL-2.0
 
-name: Backends
-description: Installs Spin and nuXmv beside the Theta the build provides, and fails when one is missing.
+name: install-backends
+description: Installs Spin and nuXmv and tests them.
 runs:
   using: composite
   steps:
@@ -12,7 +12,6 @@ runs:
       run: sudo apt-get update && sudo apt-get install -y spin
     - name: Install nuXmv
       shell: sh
-      # downloaded in every run, never cached or uploaded: nuXmv's licence forbids redistributing it
       run: |
         mkdir -p "$HOME/tools"
         curl -fsSL --proto '=https' -o "$HOME/tools/nuXmv.tar.xz" "https://nuxmv.fbk.eu/theme/download.php?file=nuXmv-2.1.0-linux64.tar.xz"

@@ -2,8 +2,8 @@
 #
 # SPDX-License-Identifier: EPL-2.0
 
-name: Browsers
-description: Installs the browsers the lock file's Playwright names and their system packages, both kept in the Actions cache.
+name: install-browsers
+description: Installs the browsers
 inputs:
   browsers:
     description: The browsers, separated by spaces.
@@ -11,12 +11,11 @@ inputs:
 runs:
   using: composite
   steps:
-    - name: Name the browser cache and keep apt's downloads
+    - name: Cache
       id: cache-key
       shell: sh
       env:
         BROWSERS: ${{ inputs.browsers }}
-      # apt keeps the packages it downloads in the cached directory, so that a slow mirror is met once per runner image
       run: |
         version=$(jq -r '.packages["node_modules/playwright"].version' package-lock.json)
         echo "version=$version" >> "$GITHUB_OUTPUT"
@@ -35,7 +34,6 @@ runs:
       env:
         BROWSERS: ${{ inputs.browsers }}
         VERSION: ${{ steps.cache-key.outputs.version }}
-      # apt leaves its lock and partial downloads readable by root alone, which the cache cannot save
       run: |
         npm install --prefix "$RUNNER_TEMP/playwright" --no-save --ignore-scripts "playwright@$VERSION"
         "$RUNNER_TEMP/playwright/node_modules/.bin/playwright" install --with-deps $BROWSERS
