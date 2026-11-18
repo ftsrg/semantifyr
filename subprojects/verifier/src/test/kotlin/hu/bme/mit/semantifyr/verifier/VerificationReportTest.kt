@@ -10,7 +10,7 @@ import hu.bme.mit.semantifyr.backend.VerificationMetadata
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.backend.witness.Fraction
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationConfig
-import kotlinx.serialization.json.Json
+import hu.bme.mit.semantifyr.verifier.internal.VerificationArtifactWriter
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.math.BigInteger
@@ -18,6 +18,7 @@ import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
 
 class VerificationReportTest {
+    private val json = VerificationArtifactWriter.json
 
     @Test
     fun `a report reads back as the report that was written`() {
@@ -107,6 +108,28 @@ class VerificationReportTest {
             trace = trace,
         )
 
-        assertThat(Json.decodeFromString<VerificationReport>(Json.encodeToString(report))).isEqualTo(report)
+        assertThat(json.decodeFromString<VerificationReport>(json.encodeToString(report))).isEqualTo(report)
+    }
+
+    @Test
+    fun `an integer too large for a JSON number reads back as text with its digits`() {
+        val largest = BigInteger.TWO.pow(53) - BigInteger.ONE
+        val state = ReportState(
+            mapOf(
+                "root.largest" to ReportValue.Integer(largest),
+                "root.beyond" to ReportValue.Integer(largest + BigInteger.ONE),
+                "root.below" to ReportValue.Integer(-largest - BigInteger.ONE),
+            ),
+        )
+
+        val read = json.decodeFromString<ReportState>(json.encodeToString(state))
+
+        assertThat(read.values).containsExactlyInAnyOrderEntriesOf(
+            mapOf(
+                "root.largest" to ReportValue.Integer(largest),
+                "root.beyond" to ReportValue.Text("9007199254740992"),
+                "root.below" to ReportValue.Text("-9007199254740992"),
+            ),
+        )
     }
 }
