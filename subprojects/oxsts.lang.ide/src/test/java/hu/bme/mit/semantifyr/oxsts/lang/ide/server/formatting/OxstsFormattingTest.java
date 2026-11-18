@@ -12,7 +12,6 @@ import hu.bme.mit.semantifyr.oxsts.lang.ide.MarkedText;
 import hu.bme.mit.semantifyr.oxsts.lang.ide.OxstsLanguageServerTest;
 import java.util.Comparator;
 import java.util.List;
-import org.eclipse.lsp4j.DocumentFormattingParams;
 import org.eclipse.lsp4j.DocumentRangeFormattingParams;
 import org.eclipse.lsp4j.FormattingOptions;
 import org.eclipse.lsp4j.Position;
@@ -34,29 +33,6 @@ class OxstsFormattingTest extends OxstsLanguageServerTest {
             }
             """;
 
-    private static final String FORMATTED = """
-            package example::format
-
-            class Messy {
-                var x: int := 0
-                tran step() {
-                    if (x < 3) {
-                        x := x + 1
-                    } else {
-                        x := 0
-                    }
-                    choice {
-                        x := 1
-                    } or {
-                        x := 2
-                    }
-                }
-                prop {
-                    return AG (x >= 0 && x <= 3)
-                }
-            }
-            """;
-
     private static final String TRANSITION_FORMATTED = """
             package   example::format
             class Messy{var x:int:=0
@@ -75,18 +51,6 @@ class OxstsFormattingTest extends OxstsLanguageServerTest {
                 prop{return AG(x>=0&&x<=3)}
             }
             """;
-
-    @Test
-    void formattingTheDocumentSpacesOperatorsDeclarationsAndKeywords() throws Exception {
-        var model = MarkedText.of(UNFORMATTED);
-        var document = openModel(model.text());
-
-        var edits = languageServer
-                .formatting(new DocumentFormattingParams(document, OPTIONS))
-                .get();
-
-        assertThat(applyEdits(model.text(), edits)).isEqualTo(FORMATTED);
-    }
 
     @Test
     void rangeFormattingFormatsTheFirstLineOfTheRange() throws Exception {

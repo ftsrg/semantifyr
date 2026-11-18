@@ -8,10 +8,15 @@ package hu.bme.mit.semantifyr.lang.ide.server;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.List;
 import org.eclipse.emf.common.util.URI;
+import org.eclipse.emf.ecore.resource.impl.ResourceImpl;
+import org.eclipse.xtext.ide.server.BuildManager;
 import org.eclipse.xtext.ide.server.ProjectManager;
+import org.eclipse.xtext.resource.XtextResourceSet;
 import org.eclipse.xtext.workspace.IProjectConfig;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -69,5 +74,30 @@ class DirectoryDeleteAwareWorkspaceManagerTest {
     @Test
     void aFileInAProjectKeepsItsProject() {
         assertThat(workspaceManager.getProjectManager(MODEL)).isSameAs(project);
+    }
+
+    @Test
+    void deletingAFolderDeletesEveryResourceBelowIt() {
+        var lamp = URI.createURI("file:///workspace/lights/lamp.semantifyr");
+        var nested = URI.createURI("file:///workspace/lights/inner/switch.semantifyr");
+        var sibling = URI.createURI("file:///workspace/lightsaber.semantifyr");
+        var resourceSet = new XtextResourceSet();
+        for (var uri : List.of(lamp, nested, sibling)) {
+            resourceSet.getResources().add(new ResourceImpl(uri));
+        }
+        when(project.getResourceSet()).thenReturn(resourceSet);
+        var buildManager = mock(BuildManager.class);
+        var folderAwareManager = new DirectoryDeleteAwareWorkspaceManager() {
+            @Override
+            public ProjectManager getProjectManager(URI uri) {
+                return project;
+            }
+        };
+        folderAwareManager.setBuildManager(buildManager);
+        var folder = URI.createURI("file:///workspace/lights");
+
+        folderAwareManager.didChangeFiles(List.of(), List.of(folder));
+
+        verify(buildManager).submit(List.of(), List.of(folder, lamp, nested));
     }
 }

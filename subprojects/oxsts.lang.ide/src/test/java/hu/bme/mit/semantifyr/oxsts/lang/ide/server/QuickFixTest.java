@@ -203,6 +203,50 @@ class QuickFixTest extends OxstsLanguageServerTest {
     }
 
     @Test
+    void initializeABooleanVariableWithFalse() throws Exception {
+        var fixed = applyQuickFix(TRAFFIC_LIGHT + """
+
+                class Gate {
+                    var <|>open: bool
+                }
+                """, "Initialize with false");
+
+        assertThat(fixed).isEqualTo(TRAFFIC_LIGHT + """
+
+                class Gate {
+                    var open: bool := false
+                }
+                """);
+    }
+
+    @Test
+    void initializeAnEnumVariableWithItsFirstLiteral() throws Exception {
+        var fixed = applyQuickFix(TRAFFIC_LIGHT + """
+
+                class Display {
+                    var <|>shown: LightColor
+                }
+                """, "Initialize with LightColor::Red");
+
+        assertThat(fixed).isEqualTo(TRAFFIC_LIGHT + """
+
+                class Display {
+                    var shown: LightColor := LightColor::Red
+                }
+                """);
+    }
+
+    @Test
+    void removeADatatypeDeclaredOutsideTheBuiltinLibrary() throws Exception {
+        var fixed = applyQuickFix(TRAFFIC_LIGHT + """
+
+                extern datatype <|>byte
+                """, "Remove");
+
+        assertThat(fixed).doesNotContain("datatype").startsWith(TRAFFIC_LIGHT.stripTrailing());
+    }
+
+    @Test
     void addTheMissingArgumentsAsNamedPlaceholders() throws Exception {
         var fixed = applyQuickFix(TRAFFIC_LIGHT + """
 

@@ -127,6 +127,18 @@ public record WrappedOxstsPackage(OxstsModelPackage oxstsModelPackage, List<Issu
                 .isNotEmpty();
     }
 
+    public void assertOnlyValidationErrorsAre(String issueCode, int line) {
+        assertThat(issues)
+                .as("expected only errors with code '" + issueCode + "' on line " + line + ", got: "
+                        + summariseIssues())
+                .filteredOn(issue -> issue.getSeverity() == Severity.ERROR)
+                .isNotEmpty()
+                .allSatisfy(issue -> {
+                    assertThat(issue.getCode()).isEqualTo(issueCode);
+                    assertThat(issue.getLineNumber()).isEqualTo(line);
+                });
+    }
+
     private String summariseResourceErrors() {
         return getResourceErrors().stream()
                 .map(diagnostic ->

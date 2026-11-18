@@ -100,6 +100,27 @@ public class ClassMemberSyntaxTest {
     }
 
     @Test
+    void initAndTranWithoutRedefineAreTheClassOwn() {
+        var parsedPackage = parseHelper.parse("""
+            package test
+            class Host {
+                var counter: int := 0
+                init {
+                }
+                tran {
+                    counter := 1
+                }
+            }
+            """);
+        parsedPackage.assertNoResourceErrors();
+        var host = parsedPackage.classByName("Host");
+        assertThat(host.anonymousInit().kind()).isEqualTo(TransitionKind.INIT);
+        assertThat(host.anonymousInit().isRedefine()).isFalse();
+        assertThat(host.anonymousMain().kind()).isEqualTo(TransitionKind.TRAN);
+        assertThat(host.anonymousMain().isRedefine()).isFalse();
+    }
+
+    @Test
     void namedTransitionWithoutParameters() {
         var parsedPackage = parseHelper.parse("""
             package test

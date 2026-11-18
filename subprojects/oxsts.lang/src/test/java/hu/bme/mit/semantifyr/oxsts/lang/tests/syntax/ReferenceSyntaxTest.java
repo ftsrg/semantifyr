@@ -203,4 +203,28 @@ public class ReferenceSyntaxTest {
                 parsedPackage.classByName("Lamp").variableByName("color").initializer();
         assertThat(initializer.getElement()).isSameAs(red);
     }
+
+    @Test
+    void quotedIdentifierNamesWithoutItsQuotesAndResolves() {
+        var parsedPackage = parseHelper.parse("""
+            package test
+            class 'traffic light' {
+                var 'tran': int := 0
+                redefine tran {
+                    'tran' := 'tran' + 1
+                }
+            }
+            class Host {
+                contains light: 'traffic light'
+            }
+            """);
+        parsedPackage.assertNoResourceErrors();
+        var light = parsedPackage.classByName("traffic light");
+        var variable = light.variableByName("tran").eObject();
+        assertThat(parsedPackage.classByName("Host").featureByName("light").typeDomain())
+                .isSameAs(light.eObject());
+        assertThat(EcoreUtil2.eAllOfType(light.anonymousMain().eObject(), ElementReference.class))
+                .isNotEmpty()
+                .allSatisfy(reference -> assertThat(reference.getElement()).isSameAs(variable));
+    }
 }

@@ -118,6 +118,33 @@ class InlineQuickFixTest extends OxstsLanguageServerTest {
         assertThat(fixed).isEqualTo(COUNTER.formatted("-3"));
     }
 
+    @Test
+    void inlineAsConstantReplacesABooleanConstantByItsValue() throws Exception {
+        var fixed = applyQuickFix("""
+                package example::gate
+
+                class Gate {
+                    var open: bool := false
+
+                    redefine tran {
+                        open := <|>1 < 2
+                    }
+                }
+                """, OxstsValidator.CONSTANT_EXPRESSION, "Inline as constant");
+
+        assertThat(fixed).isEqualTo("""
+                package example::gate
+
+                class Gate {
+                    var open: bool := false
+
+                    redefine tran {
+                        open := true
+                    }
+                }
+                """);
+    }
+
     private String applyQuickFix(String markedSource, String issueCode, String title) throws Exception {
         var model = MarkedText.of(markedSource);
         var document = openModel(model.text());
