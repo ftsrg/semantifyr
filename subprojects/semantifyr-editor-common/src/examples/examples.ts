@@ -37,7 +37,7 @@ export interface CaseManifest {
     cases: {
       name: string;
       verdict: 'Passed' | 'Failed' | 'Unknown';
-      tier?: 'Smoke' | 'Integration' | 'Nightly';
+      tier?: 'Integration' | 'Nightly';
     }[];
   }[];
 }

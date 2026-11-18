@@ -134,7 +134,7 @@
         {
             "file": "door_access.sysml",
             "cases": [
-                { "name": "LockedReachable", "verdict": "Passed", "tier": "Smoke" },
+                { "name": "LockedReachable", "verdict": "Passed", "tier": "Integration" },
                 { "name": "CheckingReachable", "verdict": "Passed", "tier": "Integration" },
                 { "name": "CheckingUnreachableViolated", "verdict": "Failed", "tier": "Integration", "falsification": true },
                 { "name": "UnlockedReachable", "verdict": "Passed", "tier": "Integration" },
