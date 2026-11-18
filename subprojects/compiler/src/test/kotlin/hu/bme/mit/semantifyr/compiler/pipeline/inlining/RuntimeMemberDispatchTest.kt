@@ -318,7 +318,50 @@ class RuntimeMemberDispatchTest : InliningTestBase() {
     }
 
     @Test
-    fun `a call through a runtime for loop variable dispatches over the instances of the range`() {
+    fun `a call on a runtime for loop variable dispatches over the instances of the range`() {
+        assertInlinedModel(
+            "Host",
+            worker + """
+                @VerificationCase
+                class Host {
+                    contains parts: Part[0..*]
+                    contains first: Part[1] subsets parts
+                    contains second: Part[1] subsets parts
+                    redefine tran {
+                        for (part in parts) {
+                            inline part.step()
+                        }
+                    }
+                    prop {
+                        return EF (first.done && second.done)
+                    }
+                }
+            """,
+            """
+                init {
+                }
+
+                tran {
+                    for (part in [root.first, root.second]) {
+                        choice {
+                            assume(part == root.first)
+                            root.first.done := true
+                        } or {
+                            assume(part == root.second)
+                            root.second.done := true
+                        }
+                    }
+                }
+
+                prop {
+                    EF root.first.done && root.second.done
+                }
+            """,
+        )
+    }
+
+    @Test
+    fun `a call through a chain on a runtime for loop variable dispatches over the instances of the range`() {
         assertInlinedModel(
             "Host",
             worker + """

@@ -243,7 +243,7 @@ class QuickFixTest extends OxstsLanguageServerTest {
                 extern datatype <|>byte
                 """, "Remove");
 
-        assertThat(fixed).doesNotContain("datatype").startsWith(TRAFFIC_LIGHT.stripTrailing());
+        assertThat(fixed).isEqualTo(TRAFFIC_LIGHT + "\n");
     }
 
     @Test
