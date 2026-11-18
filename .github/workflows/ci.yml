@@ -339,7 +339,8 @@ jobs:
       - name: Unpack the build cache
         run: mkdir -p ~/.gradle/caches/build-cache-1 && tar -xf "$RUNNER_TEMP/build-cache.tar" -C ~/.gradle/caches/build-cache-1
       - name: Run the UI suite
-        run: ./gradlew uiTest --continue -PtestBrowser="$BROWSER"
+        # the walk takes the website the Build job made, API docs included
+        run: ./gradlew uiTest --continue -PtestBrowser="$BROWSER" -Pwebsite.apiDocs=true
       - name: Upload the live screens
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v7
