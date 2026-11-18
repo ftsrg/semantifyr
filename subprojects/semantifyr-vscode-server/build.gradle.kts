@@ -101,7 +101,6 @@ val prepareDockerBuild = tasks.register("prepareDockerBuild") {
 val vscodeServerImageContext = tasks.register<Tar>("vscodeServerImageContext") {
     archiveFileName = "vscode-server-image-context.tar.gz"
     compression = Compression.GZIP
-    // the image runs theta-xsts-cli, whose execute bit Gradle's archives drop by default
     useFileSystemPermissions()
     dependsOn(prepareDockerBuild)
     from(layout.projectDirectory) {

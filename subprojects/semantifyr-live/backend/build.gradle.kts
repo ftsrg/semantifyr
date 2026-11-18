@@ -206,7 +206,6 @@ tasks.register<JavaExec>("runDev") {
     }
 }
 
-// relative to the test's working directory, the module, so that the results stay in the build cache across checkouts
 val stagingDirectory = "build/staging"
 
 tasks.test {
