@@ -17,7 +17,7 @@ services:
         ipv4_address: 172.30.0.253
 
   caddy:
-    image: caddy:2.11.7
+    image: caddy:2.11.9
     user: "65534:65534"
     restart: unless-stopped
     volumes:
