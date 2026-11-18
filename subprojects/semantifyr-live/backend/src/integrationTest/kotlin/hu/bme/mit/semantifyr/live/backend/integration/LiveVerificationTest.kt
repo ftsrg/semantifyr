@@ -198,7 +198,7 @@ class LiveVerificationTest {
                 assertThat(validation.verdict()).isEqualTo("passed")
                 assertThat(validation.portfolioId()).isEqualTo("smart")
                 val verificationDirectory = "model._Simple._LeaderStatechartIdleReachable"
-                assertThat(artifactsOnDisk(tmp, "Simple.LeaderStatechartIdleReachable")).contains(
+                assertThat(artifactsOnDisk(tmp, "Simple.LeaderStatechart-c8358067")).contains(
                     "verification/$verificationDirectory/report.json",
                     "verification/$verificationDirectory/witness.semantifyr",
                     "verification/$verificationDirectory/trace.get",
