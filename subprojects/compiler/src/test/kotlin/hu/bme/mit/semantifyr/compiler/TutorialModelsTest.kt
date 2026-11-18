@@ -4,11 +4,12 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.backends.theta
+package hu.bme.mit.semantifyr.compiler
 
+import hu.bme.mit.semantifyr.compiler.reader.SemantifyrLoader
 import hu.bme.mit.semantifyr.compiler.reader.SemantifyrModelContext
 import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup
-import hu.bme.mit.semantifyr.verifier.SemantifyrVerifierTestHelper
+import hu.bme.mit.semantifyr.oxsts.lang.tests.RestoreGlobalRegistries
 import org.assertj.core.api.Assertions.assertThat
 import org.eclipse.xtext.diagnostics.Severity
 import org.eclipse.xtext.util.CancelIndicator
@@ -25,21 +26,22 @@ import kotlin.io.path.isRegularFile
 import kotlin.io.path.name
 import kotlin.io.path.walk
 
-class ThetaTutorialTest {
+@RestoreGlobalRegistries
+class TutorialModelsTest {
 
     companion object {
 
         private val injector = OxstsStandaloneSetup().createInjectorAndDoEMFRegistration()
-        private val helper = injector.getInstance(SemantifyrVerifierTestHelper::class.java)
+        private val loader = injector.getInstance(SemantifyrLoader::class.java)
         private val validator = injector.getInstance(IResourceValidator::class.java)
-        private val tutorial = Path("build/test-models/tutorial")
+        private val tutorial = Path("../../oxsts-test-models/tutorial")
 
         // every step of a tutorial is a model of its own, loaded alone as the website's live editor loads it
         private val contexts: Map<Path, SemantifyrModelContext> by lazy {
             tutorial.walk().filter {
                 it.isRegularFile() && it.extension == "semantifyr"
             }.sorted().associateWith {
-                helper.semantifyrLoader.loadStandaloneModel(it)
+                loader.loadStandaloneModel(it)
             }
         }
 
@@ -58,8 +60,11 @@ class ThetaTutorialTest {
         val issues = validator.validate(resource, CheckMode.ALL, CancelIndicator.NullImpl).filter {
             it.severity == Severity.ERROR || it.severity == Severity.WARNING
         }
-        assertThat(issues.map { "${it.lineNumber}:${it.column} ${it.message}" })
-            .describedAs("issues a reader would see in ${model.name}")
+        assertThat(
+            issues.map {
+                "${it.lineNumber}:${it.column} ${it.message}"
+            },
+        ).describedAs("issues a reader would see in ${model.name}")
             .isEmpty()
     }
 }
