@@ -13,6 +13,7 @@ import hu.bme.mit.semantifyr.gradle.conventions.registerRenderPictures
 import hu.bme.mit.semantifyr.gradle.conventions.semantifyrArtifact
 import hu.bme.mit.semantifyr.gradle.conventions.servedExampleSources
 import hu.bme.mit.semantifyr.gradle.conventions.stampOnSuccess
+import hu.bme.mit.semantifyr.gradle.conventions.testBrowser
 import hu.bme.mit.semantifyr.gradle.conventions.testChromium
 
 plugins {
@@ -330,7 +331,7 @@ val walkBrowser = testChromium("The keyboard walk needs")
 
 tasks.register<NpmTask>("uiTest") {
     group = "verification"
-    val testBrowser = providers.gradleProperty("testBrowser").orElse("chromium")
+    val testBrowser = testBrowser()
     onlyIf("the walk runs in Chromium alone") {
         testBrowser.get() == "chromium"
     }

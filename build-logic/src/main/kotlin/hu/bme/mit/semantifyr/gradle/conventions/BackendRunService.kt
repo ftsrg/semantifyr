@@ -11,12 +11,12 @@ import org.gradle.api.services.BuildService
 import org.gradle.api.services.BuildServiceParameters
 import org.gradle.api.services.BuildServiceRegistry
 
-abstract class VerificationTestService : BuildService<BuildServiceParameters.None>
+abstract class BackendRunService : BuildService<BuildServiceParameters.None>
 
-internal const val VERIFICATION_TEST_SERVICE_NAME = "verificationTestService"
+internal const val BACKEND_RUN_SERVICE_NAME = "backendRunService"
 
-fun BuildServiceRegistry.registerVerificationTestService(): Provider<VerificationTestService> {
-    return registerIfAbsent(VERIFICATION_TEST_SERVICE_NAME, VerificationTestService::class.java) {
+fun BuildServiceRegistry.registerBackendRunService(): Provider<BackendRunService> {
+    return registerIfAbsent(BACKEND_RUN_SERVICE_NAME, BackendRunService::class.java) {
         maxParallelUsages.set(1)
     }
 }

@@ -20,13 +20,6 @@ val cloneOxstsTestModels = tasks.register<Sync>("cloneOxstsTestModels") {
     into(layout.buildDirectory.dir("test-models"))
 }
 
-listOf(
-    "adapterTest",
-    "semanticTest",
-    "integrationTest",
-    "nightlyTest",
-).forEach {
-    tasks.named(it) {
-        inputs.files(cloneOxstsTestModels)
-    }
+tasks.withType<Test>().configureEach {
+    inputs.files(cloneOxstsTestModels)
 }

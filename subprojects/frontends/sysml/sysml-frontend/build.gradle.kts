@@ -57,18 +57,8 @@ tasks.processResources {
     from(syncSysmlLibrary)
 }
 
-listOf(
-    "test",
-    "semanticTest",
-    "integrationTest",
-    "nightlyTest",
-).forEach {
-    tasks.named<Test>(it) {
-        readsServedExamples()
-    }
-}
-
 tasks.withType<Test>().configureEach {
+    readsServedExamples()
     inputs.files(syncSysmlTestModels)
     inputs.dir(layout.projectDirectory.dir("../models/etc")).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.dir(layout.projectDirectory.dir("../models/tutorial")).withPathSensitivity(PathSensitivity.RELATIVE)

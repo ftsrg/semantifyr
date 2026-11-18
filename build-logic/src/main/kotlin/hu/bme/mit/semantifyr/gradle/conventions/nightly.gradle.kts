@@ -12,7 +12,7 @@ plugins {
     id("hu.bme.mit.semantifyr.gradle.conventions.integration")
 }
 
-val verificationTestServiceProvider = gradle.sharedServices.registerVerificationTestService()
+val backendRunServiceProvider = gradle.sharedServices.registerBackendRunService()
 
 val libs = the<LibrariesForLibs>()
 
@@ -33,7 +33,7 @@ testing {
 
             targets.all {
                 testTask.configure {
-                    usesService(verificationTestServiceProvider)
+                    usesService(backendRunServiceProvider)
 
                     shouldRunAfter(suites.named("integrationTest"))
                 }

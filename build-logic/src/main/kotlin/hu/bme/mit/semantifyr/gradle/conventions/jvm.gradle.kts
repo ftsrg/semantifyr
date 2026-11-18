@@ -52,7 +52,6 @@ tasks.jar {
     }
 }
 
-// a case its manifest gives the nightly's tier runs in the nightly alone, or where a run asks for the heavy cases
 val heavyCases = providers.gradleProperty("heavyCases").orElse(
     provider {
         gradle.startParameter.taskNames.any {
@@ -82,7 +81,7 @@ tasks.withType<Test>().matching {
 
 buildWithoutPackaging()
 
-// assemble compiles every source set too, so that the pipeline's test jobs start from what it made
+// build proves every source set compiles, and the pipeline's test jobs start from the classes assemble made
 tasks.named {
     it == "build" || it == "assemble"
 }.configureEach {

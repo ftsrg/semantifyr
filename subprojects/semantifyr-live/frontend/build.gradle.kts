@@ -11,6 +11,7 @@ import hu.bme.mit.semantifyr.gradle.conventions.registerRenderPictures
 import hu.bme.mit.semantifyr.gradle.conventions.semantifyrArtifact
 import hu.bme.mit.semantifyr.gradle.conventions.servedExamples
 import hu.bme.mit.semantifyr.gradle.conventions.stampOnSuccess
+import hu.bme.mit.semantifyr.gradle.conventions.testBrowser
 import hu.bme.mit.semantifyr.gradle.conventions.testChromium
 import org.gradle.api.file.RegularFile
 
@@ -227,7 +228,7 @@ tasks.register<NpmTask>("integrationTest") {
     stampOnSuccess()
 }
 
-val testBrowser = providers.gradleProperty("testBrowser").orElse("chromium")
+val testBrowser = testBrowser()
 
 fun NpmTask.runInTestBrowser(script: String, configuration: String) {
     group = "verification"

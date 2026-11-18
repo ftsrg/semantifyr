@@ -78,10 +78,6 @@ configurations.consumable("apiDocsElements") {
     }
 }
 
-reporting.reports.register<JacocoCoverageReport>("mergedJacocoReport") {
-    testSuiteName = "test"
-}
-
 fun suiteTasks(vararg suites: String): List<TaskCollection<Task>> {
     return subprojects.map { subproject ->
         subproject.tasks.matching {
@@ -90,7 +86,6 @@ fun suiteTasks(vararg suites: String): List<TaskCollection<Task>> {
     }
 }
 
-// the suites a tier runs beyond the local build's; CI runs each in a job of its own, the UI suite once per browser
 tasks.register("continuousIntegration") {
     group = "verification"
     dependsOn(

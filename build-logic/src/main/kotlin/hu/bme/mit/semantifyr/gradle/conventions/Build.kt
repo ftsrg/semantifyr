@@ -9,7 +9,6 @@ package hu.bme.mit.semantifyr.gradle.conventions
 import org.gradle.api.Project
 import org.gradle.language.base.plugins.LifecycleBasePlugin
 
-// build checks the change; bundling and distribution are tasks of their own, called by name
 fun Project.buildWithoutPackaging() {
     tasks.named(LifecycleBasePlugin.BUILD_TASK_NAME) {
         setDependsOn(dependsOn - LifecycleBasePlugin.ASSEMBLE_TASK_NAME)
