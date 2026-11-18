@@ -6,6 +6,7 @@
 
 plugins {
     id("hu.bme.mit.semantifyr.gradle.conventions.cli")
+    id("hu.bme.mit.semantifyr.gradle.conventions.integration")
     kotlin("jvm")
 }
 
@@ -15,7 +16,8 @@ dependencies {
     implementation(project(":sysml-wrapper"))
     implementation(project(":logging"))
 
-    testImplementation(testFixtures(project(":cli-common")))
+    testFixturesApi(project(":cli-common"))
+    testFixturesApi(testFixtures(project(":cli-common")))
 }
 
 application {
@@ -36,11 +38,16 @@ distributions.main {
     }
 }
 
-tasks.named("test") {
-    inputs.dir(layout.projectDirectory.dir("../models/tutorial"))
-        .withPropertyName("sysmlTutorialModels")
-        .withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.dir(rootDirectory.dir("oxsts-test-models/semantic"))
-        .withPropertyName("oxstsSemanticModels")
-        .withPathSensitivity(PathSensitivity.RELATIVE)
+listOf(
+    "test",
+    "integrationTest",
+).forEach {
+    tasks.named(it) {
+        inputs.dir(layout.projectDirectory.dir("../models/tutorial"))
+            .withPropertyName("sysmlTutorialModels")
+            .withPathSensitivity(PathSensitivity.RELATIVE)
+        inputs.dir(rootDirectory.dir("oxsts-test-models/semantic"))
+            .withPropertyName("oxstsSemanticModels")
+            .withPathSensitivity(PathSensitivity.RELATIVE)
+    }
 }
