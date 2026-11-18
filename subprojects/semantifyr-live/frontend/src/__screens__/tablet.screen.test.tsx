@@ -11,7 +11,7 @@ import { page, server } from 'vitest/browser'
 import type { VerificationCaseState, VerificationState } from '../lib/verification/engine'
 import { ShellRoot } from '../shells/ShellRoot'
 import { caseOf, finished, seedLive, type Seed } from './seededLive'
-import { colorModesOf } from './themes'
+import { colorModes } from './themes'
 
 // Goal: a tablet gets the desktop shell, and in either orientation nothing of it overflows the viewport or clips its words
 
@@ -107,8 +107,8 @@ function expectEllipsized(button: string, label: string): void {
 
 describe('the desktop shell on a tablet', () => {
   for (const [orientationIndex, [orientation, size]] of Object.entries(ORIENTATIONS).entries()) {
-    for (const [index, [state, screen]] of Object.entries(STATES).entries()) {
-      for (const colorMode of colorModesOf(orientationIndex === 0 && index === 0)) {
+    for (const [stateIndex, [state, screen]] of Object.entries(STATES).entries()) {
+      for (const colorMode of colorModes(orientationIndex === 0 && stateIndex === 0)) {
         it(`lays out ${state} in ${orientation} in the ${colorMode} theme`, async () => {
           await page.viewport(size.width, size.height)
           const { live, shell } = seedLive(screen.seed)

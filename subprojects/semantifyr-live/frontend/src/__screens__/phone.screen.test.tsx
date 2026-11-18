@@ -15,7 +15,7 @@ import { CaseTrace } from '../trace/CaseTrace'
 import { caseOf, finished, seedLive, type Seed, type Seeded } from './seededLive'
 import { caseState, LANGUAGES, seedWithTrace } from './traces'
 import { noCases } from '../texts'
-import { colorModesOf } from './themes'
+import { colorModes } from './themes'
 
 // Goal: every phone state the mockup draws lays out in the phone's viewport in both themes, one pane at a time,
 // with the real editor; the states that a tap opens are reached by the tap
@@ -317,7 +317,7 @@ describe('the phone shell', () => {
   })
 
   for (const [index, [state, screen]] of Object.entries(STATES).entries()) {
-    for (const colorMode of colorModesOf(index === 0)) {
+    for (const colorMode of colorModes(index === 0)) {
       it(`lays out ${state} in the ${colorMode} theme`, async () => {
         const { live, shell } = typeof screen.seed === 'function' ? screen.seed() : seedLive(screen.seed)
         const container = document.createElement('div')

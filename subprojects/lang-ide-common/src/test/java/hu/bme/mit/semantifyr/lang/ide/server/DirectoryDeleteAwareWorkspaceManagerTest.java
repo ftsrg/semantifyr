@@ -77,7 +77,7 @@ class DirectoryDeleteAwareWorkspaceManagerTest {
     }
 
     @Test
-    void deletingAFolderDeletesEveryResourceBelowIt() {
+    void deletingADirectoryDeletesEveryResourceBelowIt() {
         var lamp = URI.createURI("file:///workspace/lights/lamp.semantifyr");
         var nested = URI.createURI("file:///workspace/lights/inner/switch.semantifyr");
         var sibling = URI.createURI("file:///workspace/lightsaber.semantifyr");
@@ -87,16 +87,16 @@ class DirectoryDeleteAwareWorkspaceManagerTest {
         }
         when(project.getResourceSet()).thenReturn(resourceSet);
         var buildManager = mock(BuildManager.class);
-        var folderAwareManager = new DirectoryDeleteAwareWorkspaceManager() {
+        var directoryDeleteAwareManager = new DirectoryDeleteAwareWorkspaceManager() {
             @Override
             public ProjectManager getProjectManager(URI uri) {
                 return project;
             }
         };
-        folderAwareManager.setBuildManager(buildManager);
+        directoryDeleteAwareManager.setBuildManager(buildManager);
         var folder = URI.createURI("file:///workspace/lights");
 
-        folderAwareManager.didChangeFiles(List.of(), List.of(folder));
+        directoryDeleteAwareManager.didChangeFiles(List.of(), List.of(folder));
 
         verify(buildManager).submit(List.of(), List.of(folder, lamp, nested));
     }

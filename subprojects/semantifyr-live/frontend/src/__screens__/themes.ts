@@ -7,8 +7,8 @@
 import type { ResolvedColorMode } from '../lib/util/colorMode'
 
 // a state's assertions are the same in both themes but the background, so the dark theme is shown once per shell
-export function colorModesOf(firstOfShell: boolean): ResolvedColorMode[] {
-  if (firstOfShell) {
+export function colorModes(firstStateOfShell: boolean): ResolvedColorMode[] {
+  if (firstStateOfShell) {
     return [
       'light',
       'dark',

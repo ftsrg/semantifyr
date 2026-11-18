@@ -14,7 +14,7 @@ import { connectionLost, INITIAL_CONNECTION } from '../lib/stores/connection'
 import type { VerificationCaseState, VerificationState } from '../lib/verification/engine'
 import { ShellRoot } from '../shells/ShellRoot'
 import { caseOf, finished, seedLive, type Seed } from './seededLive'
-import { colorModesOf } from './themes'
+import { colorModes } from './themes'
 
 // Goal: what the desktop shows while a case is run again, in both themes
 
@@ -139,7 +139,7 @@ const STATES: Readonly<Record<string, ScreenState>> = {
 
 describe('the fixes of the desktop shell', () => {
   for (const [index, [state, screen]] of Object.entries(STATES).entries()) {
-    for (const colorMode of colorModesOf(index === 0)) {
+    for (const colorMode of colorModes(index === 0)) {
       it(`shows ${state} in the ${colorMode} theme`, async () => {
         const { live, shell } = seedLive(screen.seed)
         const container = document.createElement('div')
