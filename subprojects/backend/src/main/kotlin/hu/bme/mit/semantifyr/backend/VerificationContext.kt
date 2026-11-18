@@ -41,12 +41,12 @@ abstract class VerificationContext<TArtifacts, TRawVerdict>(
         logger.info { "[$backendId] starting verification (output=${request.artifactOutputPath})" }
 
         return try {
-            val unsupported = capabilityChecker.check(request.inlinedOxsts)
-            if (unsupported.isEmpty()) {
-                executor.prepare()
-                runVerification(metadata)
-            } else {
-                notSupported(metadata, unsupported)
+            when (val support = capabilityChecker.support(request.inlinedOxsts, configuredSoundness)) {
+                is ModelSupport.Supported -> {
+                    executor.prepare()
+                    runVerification(metadata, support)
+                }
+                is ModelSupport.Unsupported -> notSupported(metadata, support.constructs)
             }
         } catch (c: CancellationException) {
             logger.debug { "[$backendId] cancelled" }
@@ -115,7 +115,7 @@ abstract class VerificationContext<TArtifacts, TRawVerdict>(
         return flatteningInfo.resolveOriginalVariable(holder, variable)
     }
 
-    private suspend fun runVerification(metadata: VerificationMetadata): BackendVerificationResult {
+    private suspend fun runVerification(metadata: VerificationMetadata, support: ModelSupport.Supported): BackendVerificationResult {
         val (artifacts, preparationDuration) = measureTimedValue {
             prepare()
         }
@@ -128,8 +128,7 @@ abstract class VerificationContext<TArtifacts, TRawVerdict>(
 
         val verdict = interpret(rawVerdict, artifacts)
         val property = request.inlinedOxsts.property.expression
-        val soundness = configuredSoundness.throughLowering(capabilityChecker.soundness(request.inlinedOxsts))
-        val isTrusted = soundness.trusts(verdict, property)
+        val isTrusted = support.trusts(verdict, property)
 
         val (witness, witnessDuration) = measureTimedValue {
             buildWitness(rawVerdict, artifacts)
@@ -156,7 +155,7 @@ abstract class VerificationContext<TArtifacts, TRawVerdict>(
                 },
             ),
             inlinedWitness = witness,
-            soundness = soundness,
+            soundness = support.soundness,
             isTrusted = isTrusted,
         )
     }

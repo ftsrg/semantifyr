@@ -90,9 +90,7 @@ abstract class VerificationBackend<T : BackendConfig> {
         verdict: VerificationVerdict,
     ): Boolean {
         return withVerificationScope {
-            val checker = capabilityChecker(parentInjector, config)
-            val soundness = config.soundness.throughLowering(checker.soundness(inlinedOxsts))
-            checker.check(inlinedOxsts).isEmpty() && soundness.trusts(verdict, inlinedOxsts.property.expression)
+            capabilityChecker(parentInjector, config).support(inlinedOxsts, config.soundness).trusts(verdict, inlinedOxsts.property.expression)
         }
     }
 }
