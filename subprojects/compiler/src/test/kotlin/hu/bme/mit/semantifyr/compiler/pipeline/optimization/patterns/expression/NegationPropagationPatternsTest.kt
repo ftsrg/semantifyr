@@ -92,6 +92,114 @@ class NegationPropagationPatternsTest : PatternTestBase() {
     )
 
     @Test
+    fun `negated not-equal flips to equality`() = assertPatternTransforms(
+        pattern = NegatedComparisonPattern(),
+        input = """
+            inlined oxsts of semantifyr::Anything
+            var operand: int := 0
+            init {
+            }
+            tran {
+            }
+            prop {
+                AG !(operand != 0)
+            }
+        """,
+        expected = """
+            inlined oxsts of semantifyr::Anything
+            var operand: int := 0
+            init {
+            }
+            tran {
+            }
+            prop {
+                AG (operand == 0)
+            }
+        """,
+    )
+
+    @Test
+    fun `negated less-or-equal flips to greater`() = assertPatternTransforms(
+        pattern = NegatedComparisonPattern(),
+        input = """
+            inlined oxsts of semantifyr::Anything
+            var operand: int := 0
+            init {
+            }
+            tran {
+            }
+            prop {
+                AG !(operand <= 0)
+            }
+        """,
+        expected = """
+            inlined oxsts of semantifyr::Anything
+            var operand: int := 0
+            init {
+            }
+            tran {
+            }
+            prop {
+                AG (operand > 0)
+            }
+        """,
+    )
+
+    @Test
+    fun `negated greater flips to less-or-equal`() = assertPatternTransforms(
+        pattern = NegatedComparisonPattern(),
+        input = """
+            inlined oxsts of semantifyr::Anything
+            var operand: int := 0
+            init {
+            }
+            tran {
+            }
+            prop {
+                AG !(operand > 0)
+            }
+        """,
+        expected = """
+            inlined oxsts of semantifyr::Anything
+            var operand: int := 0
+            init {
+            }
+            tran {
+            }
+            prop {
+                AG (operand <= 0)
+            }
+        """,
+    )
+
+    @Test
+    fun `negated greater-or-equal flips to less`() = assertPatternTransforms(
+        pattern = NegatedComparisonPattern(),
+        input = """
+            inlined oxsts of semantifyr::Anything
+            var operand: int := 0
+            init {
+            }
+            tran {
+            }
+            prop {
+                AG !(operand >= 0)
+            }
+        """,
+        expected = """
+            inlined oxsts of semantifyr::Anything
+            var operand: int := 0
+            init {
+            }
+            tran {
+            }
+            prop {
+                AG (operand < 0)
+            }
+        """,
+    )
+
+    @Test
     fun `de Morgan over and rewrites to or of negations`() = assertPatternTransforms(
         pattern = DeMorganPattern(),
         input = """

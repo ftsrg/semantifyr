@@ -4,11 +4,9 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.compiler.pipeline.patterns.expression
+package hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns.expression
 
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns.PatternTestBase
-import hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns.expression.ArithmeticIdentityPattern
-import hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns.expression.DoubleUnaryMinusPattern
 import org.junit.jupiter.api.Test
 
 class AlgebraicPatternsTest : PatternTestBase() {
@@ -132,6 +130,114 @@ class AlgebraicPatternsTest : PatternTestBase() {
             }
             prop {
                 AG (-(-operand) == 0)
+            }
+        """,
+        expected = """
+            inlined oxsts of semantifyr::Anything
+            var operand: int := 0
+            init {
+            }
+            tran {
+            }
+            prop {
+                AG (operand == 0)
+            }
+        """,
+    )
+
+    @Test
+    fun `add zero on right collapses to left`() = assertPatternTransforms(
+        pattern = ArithmeticIdentityPattern(),
+        input = """
+            inlined oxsts of semantifyr::Anything
+            var operand: int := 0
+            init {
+            }
+            tran {
+            }
+            prop {
+                AG (operand + 0 == 0)
+            }
+        """,
+        expected = """
+            inlined oxsts of semantifyr::Anything
+            var operand: int := 0
+            init {
+            }
+            tran {
+            }
+            prop {
+                AG (operand == 0)
+            }
+        """,
+    )
+
+    @Test
+    fun `subtract zero collapses to left`() = assertPatternTransforms(
+        pattern = ArithmeticIdentityPattern(),
+        input = """
+            inlined oxsts of semantifyr::Anything
+            var operand: int := 0
+            init {
+            }
+            tran {
+            }
+            prop {
+                AG (operand - 0 == 0)
+            }
+        """,
+        expected = """
+            inlined oxsts of semantifyr::Anything
+            var operand: int := 0
+            init {
+            }
+            tran {
+            }
+            prop {
+                AG (operand == 0)
+            }
+        """,
+    )
+
+    @Test
+    fun `subtract from zero becomes the negated right`() = assertPatternTransforms(
+        pattern = ArithmeticIdentityPattern(),
+        input = """
+            inlined oxsts of semantifyr::Anything
+            var operand: int := 0
+            init {
+            }
+            tran {
+            }
+            prop {
+                AG (0 - operand == 0)
+            }
+        """,
+        expected = """
+            inlined oxsts of semantifyr::Anything
+            var operand: int := 0
+            init {
+            }
+            tran {
+            }
+            prop {
+                AG (-operand == 0)
+            }
+        """,
+    )
+
+    @Test
+    fun `multiply by one on right collapses to left`() = assertPatternTransforms(
+        pattern = ArithmeticIdentityPattern(),
+        input = """
+            inlined oxsts of semantifyr::Anything
+            var operand: int := 0
+            init {
+            }
+            tran {
+            }
+            prop {
+                AG (operand * 1 == 0)
             }
         """,
         expected = """

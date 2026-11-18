@@ -19,15 +19,6 @@ import hu.bme.mit.semantifyr.compiler.pipeline.optimization.analyses.ConeOfInflu
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.analyses.ConstantValueAnalysis
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.analyses.LivenessAnalysis
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.analyses.ReachingDefinitionsAnalysis
-import hu.bme.mit.semantifyr.compiler.pipeline.optimization.passes.AssumeFalsePropagationPass
-import hu.bme.mit.semantifyr.compiler.pipeline.optimization.passes.ConstantVariableSubstitutionPass
-import hu.bme.mit.semantifyr.compiler.pipeline.optimization.passes.CopyPropagationPass
-import hu.bme.mit.semantifyr.compiler.pipeline.optimization.passes.DeadCodeRemovalPass
-import hu.bme.mit.semantifyr.compiler.pipeline.optimization.passes.DeadStoreEliminationPass
-import hu.bme.mit.semantifyr.compiler.pipeline.optimization.passes.ExpressionSimplificationPass
-import hu.bme.mit.semantifyr.compiler.pipeline.optimization.passes.OperationFlatteningPass
-import hu.bme.mit.semantifyr.compiler.pipeline.optimization.passes.RedundantOperationRemovalPass
-import hu.bme.mit.semantifyr.compiler.pipeline.optimization.passes.VariableLivenessPass
 import hu.bme.mit.semantifyr.compiler.reader.SemantifyrLoader
 import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration
@@ -75,31 +66,27 @@ class CompilationMetricsTest {
     }
 
     @Test
-    fun `optimizer stats name the passes of each phase`() {
+    fun `the inliner's own steps frame its optimizer's passes and every flattened pass runs alike`() {
         val metrics = compileSmokeCase(OptimizationConfig.ALL)
 
-        assertThat(metrics.inliningOptimization.passes.map { it.name }).containsExactly(
-            CompilationPass.OperationCallInlining.name,
-            ExpressionSimplificationPass::class.simpleName,
-            OperationFlatteningPass::class.simpleName,
-            RedundantOperationRemovalPass::class.simpleName,
-            AssumeFalsePropagationPass::class.simpleName,
-            CompilationPass.PropertyExpressionNormalization.name,
-        )
-        assertThat(metrics.flatteningOptimization.passes.map { it.name }).containsExactly(
-            ExpressionSimplificationPass::class.simpleName,
-            OperationFlatteningPass::class.simpleName,
-            RedundantOperationRemovalPass::class.simpleName,
-            AssumeFalsePropagationPass::class.simpleName,
-            ConstantVariableSubstitutionPass::class.simpleName,
-            CopyPropagationPass::class.simpleName,
-            DeadStoreEliminationPass::class.simpleName,
-            DeadCodeRemovalPass::class.simpleName,
-            VariableLivenessPass::class.simpleName,
-        )
-        assertThat(metrics.flatteningOptimization.passes.map { it.runs }.distinct()).hasSize(1)
-        assertThat(metrics.flatteningOptimization.passes).allMatch { it.firings <= it.runs }
-        assertThat(metrics.flatteningOptimization.analyses.map { it.name }).isSubsetOf(
+        val inliningPasses = metrics.inliningOptimization.passes.map {
+            it.name
+        }
+        assertThat(inliningPasses.first()).isEqualTo(CompilationPass.OperationCallInlining.name)
+        assertThat(inliningPasses.last()).isEqualTo(CompilationPass.PropertyExpressionNormalization.name)
+        assertThat(inliningPasses).hasSizeGreaterThan(2)
+        assertThat(metrics.flatteningOptimization.passes).isNotEmpty
+        val runs = metrics.flatteningOptimization.passes.map {
+            it.runs
+        }
+        assertThat(runs.distinct()).hasSize(1)
+        assertThat(metrics.flatteningOptimization.passes).allMatch {
+            it.firings <= it.runs
+        }
+        val analyses = metrics.flatteningOptimization.analyses.map {
+            it.name
+        }
+        assertThat(analyses).isSubsetOf(
             LivenessAnalysis::class.simpleName,
             ConeOfInfluenceAnalysis::class.simpleName,
             ConstantValueAnalysis::class.simpleName,

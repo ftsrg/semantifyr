@@ -255,4 +255,41 @@ class DeadStoreEliminationPassTest : PassTestBase() {
     ) {
         it.getInstance(DeadStoreEliminationPass::class.java)
     }
+
+    @Test
+    fun `a write in a loop body read only by the next iteration is kept`() = assertPassTransforms(
+        source = """
+            inlined oxsts of semantifyr::Anything
+            init {
+            }
+            tran {
+                var carried: int := 0
+                for (index in 0..2) {
+                    assume(carried == 0)
+                    carried := 1
+                }
+            }
+            prop {
+                AG true
+            }
+        """,
+        expectedSource = """
+            inlined oxsts of semantifyr::Anything
+            init {
+            }
+            tran {
+                var carried: int := 0
+                for (index in 0..2) {
+                    assume(carried == 0)
+                    carried := 1
+                }
+            }
+            prop {
+                AG true
+            }
+        """,
+        analysisClasses = listOf(ReachingDefinitionsAnalysis::class.java),
+    ) {
+        it.getInstance(DeadStoreEliminationPass::class.java)
+    }
 }

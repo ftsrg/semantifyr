@@ -32,4 +32,60 @@ class TemporalOperatorInliningTest : InliningTestBase() {
                 .hasMessageContaining("There are temporal operators that are not the root")
         }
     }
+
+    @Test
+    fun `a negated AG reaches the temporal check as EF of the negation with the optimizations off`() {
+        assertInlinedModel(
+            "Host",
+            """
+                package inlining::tests
+                @VerificationCase
+                class Host {
+                    var flag: bool := false
+                    prop {
+                        return !(AG flag)
+                    }
+                }
+            """,
+            """
+                init {
+                }
+
+                tran {
+                }
+
+                prop {
+                    EF !root.flag
+                }
+            """,
+        )
+    }
+
+    @Test
+    fun `a negated EF reaches the temporal check as AG of the negation with the optimizations off`() {
+        assertInlinedModel(
+            "Host",
+            """
+                package inlining::tests
+                @VerificationCase
+                class Host {
+                    var flag: bool := false
+                    prop {
+                        return !(EF flag)
+                    }
+                }
+            """,
+            """
+                init {
+                }
+
+                tran {
+                }
+
+                prop {
+                    AG !root.flag
+                }
+            """,
+        )
+    }
 }
