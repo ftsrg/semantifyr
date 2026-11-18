@@ -17,6 +17,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssignmentOperation;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.IndexingSuffixExpression;
 import org.eclipse.xtext.EcoreUtil2;
 import org.eclipse.xtext.diagnostics.Severity;
+import org.eclipse.xtext.resource.XtextSyntaxDiagnostic;
 import org.eclipse.xtext.validation.CheckMode;
 import org.junit.jupiter.api.Test;
 
@@ -247,7 +248,9 @@ public class ArraySizeFromBindingTest {
             }
             """);
 
-        assertThat(parsedPackage.getResourceErrors()).isNotEmpty();
+        assertThat(parsedPackage.getResourceErrors())
+                .singleElement()
+                .isInstanceOf(XtextSyntaxDiagnostic.class);
     }
 
     @Test

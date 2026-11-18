@@ -30,6 +30,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.NegationOperator;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.RangeExpression;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.UnaryOp;
 import org.eclipse.xtext.EcoreUtil2;
+import org.eclipse.xtext.resource.XtextSyntaxDiagnostic;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -353,7 +354,9 @@ public class OperatorSyntaxTest {
                 var total: int := 2147483648
             }
             """);
-        assertThat(parsedPackage.getResourceErrors()).isNotEmpty();
+        assertThat(parsedPackage.getResourceErrors())
+                .singleElement()
+                .isInstanceOf(XtextSyntaxDiagnostic.class);
     }
 
     @Test

@@ -14,6 +14,7 @@ import hu.bme.mit.semantifyr.oxsts.lang.tests.utils.OxstsPackageParseHelper;
 import hu.bme.mit.semantifyr.oxsts.lang.tests.utils.WrappedOxstsPackage;
 import hu.bme.mit.semantifyr.oxsts.lang.validation.OxstsValidator;
 import org.eclipse.xtext.diagnostics.Severity;
+import org.eclipse.xtext.linking.impl.XtextLinkingDiagnostic;
 import org.eclipse.xtext.validation.CheckMode;
 import org.eclipse.xtext.validation.Issue;
 import org.junit.jupiter.api.Test;
@@ -377,7 +378,9 @@ public class RecordValidationTest {
             }
             """, CheckMode.ALL);
 
-        assertThat(parsedPackage.getResourceErrors()).isNotEmpty();
+        assertThat(parsedPackage.getResourceErrors())
+                .allSatisfy(error -> assertThat(error).isInstanceOf(XtextLinkingDiagnostic.class))
+                .anySatisfy(error -> assertThat(error.getMessage()).contains("RecordDeclaration 'Worker'"));
     }
 
     @Test
