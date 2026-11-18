@@ -117,6 +117,14 @@ jobs:
           path: subprojects/semantifyr-live/backend/build/distributions/live-image-context.tar.gz
           compression-level: 0
           retention-days: 1
+      - name: Upload the vscode-server image context
+        if: ${{ runner.os == 'Linux' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: vscode-server-image-context
+          path: subprojects/semantifyr-vscode-server/build/distributions/vscode-server-image-context.tar.gz
+          compression-level: 0
+          retention-days: 1
 
   ui-tests:
     name: UI Tests (${{ matrix.browser }})
@@ -176,6 +184,64 @@ jobs:
         uses: fsfe/reuse-action@676e2d560c9a403aa252096d99fcab3e1132b0f5 # v6.0.0
         with:
           args: --include-meson-subprojects lint
+
+  vscode-server-image:
+    name: Build the semantifyr-vscode-server Image
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      tag: ${{ steps.tag.outputs.tag }}
+    env:
+      IMAGE: docker.io/ftsrgbot/semantifyr-vscode-server
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      - name: Download the vscode-server image context
+        uses: actions/download-artifact@v8
+        with:
+          name: vscode-server-image-context
+      - name: Unpack the vscode-server image context
+        run: mkdir context && tar -xzf vscode-server-image-context.tar.gz -C context
+      - name: Compute the tag
+        id: tag
+        run: echo "tag=$(sed -n 's/^version=//p' gradle.properties)-dev.${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+      - name: Build
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: context
+          load: true
+          provenance: false
+          tags: |
+            ${{ env.IMAGE }}:${{ steps.tag.outputs.tag }}
+            ${{ env.IMAGE }}:snapshot
+          labels: |
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.version=${{ steps.tag.outputs.tag }}
+          cache-from: type=gha,scope=vscode-server-image
+          cache-to: type=gha,mode=max,scope=vscode-server-image
+      - name: Smoke test
+        timeout-minutes: 5
+        env:
+          TAG: ${{ steps.tag.outputs.tag }}
+        run: .github/scripts/smoke-test-vscode-server-image.sh "$IMAGE:$TAG"
+      - name: Save the image
+        if: ${{ inputs.publish }}
+        env:
+          TAG: ${{ steps.tag.outputs.tag }}
+        run: docker save "$IMAGE:$TAG" "$IMAGE:snapshot" | gzip > "$RUNNER_TEMP/vscode-server-image.tar.gz"
+      - name: Upload the image
+        if: ${{ inputs.publish }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: vscode-server-image
+          path: ${{ runner.temp }}/vscode-server-image.tar.gz
+          compression-level: 0
+          retention-days: 1
 
   live-image:
     name: Build Live Image
@@ -312,4 +378,32 @@ jobs:
       - name: Push
         env:
           TAG: ${{ needs.live-image.outputs.tag }}
+        run: docker push "$IMAGE:$TAG" && docker push "$IMAGE:snapshot"
+
+  push-vscode-server-image:
+    name: Push the semantifyr-vscode-server Image
+    if: ${{ inputs.publish }}
+    needs:
+      - build
+      - vscode-server-image
+    runs-on: ubuntu-latest
+    permissions: {}
+    env:
+      IMAGE: docker.io/ftsrgbot/semantifyr-vscode-server
+    steps:
+      - name: Download the image
+        uses: actions/download-artifact@v8
+        with:
+          name: vscode-server-image
+          path: ${{ runner.temp }}
+      - name: Load the image
+        run: docker load < "$RUNNER_TEMP/vscode-server-image.tar.gz"
+      - name: Log in to Docker Hub
+        uses: docker/login-action@81c6f93d4bc991e510b342a00b419b3bb4efc5c6 # v4.7.0
+        with:
+          username: ftsrgbot
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Push
+        env:
+          TAG: ${{ needs.vscode-server-image.outputs.tag }}
         run: docker push "$IMAGE:$TAG" && docker push "$IMAGE:snapshot"
