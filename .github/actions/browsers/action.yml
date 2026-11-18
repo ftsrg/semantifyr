@@ -29,12 +29,13 @@ runs:
         path: |
           ~/.cache/ms-playwright
           ~/.cache/apt-archives
-          !~/.cache/apt-archives/partial
-          !~/.cache/apt-archives/lock
         key: ${{ steps.cache-key.outputs.key }}
     - name: Install the browsers
       shell: sh
       env:
         BROWSERS: ${{ inputs.browsers }}
         VERSION: ${{ steps.cache-key.outputs.version }}
-      run: npx --yes "playwright@$VERSION" install --with-deps $BROWSERS
+      # apt leaves its lock and partial downloads readable by root alone, which the cache cannot save
+      run: |
+        npx --yes "playwright@$VERSION" install --with-deps $BROWSERS
+        sudo chmod -R a+rX "$HOME/.cache/apt-archives"
