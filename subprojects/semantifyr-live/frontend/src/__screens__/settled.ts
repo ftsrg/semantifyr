@@ -12,7 +12,6 @@ function movingAnimations(): number {
   }).length
 }
 
-// a spinner runs for good, so only an animation with an end keeps a state from being measured
 export async function settledOn(expectState: () => Promise<void> | void): Promise<void> {
   await document.fonts.ready
   await vi.waitFor(async () => {

@@ -160,7 +160,6 @@ class SemantifyrVerifierTestHelper @Inject constructor(
         expectsWitness(it, expectedVerdictFromTags(it))
     }
 
-    // a case may inherit its property, so its root operator is read from the compiled model, once per class since a compilation registers its resources
     fun expectsWitness(case: VerificationCase, verdict: VerificationVerdict): Boolean {
         val property = compiledProperties.getOrPut(case.classDeclaration) {
             val compiler = SemantifyrCompiler(injector, ArtifactConfig.NONE, OptimizationConfig.NONE)

@@ -8,7 +8,6 @@ set -eu
 
 image=$1
 
-# without JupyterHub's variables the image's own command starts JupyterLab, whose proxy serves openvscode-server
 container=$(docker run --detach --publish 127.0.0.1::8888 --env JUPYTER_TOKEN=smoke "$image")
 trap 'docker rm --force "$container" > /dev/null' EXIT
 

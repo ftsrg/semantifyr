@@ -36,7 +36,6 @@ await esbuild.build({
     target: 'ES2023',
 });
 
-// VS Code runs a test suite only beside an extension under development, so the suite gets one that contributes nothing
 const harness = path.join(testDirectory, 'harness');
 mkdirSync(harness, { recursive: true });
 writeFileSync(path.join(harness, 'package.json'), JSON.stringify({
@@ -64,13 +63,11 @@ function firstJavaOnPath() {
     return first === undefined || first === '' ? '(none)' : first;
 }
 
-// the extension starts its language server with no output in the log, so a failed run starts the installed launcher once to show what it says
 async function describeLauncher() {
     console.error('---- the installed language server launcher, started by the harness ----');
     console.error(`JAVA_HOME: ${process.env.JAVA_HOME ?? '(not set)'}`);
     console.error(`java on the path: ${firstJavaOnPath()}`);
     if (process.platform !== 'win32') {
-        // VS Code takes its extension host's environment from a login shell unless its own command line started it
         const login = spawnSync(process.env.SHELL ?? '/bin/sh', ['-ilc', 'echo "JAVA_HOME=$JAVA_HOME"; command -v java; java -version 2>&1'], { encoding: 'utf8', timeout: 30_000 });
         console.error(`in a login shell: ${`${login.stdout}${login.stderr}`.trim()}`);
     }
@@ -123,7 +120,6 @@ async function describeLauncher() {
             resolve(`exited with code ${String(code)}${signal === null ? '' : ` on ${signal}`}`);
         });
     });
-    // on Windows the child is the shell, and the server it started outlives it unless its tree is ended
     if (windows && child.pid !== undefined) {
         spawnSync('taskkill', ['/pid', String(child.pid), '/T', '/F']);
     } else {
@@ -156,7 +152,6 @@ try {
                 '--disable-gpu',
                 '--no-sandbox',
                 '--ozone-platform=headless',
-                // otherwise VS Code gives the extension the Java of a login shell, which need not be the one this run set up
                 '--force-disable-user-env',
                 '--user-data-dir', userDataDirectory,
                 '--extensions-dir', extensionsDirectory,

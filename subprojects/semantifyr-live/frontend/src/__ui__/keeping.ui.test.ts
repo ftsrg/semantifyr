@@ -248,7 +248,6 @@ describe('a share link with results', () => {
     const released = new Promise<void>((resolve) => {
       release = resolve
     })
-    // the receiver's own run replaces the shared verdicts, so it is held while they are read
     ui.backend.answer('verify', async (_request, recorded) => {
       await released
       return recorded()

@@ -35,7 +35,6 @@ function penDigitizer(): void {
   }
 }
 
-// the editor applies typed text at once and draws it in the next frame, so two frames later it shows what it took
 async function drawn(page: Page): Promise<void> {
   await page.evaluate(async () => {
     for (let frame = 0; frame < 2; frame++) {

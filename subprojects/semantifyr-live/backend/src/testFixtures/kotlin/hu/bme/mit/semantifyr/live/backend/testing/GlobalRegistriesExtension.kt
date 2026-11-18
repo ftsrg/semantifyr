@@ -12,7 +12,6 @@ import org.junit.jupiter.api.extension.AfterAllCallback
 import org.junit.jupiter.api.extension.BeforeAllCallback
 import org.junit.jupiter.api.extension.ExtensionContext
 
-// every language setup registers its injector in the JVM-global registries, so each test class puts back what it found
 class GlobalRegistriesExtension :
     BeforeAllCallback,
     AfterAllCallback {

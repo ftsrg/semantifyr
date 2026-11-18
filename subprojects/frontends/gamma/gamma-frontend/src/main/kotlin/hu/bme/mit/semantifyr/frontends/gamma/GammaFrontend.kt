@@ -50,7 +50,6 @@ import kotlin.io.path.writeText
 import kotlin.time.Duration
 import kotlin.time.toKotlinDuration
 
-// the verifier nests its own bounded case directory below this one, and a backend's working directory has to fit Windows' 260 characters
 private const val MAX_GAMMA_CASE_DIRECTORY_LENGTH = 32
 
 data class GammaVerificationCase(

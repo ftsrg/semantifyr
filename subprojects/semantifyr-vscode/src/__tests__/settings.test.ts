@@ -102,7 +102,6 @@ describe('settings reaching the server', () => {
         state.configurationChanged.fire({ affectsConfiguration: (section) => section === 'editor' });
         subscription.dispose();
         state.configurationChanged.fire({ affectsConfiguration: () => true });
-        // the connection keeps the order of its messages, so a marker sent last arrives after any settings sent before it
         const marked = new Promise<void>((resolve) => {
             client.server.onNotification('test/marker', () => {
                 resolve();
