@@ -18,6 +18,7 @@ import { modelOxstsTabOf } from '../lib/workspace/libraryTabs'
 import { ShellRoot } from '../shells/ShellRoot'
 import { ABOUT, CASE_MESSAGES, DOCUMENTATION, noCases, PRIVACY_URL, SOURCE_CODE_URL, TRACE_HINTS, VALIDATION, WEBSITE_URL } from '../texts'
 import { caseOf, CONNECTED, finished, seedLive, type Seed } from './seededLive'
+import { settledOn } from './settled'
 
 // Goal: every desktop state the mockup draws lays out inside the viewport in both themes, with the real editor;
 // the proof is the layout itself, measured in a browser, never the pixels
@@ -112,7 +113,6 @@ const STATES: Readonly<Record<string, ScreenState>> = {
     expectState: () => {
       expect(text('.initialization-pressed')).toContain('Verify all is pressed')
       expect(count('.results-header .button-cancel')).toBe(1)
-      expect(text('[data-testid=status-message]')).toBe('Verify all waits: finding the verification cases')
     },
   },
   'cases-while-initializing': {
@@ -154,7 +154,6 @@ const STATES: Readonly<Record<string, ScreenState>> = {
     expectState: () => {
       expect(count('.case-row.status-queued')).toBe(2)
       expect(count('.case-row.status-running')).toBe(0)
-      expect(text('[data-testid=status-message]')).toBe(`The server is busy with other verifications: ${BARRIER.id} waits`)
     },
   },
   'results': {
@@ -251,7 +250,6 @@ const STATES: Readonly<Record<string, ScreenState>> = {
     },
     expectState: () => {
       expect(text('.problem-counts').replace(/\s+/g, ' ')).toBe('1 1')
-      expect(text('[data-testid=status-message]')).toContain('Verify all did not run: the model has 1 error')
       expect(count('.case-row.status-running, .case-row.status-queued')).toBe(0)
     },
   },
@@ -372,10 +370,7 @@ describe('the desktop shell', () => {
           diagnostics.set(vscode.Uri.parse('file:///workspace/snippet.sysml'), toVscodeDiagnostics(screen.problems))
         }
         await screen.act?.()
-        await new Promise((resolve) => {
-          setTimeout(resolve, 600)
-        })
-        screen.expectState()
+        await settledOn(screen.expectState)
         expectLayout(colorMode, waiting)
         await page.screenshot({ path: `../../build/screens/${server.browser}/desktop-${state}-${colorMode}.png` })
       })

@@ -8,10 +8,11 @@ import type { Page } from 'playwright'
 import { describe, expect } from 'vitest'
 
 import { editorKeysOf } from '../testBrowser'
-import { casesListed, editor, test } from './harness'
+import { casesListed, editor, results, statesOf, test } from './harness'
 
 const BUILTIN = 'file:///workspace/.semantifyr/builtin/standard.semantifyr'
 const TRACE_ANNOTATION_LINE = 80
+const BARRIER = '_BarrierDownWhileTrainInCrossing'
 
 // the text of the line the cursor is on in the document shown
 async function currentLine(page: Page): Promise<string> {
@@ -164,5 +165,29 @@ describe('the OXSTS of the model', () => {
       await page.keyboard.press((await editorKeysOf(page)).endOfDocument)
       return (await editor(page).lines.innerText()).replace(/\u00a0/g, ' ')
     }).toContain('// recompiled')
+  })
+})
+
+describe('the margin', () => {
+  test('shows the marks of the shown document\'s cases alone, one state each, after another shell\'s editor showed the same model', async ({ ui }) => {
+    const page = await ui.open('/language/level-crossing?library=gamma', { height: 5800 })
+    await casesListed(page)
+    await results(page).row(BARRIER).getByRole('button', { name: `Run ${BARRIER}` }).click()
+    await expect.poll(async () => {
+      return statesOf(editor(page).marks, 'verdict-glyph-')
+    }).toEqual(['failed', 'not-run'])
+
+    await page.setViewportSize({ width: 390, height: 844 })
+    await expect.poll(async () => {
+      return page.getByTestId('phone-shell').count()
+    }).toBe(1)
+    await page.setViewportSize({ width: 1440, height: 5800 })
+    await expect.poll(async () => {
+      return page.getByTestId('desktop-shell').count()
+    }).toBe(1)
+
+    await expect.poll(async () => {
+      return statesOf(editor(page).marks, 'verdict-glyph-')
+    }).toEqual(['failed', 'not-run'])
   })
 })

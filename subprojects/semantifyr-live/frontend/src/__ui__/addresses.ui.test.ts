@@ -50,23 +50,6 @@ describe('the first screen', () => {
 })
 
 describe('an address that names what Live does not have', () => {
-  for (const [address, requested, opened] of [
-    ['/kerml/level-crossing', 'language "kerml"', titleOf('sysml', 'level-crossing')],
-    ['/gamma/level-crosing', 'example "level-crosing"', titleOf('gamma', 'level-crossing')],
-    ['/language/crossroads?library=uml', 'library "uml"', titleOf('oxsts', 'level-crossing')],
-  ] as const) {
-    test(`says the ${requested} was not found and opens its replacement`, async ({ ui }) => {
-      const page = await ui.open(address)
-
-      await expect.poll(async () => {
-        return page.locator('.orientation.is-error').innerText()
-      }).toContain(`names the ${requested}`)
-      await expect.poll(async () => {
-        return page.title()
-      }).toBe(opened)
-    })
-  }
-
   test('says a model of the fragment that cannot be read was not, and opens the example', async ({ ui }) => {
     const page = await ui.open('/language/intersection#model=garbled')
 

@@ -5,7 +5,7 @@
  */
 
 import { createRoot } from 'react-dom/client'
-import { afterAll, describe, expect, it, onTestFinished, vi } from 'vitest'
+import { describe, expect, it, onTestFinished } from 'vitest'
 import { page, server, userEvent } from 'vitest/browser'
 
 import { initializeMonaco } from '../lib/session/monaco'
@@ -13,6 +13,7 @@ import { LiveContext } from '../lib/workspace/liveContext'
 import { ShellContext } from '../shells/shellContext'
 import { ShellRoot } from '../shells/ShellRoot'
 import { CaseTrace } from '../trace/CaseTrace'
+import { settledOn } from './settled'
 import { caseState, LANGUAGES, seedWithTrace } from './traces'
 
 import '@semantifyr/editor-common/tokens.css'
@@ -227,98 +228,8 @@ async function settle(state: TraceState): Promise<void> {
     await chooseView(state.view)
   }
   await state.act?.()
-  await new Promise((resolve) => {
-    setTimeout(resolve, 400)
-  })
+  await settledOn(state.expectState)
 }
-
-afterAll(async () => {
-  await page.viewport(1440, 900)
-})
-
-describe('the chosen view of the trace', () => {
-  it('stays chosen for the next case, and falls back to the first view for a trace without it', async () => {
-    await page.viewport(1440, 900)
-    const language = LANGUAGES.sysml!
-    const first = caseState(language, { validated: false, recorded: true })
-    const second: typeof first = { ...first, caseInfo: { ...first.caseInfo, id: 'TwoTrainsCanBeInTheCrossing', label: 'TwoTrainsCanBeInTheCrossing' } }
-    const withoutText: typeof first = { ...first, caseInfo: { ...first.caseInfo, id: 'NoText', label: 'NoText' }, trace: { ...first.trace!, witnessUri: null } }
-    const { live, shell } = seedWithTrace(language, first)
-    const flavor = live.workspace.get().flavor!
-    const container = document.createElement('div')
-    container.style.cssText = 'display: flex; flex-direction: column; width: 600px; height: 760px'
-    document.body.append(container)
-    const root = createRoot(container)
-    onTestFinished(() => {
-      root.unmount()
-      container.remove()
-    })
-    // the view the trace of a newly selected case opens on, once that trace has replaced the one before
-    const show = async (shown: typeof first): Promise<string | null | undefined> => {
-      const before = document.querySelector('.case-trace')
-      root.render(
-        <LiveContext.Provider value={live}>
-          <ShellContext.Provider value={shell}>
-            <CaseTrace caseState={shown} flavor={flavor} />
-          </ShellContext.Provider>
-        </LiveContext.Provider>,
-      )
-      await expect.poll(() => {
-        const current = document.querySelector('.case-trace')
-        return current !== null && current !== before
-      }).toBe(true)
-      return document.querySelector('.case-trace')?.getAttribute('data-view')
-    }
-    await initializeMonaco('light')
-    expect(await show(first)).toBe('own')
-    await chooseView('calls')
-    expect(await show(second)).toBe('calls')
-    await chooseView('witness')
-    expect(await show(withoutText)).toBe('own')
-    expect(await show(first)).toBe('witness')
-  })
-})
-
-describe('the text of a trace', () => {
-  it('stays in its view after the extension host lets go of its document', async () => {
-    await page.viewport(1440, 900)
-    await initializeMonaco('light')
-    const language = LANGUAGES.sysml!
-    const traced = caseState(language, { validated: false, recorded: true })
-    // a document of its own, which no test before opened
-    const witnessUri = 'file:///workspace/traces/Kept.trace.sysml'
-    const kept: typeof traced = { ...traced, caseInfo: { ...traced.caseInfo, id: 'Kept', label: 'Kept' }, trace: { ...traced.trace!, witnessUri } }
-    const { live, shell } = seedWithTrace(language, kept)
-    const sysmlTrace = await live.workspace.get().runtime!.api.readDocument(language.traceUri)
-    live.workspace.get().runtime!.api.readDocument = () => {
-      return Promise.resolve(sysmlTrace)
-    }
-    const container = document.createElement('div')
-    container.style.cssText = 'display: flex; flex-direction: column; width: 600px; height: 760px'
-    document.body.append(container)
-    const root = createRoot(container)
-    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'], shouldAdvanceTime: true })
-    onTestFinished(() => {
-      vi.useRealTimers()
-      root.unmount()
-      container.remove()
-    })
-    root.render(
-      <LiveContext.Provider value={live}>
-        <ShellContext.Provider value={shell}>
-          <CaseTrace caseState={kept} flavor={live.workspace.get().flavor!} />
-        </ShellContext.Provider>
-      </LiveContext.Provider>,
-    )
-    await editorShows('part def BarrierDownWhileTrainInCrossingTrace')
-    vi.advanceTimersByTime(4 * 60 * 1000)
-    await new Promise((resolve) => {
-      setTimeout(resolve, 500)
-    })
-    expect(count('.case-trace .trace-editor .monaco-editor')).toBe(1)
-    expect(text('.case-trace .trace-editor .view-lines')).toContain('part def BarrierDownWhileTrainInCrossingTrace')
-  })
-})
 
 describe('the documents menu', () => {
   // the headings of the groups and the first entries under each
@@ -341,7 +252,6 @@ describe('the documents menu', () => {
   }
   for (const [languageName, { headings, first, filtered }] of Object.entries(ENTRIES)) {
     it(`opens the selected case's trace texts in ${languageName} as the trace area's Open does`, async () => {
-      await page.viewport(1440, 900)
       const language = LANGUAGES[languageName]!
       const { live, shell } = seedWithTrace(language, caseState(language, { validated: false, recorded: true }))
       const container = document.createElement('div')
@@ -392,8 +302,7 @@ describe('the trace area', () => {
   for (const colorMode of ['light', 'dark'] as const) {
     for (const [name, state] of Object.entries(STATES_BY_NAME)) {
       it(`shows ${name} in the desktop column in the ${colorMode} theme`, async () => {
-        await page.viewport(1440, 900)
-        const language = LANGUAGES[state.language]!
+          const language = LANGUAGES[state.language]!
         const { live, shell } = seedWithTrace(language, caseState(language, { validated: state.validated ?? false, recorded: state.recorded ?? true }))
         const container = document.createElement('div')
         document.body.append(container)
@@ -407,7 +316,6 @@ describe('the trace area', () => {
           return document.querySelector('.monaco-editor .view-line') && document.querySelector('.case-trace')
         }, { timeout: 60_000 }).toBeTruthy()
         await settle(state)
-        await state.expectState()
         expectLayout()
         await page.screenshot({ path: `../../build/screens/${server.browser}/trace-${name}-${colorMode}.png` })
       })
@@ -416,7 +324,18 @@ describe('the trace area', () => {
     for (const name of PHONE_STATES) {
       it(`shows ${name} at phone width in the ${colorMode} theme`, async () => {
         await page.viewport(360, 760)
+        onTestFinished(async () => {
+          await page.viewport(1440, 900)
+        })
+        const theme = document.documentElement.dataset.theme
         document.documentElement.dataset.theme = colorMode
+        onTestFinished(() => {
+          if (theme === undefined) {
+            delete document.documentElement.dataset.theme
+          } else {
+            document.documentElement.dataset.theme = theme
+          }
+        })
         await initializeMonaco(colorMode)
         const state = STATES_BY_NAME[name]!
         const language = LANGUAGES[state.language]!
@@ -442,7 +361,6 @@ describe('the trace area', () => {
           return document.querySelector('.case-trace')
         }).toBeTruthy()
         await settle(state)
-        await state.expectState()
         expectLayout()
         expect(count('.frame-open'), 'no tab to open').toBe(0)
         await page.screenshot({ path: `../../build/screens/${server.browser}/trace-phone-${name}-${colorMode}.png` })

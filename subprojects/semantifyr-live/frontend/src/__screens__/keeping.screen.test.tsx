@@ -13,6 +13,7 @@ import type { VerificationCaseState, VerificationState } from '../lib/verificati
 import type { SharedResults } from '../lib/workspace/sharedResults'
 import { ShellRoot } from '../shells/ShellRoot'
 import { caseOf, finished, seedLive, type Seed } from './seededLive'
+import { settledOn } from './settled'
 import { colorModes } from './themes'
 
 // Goal: each state of keeping work the mockup draws shows the element that tells it from the plain screen, in both themes
@@ -53,6 +54,8 @@ function count(selector: string): number {
   return document.querySelectorAll(selector).length
 }
 
+let saveOptionsWidth = 0
+
 interface ScreenState {
   seed: Seed
   act?: () => Promise<void>
@@ -81,12 +84,12 @@ const STATES: Readonly<Record<string, ScreenState>> = {
   'save-menu': {
     seed: { unsaved: true, verification: discovered([{ caseInfo: BARRIER, status: 'stale' }, { caseInfo: TWO_TRAINS, status: 'stale' }], 'idle') },
     act: async () => {
-      document.querySelector<HTMLElement>('.save-split button[aria-label="Save options"]')?.click()
-      await new Promise((resolve) => {
-        setTimeout(resolve, 500)
-      })
+      const options = document.querySelector<HTMLElement>('.save-split button[aria-label="Save options"]')!
+      saveOptionsWidth = options.getBoundingClientRect().width
+      await userEvent.click(options)
     },
     expectState: () => {
+      expect(document.querySelector('.save-split button[aria-label="Save options"]')!.getBoundingClientRect().width, 'the save options button keeps its width').toBe(saveOptionsWidth)
       expect(text('.save-menu')).toContain('Ctrl Shift S')
       expect(text('.save-menu')).toContain('Save as...')
       expect(text('.save-menu .save-note')).toContain('Save ')
@@ -110,9 +113,6 @@ const STATES: Readonly<Record<string, ScreenState>> = {
         return button.innerText.trim() === 'Share'
       })
       share?.click()
-      await new Promise((resolve) => {
-        setTimeout(resolve, 800)
-      })
     },
     expectState: () => {
       expect(document.querySelector('[role=radiogroup] [role=radio][aria-checked=true]')?.textContent).toContain('With results')
@@ -163,10 +163,7 @@ describe('keeping work in the desktop shell', () => {
           return document.querySelector('.monaco-editor .view-line')
         }, { timeout: 60_000 }).toBeTruthy()
         await screen.act?.()
-        await new Promise((resolve) => {
-          setTimeout(resolve, 600)
-        })
-        screen.expectState()
+        await settledOn(screen.expectState)
         const documentRoot = document.documentElement
         expect(documentRoot.scrollWidth, 'horizontal overflow').toBeLessThanOrEqual(documentRoot.clientWidth)
         expect(getComputedStyle(document.body).backgroundColor).toBe(BACKGROUNDS[colorMode])
@@ -174,26 +171,4 @@ describe('keeping work in the desktop shell', () => {
       })
     }
   }
-
-  it('keeps the save options button its width while its menu is open', async () => {
-    const { live, shell } = seedLive({ verification: discovered([{ caseInfo: BARRIER, status: 'stale' }, { caseInfo: TWO_TRAINS, status: 'stale' }], 'idle') })
-    const container = document.createElement('div')
-    document.body.append(container)
-    const root = createRoot(container)
-    onTestFinished(() => {
-      root.unmount()
-      container.remove()
-    })
-    root.render(<ShellRoot live={live} shell={shell} colorMode="light" />)
-    await expect.poll(() => {
-      return document.querySelector('.save-split [aria-label="Save options"]')
-    }).toBeTruthy()
-    const options = document.querySelector<HTMLElement>('.save-split [aria-label="Save options"]')!
-    const closed = options.getBoundingClientRect().width
-    await userEvent.click(options)
-    await expect.poll(() => {
-      return count('.save-menu')
-    }).toBe(1)
-    expect(options.getBoundingClientRect().width).toBe(closed)
-  })
 })

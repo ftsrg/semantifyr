@@ -188,21 +188,3 @@ export async function editorWorkerLoaded(page: Page): Promise<void> {
     return loaded.includes(true)
   }).toBe(true)
 }
-
-// collects every text the status line shows from the page's start, which a test reads with seenStatusTexts
-export function watchStatusTexts(): void {
-  const seen = new Set<string>()
-  Object.assign(window, { statusTexts: seen })
-  new MutationObserver(() => {
-    const text = document.querySelector<HTMLElement>('[data-testid=status-message]')?.innerText
-    if (text !== undefined) {
-      seen.add(text)
-    }
-  }).observe(document, { subtree: true, childList: true, characterData: true })
-}
-
-export async function seenStatusTexts(page: Page): Promise<string[]> {
-  return page.evaluate(() => {
-    return [...(window as unknown as { statusTexts: Set<string> }).statusTexts]
-  })
-}

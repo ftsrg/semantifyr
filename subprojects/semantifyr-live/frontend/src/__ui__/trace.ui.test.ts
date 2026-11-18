@@ -123,6 +123,40 @@ describe('the views of a trace', () => {
   })
 })
 
+describe('the chosen view of a trace', () => {
+  test('stays chosen for the case selected next', async ({ ui }) => {
+    const page = await traced(ui, '/gamma/level-crossing')
+    await showView(page, 'calls')
+    const next = results(page).rows.and(page.locator(':not([aria-selected="true"])')).first()
+    const name = await next.locator('.case-name').innerText()
+
+    await next.click()
+
+    await expect.poll(async () => {
+      return results(page).trace.locator('.trace-title').innerText()
+    }).toContain(name)
+    expect(await caseTrace(page).getAttribute('data-view')).toBe('calls')
+  })
+})
+
+describe('the text of a trace in its view', () => {
+  test('stays shown after the extension host lets go of its document', async ({ ui }) => {
+    const page = await ui.open('/sysml/level-crossing')
+    await page.clock.install()
+    await casesListed(page)
+    await results(page).verifyAll.click()
+    const text = caseTrace(page).locator('.trace-editor .view-lines')
+    await expect.poll(async () => {
+      return text.innerText()
+    }, { timeout: 60_000 }).toContain('Trace')
+
+    await page.clock.fastForward('04:00')
+
+    expect(await caseTrace(page).locator('.trace-editor .monaco-editor').count()).toBe(1)
+    expect(await text.innerText()).toContain('Trace')
+  })
+})
+
 describe('a trace text over a scrolled model', () => {
   test('opens as a tab with none of the model\'s sticky lines over it, and the model tab shows them again', async ({ ui }) => {
     const page = await traced(ui, '/sysml/level-crossing')
@@ -137,7 +171,9 @@ describe('a trace text over a scrolled model', () => {
     await expect.poll(async () => {
       return editor(page).selectedTab.innerText()
     }).toMatch(/Trace\.sysml$/)
-    await page.waitForTimeout(1000)
+    await expect.poll(async () => {
+      return editor(page).lines.innerText()
+    }, { timeout: 30_000 }).toContain('Trace')
     expect(await sticky.innerText()).toBe('')
     await editor(page).tabs.first().click()
 
@@ -148,6 +184,19 @@ describe('a trace text over a scrolled model', () => {
 })
 
 describe('the documents control', () => {
+  test('filters the long list of the SysML library files', async ({ ui }) => {
+    const page = await ui.open('/sysml/level-crossing')
+    await casesListed(page)
+    await page.getByRole('button', { name: 'Read-only documents' }).click()
+
+    await page.locator('.documents-filter').fill('scalarvalues')
+
+    await expect.poll(async () => {
+      return page.locator('.documents-group[aria-label$="library"] .menu-item-label').allInnerTexts()
+    }).toEqual(['ScalarValues.kerml'])
+  })
+
+
   test('lists the documents of the selected case and follows the selection', async ({ ui }) => {
     const page = await traced(ui, '/gamma/level-crossing')
     const entries = async (): Promise<string[]> => {
