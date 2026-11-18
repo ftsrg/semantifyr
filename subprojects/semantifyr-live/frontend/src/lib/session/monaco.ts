@@ -372,7 +372,7 @@ export async function createEditor(
   };
   const editorApp = new EditorApp(editorAppConfig);
   await editorApp.start(host);
-  // a menu the user opened while the editor started keeps the focus, and with it stays open
+  // a control the user is on keeps the focus, and with it an open menu stays open
   if (document.activeElement === null || document.activeElement === document.body) {
     try {
       editorApp.getEditor()?.focus();
