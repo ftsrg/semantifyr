@@ -6,6 +6,7 @@
 
 package hu.bme.mit.semantifyr.benchmark
 
+import kotlinx.serialization.json.jsonObject
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
@@ -90,6 +91,13 @@ class BenchmarkFileTest {
 
         val read = benchmarkJson.decodeFromString(serializer, written)
 
+        assertThat(benchmarkJson.parseToJsonElement(written).jsonObject.keys).containsExactly(
+            "benchmark",
+            "startedAt",
+            "context",
+            "configurations",
+            "repetitions",
+        )
         assertThat(benchmarkJson.encodeToString(serializer, read)).isEqualTo(written)
         assertThat(read.repetitions).isEqualTo(run.repetitions)
         assertThat(read.configurations).isEqualTo(run.configurations)

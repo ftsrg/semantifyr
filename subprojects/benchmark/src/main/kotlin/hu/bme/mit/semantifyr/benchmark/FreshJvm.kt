@@ -81,24 +81,37 @@ internal fun <R> startFreshJvm(
 object FreshJvm {
     @JvmStatic
     fun main(arguments: Array<String>) {
-        val (runClassName, input, directoryName, runexecExecutable, runexecVersion) = arguments
-        val directory = Path(directoryName)
+        val (runClassName, input, directory, runexecExecutable, runexecVersion) = arguments
+        repeatInThisProcess(runClassName, input, Path(directory), Runexec(runexecExecutable, runexecVersion))
+        exitProcess(0)
+    }
+
+    internal fun repeatInThisProcess(
+        runClassName: String,
+        input: String,
+        directory: Path,
+        runexec: Runexec,
+    ) {
         val runClass = Class.forName(runClassName)
         val run = try {
             val constructor = runClass.constructors.single()
             constructor.newInstance(benchmarkJson.decodeFromString(serializer(constructor.genericParameterTypes.single()), input)) as FreshJvmRun<*>
         } catch (throwable: Throwable) {
             writeFailure(directory, Failure(Stage.Setup, throwable.stackTraceToString()))
-            exitProcess(0)
+            return
         }
-        val measurement = Measurement(Runexec(runexecExecutable, runexecVersion), null, directory)
+        val callsSerializer = ListSerializer(Call.serializer(resultSerializer(runClass)))
+        val measurement = Measurement(runexec, null, directory)
+        // a JVM cut at its time limit keeps the calls it finished
+        measurement.writeFinishedCalls = {
+            writeAtomically(directory.resolve(CALLS_FILE), benchmarkJson.encodeToString(callsSerializer, it))
+        }
         try {
             val calls = measurement.calls(run.run(measurement))
-            writeAtomically(directory.resolve(CALLS_FILE), benchmarkJson.encodeToString(ListSerializer(Call.serializer(resultSerializer(runClass))), calls))
+            writeAtomically(directory.resolve(CALLS_FILE), benchmarkJson.encodeToString(callsSerializer, calls))
         } catch (throwable: Throwable) {
             writeFailure(directory, measurement.failure(throwable))
         }
-        exitProcess(0)
     }
 
     private fun writeFailure(directory: Path, failure: Failure) {

@@ -6,10 +6,13 @@
 
 package hu.bme.mit.semantifyr.benchmark
 
+import hu.bme.mit.semantifyr.logging.info
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.serializer
+import org.slf4j.LoggerFactory
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
@@ -17,6 +20,8 @@ import kotlin.io.path.Path
 import kotlin.io.path.readText
 import kotlin.io.path.writeText
 import kotlin.time.Duration
+
+private val logger = LoggerFactory.getLogger("hu.bme.mit.semantifyr.benchmark.BenchmarkRun")
 
 @Serializable
 class BenchmarkRun<R> {
@@ -28,8 +33,10 @@ class BenchmarkRun<R> {
 
     private val context = mutableMapOf<String, JsonElement>()
 
+    @SerialName("configurations")
     private val configurationValues = mutableMapOf<String, JsonElement>()
 
+    @SerialName("repetitions")
     private val recordedRepetitions = mutableListOf<Repetition<R>>()
 
     val configurations: Map<String, JsonElement>
@@ -68,6 +75,18 @@ class BenchmarkRun<R> {
     ) {
         configurationValues[configuration] = value
         recordedRepetitions += Repetition(configuration, measured.hostState, measured.timeLimit, measured.jvm, measured.calls, measured.failure)
+        logger.info { "Repetition ${recordedRepetitions.size}: $configuration" }
+        BenchmarkEnvironment.written(this)
+    }
+
+    internal fun describe(
+        benchmark: String,
+        startedAt: String,
+        context: Map<String, JsonElement>,
+    ) {
+        this.benchmark = benchmark
+        this.startedAt = startedAt
+        this.context.putAll(context)
     }
 
     fun repetitionsOf(configuration: String): List<Repetition<R>> {

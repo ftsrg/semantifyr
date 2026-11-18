@@ -10,7 +10,10 @@ import hu.bme.mit.semantifyr.logging.error
 import hu.bme.mit.semantifyr.logging.info
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.serializer
+import org.apache.logging.log4j.Level
+import org.apache.logging.log4j.core.config.Configurator
 import org.slf4j.LoggerFactory
 import java.io.File
 import java.lang.reflect.ParameterizedType
@@ -27,22 +30,48 @@ import kotlin.system.exitProcess
 
 private val logger = LoggerFactory.getLogger("hu.bme.mit.semantifyr.benchmark.BenchmarkRunner")
 
+internal class RunOutput(
+    val benchmark: String,
+    val startedAt: String,
+    val file: Path,
+    private val context: Map<String, JsonElement>,
+    private val serializer: KSerializer<out BenchmarkRun<*>>,
+) {
+    @Suppress("UNCHECKED_CAST")
+    fun write(run: BenchmarkRun<*>) {
+        run.describe(benchmark, startedAt, context)
+        writeAtomically(file, benchmarkJson.encodeToString(serializer as KSerializer<BenchmarkRun<*>>, run))
+    }
+}
+
 internal object BenchmarkEnvironment {
     lateinit var runexec: Runexec
+        private set
 
-    private lateinit var runDirectory: Path
+    private lateinit var directory: Path
+
+    private var output: RunOutput? = null
 
     private var repetitions = 0
 
-    fun start(runexec: Runexec, runDirectory: Path) {
+    fun start(
+        runexec: Runexec,
+        directory: Path,
+        output: RunOutput?,
+    ) {
         this.runexec = runexec
-        this.runDirectory = runDirectory
+        this.directory = directory
+        this.output = output
         repetitions = 0
     }
 
     fun nextDirectory(): Path {
         repetitions += 1
-        return runDirectory.resolve("repetition-$repetitions").createDirectories()
+        return directory.resolve("repetition-$repetitions").createDirectories()
+    }
+
+    fun written(run: BenchmarkRun<*>) {
+        output?.write(run)
     }
 }
 
@@ -53,6 +82,7 @@ fun main(arguments: Array<String>) {
         logger.error { "No benchmark is named $name" }
         exitProcess(1)
     }
+    Configurator.setLevel(benchmarkClass.name, Level.INFO)
     val benchmark = benchmarkClass.getDeclaredConstructor().newInstance() as Benchmark<*>
     val files = arguments.drop(1)
     try {
@@ -86,21 +116,20 @@ internal fun <R> measureAndWrite(
     val name = benchmark.javaClass.simpleName
     val startedAt = Instant.now().toString()
     val runDirectory = outputDirectory.resolve(name).resolve(startedAt.replace(':', '-'))
-    BenchmarkEnvironment.start(runexec, runDirectory)
-    benchmark.setUp()
-    val run = benchmark.measure()
-    run.benchmark = name
-    run.startedAt = startedAt
+    val file = runDirectory.resolveSibling("${runDirectory.fileName}.json").createParentDirectories()
     val runexecSource = object : ContextSource<String>("runexec", String.serializer()) {
         override fun record(): String {
             return runexec.version
         }
     }
-    for (source in listOf(CodeRevision, Host, Jvm, runexecSource)) {
-        run.record(source)
+    val context = listOf(CodeRevision, Host, Jvm, runexecSource).associate {
+        it.name to it.recordAsJson()
     }
-    val file = runDirectory.resolveSibling("${runDirectory.fileName}.json").createParentDirectories()
-    writeAtomically(file, benchmarkJson.encodeToString(BenchmarkRun.serializer(resultSerializer(benchmark)), run))
+    BenchmarkEnvironment.start(runexec, runDirectory, RunOutput(name, startedAt, file, context, BenchmarkRun.serializer(resultSerializer(benchmark))))
+    logger.info { "Writing $file" }
+    benchmark.setUp()
+    val run = benchmark.measure()
+    BenchmarkEnvironment.written(run)
     val loads = run.repetitions.map {
         it.hostState.loadBefore.oneMinute
     }

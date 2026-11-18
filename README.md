@@ -52,10 +52,10 @@ A benchmark runs only on Linux with [BenchExec](https://github.com/sosy-lab/benc
     python3 -m venv ~/.local/benchexec
     ~/.local/benchexec/bin/pip install 'benchexec[systemd]==3.35'
 
-The `systemd` extra lets `runexec` create its cgroups through the user's systemd instance, which needs the `cpu`, `memory` and `pids` controllers delegated to the user (`cat /sys/fs/cgroup/user.slice/user-$(id -u).slice/user@$(id -u).service/cgroup.subtree_control`); BenchExec's [installation guide](https://github.com/sosy-lab/benchexec/blob/main/doc/INSTALL.md#setting-up-cgroups) describes the delegation. Run a benchmark by its class name with `runexec` on `PATH` or named by `-Prunexec`, and a program over the file it wrote:
+The `systemd` extra lets `runexec` create its cgroups through the user's systemd instance, which needs the `cpu`, `memory` and `pids` controllers delegated to the user (`cat /sys/fs/cgroup/user.slice/user-$(id -u).slice/user@$(id -u).service/cgroup.subtree_control`); BenchExec's [installation guide](https://github.com/sosy-lab/benchexec/blob/main/doc/INSTALL.md#setting-up-cgroups) describes the delegation. A module's `benchmark` task runs a benchmark by its class name, with `runexec` on `PATH` or named by `-Prunexec`, writes its run to `build/benchmark/<class>/<start>.json` and then runs the benchmark's analysis; with written files after the class name, it runs only the analysis over them:
 
     ./gradlew :compiler:benchmark --args=CompilationPhasesBenchmark -Prunexec=$HOME/.local/benchexec/bin/runexec
-    ./gradlew :compiler:benchmarkProgram --args="CompilationPhasesRelation build/benchmark/CompilationPhasesBenchmark/<run>.json"
+    ./gradlew :compiler:benchmark --args="CompilationPhasesBenchmark build/benchmark/CompilationPhasesBenchmark/<start>.json"
 
 ## Contributing
 

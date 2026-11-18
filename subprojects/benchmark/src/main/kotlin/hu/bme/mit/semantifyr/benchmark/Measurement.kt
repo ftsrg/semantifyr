@@ -23,6 +23,8 @@ class Measurement internal constructor(
 
     private val opened = mutableListOf<Instruments>()
 
+    internal var writeFinishedCalls: ((List<Call<Any?>>) -> Unit)? = null
+
     fun warmUp(): Instruments {
         return open(true)
     }
@@ -32,6 +34,11 @@ class Measurement internal constructor(
     }
 
     private fun open(warmUp: Boolean): Instruments {
+        writeFinishedCalls?.invoke(
+            opened.map {
+                Call(it.warmUp, it.spans.observations.toList(), it.processes.observations.toList(), null)
+            },
+        )
         val instruments = Instruments(warmUp, runexec, deadline, directory.resolve("call-${opened.size + 1}").createDirectories())
         opened += instruments
         return instruments
@@ -44,7 +51,10 @@ class Measurement internal constructor(
         if (measurementFailure != null) {
             throw measurementFailure
         }
-        if (opened.none { !it.warmUp }) {
+        val measuredOpened = opened.any {
+            !it.warmUp
+        }
+        if (!measuredOpened) {
             open(false)
         }
         val resultIndex = opened.indexOfLast {

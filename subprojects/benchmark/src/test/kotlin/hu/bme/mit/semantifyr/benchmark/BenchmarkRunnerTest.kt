@@ -6,11 +6,15 @@
 
 package hu.bme.mit.semantifyr.benchmark
 
+import kotlinx.serialization.builtins.ListSerializer
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Path
 import java.nio.file.attribute.PosixFilePermissions
+import kotlin.io.path.listDirectoryEntries
+import kotlin.io.path.readText
 import kotlin.io.path.setPosixFilePermissions
 import kotlin.io.path.writeText
 
@@ -21,6 +25,31 @@ class OutOfMemoryRun(cell: ModelCell) : FreshJvmRun<BackendAnswer> {
 
     override fun run(measurement: Measurement): BackendAnswer {
         return BackendAnswer("Passed", null)
+    }
+}
+
+class CutRun(cell: ModelCell) : FreshJvmRun<BackendAnswer> {
+    private val model = cell.model
+
+    override fun run(measurement: Measurement): BackendAnswer {
+        repeat(2) {
+            measurement.warmUp().spans.measure(model) {
+                model.length
+            }
+        }
+        measurement.measured()
+        throw Error("cut at the time limit")
+    }
+}
+
+class StoppingBenchmark : Benchmark<BackendAnswer>() {
+    override fun measure(): BenchmarkRun<BackendAnswer> {
+        val run = BenchmarkRun<BackendAnswer>()
+        val measured = inThisJvm {
+            BackendAnswer("Passed", null)
+        }
+        run.add("crossroads/all", ModelCell("crossroads", emptySet()), measured)
+        error("the prework of the next repetition failed")
     }
 }
 
@@ -37,7 +66,7 @@ class BenchmarkRunnerTest {
     }
 
     private fun start(runexec: String) {
-        BenchmarkEnvironment.start(Runexec.probe(runexec), directory.resolve("benchmark"))
+        BenchmarkEnvironment.start(Runexec.probe(runexec), directory.resolve("benchmark"), null)
     }
 
     @Test
@@ -60,13 +89,41 @@ class BenchmarkRunnerTest {
     }
 
     @Test
-    fun `an error thrown while a fresh JVM creates its run reaches the repetition`() {
-        start(standIn("stand-in.sh"))
+    fun `an error thrown while a fresh JVM creates its run is its failed setup`() {
+        val input = benchmarkJson.encodeToString(ModelCell.serializer(), ModelCell("crossroads", emptySet()))
 
-        val measured = freshJvm(OutOfMemoryRun::class, ModelCell("crossroads", emptySet()))
+        FreshJvm.repeatInThisProcess(OutOfMemoryRun::class.java.name, input, directory, Runexec("runexec", "runexec 3.35"))
 
-        assertThat(measured.failure?.stage).isEqualTo(Stage.Setup)
-        assertThat(measured.failure?.stackTrace).contains("OutOfMemoryError")
-        assertThat(measured.jvm).isNotNull()
+        val failure = benchmarkJson.decodeFromString(Failure.serializer(), directory.resolve("failure.json").readText())
+        assertThat(failure.stage).isEqualTo(Stage.Setup)
+        assertThat(failure.stackTrace).contains("OutOfMemoryError")
+    }
+
+    @Test
+    fun `a measure that stops leaves the repetitions added before it in the run's file`() {
+        val outputDirectory = directory.resolve("benchmark")
+
+        assertThatThrownBy {
+            measureAndWrite(StoppingBenchmark(), standIn("stand-in.sh"), outputDirectory)
+        }.hasMessageContaining("prework")
+
+        val file = outputDirectory.resolve("StoppingBenchmark").listDirectoryEntries("*.json").single()
+        val run = benchmarkJson.decodeFromString(BenchmarkRun.serializer(BackendAnswer.serializer()), file.readText())
+        assertThat(run.repetitions).hasSize(1)
+        assertThat(run.context(CodeRevision)).isNotNull()
+    }
+
+    @Test
+    fun `a fresh JVM keeps the calls it finished before it stops`() {
+        val input = benchmarkJson.encodeToString(ModelCell.serializer(), ModelCell("crossroads", emptySet()))
+
+        FreshJvm.repeatInThisProcess(CutRun::class.java.name, input, directory, Runexec("runexec", "runexec 3.35"))
+
+        val calls = benchmarkJson.decodeFromString(ListSerializer(Call.serializer(BackendAnswer.serializer())), directory.resolve("calls.json").readText())
+        assertThat(calls).hasSize(2).allSatisfy {
+            assertThat(it.warmUp).isTrue()
+            assertThat(it.spans).hasSize(1)
+        }
+        assertThat(directory.resolve("failure.json")).exists()
     }
 }
