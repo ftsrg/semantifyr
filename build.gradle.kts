@@ -9,7 +9,7 @@ plugins {
     alias(libs.plugins.kotlin.serialization) apply false
     alias(libs.plugins.sonarqube)
     alias(libs.plugins.dokka)
-    `jacoco-report-aggregation`
+    jacoco
 }
 
 val javadocModules = listOf("oxsts.lang", "oxsts.model")
@@ -32,9 +32,6 @@ val apiDocsDirectory = layout.buildDirectory.dir("api")
 
 dependencies {
     subprojects.forEach { subproject ->
-        subproject.plugins.withId("hu.bme.mit.semantifyr.gradle.conventions.jvm") {
-            jacocoAggregation(project(subproject.path))
-        }
         subproject.plugins.withId("org.jetbrains.kotlin.jvm") {
             if (subproject.name !in javadocModules) {
                 dokka(project(subproject.path))
@@ -111,10 +108,36 @@ tasks.register("nightly") {
     )
 }
 
+// the coverage of every suite that ran, over the main code of every module
+val coverageReport = tasks.register<JacocoReport>("coverageReport") {
+    group = "verification"
+    reports {
+        xml.required = true
+    }
+    subprojects.forEach { subproject ->
+        subproject.plugins.withId("hu.bme.mit.semantifyr.gradle.conventions.jvm") {
+            val main = subproject.extensions.getByType<SourceSetContainer>().getByName("main")
+            sourceDirectories.from(main.allSource.srcDirs)
+            classDirectories.from(main.output)
+            executionData.from(
+                subproject.fileTree(subproject.layout.buildDirectory.dir("jacoco")) {
+                    include("*.exec")
+                },
+            )
+            mustRunAfter(subproject.tasks.withType<Test>())
+        }
+    }
+}
+
+tasks.named("sonar") {
+    dependsOn(coverageReport)
+}
+
 val generatedSourceExclusions = "**/src-gen/**,**/generated/**,**/xtext-gen/**,**/emf-gen/**"
 
 sonar {
     properties {
+        property("sonar.coverage.jacoco.xmlReportPaths", coverageReport.get().reports.xml.outputLocation.get().asFile)
         property("sonar.coverage.exclusions", generatedSourceExclusions)
         property("sonar.exclusions", generatedSourceExclusions)
         property("sonar.projectKey", "ftsrg_semantifyr")

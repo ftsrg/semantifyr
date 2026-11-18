@@ -74,12 +74,6 @@ tasks.withType<Test>().configureEach {
     systemProperty("semantifyr.heavyCases", heavyCases.get())
 }
 
-tasks.withType<Test>().matching {
-    it.name != "test"
-}.configureEach {
-    the<JacocoTaskExtension>().isEnabled = false
-}
-
 tasks.withType<JavaExec>().configureEach {
     systemProperty("guice_bytecode_gen_option", "DISABLED")
 }
@@ -122,7 +116,6 @@ testing {
             targets.all {
                 testTask.configure {
                     jvmArgumentProviders.add(MockitoAgentArgumentProvider(files(mockitoAgentClasspath)))
-                    finalizedBy(tasks.jacocoTestReport)
                 }
             }
         }
@@ -131,10 +124,6 @@ testing {
 
 tasks.jacocoTestReport {
     inputs.files(tasks.test)
-}
-
-tasks.named("sonarResolver") {
-    inputs.files(tasks.jacocoTestReport)
 }
 
 // plain values only, as the plugin is not yet updated to providers
@@ -152,11 +141,6 @@ sonar {
         })
         property("sonar.java.test.binaries", nonMainSourceSets.flatMap {
             it.output.classesDirs.files
-        })
-        property("sonar.coverage.jacoco.xmlReportPaths", tasks.withType<JacocoReport>().map {
-            it.reports.xml.outputLocation.get().asFile
-        }.filter {
-            it.exists()
         })
     }
 }
