@@ -20,8 +20,8 @@ import hu.bme.mit.semantifyr.compiler.reader.SemantifyrLoader
 import hu.bme.mit.semantifyr.compiler.reader.SemantifyrModelContext
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
-import hu.bme.mit.semantifyr.oxsts.lang.naming.NamingUtil
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AG
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.EF
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.PropertyDeclaration
@@ -47,6 +47,8 @@ class SemantifyrVerifierTestHelper @Inject constructor(
 ) {
 
     val logger by loggerFactory()
+
+    private val compiledProperties = mutableMapOf<ClassDeclaration, PropertyDeclaration?>()
 
     private fun buildVerifier(
         verificationPortfolio: VerificationPortfolio,
@@ -158,11 +160,14 @@ class SemantifyrVerifierTestHelper @Inject constructor(
         expectsWitness(it, expectedVerdictFromTags(it))
     }
 
-    private fun expectsWitness(case: VerificationCase, verdict: VerificationVerdict): Boolean {
-        val property = case.classDeclaration.eAllContents().asSequence().filterIsInstance<PropertyDeclaration>().firstOrNull {
-            NamingUtil.getName(it) == "prop"
-        } ?: return false
-        return when (property.expression) {
+    // a case may inherit its property, so its root operator is read from the compiled model, once per class since a compilation registers its resources
+    fun expectsWitness(case: VerificationCase, verdict: VerificationVerdict): Boolean {
+        val property = compiledProperties.getOrPut(case.classDeclaration) {
+            val compiler = SemantifyrCompiler(injector, ArtifactConfig.NONE, OptimizationConfig.NONE)
+            val outputDirectory = Path("build", "test-artifacts", "witness-expectation").resolve(caseDirectoryName(case))
+            compiler.compile(case.classDeclaration, outputDirectory).inlinedOxsts.property
+        }
+        return when (property?.expression) {
             is AG -> verdict == VerificationVerdict.Failed
             is EF -> verdict == VerificationVerdict.Passed
             else -> false
