@@ -9,10 +9,7 @@ package hu.bme.mit.semantifyr.gradle.conventions
 plugins {
     id("hu.bme.mit.semantifyr.gradle.conventions.jvm")
     id("hu.bme.mit.semantifyr.gradle.conventions.theta")
-    id("hu.bme.mit.semantifyr.gradle.conventions.adapter")
-    id("hu.bme.mit.semantifyr.gradle.conventions.semantic")
-    id("hu.bme.mit.semantifyr.gradle.conventions.integration")
-    id("hu.bme.mit.semantifyr.gradle.conventions.nightly")
+    id("hu.bme.mit.semantifyr.gradle.conventions.suites")
 }
 
 val cloneOxstsTestModels = tasks.register<Sync>("cloneOxstsTestModels") {

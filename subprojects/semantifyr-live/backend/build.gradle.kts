@@ -10,7 +10,7 @@ import java.time.Instant
 
 plugins {
     id("hu.bme.mit.semantifyr.gradle.conventions.application")
-    id("hu.bme.mit.semantifyr.gradle.conventions.integration")
+    id("hu.bme.mit.semantifyr.gradle.conventions.suites")
     id("hu.bme.mit.semantifyr.gradle.conventions.theta")
     kotlin("jvm")
     kotlin("plugin.serialization")

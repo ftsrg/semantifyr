@@ -7,7 +7,7 @@
 package hu.bme.mit.semantifyr.gradle.conventions
 
 plugins {
-    id("hu.bme.mit.semantifyr.gradle.conventions.nightly")
+    id("hu.bme.mit.semantifyr.gradle.conventions.suites")
 }
 
 // the timed case is one of crossroads' further cases, so the model is compiled with them

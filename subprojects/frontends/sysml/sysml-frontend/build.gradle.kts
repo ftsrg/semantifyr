@@ -10,9 +10,7 @@ import hu.bme.mit.semantifyr.gradle.conventions.semantifyrArtifact
 plugins {
     id("hu.bme.mit.semantifyr.gradle.conventions.jvm")
     id("hu.bme.mit.semantifyr.gradle.conventions.theta")
-    id("hu.bme.mit.semantifyr.gradle.conventions.semantic")
-    id("hu.bme.mit.semantifyr.gradle.conventions.integration")
-    id("hu.bme.mit.semantifyr.gradle.conventions.nightly")
+    id("hu.bme.mit.semantifyr.gradle.conventions.suites")
     kotlin("jvm")
     kotlin("plugin.serialization")
 }

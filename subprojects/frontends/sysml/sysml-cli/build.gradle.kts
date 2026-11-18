@@ -6,7 +6,7 @@
 
 plugins {
     id("hu.bme.mit.semantifyr.gradle.conventions.cli")
-    id("hu.bme.mit.semantifyr.gradle.conventions.integration")
+    id("hu.bme.mit.semantifyr.gradle.conventions.suites")
     kotlin("jvm")
 }
 
