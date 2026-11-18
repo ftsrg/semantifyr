@@ -221,6 +221,7 @@ testing {
         named<JvmTestSuite>("integrationTest") {
             dependencies {
                 implementation(project(":logging"))
+                implementation(project(":oxsts.lang.ide"))
             }
 
             targets.all {

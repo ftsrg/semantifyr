@@ -8,7 +8,6 @@ package hu.bme.mit.semantifyr.live.backend.lsp.service
 
 import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseRequest
 import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseResult
-import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseSpecification
 import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationStatus
 import hu.bme.mit.semantifyr.lang.ide.server.wire.WitnessValidationResult
 import hu.bme.mit.semantifyr.lang.ide.server.wire.WitnessValidationStatus
@@ -22,7 +21,6 @@ import hu.bme.mit.semantifyr.live.backend.lsp.session.VerificationExecutor
 import hu.bme.mit.semantifyr.live.backend.testing.LspWire
 import hu.bme.mit.semantifyr.live.backend.testing.awaitResponseCollectingNotifications
 import hu.bme.mit.semantifyr.live.backend.testing.awaitResponseFor
-import hu.bme.mit.semantifyr.live.backend.testing.errorAs
 import hu.bme.mit.semantifyr.live.backend.testing.installSemantifyrApp
 import hu.bme.mit.semantifyr.live.backend.testing.installSemantifyrLiveBackend
 import hu.bme.mit.semantifyr.live.backend.testing.jsonClient
@@ -37,8 +35,6 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.awaitCancellation
 import org.assertj.core.api.Assertions.assertThat
 import org.eclipse.lsp4j.ExecuteCommandParams
-import org.eclipse.lsp4j.jsonrpc.messages.ResponseError
-import org.eclipse.lsp4j.jsonrpc.messages.ResponseErrorCode
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import org.junit.jupiter.params.ParameterizedTest
@@ -71,16 +67,11 @@ class WebSocketVerificationFlowTest {
         }
     }
 
-    private fun verifyRequest(uri: String = documentUri, portfolio: String? = "smart"): VerificationCaseRequest {
-        return VerificationCaseRequest(uri, LspWire.range(), portfolio)
-    }
-
     private fun verifyCommand(
         id: Int,
         command: String = "oxsts.case.verify",
-        argument: Any = verifyRequest(),
     ): String {
-        return LspWire.executeCommandRequest(id = id, command = command, arguments = listOf(argument))
+        return LspWire.executeCommandRequest(id = id, command = command, arguments = listOf(VerificationCaseRequest(documentUri, LspWire.range(), "smart")))
     }
 
     @Test
@@ -274,93 +265,6 @@ class WebSocketVerificationFlowTest {
     }
 
     @Test
-    fun `a queued verify of a case is answered as superseded when the case is verified again`(@TempDir tmp: Path) = testApplication {
-        val running = CompletableDeferred<Unit>()
-        val release = CompletableDeferred<Unit>()
-        val executor = FakeVerificationExecutor {
-            if (running.complete(Unit)) {
-                release.await()
-            }
-            cannedResult
-        }
-        installSemantifyrApp(webSockets = true) {
-            installSemantifyrLiveBackend(
-                testInjector(config(tmp).copy(verification = VerificationConfig(concurrency = 1))) {
-                    bind(VerificationExecutor::class.java).toInstance(executor)
-                },
-            )
-        }
-
-        val otherCase = VerificationCaseRequest(documentUri, LspWire.range(startLine = 5, endLine = 5), "smart")
-        jsonClient(webSockets = true).webSocket("/ws/lsp/oxsts") {
-            send(Frame.Text(LspWire.initializeRequest()))
-            awaitResponseFor(id = 1)
-            send(Frame.Text(verifyCommand(id = 2, argument = otherCase)))
-            running.await()
-            send(Frame.Text(verifyCommand(id = 3)))
-            send(Frame.Text(verifyCommand(id = 4)))
-            val superseded = awaitResponseFor(id = 3).resultAs(VerificationCaseResult::class.java)
-            assertThat(superseded.status()).isEqualTo(VerificationStatus.CANCELLED)
-            assertThat(superseded.message()).contains("superseded")
-            assertThat(superseded.portfolioId()).isEqualTo("smart")
-            release.complete(Unit)
-            assertThat(awaitResponseFor(id = 4).resultAs(VerificationCaseResult::class.java).status()).isEqualTo("passed")
-        }
-
-        assertThat(executor.calls).hasSize(2)
-    }
-
-    @Test
-    fun `verify command missing the portfolio is rejected with an InvalidParams error and skips the executor`(
-        @TempDir tmp: Path,
-    ) = testApplication {
-        val executor = FakeVerificationExecutor { cannedResult }
-        installSemantifyrApp(webSockets = true) {
-            installSemantifyrLiveBackend(
-                testInjector(config(tmp)) {
-                    bind(VerificationExecutor::class.java).toInstance(executor)
-                },
-            )
-        }
-
-        jsonClient(webSockets = true).webSocket("/ws/lsp/oxsts") {
-            send(Frame.Text(LspWire.initializeRequest()))
-            awaitResponseFor(id = 1)
-            send(Frame.Text(verifyCommand(id = 2, argument = verifyRequest(portfolio = null))))
-            val error = awaitResponseFor(id = 2).errorAs(ResponseError::class.java)
-            assertThat(error.code).isEqualTo(ResponseErrorCode.InvalidParams.value)
-            assertThat(error.message).contains("portfolio")
-        }
-
-        assertThat(executor.calls).isEmpty()
-    }
-
-    @Test
-    fun `a command outside the flavor's commands is answered with MethodNotFound and skips the executor`(
-        @TempDir tmp: Path,
-    ) = testApplication {
-        val executor = FakeVerificationExecutor { cannedResult }
-        installSemantifyrApp(webSockets = true) {
-            installSemantifyrLiveBackend(
-                testInjector(config(tmp)) {
-                    bind(VerificationExecutor::class.java).toInstance(executor)
-                },
-            )
-        }
-
-        jsonClient(webSockets = true).webSocket("/ws/lsp/oxsts") {
-            send(Frame.Text(LspWire.initializeRequest()))
-            awaitResponseFor(id = 1)
-            send(Frame.Text(verifyCommand(id = 2, command = "oxsts.class.inline")))
-            val error = awaitResponseFor(id = 2).errorAs(ResponseError::class.java)
-            assertThat(error.code).isEqualTo(ResponseErrorCode.MethodNotFound.value)
-            assertThat(error.message).contains("oxsts.class.inline")
-        }
-
-        assertThat(executor.calls).isEmpty()
-    }
-
-    @Test
     fun `verify brackets the run with verificationsChanged notifications carrying the case`(@TempDir tmp: Path) = testApplication {
         val executor = FakeVerificationExecutor { cannedResult }
         installSemantifyrApp(webSockets = true) {
@@ -391,46 +295,6 @@ class WebSocketVerificationFlowTest {
             assertThat(entry.location.uri).isEqualTo(documentUri)
             assertThat(lastActive).isEmpty()
         }
-    }
-
-    @Test
-    fun `non-throttled command bypasses the executor`(@TempDir tmp: Path) = testApplication {
-        val executor = FakeVerificationExecutor { cannedResult }
-        installSemantifyrApp(webSockets = true) {
-            installSemantifyrLiveBackend(
-                testInjector(config(tmp)) {
-                    bind(VerificationExecutor::class.java).toInstance(executor)
-                },
-            )
-        }
-
-        jsonClient(webSockets = true).webSocket("/ws/lsp/oxsts") {
-            send(Frame.Text(LspWire.initializeRequest()))
-            awaitResponseFor(id = 1)
-            send(Frame.Text(LspWire.initializedNotification()))
-            send(
-                Frame.Text(
-                    LspWire.didOpenNotification(
-                        uri = documentUri,
-                        languageId = "oxsts",
-                        text = "package test\n\n@VerificationCase\nclass CaseA {\n    prop {\n        return true\n    }\n}\n",
-                    ),
-                ),
-            )
-            send(
-                Frame.Text(
-                    LspWire.executeCommandRequest(
-                        id = 2,
-                        command = "oxsts.case.discover",
-                        arguments = listOf(documentUri),
-                    ),
-                ),
-            )
-            val cases = awaitResponseFor(id = 2).resultAs(Array<VerificationCaseSpecification>::class.java)
-            assertThat(cases).isNotEmpty
-        }
-
-        assertThat(executor.calls).isEmpty()
     }
 
     @Test

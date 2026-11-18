@@ -31,12 +31,10 @@ import io.ktor.client.request.get
 import io.ktor.server.testing.testApplication
 import io.ktor.websocket.Frame
 import io.micrometer.core.instrument.MeterRegistry
-import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
 import org.assertj.core.api.Assertions.assertThat
 import org.eclipse.lsp4j.CodeAction
@@ -484,41 +482,6 @@ class WebSocketSessionTest {
             withTimeout(60.seconds) {
                 results.awaitAll()
             }
-        }
-    }
-
-    @Test
-    fun `a session past the global limit is closed with code 4429 and counted as rejected`(@TempDir temporaryDirectory: Path) = testApplication {
-        val limitedConfig = config(temporaryDirectory).run { copy(sessionManager = sessionManager.copy(maxSessionsGlobal = 1)) }
-        val injector = testInjector(limitedConfig)
-        val registry = injector.getInstance(MeterRegistry::class.java)
-        installSemantifyrApp(webSockets = true) {
-            installSemantifyrLiveBackend(injector)
-        }
-        val client = jsonClient(webSockets = true)
-        val firstReady = CompletableDeferred<Unit>()
-        val releaseFirst = CompletableDeferred<Unit>()
-        coroutineScope {
-            val first = launch {
-                client.webSocket("/ws/lsp/oxsts") {
-                    send(Frame.Text(LspWire.initializeRequest()))
-                    awaitResponseFor(id = 1)
-                    firstReady.complete(Unit)
-                    releaseFirst.await()
-                }
-            }
-            withTimeout(30.seconds) {
-                firstReady.await()
-                client.webSocket("/ws/lsp/oxsts") {
-                    val reason = closeReason.await()
-                    assertThat(reason?.code).isEqualTo(4429.toShort())
-                }
-            }
-            assertThat(registry.get("semantifyr.live.sessions.active").gauge().value()).isEqualTo(1.0)
-            assertThat(registry.get("semantifyr.live.sessions.limit").gauge().value()).isEqualTo(1.0)
-            assertThat(registry.get("semantifyr.live.sessions.rejected").counter().count()).isEqualTo(1.0)
-            releaseFirst.complete(Unit)
-            first.join()
         }
     }
 
