@@ -8,11 +8,11 @@ import LiveEmbed from '@site/src/components/LiveEmbed';
 import LiveLink from '@site/src/components/LiveLink';
 import CaseVerdict from '@site/src/components/CaseVerdict';
 import { Junction, LibraryClasses, LightAsData, TraceTimeline } from '@site/src/components/LessonFigures';
-import step1 from '@served-examples/oxsts/semantic-libraries-step1';
-import step2 from '@served-examples/oxsts/semantic-libraries-step2';
-import step3 from '@served-examples/oxsts/semantic-libraries-step3';
-import step4 from '@served-examples/oxsts/semantic-libraries-step4';
-import final from '@served-examples/oxsts/semantic-libraries';
+import step1 from '@lesson-stages/semantic-libraries-step1';
+import step2 from '@lesson-stages/semantic-libraries-step2';
+import step3 from '@lesson-stages/semantic-libraries-step3';
+import step4 from '@lesson-stages/semantic-libraries-step4';
+import final from '@lesson-stages/semantic-libraries';
 
 # Semantic Libraries
 

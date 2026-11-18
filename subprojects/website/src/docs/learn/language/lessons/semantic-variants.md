@@ -7,12 +7,12 @@ description: The third lesson of the Semantifyr Language. Move into the statecha
 import LiveLink from '@site/src/components/LiveLink';
 import CaseVerdict from '@site/src/components/CaseVerdict';
 import { CompositionRules, TraceTimeline } from '@site/src/components/LessonFigures';
-import libraries from '@served-examples/oxsts/semantic-libraries';
-import step1 from '@served-examples/oxsts/semantic-variants-step1';
-import step2 from '@served-examples/oxsts/semantic-variants-step2';
-import step3 from '@served-examples/oxsts/semantic-variants-step3';
-import step4 from '@served-examples/oxsts/semantic-variants-step4';
-import final from '@served-examples/oxsts/semantic-variants';
+import libraries from '@lesson-stages/semantic-libraries';
+import step1 from '@lesson-stages/semantic-variants-step1';
+import step2 from '@lesson-stages/semantic-variants-step2';
+import step3 from '@lesson-stages/semantic-variants-step3';
+import step4 from '@lesson-stages/semantic-variants-step4';
+import final from '@lesson-stages/semantic-variants';
 
 # Semantic Variants
 

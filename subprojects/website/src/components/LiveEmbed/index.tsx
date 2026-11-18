@@ -9,18 +9,22 @@ import type { LiveEditorLines, LiveEditorView } from '@semantifyr/editor-common'
 import type { CaseManifest, ExampleLanguage } from '@semantifyr/editor-common/examples';
 import { EmbeddedExample } from './EmbeddedExample';
 
-// a served example as a page imports it, by its address @served-examples/<language>/<id>
-export interface ServedText {
+// a model as a page imports it, a served example by @served-examples/<language>/<id> and a lesson's stage by @lesson-stages/<name>
+export interface PageModel {
   language: ExampleLanguage;
-  id: string;
+  // from the repository's root
+  file: string;
+  // a served example's, by which live opens it; any other model opens with its text in the address
+  id?: string | undefined;
   text: string;
+  compressedModel: string;
   verdicts: Readonly<Record<string, ExpectedVerdict>>;
 }
 
 export type ExpectedVerdict = CaseManifest['models'][number]['cases'][number]['verdict'];
 
 interface Props {
-  example: ServedText;
+  example: PageModel;
   library?: 'gamma' | 'sysml';
   view?: LiveEditorView;
   show?: string[];
@@ -86,7 +90,7 @@ export function selectDeclarations(code: string, names: string[]): string {
   return select(code, names).text;
 }
 
-// a served example shown whole or by its declarations, which opens in live's editor by its address at the declarations shown
+// a model shown whole or by its declarations, which opens in live's editor at the declarations shown
 export default function LiveEmbed({ example, library, view, show }: Props): React.JSX.Element {
   const model = example.text;
   const language = example.language;

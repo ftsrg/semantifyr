@@ -8,14 +8,14 @@ import LiveEmbed from '@site/src/components/LiveEmbed';
 import LiveLink from '@site/src/components/LiveLink';
 import CaseVerdict from '@site/src/components/CaseVerdict';
 import { NestedStates, TraceTimeline } from '@site/src/components/LessonFigures';
-import variants from '@served-examples/oxsts/semantic-variants-step1';
-import step1 from '@served-examples/oxsts/extending-the-library-step1';
-import step2 from '@served-examples/oxsts/extending-the-library-step2';
-import final from '@served-examples/oxsts/extending-the-library';
-import nestedStatesStep1 from '@served-examples/oxsts/extending-the-library-nested-states-step1';
-import nestedStatesStep2 from '@served-examples/oxsts/extending-the-library-nested-states-step2';
-import nestedStates from '@served-examples/oxsts/extending-the-library-nested-states';
-import events from '@served-examples/oxsts/extending-the-library-events';
+import variants from '@lesson-stages/semantic-variants-step1';
+import step1 from '@lesson-stages/extending-the-library-step1';
+import step2 from '@lesson-stages/extending-the-library-step2';
+import final from '@lesson-stages/extending-the-library';
+import nestedStatesStep1 from '@lesson-stages/extending-the-library-nested-states-step1';
+import nestedStatesStep2 from '@lesson-stages/extending-the-library-nested-states-step2';
+import nestedStates from '@lesson-stages/extending-the-library-nested-states';
+import events from '@lesson-stages/extending-the-library-events';
 
 # Extending the Library
 

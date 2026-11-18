@@ -26,7 +26,7 @@ const FOCUSABLE = [
   '[tabindex]',
 ].join(', ');
 
-// a lesson's step, which embeds its examples
+// a lesson, which embeds its stages
 const LESSON = '/learn/language/lessons/modeling-and-verification/';
 
 const PHONE = { width: 375, height: 812 };
@@ -377,6 +377,10 @@ describe('the keyboard', () => {
   });
 
   test('opens a lesson\'s example into its editor, leaves the editor by Tab and finds the focus back on its control once it closes', async ({ walk }) => {
+    // live's mock records no lesson stage, and the walk is about the focus, not the cases
+    walk.backend.answer('discover', () => {
+      return [];
+    });
     const page = await walk.open(LESSON);
     const control = page.getByRole('button', { name: 'Open', exact: true }).first();
     await tabTo(page, control, 'the example\'s control', 120);
