@@ -80,15 +80,6 @@ tasks.withType<Test>().matching {
     the<JacocoTaskExtension>().isEnabled = false
 }
 
-// CI's test jobs start from the classes the Build job compiled
-tasks.assemble {
-    dependsOn(
-        sourceSets.map {
-            it.classesTaskName
-        },
-    )
-}
-
 tasks.withType<JavaExec>().configureEach {
     systemProperty("guice_bytecode_gen_option", "DISABLED")
 }
