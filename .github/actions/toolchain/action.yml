@@ -1,0 +1,41 @@
+# SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+#
+# SPDX-License-Identifier: EPL-2.0
+
+name: Toolchain
+description: Sets up Java, Gradle and Node, and on request unpacks the build cache the Build job uploaded.
+inputs:
+  gradle-encryption-key:
+    description: The key of Gradle's configuration cache in the Actions cache.
+    required: false
+  build-cache:
+    description: Whether the job starts from the Build job's build cache.
+    default: 'false'
+runs:
+  using: composite
+  steps:
+    - name: Set up JDK
+      uses: actions/setup-java@v6
+      with:
+        java-version: 25
+        distribution: temurin
+    - name: Setup Gradle
+      uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
+      with:
+        cache-encryption-key: ${{ inputs.gradle-encryption-key }}
+    - name: Set up Node
+      uses: actions/setup-node@v7
+      with:
+        node-version-file: .nvmrc
+        cache: npm
+        cache-dependency-path: package-lock.json
+    - name: Download the build cache
+      if: ${{ inputs.build-cache == 'true' }}
+      uses: actions/download-artifact@v8
+      with:
+        name: build-cache
+        path: ${{ runner.temp }}
+    - name: Unpack the build cache
+      if: ${{ inputs.build-cache == 'true' }}
+      shell: sh
+      run: mkdir -p ~/.gradle/caches/build-cache-1 && tar -xf "$RUNNER_TEMP/build-cache.tar" -C ~/.gradle/caches/build-cache-1
