@@ -355,9 +355,7 @@ jobs:
   push-image:
     name: Push Live Image
     if: ${{ inputs.publish }}
-    needs:
-      - build
-      - live-image
+    needs: live-image
     runs-on: ubuntu-latest
     permissions: {}
     env:
@@ -383,9 +381,7 @@ jobs:
   push-vscode-server-image:
     name: Push the semantifyr-vscode-server Image
     if: ${{ inputs.publish }}
-    needs:
-      - build
-      - vscode-server-image
+    needs: vscode-server-image
     runs-on: ubuntu-latest
     permissions: {}
     env:
