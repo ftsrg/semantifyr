@@ -120,7 +120,7 @@ class GammaConstructStatusTest {
 
     @ParameterizedTest
     @MethodSource("constructs")
-    fun `construct has the outcome the table claims`(columns: List<String>) {
+    fun `a construct's row is complete for its outcome and its fixture holds its marker`(columns: List<String>) {
         val row = rowOf(columns)
         assertThat(row.area).isNotBlank()
         assertThat(row.warning).describedAs("the warning of '${row.construct}'").isIn("yes", "no")

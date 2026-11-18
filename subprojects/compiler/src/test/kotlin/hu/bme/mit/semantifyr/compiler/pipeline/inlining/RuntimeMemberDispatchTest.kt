@@ -318,6 +318,92 @@ class RuntimeMemberDispatchTest : InliningTestBase() {
     }
 
     @Test
+    fun `a call on a runtime for loop variable dispatches over the instances of the range`() {
+        assertInlinedModel(
+            "Host",
+            worker + """
+                @VerificationCase
+                class Host {
+                    contains parts: Part[0..*]
+                    contains first: Part[1] subsets parts
+                    contains second: Part[1] subsets parts
+                    redefine tran {
+                        for (part in parts) {
+                            inline part.step()
+                        }
+                    }
+                    prop {
+                        return EF (first.done && second.done)
+                    }
+                }
+            """,
+            """
+                init {
+                }
+
+                tran {
+                    for (part in [root.first, root.second]) {
+                        choice {
+                            assume(part == root.first)
+                            root.first.done := true
+                        } or {
+                            assume(part == root.second)
+                            root.second.done := true
+                        }
+                    }
+                }
+
+                prop {
+                    EF root.first.done && root.second.done
+                }
+            """,
+        )
+    }
+
+    @Test
+    fun `a call through a chain on a runtime for loop variable dispatches over the instances of the range`() {
+        assertInlinedModel(
+            "Host",
+            worker + """
+                @VerificationCase
+                class Host {
+                    contains workers: Worker[0..*]
+                    contains first: Worker[1] subsets workers
+                    contains second: Worker[1] subsets workers
+                    redefine tran {
+                        for (worker in workers) {
+                            inline worker.part.step()
+                        }
+                    }
+                    prop {
+                        return EF (first.part.done && second.part.done)
+                    }
+                }
+            """,
+            """
+                init {
+                }
+
+                tran {
+                    for (worker in [root.first, root.second]) {
+                        choice {
+                            assume(worker == root.first)
+                            root.first.part.done := true
+                        } or {
+                            assume(worker == root.second)
+                            root.second.part.done := true
+                        }
+                    }
+                }
+
+                prop {
+                    EF root.first.part.done && root.second.part.done
+                }
+            """,
+        )
+    }
+
+    @Test
     fun `a read through an array slot dispatches on the slot`() {
         assertInlinedModel(
             "Host",

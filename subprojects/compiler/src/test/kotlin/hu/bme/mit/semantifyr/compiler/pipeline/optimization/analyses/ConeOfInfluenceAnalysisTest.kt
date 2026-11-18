@@ -9,7 +9,9 @@ package hu.bme.mit.semantifyr.compiler.pipeline.optimization.analyses
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.eAllOfType
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssignmentOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ElementReference
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.HavocOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.LocalVarDeclarationOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -600,6 +602,111 @@ class ConeOfInfluenceAnalysisTest : AnalysisTestBase() {
         assertThat(result.isRelevant(inlined.assignmentsTo(toggled).single())).isFalse
     }
 
+    @Test
+    fun `nested if guards contribute variables to the cone`() {
+        val (inlined, result) = runConeOfInfluence(
+            """
+                inlined oxsts of semantifyr::Anything
+                var value: int := 0
+                var outerGuard: int := 0
+                var innerGuard: int := 0
+                init {
+                }
+                tran {
+                    if (outerGuard == 0) {
+                        if (innerGuard == 0) {
+                            value := 1
+                        }
+                    }
+                }
+                prop {
+                    AG (value != 1)
+                }
+            """,
+        )
+        val value = inlined.varNamed("value")
+        val outerGuard = inlined.varNamed("outerGuard")
+        val innerGuard = inlined.varNamed("innerGuard")
+        assertThat(result.isRelevant(value)).isTrue
+        assertThat(result.isRelevant(outerGuard))
+            .`as`("outer if-guard variable 'outerGuard' should be in the cone")
+            .isTrue
+        assertThat(result.isRelevant(innerGuard))
+            .`as`("inner if-guard variable 'innerGuard' should be in the cone")
+            .isTrue
+    }
+
+    @Test
+    fun `havoc to a relevant variable is itself relevant`() {
+        val (inlined, result) = runConeOfInfluence(
+            """
+                inlined oxsts of semantifyr::Anything
+                var value: int := 0
+                init {
+                }
+                tran {
+                    havoc(value)
+                }
+                prop {
+                    AG (value != 42)
+                }
+            """,
+        )
+        val value = inlined.varNamed("value")
+        val havoc = inlined.havocsOn(value).single()
+        assertThat(result.isRelevant(havoc))
+            .`as`("havoc on a property-relevant variable must be kept")
+            .isTrue
+    }
+
+    @Test
+    fun `a local flag assumed after the regions keeps every region's write relevant`() {
+        val (inlined, result) = runConeOfInfluence(
+            """
+                inlined oxsts of semantifyr::Anything
+                var activeState: int := -1
+                init {
+                    activeState := 0
+                }
+                tran {
+                    var anyRegionExecuted: bool := false
+                    choice {
+                        assume(activeState == 0)
+                        activeState := 25
+                        anyRegionExecuted := true
+                    } or {
+                        assume(activeState == 25)
+                        activeState := 0
+                        anyRegionExecuted := true
+                    }
+                    assume(anyRegionExecuted)
+                }
+                prop {
+                    AG (activeState != 25)
+                }
+            """,
+        )
+
+        val activeState = inlined.varNamed("activeState")
+        val anyRegionExecuted = inlined.eAllOfType<LocalVarDeclarationOperation>().single()
+
+        assertThat(result.isRelevant(activeState)).isTrue
+        assertThat(result.isRelevant(anyRegionExecuted as VariableDeclaration))
+            .`as`("the local 'anyRegionExecuted' flag guards a relevant write chain and must be in the cone")
+            .isTrue
+
+        for (write in inlined.assignmentsTo(activeState)) {
+            assertThat(result.isRelevant(write))
+                .`as`("every write to 'activeState' should stay relevant")
+                .isTrue
+        }
+        for (flagWrite in inlined.assignmentsTo(anyRegionExecuted)) {
+            assertThat(result.isRelevant(flagWrite))
+                .`as`("every write to the local flag should stay relevant")
+                .isTrue
+        }
+    }
+
     private fun InlinedOxsts.varNamed(name: String): VariableDeclaration {
         return eAllOfType<VariableDeclaration>().firstOrNull {
             it.name == name
@@ -608,6 +715,13 @@ class ConeOfInfluenceAnalysisTest : AnalysisTestBase() {
 
     private fun InlinedOxsts.assignmentsTo(variable: VariableDeclaration): List<AssignmentOperation> {
         return eAllOfType<AssignmentOperation>().filter {
+            val reference = it.reference
+            reference is ElementReference && reference.element === variable
+        }.toList()
+    }
+
+    private fun InlinedOxsts.havocsOn(variable: VariableDeclaration): List<HavocOperation> {
+        return eAllOfType<HavocOperation>().filter {
             val reference = it.reference
             reference is ElementReference && reference.element === variable
         }.toList()

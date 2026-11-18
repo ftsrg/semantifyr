@@ -42,6 +42,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.eclipse.lsp4j.CodeAction
 import org.eclipse.lsp4j.CodeActionContext
 import org.eclipse.lsp4j.CodeActionParams
+import org.eclipse.lsp4j.DiagnosticSeverity
 import org.eclipse.lsp4j.InitializeResult
 import org.eclipse.lsp4j.InlayHint
 import org.eclipse.lsp4j.InlayHintKind
@@ -76,10 +77,10 @@ class WebSocketSessionTest {
         }
     """.trimIndent()
 
-    private fun config(tmp: Path): BackendConfig {
+    private fun config(temporaryDirectory: Path): BackendConfig {
         return BackendConfig(
             server = ServerConfig(wsHandshakesPerPeriod = 10_000),
-            sessionManager = SessionManagerConfig(rootWorkDirectory = tmp.toString(), maxSessionsGlobal = 16),
+            sessionManager = SessionManagerConfig(rootWorkDirectory = temporaryDirectory.toString(), maxSessionsGlobal = 16),
         )
     }
 
@@ -100,9 +101,9 @@ class WebSocketSessionTest {
     }
 
     @Test
-    fun `initialize over websocket advertises only the flavor's commands`(@TempDir tmp: Path) = testApplication {
+    fun `initialize over websocket advertises code actions and only the flavor's commands`(@TempDir temporaryDirectory: Path) = testApplication {
         installSemantifyrApp(webSockets = true) {
-            installSemantifyrLiveBackend(testInjector(config(tmp)))
+            installSemantifyrLiveBackend(testInjector(config(temporaryDirectory)))
         }
         jsonClient(webSockets = true).webSocket("/ws/lsp/oxsts") {
             send(Frame.Text(LspWire.initializeRequest()))
@@ -114,25 +115,14 @@ class WebSocketSessionTest {
                 "oxsts.redefinable.redefined.navigate",
                 "oxsts.redefinable.redefiners.navigate",
             )
-        }
-    }
-
-    @Test
-    fun `initialize advertises code actions for the oxsts flavor`(@TempDir tmp: Path) = testApplication {
-        installSemantifyrApp(webSockets = true) {
-            installSemantifyrLiveBackend(testInjector(config(tmp)))
-        }
-        jsonClient(webSockets = true).webSocket("/ws/lsp/oxsts") {
-            send(Frame.Text(LspWire.initializeRequest()))
-            val response = awaitResponseFor(id = 1).resultAs(InitializeResult::class.java)
             assertThat(response.capabilities.codeActionProvider.left).isTrue
         }
     }
 
     @Test
-    fun `code action over websocket adds redefine to a shadowing transition`(@TempDir tmp: Path) = testApplication {
+    fun `code action over websocket adds redefine to a shadowing transition`(@TempDir temporaryDirectory: Path) = testApplication {
         installSemantifyrApp(webSockets = true) {
-            installSemantifyrLiveBackend(testInjector(config(tmp)))
+            installSemantifyrLiveBackend(testInjector(config(temporaryDirectory)))
         }
         val uri = "file:///workspace/snippet.semantifyr"
         val model = """
@@ -173,9 +163,41 @@ class WebSocketSessionTest {
     }
 
     @Test
-    fun `session info request is intercepted and returns metadata`(@TempDir tmp: Path) = testApplication {
+    fun `a compile-time if is published as a hint at its keyword`(@TempDir temporaryDirectory: Path) = testApplication {
         installSemantifyrApp(webSockets = true) {
-            installSemantifyrLiveBackend(testInjector(config(tmp)))
+            installSemantifyrLiveBackend(testInjector(config(temporaryDirectory)))
+        }
+        val uri = "file:///workspace/snippet.semantifyr"
+        val model = """
+            package test
+
+            class Counter {
+                var count: int := 0
+
+                redefine tran {
+                    if (1 < 2) {
+                        count := 1
+                    }
+                }
+            }
+        """.trimIndent()
+        jsonClient(webSockets = true).webSocket("/ws/lsp/oxsts") {
+            openWith(uri, model)
+            val diagnostics = awaitPublishDiagnostics(uri).paramsAs(PublishDiagnosticsParams::class.java).diagnostics
+            val hints = diagnostics.filter {
+                it.code?.left == "OXSTS.COULD_BE_INLINE"
+            }
+            assertThat(hints).hasSize(1)
+            assertThat(hints[0].severity).isEqualTo(DiagnosticSeverity.Hint)
+            assertThat(hints[0].range.start).isEqualTo(Position(6, 8))
+            assertThat(hints[0].range.end).isEqualTo(Position(6, 10))
+        }
+    }
+
+    @Test
+    fun `session info request is intercepted and returns metadata`(@TempDir temporaryDirectory: Path) = testApplication {
+        installSemantifyrApp(webSockets = true) {
+            installSemantifyrLiveBackend(testInjector(config(temporaryDirectory)))
         }
         jsonClient(webSockets = true).webSocket("/ws/lsp/oxsts") {
             send(Frame.Text(LspWire.initializeRequest()))
@@ -183,18 +205,18 @@ class WebSocketSessionTest {
             send(Frame.Text(LspWire.request(id = 2, method = SemantifyrLiveMethods.SESSION_INFO)))
             val info = awaitResponseFor(id = 2).resultAs(SessionInfo::class.java)
             assertThat(info.flavorId).isEqualTo("oxsts")
-            assertThat(info.workingDirectory).contains(tmp.toString())
+            assertThat(info.workingDirectory).contains(temporaryDirectory.toString())
         }
     }
 
     @Test
-    fun `admin status reports the live session while connected`(@TempDir tmp: Path) = testApplication {
+    fun `admin status reports the live session while connected`(@TempDir temporaryDirectory: Path) = testApplication {
         val signedIn = mock<ProxyUserResolver> {
             on { resolve(any(), any()) } doReturn "octocat"
         }
         installSemantifyrApp(webSockets = true) {
             installSemantifyrLiveBackend(
-                testInjector(config(tmp)) {
+                testInjector(config(temporaryDirectory)) {
                     bind(ProxyUserResolver::class.java).toInstance(signedIn)
                 },
             )
@@ -211,11 +233,11 @@ class WebSocketSessionTest {
     }
 
     @Test
-    fun `a session names its kind in the admin status and the metrics`(@TempDir tmp: Path) = testApplication {
+    fun `a session names its kind in the admin status and the metrics`(@TempDir temporaryDirectory: Path) = testApplication {
         val signedIn = mock<ProxyUserResolver> {
             on { resolve(any(), any()) } doReturn "octocat"
         }
-        val injector = testInjector(config(tmp)) {
+        val injector = testInjector(config(temporaryDirectory)) {
             bind(ProxyUserResolver::class.java).toInstance(signedIn)
         }
         installSemantifyrApp(webSockets = true) {
@@ -237,9 +259,9 @@ class WebSocketSessionTest {
     }
 
     @Test
-    fun `discover over websocket returns the verification cases`(@TempDir tmp: Path) = testApplication {
+    fun `discover over websocket returns the verification cases`(@TempDir temporaryDirectory: Path) = testApplication {
         installSemantifyrApp(webSockets = true) {
-            installSemantifyrLiveBackend(testInjector(config(tmp)))
+            installSemantifyrLiveBackend(testInjector(config(temporaryDirectory)))
         }
         jsonClient(webSockets = true).webSocket("/ws/lsp/oxsts") {
             openWith("file:///workspace/snippet.semantifyr")
@@ -256,9 +278,9 @@ class WebSocketSessionTest {
     }
 
     @Test
-    fun `semanticTokens full returns a non-empty data array`(@TempDir tmp: Path) = testApplication {
+    fun `semanticTokens full returns a non-empty data array`(@TempDir temporaryDirectory: Path) = testApplication {
         installSemantifyrApp(webSockets = true) {
-            installSemantifyrLiveBackend(testInjector(config(tmp)))
+            installSemantifyrLiveBackend(testInjector(config(temporaryDirectory)))
         }
         jsonClient(webSockets = true).webSocket("/ws/lsp/oxsts") {
             openWith("file:///workspace/snippet.semantifyr")
@@ -269,9 +291,9 @@ class WebSocketSessionTest {
     }
 
     @Test
-    fun `signature help over websocket shows the callee and the active parameter`(@TempDir tmp: Path) = testApplication {
+    fun `signature help over websocket shows the callee and the active parameter`(@TempDir temporaryDirectory: Path) = testApplication {
         installSemantifyrApp(webSockets = true) {
-            installSemantifyrLiveBackend(testInjector(config(tmp)))
+            installSemantifyrLiveBackend(testInjector(config(temporaryDirectory)))
         }
         val model = """
             package test
@@ -309,10 +331,10 @@ class WebSocketSessionTest {
 
     @Test
     fun `semanticTokens stay populated when an extra OxstsStandaloneSetup is constructed at runtime`(
-        @TempDir tmp: Path,
+        @TempDir temporaryDirectory: Path,
     ) = testApplication {
         installSemantifyrApp(webSockets = true) {
-            installSemantifyrLiveBackend(testInjector(config(tmp)))
+            installSemantifyrLiveBackend(testInjector(config(temporaryDirectory)))
         }
         jsonClient(webSockets = true).webSocket("/ws/lsp/oxsts") {
             openWith("file:///workspace/snippet.semantifyr")
@@ -345,7 +367,7 @@ class WebSocketSessionTest {
     }
 
     @Test
-    fun `inlay hints name a positional argument and resolve it to the parameter`(@TempDir tmp: Path) = testApplication {
+    fun `inlay hints name a positional argument and resolve it to the parameter`(@TempDir temporaryDirectory: Path) = testApplication {
         val uri = "file:///workspace/snippet.semantifyr"
         val model = """
             package test
@@ -367,7 +389,7 @@ class WebSocketSessionTest {
             }
         """.trimIndent()
         installSemantifyrApp(webSockets = true) {
-            installSemantifyrLiveBackend(testInjector(config(tmp)))
+            installSemantifyrLiveBackend(testInjector(config(temporaryDirectory)))
         }
         jsonClient(webSockets = true).webSocket("/ws/lsp/oxsts") {
             openWith(uri, model)
@@ -382,9 +404,9 @@ class WebSocketSessionTest {
     }
 
     @Test
-    fun `type hierarchy items carry client uris`(@TempDir tmp: Path) = testApplication {
+    fun `type hierarchy items carry client uris`(@TempDir temporaryDirectory: Path) = testApplication {
         installSemantifyrApp(webSockets = true) {
-            installSemantifyrLiveBackend(testInjector(config(tmp)))
+            installSemantifyrLiveBackend(testInjector(config(temporaryDirectory)))
         }
         val uri = "file:///workspace/snippet.semantifyr"
         val model = """
@@ -420,9 +442,9 @@ class WebSocketSessionTest {
     }
 
     @Test
-    fun `rapid didChange does not break a later discover`(@TempDir tmp: Path) = testApplication {
+    fun `rapid didChange does not break a later discover`(@TempDir temporaryDirectory: Path) = testApplication {
         installSemantifyrApp(webSockets = true) {
-            installSemantifyrLiveBackend(testInjector(config(tmp)))
+            installSemantifyrLiveBackend(testInjector(config(temporaryDirectory)))
         }
         jsonClient(webSockets = true).webSocket("/ws/lsp/oxsts") {
             openWith("file:///workspace/snippet.semantifyr")
@@ -443,9 +465,9 @@ class WebSocketSessionTest {
     }
 
     @Test
-    fun `concurrent websocket sessions each discover independently`(@TempDir tmp: Path) = testApplication {
+    fun `concurrent websocket sessions each discover independently`(@TempDir temporaryDirectory: Path) = testApplication {
         installSemantifyrApp(webSockets = true) {
-            installSemantifyrLiveBackend(testInjector(config(tmp)))
+            installSemantifyrLiveBackend(testInjector(config(temporaryDirectory)))
         }
         val client = jsonClient(webSockets = true)
         coroutineScope {
@@ -466,8 +488,8 @@ class WebSocketSessionTest {
     }
 
     @Test
-    fun `a session past the global limit is closed with code 4429 and counted as rejected`(@TempDir tmp: Path) = testApplication {
-        val limitedConfig = config(tmp).run { copy(sessionManager = sessionManager.copy(maxSessionsGlobal = 1)) }
+    fun `a session past the global limit is closed with code 4429 and counted as rejected`(@TempDir temporaryDirectory: Path) = testApplication {
+        val limitedConfig = config(temporaryDirectory).run { copy(sessionManager = sessionManager.copy(maxSessionsGlobal = 1)) }
         val injector = testInjector(limitedConfig)
         val registry = injector.getInstance(MeterRegistry::class.java)
         installSemantifyrApp(webSockets = true) {
@@ -502,12 +524,12 @@ class WebSocketSessionTest {
 
     @Test
     fun `the per-session working directory is created during a session and removed afterwards`(
-        @TempDir tmp: Path,
+        @TempDir temporaryDirectory: Path,
     ) = testApplication {
         installSemantifyrApp(webSockets = true) {
-            installSemantifyrLiveBackend(testInjector(config(tmp)))
+            installSemantifyrLiveBackend(testInjector(config(temporaryDirectory)))
         }
-        val sessionsDir = tmp.resolve("sessions")
+        val sessionsDir = temporaryDirectory.resolve("sessions")
         jsonClient(webSockets = true).webSocket("/ws/lsp/oxsts") {
             send(Frame.Text(LspWire.initializeRequest()))
             awaitResponseFor(id = 1)

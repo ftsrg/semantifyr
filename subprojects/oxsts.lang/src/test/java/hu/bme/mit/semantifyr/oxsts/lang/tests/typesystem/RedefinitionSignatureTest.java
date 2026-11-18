@@ -6,13 +6,10 @@
 
 package hu.bme.mit.semantifyr.oxsts.lang.tests.typesystem;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import com.google.inject.Inject;
 import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts;
 import hu.bme.mit.semantifyr.oxsts.lang.tests.utils.OxstsPackageParseHelper;
 import hu.bme.mit.semantifyr.oxsts.lang.validation.OxstsValidator;
-import org.eclipse.xtext.diagnostics.Severity;
 import org.eclipse.xtext.validation.CheckMode;
 import org.junit.jupiter.api.Test;
 
@@ -54,6 +51,7 @@ public class RedefinitionSignatureTest {
 
         parsedPackage.assertNoResourceErrors();
         parsedPackage.assertHasValidationIssue(OxstsValidator.REDEFINITION_SIGNATURE_MISMATCH, "1 parameter");
+        parsedPackage.assertOnlyValidationErrorsAre(OxstsValidator.REDEFINITION_SIGNATURE_MISMATCH, 7);
     }
 
     @Test
@@ -69,24 +67,5 @@ public class RedefinitionSignatureTest {
             """, CheckMode.ALL);
 
         parsedPackage.assertHasValidationIssue(OxstsValidator.REDEFINITION_SIGNATURE_MISMATCH, "0 parameters");
-    }
-
-    @Test
-    void signatureMismatchIsAnError() {
-        var parsedPackage = parseHelper.parse("""
-            package test
-            class Node { }
-            abstract class Base {
-                abstract tran enter(from: Node)
-            }
-            class Child : Base {
-                redefine tran enter() { }
-            }
-            """, CheckMode.ALL);
-
-        assertThat(parsedPackage.getIssues())
-                .filteredOn(issue -> OxstsValidator.REDEFINITION_SIGNATURE_MISMATCH.equals(issue.getCode()))
-                .extracting(issue -> issue.getSeverity())
-                .containsOnly(Severity.ERROR);
     }
 }

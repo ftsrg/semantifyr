@@ -11,7 +11,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.google.inject.Inject;
 import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts;
 import hu.bme.mit.semantifyr.oxsts.lang.tests.utils.OxstsPackageParseHelper;
-import hu.bme.mit.semantifyr.oxsts.lang.tests.utils.WrappedOxstsPackage;
 import hu.bme.mit.semantifyr.oxsts.lang.validation.OxstsValidator;
 import org.eclipse.xtext.diagnostics.Severity;
 import org.eclipse.xtext.validation.CheckMode;
@@ -47,7 +46,7 @@ public class DeclarationValidationTest {
             """, CheckMode.ALL);
 
         parsedPackage.assertNoResourceErrors();
-        assertOnlyErrorsAre(parsedPackage, OxstsValidator.MEMBER_NOT_IN_ABSTRACT_CLASS, 3);
+        parsedPackage.assertOnlyValidationErrorsAre(OxstsValidator.MEMBER_NOT_IN_ABSTRACT_CLASS, 3);
     }
 
     @Test
@@ -60,7 +59,7 @@ public class DeclarationValidationTest {
             """, CheckMode.ALL);
 
         parsedPackage.assertNoResourceErrors();
-        assertOnlyErrorsAre(parsedPackage, OxstsValidator.MEMBER_NOT_IN_ABSTRACT_CLASS, 3);
+        parsedPackage.assertOnlyValidationErrorsAre(OxstsValidator.MEMBER_NOT_IN_ABSTRACT_CLASS, 3);
     }
 
     @Test
@@ -78,7 +77,7 @@ public class DeclarationValidationTest {
 
         parsedPackage.assertNoResourceErrors();
         parsedPackage.assertHasValidationIssue(OxstsValidator.ABSTRACT_CLASS_INHERITED_MEMBERS_NOT_REDEFINED, "'area'");
-        assertOnlyErrorsAre(parsedPackage, OxstsValidator.ABSTRACT_CLASS_INHERITED_MEMBERS_NOT_REDEFINED, 6);
+        parsedPackage.assertOnlyValidationErrorsAre(OxstsValidator.ABSTRACT_CLASS_INHERITED_MEMBERS_NOT_REDEFINED, 6);
     }
 
     @Test
@@ -113,7 +112,7 @@ public class DeclarationValidationTest {
             """, CheckMode.ALL);
 
         parsedPackage.assertNoResourceErrors();
-        assertOnlyErrorsAre(parsedPackage, OxstsValidator.ABSTRACT_VERIFICATION_CASE, 3);
+        parsedPackage.assertOnlyValidationErrorsAre(OxstsValidator.ABSTRACT_VERIFICATION_CASE, 3);
     }
 
     @Test
@@ -142,7 +141,7 @@ public class DeclarationValidationTest {
             """, CheckMode.ALL);
 
         parsedPackage.assertNoResourceErrors();
-        assertOnlyErrorsAre(parsedPackage, OxstsValidator.MISSING_PROPERTY, 3);
+        parsedPackage.assertOnlyValidationErrorsAre(OxstsValidator.MISSING_PROPERTY, 3);
         parsedPackage.assertHasValidationIssue(OxstsValidator.MISSING_PROPERTY, "'Case' has no property");
     }
 
@@ -452,7 +451,7 @@ public class DeclarationValidationTest {
             """, CheckMode.ALL);
 
         parsedPackage.assertNoResourceErrors();
-        assertOnlyErrorsAre(parsedPackage, OxstsValidator.DATA_TYPE_NOT_IN_BUILTIN_ISSUE, 2);
+        parsedPackage.assertOnlyValidationErrorsAre(OxstsValidator.DATA_TYPE_NOT_IN_BUILTIN_ISSUE, 2);
     }
 
     @Test
@@ -520,6 +519,23 @@ public class DeclarationValidationTest {
     }
 
     @Test
+    void containerPairedWithAReferenceIsRejected() {
+        var parsedPackage = parseHelper.parse("""
+            package test
+            class Parent {
+                refers kid: Child[1] opposite parent
+            }
+            class Child {
+                container parent: Parent[1] opposite kid
+            }
+            """, CheckMode.ALL);
+
+        parsedPackage.assertNoResourceErrors();
+        parsedPackage.assertHasValidationIssue(
+                OxstsValidator.INCORRECT_OPPOSITE, "Container's opposite must be containment");
+    }
+
+    @Test
     void variableWithoutATypeIsRejected() {
         var parsedPackage = parseHelper.parse("""
             package test
@@ -529,7 +545,7 @@ public class DeclarationValidationTest {
             """, CheckMode.ALL);
 
         parsedPackage.assertNoResourceErrors();
-        assertOnlyErrorsAre(parsedPackage, OxstsValidator.VARIABLE_WITH_IMPLICIT_TYPE, 3);
+        parsedPackage.assertOnlyValidationErrorsAre(OxstsValidator.VARIABLE_WITH_IMPLICIT_TYPE, 3);
     }
 
     @Test
@@ -559,121 +575,5 @@ public class DeclarationValidationTest {
 
         parsedPackage.assertNoResourceErrors();
         parsedPackage.assertHasValidationIssue(OxstsValidator.INCORRECT_ASSIGNMENT, "Only a variable can be assigned");
-    }
-
-    @Test
-    void redefinedPropertyMayNarrowTheReturnType() {
-        var parsedPackage = parseHelper.parse("""
-            package test
-            abstract class Base {
-                abstract prop value(): any
-            }
-            class Child : Base {
-                redefine prop value(): int { return 1 }
-            }
-            """, CheckMode.ALL);
-
-        parsedPackage.assertNoResourceErrors();
-        parsedPackage.assertNoValidationIssues();
-    }
-
-    @Test
-    void redefinedPropertyWithAnUnrelatedReturnTypeIsRejected() {
-        var parsedPackage = parseHelper.parse("""
-            package test
-            abstract class Base {
-                abstract prop value(): int
-            }
-            class Child : Base {
-                redefine prop value(): bool { return true }
-            }
-            """, CheckMode.ALL);
-
-        parsedPackage.assertNoResourceErrors();
-        assertOnlyErrorsAre(parsedPackage, OxstsValidator.TYPE_MISMATCH, 6);
-    }
-
-    @Test
-    void redefinitionMayNarrowParameterTypes() {
-        var parsedPackage = parseHelper.parse("""
-            package test
-            abstract class Attribute {
-                abstract tran set(value: any)
-            }
-            class IntegerAttribute : Attribute {
-                var stored: int := 0
-                redefine tran set(value: int) { stored := value }
-            }
-            """, CheckMode.ALL);
-
-        parsedPackage.assertNoResourceErrors();
-        parsedPackage.assertNoValidationIssues();
-    }
-
-    @Test
-    void efBodyMustBeBoolean() {
-        var parsedPackage = parseHelper.parse("""
-            package test
-            class Holder {
-                var count: int := 0
-                prop { return EF count }
-            }
-            """, CheckMode.ALL);
-
-        parsedPackage.assertHasValidationIssue(OxstsValidator.TYPE_MISMATCH, "`EF` body must be boolean");
-    }
-
-    @Test
-    void inlineIfGuardMustBeBoolean() {
-        var parsedPackage = parseHelper.parse("""
-            package test
-            class Holder {
-                var count: int := 0
-                redefine tran {
-                    inline if (1) { count := 1 }
-                }
-            }
-            """, CheckMode.ALL);
-
-        parsedPackage.assertHasValidationIssue(OxstsValidator.TYPE_MISMATCH, "`inline if` guard must be boolean");
-    }
-
-    @Test
-    void unaryMinusOnABooleanIsRejected() {
-        var parsedPackage = parseHelper.parse("""
-            package test
-            class Holder {
-                var flag: bool := false
-                var count: int := 0
-                redefine tran { count := -flag }
-            }
-            """, CheckMode.ALL);
-
-        parsedPackage.assertHasValidationIssue(
-                OxstsValidator.TYPE_MISMATCH, "unary arithmetic operand must be numeric");
-    }
-
-    @Test
-    void infinityIsNoValue() {
-        var parsedPackage = parseHelper.parse("""
-            package test
-            class Holder {
-                var count: int := 0
-                redefine tran { count := * }
-            }
-            """, CheckMode.ALL);
-
-        parsedPackage.assertNoResourceErrors();
-        assertOnlyErrorsAre(parsedPackage, OxstsValidator.TYPE_MISMATCH, 4);
-    }
-
-    private static void assertOnlyErrorsAre(WrappedOxstsPackage parsedPackage, String code, int line) {
-        assertThat(parsedPackage.getIssues())
-                .filteredOn(issue -> issue.getSeverity() == Severity.ERROR)
-                .isNotEmpty()
-                .allSatisfy(issue -> {
-                    assertThat(issue.getCode()).isEqualTo(code);
-                    assertThat(issue.getLineNumber()).isEqualTo(line);
-                });
     }
 }

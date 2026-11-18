@@ -690,4 +690,139 @@ public class TypeValidationTest {
 
         parsedPackage.assertHasValidationIssue(OxstsValidator.TYPE_MISMATCH, "AG");
     }
+
+    @Test
+    void stringArgumentOfAnAnnotationOnAVariablePasses() {
+        var parsedPackage = parseHelper.parse("""
+            package test
+            annotation Note(text: string)
+            class Counter {
+                @Note("a counter")
+                var count: int := 0
+            }
+            """, CheckMode.ALL);
+
+        parsedPackage.assertNoResourceErrors();
+        parsedPackage.assertNoValidationErrors();
+    }
+
+    @Test
+    void redefinedPropertyMayNarrowTheReturnType() {
+        var parsedPackage = parseHelper.parse("""
+            package test
+            abstract class Base {
+                abstract prop value(): any
+            }
+            class Child : Base {
+                redefine prop value(): int {
+                    return 1
+                }
+            }
+            """, CheckMode.ALL);
+
+        parsedPackage.assertNoResourceErrors();
+        parsedPackage.assertNoValidationIssues();
+    }
+
+    @Test
+    void redefinedPropertyWithAnUnrelatedReturnTypeIsRejected() {
+        var parsedPackage = parseHelper.parse("""
+            package test
+            abstract class Base {
+                abstract prop value(): int
+            }
+            class Child : Base {
+                redefine prop value(): bool {
+                    return true
+                }
+            }
+            """, CheckMode.ALL);
+
+        parsedPackage.assertNoResourceErrors();
+        parsedPackage.assertOnlyValidationErrorsAre(OxstsValidator.TYPE_MISMATCH, 6);
+    }
+
+    @Test
+    void redefinitionMayNarrowParameterTypes() {
+        var parsedPackage = parseHelper.parse("""
+            package test
+            abstract class Attribute {
+                abstract tran set(value: any)
+            }
+            class IntegerAttribute : Attribute {
+                var stored: int := 0
+                redefine tran set(value: int) {
+                    stored := value
+                }
+            }
+            """, CheckMode.ALL);
+
+        parsedPackage.assertNoResourceErrors();
+        parsedPackage.assertNoValidationIssues();
+    }
+
+    @Test
+    void efBodyMustBeBoolean() {
+        var parsedPackage = parseHelper.parse("""
+            package test
+            class Holder {
+                var count: int := 0
+                prop {
+                    return EF count
+                }
+            }
+            """, CheckMode.ALL);
+
+        parsedPackage.assertHasValidationIssue(OxstsValidator.TYPE_MISMATCH, "`EF` body must be boolean");
+    }
+
+    @Test
+    void inlineIfGuardMustBeBoolean() {
+        var parsedPackage = parseHelper.parse("""
+            package test
+            class Holder {
+                var count: int := 0
+                redefine tran {
+                    inline if (1) {
+                        count := 1
+                    }
+                }
+            }
+            """, CheckMode.ALL);
+
+        parsedPackage.assertHasValidationIssue(OxstsValidator.TYPE_MISMATCH, "`inline if` guard must be boolean");
+    }
+
+    @Test
+    void unaryMinusOnABooleanIsRejected() {
+        var parsedPackage = parseHelper.parse("""
+            package test
+            class Holder {
+                var flag: bool := false
+                var count: int := 0
+                redefine tran {
+                    count := -flag
+                }
+            }
+            """, CheckMode.ALL);
+
+        parsedPackage.assertHasValidationIssue(
+                OxstsValidator.TYPE_MISMATCH, "unary arithmetic operand must be numeric");
+    }
+
+    @Test
+    void infinityIsNoValue() {
+        var parsedPackage = parseHelper.parse("""
+            package test
+            class Holder {
+                var count: int := 0
+                redefine tran {
+                    count := *
+                }
+            }
+            """, CheckMode.ALL);
+
+        parsedPackage.assertNoResourceErrors();
+        parsedPackage.assertOnlyValidationErrorsAre(OxstsValidator.TYPE_MISMATCH, 5);
+    }
 }
