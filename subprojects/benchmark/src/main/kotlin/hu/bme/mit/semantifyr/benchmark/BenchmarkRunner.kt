@@ -84,12 +84,7 @@ fun main(arguments: Array<String>) {
         logger.error { "No benchmark is named $name" }
         exitProcess(1)
     }
-    val sourceSets = System.getProperty("benchmark.sourceSets").orEmpty().split(File.pathSeparator).filter {
-        it.isNotEmpty()
-    }.map {
-        Path(it)
-    }
-    logBenchmarkClassesAtInfo(sourceSets)
+    logBenchmarkClassesAtInfo()
     val benchmark = benchmarkClass.getDeclaredConstructor().newInstance() as Benchmark<*>
     val files = arguments.drop(1)
     try {
@@ -155,7 +150,13 @@ private fun <R> resultSerializer(benchmark: Benchmark<R>): KSerializer<R> {
     return serializer(superType.actualTypeArguments.single()) as KSerializer<R>
 }
 
-internal fun logBenchmarkClassesAtInfo(sourceSets: List<Path>) {
+internal fun logBenchmarkClassesAtInfo(
+    sourceSets: List<Path> = System.getProperty("benchmark.sourceSets").orEmpty().split(File.pathSeparator).filter {
+        it.isNotEmpty()
+    }.map {
+        Path(it)
+    },
+) {
     // a source set's classes directory for a language it has no sources in is never created
     val classNames = sourceSets.filter {
         it.exists()

@@ -92,6 +92,7 @@ object FreshJvm {
     @JvmStatic
     fun main(arguments: Array<String>) {
         val (runClassName, input, directory, runexecExecutable, runexecVersion) = arguments
+        logBenchmarkClassesAtInfo()
         repeatInThisProcess(runClassName, input, Path(directory), Runexec(runexecExecutable, runexecVersion))
         exitProcess(0)
     }
