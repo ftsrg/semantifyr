@@ -8,6 +8,7 @@ package hu.bme.mit.semantifyr.compiler
 
 import hu.bme.mit.semantifyr.compiler.reader.SemantifyrLoader
 import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup
+import hu.bme.mit.semantifyr.oxsts.lang.tests.RestoreGlobalRegistries
 import org.assertj.core.api.Assertions.assertThat
 import org.eclipse.xtext.resource.FileExtensionProvider
 import org.junit.jupiter.api.Test
@@ -15,6 +16,7 @@ import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Path
 import kotlin.io.path.writeText
 
+@RestoreGlobalRegistries
 class SemantifyrLoaderExtensionTest {
 
     private val injector = OxstsStandaloneSetup().createInjectorAndDoEMFRegistration()

@@ -11,6 +11,7 @@ import hu.bme.mit.semantifyr.compiler.pipeline.artifact.ArtifactConfig
 import hu.bme.mit.semantifyr.compiler.reader.SemantifyrLoader
 import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.VerificationCaseFinder
+import hu.bme.mit.semantifyr.oxsts.lang.tests.RestoreGlobalRegistries
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.OxstsModelPackage
 import kotlinx.coroutines.Dispatchers
@@ -27,6 +28,7 @@ import kotlin.io.path.readText
 import kotlin.io.path.relativeTo
 import kotlin.io.path.walk
 
+@RestoreGlobalRegistries
 class ConcurrentCompilationTest {
 
     @TempDir

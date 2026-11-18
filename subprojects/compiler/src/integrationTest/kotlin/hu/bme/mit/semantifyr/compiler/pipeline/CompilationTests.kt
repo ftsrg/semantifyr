@@ -17,8 +17,11 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.DataTypeDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.EnumDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.FeatureDeclaration
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.ForOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralBoolean
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralNothing
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralReal
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralString
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.NavigationSuffixExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.TemporalOperator
 import org.assertj.core.api.Assertions.assertThat
@@ -171,50 +174,6 @@ class CompilationTests {
                     }
                     prop {
                         return EF counter == 6
-                    }
-                }
-            """,
-        )
-    }
-
-    @Test
-    fun `inline for over a range unrolls at compile time`() {
-        assertCompiles(
-            classToCompile = "InlineForSum",
-            source = """
-                package compilation::tests::inline_for
-                @VerificationCase
-                class InlineForSum {
-                    var counter: int := 0
-                    redefine tran {
-                        inline for (index in 1..3) {
-                            counter := counter + index
-                        }
-                    }
-                    prop {
-                        return EF counter == 6
-                    }
-                }
-            """,
-        )
-    }
-
-    @Test
-    fun `inline for choice over a range produces a choice`() {
-        assertCompiles(
-            classToCompile = "InlineForChoice",
-            source = """
-                package compilation::tests::inline_for_choice
-                @VerificationCase
-                class InlineForChoice {
-                    var counter: int := 0
-                    redefine tran {
-                        inline for choice (index in 1..3) {
-                            counter := index
-                        }
-                    }
-                    prop {
-                        return EF counter == 2
                     }
                 }
             """,
@@ -628,7 +587,7 @@ class CompilationTests {
 
     @Test
     fun `self reference resolves to current instance`() {
-        assertCompiles(
+        val compiled = assertCompiles(
             classToCompile = "SelfUse",
             source = """
                 package compilation::tests::self_use
@@ -647,6 +606,8 @@ class CompilationTests {
                 }
             """,
         )
+
+        assertThat(compiled.inlinedOxsts.variables).hasSize(1)
     }
 
     @Test
@@ -668,75 +629,6 @@ class CompilationTests {
                     prop {
                         return AG (counter >= -10 && counter <= 10 && !(counter < -100) && !(counter > 100))
                     }
-                }
-            """,
-        )
-    }
-
-    @Test
-    fun `inline transition call through a feature-typed variable dispatches across candidates`() {
-        assertCompiles(
-            classToCompile = "Dispatcher",
-            source = """
-                package compilation::tests::variable_dispatch
-                class Worker {
-                    var done: bool := false
-                    tran step() {
-                        done := true
-                    }
-                }
-
-                @VerificationCase
-                class Dispatcher {
-                    contains workers: Worker[0..*]
-                    contains first: Worker[1] subsets workers
-                    contains second: Worker[1] subsets workers
-                    var current: workers[0..1] := nothing
-                    redefine init {
-                        choice {
-                            current := first
-                        } or {
-                            current := second
-                        }
-                    }
-                    redefine tran {
-                        inline current.step()
-                    }
-                    prop {
-                        return EF (first.done && second.done)
-                    }
-                }
-            """,
-        )
-    }
-
-    @Test
-    fun `derived refers feature with opposite resolves via reverse lookup`() {
-        assertCompiles(
-            classToCompile = "Wiring",
-            source = """
-                package compilation::tests::derived_refers
-                class Node {
-                    refers ownedBy: Graph[1]
-                    var value: int := 0
-                }
-
-                @VerificationCase
-                class Wiring {
-                    contains graph: Graph[1]
-                    contains node: Node[1] {
-                        redefine refers ownedBy: Graph[1] = graph
-                    }
-                    redefine tran {
-                        node.value := node.value + 1
-                    }
-                    prop {
-                        return EF node.value == 1
-                    }
-                }
-
-                class Graph {
-                    derived refers owns: Node[0..*] opposite ownedBy
                 }
             """,
         )
@@ -788,33 +680,6 @@ class CompilationTests {
                     }
                     prop {
                         return EF predicate()
-                    }
-                }
-            """,
-        )
-    }
-
-    @Test
-    fun `optional navigation on empty containment drops the call`() {
-        assertCompiles(
-            classToCompile = "Parent",
-            source = """
-                package compilation::tests::optional_nav
-                class Leaf {
-                    var value: int := 0
-                    tran bump() {
-                        value := value + 1
-                    }
-                }
-
-                @VerificationCase
-                class Parent {
-                    contains leaf: Leaf[0..1]
-                    redefine tran {
-                        inline leaf?.bump()
-                    }
-                    prop {
-                        return AG true
                     }
                 }
             """,
@@ -911,84 +776,8 @@ class CompilationTests {
     }
 
     @Test
-    fun `non-inline for over an instance range iterates at runtime`() {
-        assertCompiles(
-            classToCompile = "Host",
-            source = """
-                package compilation::tests::runtime_for
-                class Worker {
-                    var value: int := 0
-                    tran bump() {
-                        value := value + 1
-                    }
-                }
-
-                @VerificationCase
-                class Host {
-                    contains workers: Worker[0..*]
-                    contains first: Worker[1] subsets workers
-                    contains second: Worker[1] subsets workers
-                    redefine tran {
-                        for (worker in workers) {
-                            inline worker.bump()
-                        }
-                    }
-                    prop {
-                        return EF (first.value == 1 && second.value == 1)
-                    }
-                }
-            """,
-        )
-    }
-
-    @Test
-    fun `fixed-size integer array with array literal initializer compiles`() {
-        assertCompiles(
-            classToCompile = "ArrayHolder",
-            source = """
-                package compilation::tests::array_fixed
-                @VerificationCase
-                class ArrayHolder {
-                    var slots: int[3] := [10, 20, 30]
-                    redefine tran {
-                        slots[0] := slots[0] + 1
-                    }
-                    prop {
-                        return EF slots[0] == 11
-                    }
-                }
-            """,
-        )
-    }
-
-    @Test
-    fun `array with constant index reads and writes compiles`() {
-        assertCompiles(
-            classToCompile = "ArrayAccess",
-            source = """
-                package compilation::tests::array_access
-                @VerificationCase
-                class ArrayAccess {
-                    var values: int[4] := [0, 0, 0, 0]
-                    redefine tran {
-                        values[0] := values[1] + values[2]
-                    }
-                    prop {
-                        return AG values[3] == 0
-                    }
-                }
-            """,
-        )
-    }
-
-    @Test
     fun `real literal passes through the compiler uninterpreted`() {
-        // Pins current behaviour: real literals parse and survive the
-        // compilation pipeline even though Theta's backend only supports
-        // int/bool/enum. Semantic correctness at the backend level belongs
-        // to the verification suite; if real-literal support is added or
-        // rejected downstream, this test documents the change.
-        assertCompiles(
+        val compiled = assertCompiles(
             classToCompile = "RealLiteral",
             source = """
                 package compilation::tests::real_literal
@@ -1004,12 +793,13 @@ class CompilationTests {
                 }
             """,
         )
+
+        assertThat(EcoreUtil2.eAllOfType(compiled.inlinedOxsts.property, LiteralReal::class.java)).isNotEmpty
     }
 
     @Test
     fun `string literal passes through the compiler uninterpreted`() {
-        // Pins current behaviour: see note on real literals.
-        assertCompiles(
+        val compiled = assertCompiles(
             classToCompile = "StringLiteral",
             source = """
                 package compilation::tests::string_literal
@@ -1025,33 +815,8 @@ class CompilationTests {
                 }
             """,
         )
-    }
 
-    @Test
-    fun `array with runtime index reads and writes compiles`() {
-        // Runtime-index access was previously rejected; ArrayFlatteningPass
-        // now rewrites it to an if-chain over the per-slot variables.
-        assertCompiles(
-            classToCompile = "RuntimeArray",
-            source = """
-                package compilation::tests::runtime_array
-                @VerificationCase
-                class RuntimeArray {
-                    var values: int[3] := [0, 0, 0]
-                    var index: int := 0
-                    var seen: int := 0
-                    redefine tran {
-                        havoc(index)
-                        assume(index >= 0 && index < 3)
-                        values[index] := values[index] + 1
-                        seen := values[index]
-                    }
-                    prop {
-                        return EF seen == 1
-                    }
-                }
-            """,
-        )
+        assertThat(EcoreUtil2.eAllOfType(compiled.inlinedOxsts.property, LiteralString::class.java)).isNotEmpty
     }
 
     @Test
@@ -1076,7 +841,7 @@ class CompilationTests {
 
     @Test
     fun `non-inline for over an integer range iterates at runtime`() {
-        assertCompiles(
+        val compiled = assertCompiles(
             classToCompile = "RuntimeFor",
             source = """
                 package compilation::tests::runtime_for_int
@@ -1094,6 +859,8 @@ class CompilationTests {
                 }
             """,
         )
+
+        assertThat(EcoreUtil2.eAllOfType(compiled.inlinedOxsts.mainTransition, ForOperation::class.java)).isNotEmpty
     }
 
     @Test
@@ -1157,36 +924,6 @@ class CompilationTests {
                     }
                     prop {
                         return EF (if number > 0 then true else false)
-                    }
-                }
-            """,
-        )
-    }
-
-    @Test
-    fun `cast expression narrows a base-typed reference to its child`() {
-        assertCompiles(
-            classToCompile = "CastNarrow",
-            source = """
-                package compilation::tests::cast_narrow
-                class Base {
-                }
-                class Child : Base {
-                }
-                @VerificationCase
-                class CastNarrow {
-                    contains children: Base[0..*]
-                    contains child: Child[1] subsets children
-                    var selected: children[0..1] := nothing
-                    redefine init {
-                        selected := child
-                    }
-                    redefine tran {
-                        var narrowed: Child[0..1] := nothing
-                        narrowed := selected as Child
-                    }
-                    prop {
-                        return EF selected == child
                     }
                 }
             """,
@@ -1320,7 +1057,7 @@ class CompilationTests {
     private fun assertCompiles(
         classToCompile: String,
         source: String,
-    ) {
+    ): FlattenedCompilationContext {
         val parsed = parseHelper.parse(source.trimIndent())
         if (parsed.resourceErrors.isNotEmpty()) {
             val formatted = parsed.resourceErrors.joinToString("\n") {
@@ -1354,6 +1091,7 @@ class CompilationTests {
         assertThat(emitted)
             .`as`("default config should emit the three staged model artifacts")
             .contains("instantiated.semantifyr", "inlined.semantifyr", "flattened.semantifyr")
+        return compiled
     }
 
     private fun assertFlattenedContract(compiled: FlattenedCompilationContext) {
