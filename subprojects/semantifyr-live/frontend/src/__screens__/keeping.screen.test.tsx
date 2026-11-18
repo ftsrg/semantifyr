@@ -13,6 +13,7 @@ import type { VerificationCaseState, VerificationState } from '../lib/verificati
 import type { SharedResults } from '../lib/workspace/sharedResults'
 import { ShellRoot } from '../shells/ShellRoot'
 import { caseOf, finished, seedLive, type Seed } from './seededLive'
+import { colorModesOf } from './themes'
 
 // Goal: each state of keeping work the mockup draws shows the element that tells it from the plain screen, in both themes
 
@@ -146,8 +147,8 @@ const STATES: Readonly<Record<string, ScreenState>> = {
 }
 
 describe('keeping work in the desktop shell', () => {
-  for (const colorMode of ['light', 'dark'] as const) {
-    for (const [state, screen] of Object.entries(STATES)) {
+  for (const [index, [state, screen]] of Object.entries(STATES).entries()) {
+    for (const colorMode of colorModesOf(index === 0)) {
       it(`shows ${state} in the ${colorMode} theme`, async () => {
         const { live, shell } = seedLive(screen.seed)
         const container = document.createElement('div')

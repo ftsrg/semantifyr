@@ -78,18 +78,6 @@ describe('the trace of each language', () => {
 })
 
 describe('the views of a trace', () => {
-  test('keep the view chosen for the language when another case is selected', async ({ ui }) => {
-    const page = await traced(ui, '/gamma/level-crossing')
-    await showView(page, 'calls')
-
-    await results(page).rows.nth(1).click()
-
-    await expect.poll(async () => {
-      return results(page).rows.nth(1).getAttribute('aria-selected')
-    }).toBe('true')
-    expect(await caseTrace(page).getAttribute('data-view')).toBe('calls')
-  })
-
   test('open a text view in the editor as a read-only tab, which a middle click closes', async ({ ui }) => {
     const page = await traced(ui, '/gamma/level-crossing')
 

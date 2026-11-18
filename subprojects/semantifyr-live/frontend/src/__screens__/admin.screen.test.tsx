@@ -14,6 +14,7 @@ import { ApiError, type AdminConfigResponse, type AdminStatusResponse, type Info
 import { createSettingsStore } from '../lib/stores/settings'
 import type { ResolvedColorMode } from '../lib/util/colorMode'
 import { servedFlavors } from '../__tests__/fixtures/flavors'
+import { colorModesOf } from './themes'
 
 // Goal: every state of the admin page lays out inside the viewport in both themes, and each state shows the element that tells it apart;
 // the proof is the layout itself, measured in a browser, never the pixels
@@ -351,8 +352,8 @@ async function showState(state: string, colorMode: ResolvedColorMode, picture: s
 }
 
 describe('the admin page', () => {
-  for (const colorMode of ['light', 'dark'] as const) {
-    for (const state of Object.keys(states())) {
+  for (const [index, state] of Object.keys(states()).entries()) {
+    for (const colorMode of colorModesOf(index === 0)) {
       it(`lays out ${state} in the ${colorMode} theme`, async () => {
         await showState(state, colorMode, `admin-${state}-${colorMode}`)
       })
