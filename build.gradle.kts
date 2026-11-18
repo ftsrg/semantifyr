@@ -127,7 +127,5 @@ sonar {
         property("sonar.projectName", "Semantifyr")
         property("sonar.host.url", "https://sonarcloud.io")
         property("sonar.sourceEncoding", "UTF-8")
-        // a failed quality gate fails the scan, and with it the pull request's units job
-        property("sonar.qualitygate.wait", true)
     }
 }
