@@ -69,7 +69,12 @@ async function describeLauncher() {
     console.error('---- the installed language server launcher, started by the harness ----');
     console.error(`JAVA_HOME: ${process.env.JAVA_HOME ?? '(not set)'}`);
     console.error(`java on the path: ${firstJavaOnPath()}`);
-    const installed = existsSync(extensionsDirectory) ? readdirSync(extensionsDirectory).find((name) => {
+    if (process.platform !== 'win32') {
+        // VS Code takes its extension host's environment from a login shell unless its own command line started it
+        const login = spawnSync(process.env.SHELL ?? '/bin/sh', ['-ilc', 'echo "JAVA_HOME=$JAVA_HOME"; command -v java; java -version 2>&1'], { encoding: 'utf8', timeout: 30_000 });
+        console.error(`in a login shell: ${`${login.stdout}${login.stderr}`.trim()}`);
+    }
+    const installed =existsSync(extensionsDirectory) ? readdirSync(extensionsDirectory).find((name) => {
         return name.startsWith('ftsrg.semantifyr-');
     }) : undefined;
     const windows = process.platform === 'win32';
