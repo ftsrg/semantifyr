@@ -19,7 +19,7 @@ runs:
       run: |
         version=$(jq -r '.packages["node_modules/playwright"].version' package-lock.json)
         echo "version=$version" >> "$GITHUB_OUTPUT"
-        echo "key=browsers-$ImageOS-$ImageVersion-$version-$(echo "$BROWSERS" | tr ' ' '-')" >> "$GITHUB_OUTPUT"
+        echo "key=browsers-$ImageOS-$version-$(echo "$BROWSERS" | tr ' ' '-')" >> "$GITHUB_OUTPUT"
         mkdir -p "$HOME/.cache/apt-archives/partial"
         printf 'Dir::Cache::Archives "%s";\nAPT::Keep-Downloaded-Packages "true";\n' "$HOME/.cache/apt-archives" | sudo tee /etc/apt/apt.conf.d/90-cached-archives > /dev/null
     - name: Restore the browser cache
