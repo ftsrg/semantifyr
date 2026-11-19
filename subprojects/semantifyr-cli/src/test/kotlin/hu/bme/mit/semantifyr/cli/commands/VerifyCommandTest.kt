@@ -13,7 +13,6 @@ import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.backend.execution.AvailabilityReport
 import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
 import hu.bme.mit.semantifyr.backend.execution.ExecutorKey
-import hu.bme.mit.semantifyr.backend.witness.InlinedWitness
 import hu.bme.mit.semantifyr.cli.SMOKE_CASE
 import hu.bme.mit.semantifyr.cli.common.CaseFailureLine
 import hu.bme.mit.semantifyr.cli.common.CasePhase
@@ -41,8 +40,6 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.CsvSource
-import org.mockito.kotlin.doThrow
-import org.mockito.kotlin.mock
 import java.nio.file.Path
 import kotlin.io.path.Path
 import kotlin.io.path.copyTo
@@ -343,31 +340,6 @@ class VerifyCommandTest {
     }
 
     @Test
-    suspend fun `a witness that fails to back-annotate exits with the back-annotation code`(@TempDir artifacts: Path) {
-        val portfolio = brokenWitnessPortfolio()
-
-        val result = runCli("verify", "--json", "--portfolio", portfolio.id, "-d", artifacts.toString(), smokeModel.toString(), portfolios = listOf(portfolio))
-
-        assertThat(result.statusCode).describedAs(result.output).isEqualTo(9)
-        val line = jsonLines<CaseFailureLine>(result.stdout).single()
-        assertThat(line.case).isEqualTo(SMOKE_CASE)
-        assertThat(line.exitCode).isEqualTo(9)
-        assertThat(line.phase).isEqualTo(CasePhase.BackAnnotation)
-        assertThat(line.error).contains("broken witness")
-        assertThat(result.stderr).contains("Back-annotating the witness of $SMOKE_CASE failed").doesNotContain("Compiling")
-    }
-
-    @Test
-    suspend fun `a witness that fails to back-annotate is no compilation error in text mode`(@TempDir artifacts: Path) {
-        val portfolio = brokenWitnessPortfolio()
-
-        val result = runCli("verify", "--portfolio", portfolio.id, "-d", artifacts.toString(), smokeModel.toString(), portfolios = listOf(portfolio))
-
-        assertThat(result.statusCode).isEqualTo(9)
-        assertThat(result.stdout.lines()).containsSequence("Verifying $SMOKE_CASE ...", "  BACK_ANNOTATION_ERROR")
-    }
-
-    @Test
     suspend fun `an artifact directory that cannot be written exits with the output code before verifying`(@TempDir directory: Path) {
         val readOnly = directory.resolve("read-only").createDirectory()
         assumeTrue(readOnly.toFile().setWritable(false) && !readOnly.isWritable(), "the file system cannot revoke write access")
@@ -380,18 +352,6 @@ class VerifyCommandTest {
         assertThat(result.stdout).isEmpty()
         assertThat(result.stderr).contains("Artifact directory").contains("cannot be written")
         assertThat(backend.invocations.get()).isZero()
-    }
-
-    private fun brokenWitnessPortfolio(): SingleBackendPortfolio<FakeConfig> {
-        val witness = mock<InlinedWitness> {
-            on {
-                initializedState
-            } doThrow IllegalStateException("broken witness")
-        }
-        val backend = FakeBackend("broken") {
-            BackendVerificationResult(verdict = VerificationVerdict.Failed, metadata = fakeMetadata("broken"), inlinedWitness = witness)
-        }
-        return SingleBackendPortfolio(backend, FakeConfig("broken"))
     }
 
     private object UnavailablePortfolio : VerificationPortfolio() {
@@ -411,6 +371,7 @@ class VerifyCommandTest {
             gate: ConcurrencyGate,
             environment: ExecutionEnvironment,
             progress: ProgressContext,
+            readBack: suspend (BackendVerificationResult) -> BackendVerificationResult,
         ): BackendVerificationResult {
             error("UnavailablePortfolio.verify was called")
         }

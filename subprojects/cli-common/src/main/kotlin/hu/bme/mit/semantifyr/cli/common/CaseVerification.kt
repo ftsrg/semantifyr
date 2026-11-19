@@ -14,7 +14,6 @@ import com.github.ajalt.clikt.parameters.options.help
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.options.switch
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
-import hu.bme.mit.semantifyr.verifier.BackAnnotationException
 import hu.bme.mit.semantifyr.verifier.VerificationOutcome
 import kotlin.coroutines.cancellation.CancellationException
 
@@ -43,21 +42,6 @@ suspend fun SuspendingCliktCommand.verifyCase(
         verify()
     } catch (exception: CancellationException) {
         throw exception
-    } catch (exception: BackAnnotationException) {
-        val message = exception.message ?: exception::class.simpleName
-        when (output) {
-            VerifyOutput.Text -> {
-                echo("  BACK_ANNOTATION_ERROR")
-            }
-            VerifyOutput.Quiet -> {
-                echo("BACK_ANNOTATION_ERROR")
-            }
-            VerifyOutput.Json -> {
-                echo(jsonLineFormat.encodeToString(CaseFailureLine(caseName, ExitCode.BackAnnotation.code, CasePhase.BackAnnotation, message)))
-            }
-        }
-        echo("error: Back-annotating the witness of $caseName failed: $message", err = true)
-        return ExitCode.BackAnnotation
     } catch (exception: Exception) {
         val message = exception.message ?: exception::class.simpleName
         when (output) {

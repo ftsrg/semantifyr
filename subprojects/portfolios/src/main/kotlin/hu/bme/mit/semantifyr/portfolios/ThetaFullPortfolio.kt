@@ -61,6 +61,7 @@ class ThetaFullPortfolio(
         gate: ConcurrencyGate,
         environment: ExecutionEnvironment,
         progress: ProgressContext,
+        readBack: suspend (BackendVerificationResult) -> BackendVerificationResult,
     ): BackendVerificationResult {
         val startedAt = Clock.System.now()
         if (!tasks.any { it.leg.isAvailable(environment) }) {
@@ -76,7 +77,7 @@ class ThetaFullPortfolio(
             )
         }
         progress.reportProgress("racing ${tasks.size} Theta configurations")
-        val outcome = firstDecisive(startCase(parentInjector, request, gate, environment, progress)) {
+        val outcome = firstDecisive(startCase(parentInjector, request, gate, environment, progress, readBack)) {
             legs(tasks)
         }
         return outcome.toBackendVerificationResult(startedAt)

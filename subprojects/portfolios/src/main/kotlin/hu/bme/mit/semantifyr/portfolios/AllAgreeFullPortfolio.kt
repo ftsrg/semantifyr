@@ -73,6 +73,7 @@ class AllAgreeFullPortfolio(
         gate: ConcurrencyGate,
         environment: ExecutionEnvironment,
         progress: ProgressContext,
+        readBack: suspend (BackendVerificationResult) -> BackendVerificationResult,
     ): BackendVerificationResult {
         val startedAt = Clock.System.now()
         val available = tasks.filter {
@@ -98,7 +99,7 @@ class AllAgreeFullPortfolio(
         }
         progress.reportProgress("running ${available.size} backend(s)")
 
-        val outcome = all(startCase(parentInjector, request, gate, environment, progress)) {
+        val outcome = all(startCase(parentInjector, request, gate, environment, progress, readBack)) {
             legs(available)
         }
 

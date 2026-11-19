@@ -43,10 +43,11 @@ class SingleBackendPortfolio<T : BackendConfig>(
         gate: ConcurrencyGate,
         environment: ExecutionEnvironment,
         progress: ProgressContext,
+        readBack: suspend (BackendVerificationResult) -> BackendVerificationResult,
     ): BackendVerificationResult {
         val startedAt = Clock.System.now()
         val backendResult = gate.withPermit {
-            leg.run(parentInjector, request, environment)
+            leg.run(parentInjector, request, environment, readBack)
         }
         return PortfolioOutcome.Decided(withholdUntrusted(backendResult, request)).toBackendVerificationResult(startedAt)
     }

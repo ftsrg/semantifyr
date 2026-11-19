@@ -37,6 +37,7 @@ class ErroringPortfolio(
         gate: ConcurrencyGate,
         environment: ExecutionEnvironment,
         progress: ProgressContext,
+        readBack: suspend (BackendVerificationResult) -> BackendVerificationResult,
     ): BackendVerificationResult {
         invocations.incrementAndGet()
         error("ErroringPortfolio.verify was called but should not have been")

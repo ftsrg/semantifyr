@@ -42,9 +42,10 @@ class EngineVerdictPortfolio<T : BackendConfig>(
         gate: ConcurrencyGate,
         environment: ExecutionEnvironment,
         progress: ProgressContext,
+        readBack: suspend (BackendVerificationResult) -> BackendVerificationResult,
     ): BackendVerificationResult {
         return gate.withPermit {
-            leg.run(parentInjector, request, environment)
+            leg.run(parentInjector, request, environment, readBack)
         }
     }
 }

@@ -25,7 +25,6 @@ import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
 import hu.bme.mit.semantifyr.logging.warn
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
-import hu.bme.mit.semantifyr.verifier.BackAnnotationException
 import hu.bme.mit.semantifyr.verifier.ProgressContext
 import hu.bme.mit.semantifyr.verifier.REPORT_VERSION
 import hu.bme.mit.semantifyr.verifier.ReportKind
@@ -56,6 +55,8 @@ import kotlinx.coroutines.withTimeout
 import org.eclipse.emf.ecore.util.EcoreUtil
 import java.io.IOException
 import java.nio.file.Path
+import java.util.Collections
+import java.util.IdentityHashMap
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.io.path.createDirectories
 import kotlin.time.Clock
@@ -175,10 +176,11 @@ class SemantifyrVerifierImpl @AssistedInject constructor(
         val startedAt = Clock.System.now()
         logger.info { "Verifying case '$qualifiedName' with portfolio '${semantifyrVerifierConfiguration.portfolio.id}' (timeout=${semantifyrVerifierConfiguration.timeout})" }
 
+        val witnessReadBack = WitnessReadBack(compilation, qualifiedName)
         val portfolioMark = markNow()
         val (backendResult, portfolioDuration) = try {
             runInTimeout(progress, deadline) {
-                runBackend(compilation, caseDirectory, startedAt, progress, deadline)
+                runBackend(compilation, caseDirectory, startedAt, progress, deadline, witnessReadBack)
             }
         } catch (_: TimeoutCancellationException) {
             logger.info { "Verification of '$qualifiedName' timed out after ${semantifyrVerifierConfiguration.timeout}" }
@@ -217,19 +219,11 @@ class SemantifyrVerifierImpl @AssistedInject constructor(
 
         val backAnnotationMark = markNow()
         val (outcome, backAnnotation, verifierBackAnnotationDuration) = try {
-            val witness = backendResult.inlinedWitness
-            if (witness == null) {
-                BackAnnotationOutcome(backendResult, null, Duration.ZERO)
-            } else {
-                val backAnnotation = runInTimeout(progress, deadline) {
-                    runInterruptible {
-                        backAnnotateWitness(witness, backendResult, compilation, qualifiedName)
-                    }
-                }
-                val duration = backAnnotationMark.elapsedNow()
-                logger.info { "[$qualifiedName] back-annotation completed in $duration" }
-                BackAnnotationOutcome(backendResult, backAnnotation, duration)
+            val readBackResult = runInTimeout(progress, deadline) {
+                witnessReadBack.readBack(backendResult)
             }
+            val backAnnotation = witnessReadBack.of(readBackResult)
+            BackAnnotationOutcome(readBackResult, backAnnotation, backAnnotation?.duration ?: Duration.ZERO)
         } catch (_: TimeoutCancellationException) {
             logger.info {
                 "Back-annotation of '$qualifiedName' timed out after ${semantifyrVerifierConfiguration.timeout}"
@@ -241,10 +235,6 @@ class SemantifyrVerifierImpl @AssistedInject constructor(
                 message = "Timeout (${semantifyrVerifierConfiguration.timeout}) exceeded while back-annotating the witness of ${backendResult.metadata.backendId}'s ${backendResult.verdict} verdict.",
             )
             BackAnnotationOutcome(timedOut, null, backAnnotationMark.elapsedNow())
-        } catch (exception: CancellationException) {
-            throw exception
-        } catch (exception: Exception) {
-            throw BackAnnotationException(exception.message ?: exception::class.simpleName, exception)
         }
 
         val totalDuration = (Clock.System.now() - startedAt)
@@ -319,6 +309,7 @@ class SemantifyrVerifierImpl @AssistedInject constructor(
         startedAt: Instant,
         progress: ProgressContext,
         deadline: ValueTimeMark,
+        witnessReadBack: WitnessReadBack,
     ): BackendOutcomeWithDuration {
         val inlinedOxsts = compilation.inlinedOxsts
 
@@ -338,26 +329,63 @@ class SemantifyrVerifierImpl @AssistedInject constructor(
         )
 
         val (result, duration) = measureTimedValue {
-            semantifyrVerifierConfiguration.portfolio.verify(semantifyrVerifierConfiguration.injector, request, gate, semantifyrVerifierConfiguration.environment, progress)
+            semantifyrVerifierConfiguration.portfolio.verify(semantifyrVerifierConfiguration.injector, request, gate, semantifyrVerifierConfiguration.environment, progress) {
+                witnessReadBack.readBack(it)
+            }
         }
         return BackendOutcomeWithDuration(result, duration)
     }
 
-    private fun backAnnotateWitness(
-        witness: InlinedWitness,
-        backendResult: BackendVerificationResult,
-        compilation: FlattenedCompilationContext,
-        qualifiedName: String,
-    ): BackAnnotation {
-        logger.info { "[$qualifiedName] back-annotating witness from ${backendResult.metadata.backendId ?: "?"}" }
-        val classWitness = classWitnessTransformer.transform(witness, compilation)
-        val reportTrace = reportTraceTransformer.transform(classWitness, compilation)
-        val backAnnotatedModel = classWitnessBackAnnotator.createWitnessInlinedOxsts(
-            reportTrace,
-            compilation,
-            backendResult.verdict,
-        )
-        return BackAnnotation(backAnnotatedModel, reportTrace)
+    // a run whose witness cannot be read back fails, and the portfolio carries on with its other runs
+    private inner class WitnessReadBack(
+        private val compilation: FlattenedCompilationContext,
+        private val qualifiedName: String,
+    ) {
+        private val backAnnotations = Collections.synchronizedMap(IdentityHashMap<InlinedWitness, BackAnnotation>())
+
+        fun of(result: BackendVerificationResult): BackAnnotation? {
+            return result.inlinedWitness?.let {
+                backAnnotations[it]
+            }
+        }
+
+        suspend fun readBack(result: BackendVerificationResult): BackendVerificationResult {
+            val witness = result.inlinedWitness
+            if (witness == null || backAnnotations.containsKey(witness)) {
+                return result
+            }
+            try {
+                backAnnotations[witness] = runInterruptible {
+                    backAnnotate(witness, result)
+                }
+                return result
+            } catch (exception: CancellationException) {
+                throw exception
+            } catch (exception: RuntimeException) {
+                logger.warn(exception) { "[$qualifiedName] the witness of ${result.metadata.backendId} could not be read back" }
+                return result.copy(
+                    verdict = VerificationVerdict.Errored,
+                    isTrusted = false,
+                    inlinedWitness = null,
+                    message = "The witness of ${result.metadata.backendId}'s ${result.verdict} verdict could not be read back: ${exception.message ?: exception::class.simpleName}",
+                )
+            }
+        }
+
+        private fun backAnnotate(witness: InlinedWitness, result: BackendVerificationResult): BackAnnotation {
+            logger.info { "[$qualifiedName] back-annotating witness from ${result.metadata.backendId ?: "?"}" }
+            val mark = markNow()
+            val classWitness = classWitnessTransformer.transform(witness, compilation)
+            val reportTrace = reportTraceTransformer.transform(classWitness, compilation)
+            val backAnnotatedModel = classWitnessBackAnnotator.createWitnessInlinedOxsts(
+                reportTrace,
+                compilation,
+                result.verdict,
+            )
+            val duration = mark.elapsedNow()
+            logger.info { "[$qualifiedName] back-annotation completed in $duration" }
+            return BackAnnotation(backAnnotatedModel, reportTrace, duration)
+        }
     }
 
     private suspend inline fun <T> runInTimeout(
@@ -408,6 +436,7 @@ class SemantifyrVerifierImpl @AssistedInject constructor(
     private class BackAnnotation(
         val witness: InlinedOxsts,
         val reportTrace: ReportTrace,
+        val duration: Duration,
     )
 
     private data class BackAnnotationOutcome(

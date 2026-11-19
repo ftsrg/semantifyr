@@ -276,3 +276,7 @@ fun stubRequest(
         timeout = timeout,
     )
 }
+
+val noReadBack: suspend (BackendVerificationResult) -> BackendVerificationResult = {
+    it
+}

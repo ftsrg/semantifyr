@@ -140,6 +140,7 @@ class SemantifyrVerifierTestHelperTest {
             gate: ConcurrencyGate,
             environment: ExecutionEnvironment,
             progress: ProgressContext,
+            readBack: suspend (BackendVerificationResult) -> BackendVerificationResult,
         ): BackendVerificationResult {
             return BackendVerificationResult(verdict = verdict, metadata = fakeMetadata(FakeExecutorKey.name))
         }

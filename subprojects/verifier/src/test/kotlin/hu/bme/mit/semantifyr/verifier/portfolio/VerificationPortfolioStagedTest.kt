@@ -21,6 +21,7 @@ import hu.bme.mit.semantifyr.verifier.FakeExecutorKey
 import hu.bme.mit.semantifyr.verifier.ProgressContext
 import hu.bme.mit.semantifyr.verifier.fakeMetadata
 import hu.bme.mit.semantifyr.verifier.fakeRequest
+import hu.bme.mit.semantifyr.verifier.noReadBack
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.coroutineScope
@@ -112,6 +113,7 @@ private class StagedPortfolio(
         gate: ConcurrencyGate,
         environment: ExecutionEnvironment,
         progress: ProgressContext,
+        readBack: suspend (BackendVerificationResult) -> BackendVerificationResult,
     ): BackendVerificationResult {
         error("StagedPortfolio.verify is unused; tests call run directly")
     }
@@ -121,7 +123,7 @@ private class StagedPortfolio(
         timeout: Duration,
         progress: ProgressContext = ProgressContext.Silent,
     ): PortfolioOutcome {
-        return staged(startCase(mock(), fakeRequest().copy(timeout = timeout), gate, ExecutionEnvironment.Empty, progress), stages)
+        return staged(startCase(mock(), fakeRequest().copy(timeout = timeout), gate, ExecutionEnvironment.Empty, progress, noReadBack), stages)
     }
 }
 

@@ -47,6 +47,10 @@ val noopGate: ConcurrencyGate = object : ConcurrencyGate {
     }
 }
 
+val noReadBack: suspend (BackendVerificationResult) -> BackendVerificationResult = {
+    it
+}
+
 fun fakeRequest(): BackendVerificationRequest {
     return BackendVerificationRequest(
         inlinedOxsts = OxstsFactory.createInlinedOxsts().also {

@@ -32,7 +32,8 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.OxstsModelPackage
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
-import hu.bme.mit.semantifyr.verifier.BackAnnotationException
+import hu.bme.mit.semantifyr.verifier.FakeBackend
+import hu.bme.mit.semantifyr.verifier.FakeConfig
 import hu.bme.mit.semantifyr.verifier.ProgressContext
 import hu.bme.mit.semantifyr.verifier.ReportKind
 import hu.bme.mit.semantifyr.verifier.SemantifyrVerifier
@@ -41,6 +42,7 @@ import hu.bme.mit.semantifyr.verifier.VerificationReport
 import hu.bme.mit.semantifyr.verifier.caseDirectoryName
 import hu.bme.mit.semantifyr.verifier.portfolio.ConcurrencyGate
 import hu.bme.mit.semantifyr.verifier.portfolio.PortfolioLeg
+import hu.bme.mit.semantifyr.verifier.portfolio.PortfolioTask
 import hu.bme.mit.semantifyr.verifier.portfolio.VerificationPortfolio
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.test.runTest
@@ -243,23 +245,41 @@ class SemantifyrVerifierImplTest {
     }
 
     @Test
-    fun `a witness that fails to back-annotate throws a back-annotation exception`(@TempDir output: Path) {
-        val witness = mock<InlinedWitness> {
-            on {
-                initializedState
-            } doThrow IllegalStateException("broken witness")
+    suspend fun `a run whose witness cannot be read back fails and the portfolio's other run answers`(@TempDir output: Path) {
+        val broken = FakeBackend("broken") {
+            decisiveResult(VerificationVerdict.Failed, "broken").copy(isTrusted = true, inlinedWitness = brokenWitness())
         }
-        val portfolio = ScriptedPortfolio { _, _ ->
-            decisiveResult(VerificationVerdict.Failed).copy(inlinedWitness = witness)
+        val answering = FakeBackend("answering") {
+            delay(200)
+            decisiveResult(VerificationVerdict.Passed, "answering").copy(isTrusted = true)
         }
-        val verifier = build(portfolio, output)
-        val case = loadFirstCase()
+        val portfolio = RacingPortfolio(
+            listOf(
+                PortfolioTask(broken, FakeConfig("broken"), "broken"),
+                PortfolioTask(answering, FakeConfig("answering"), "answering"),
+            ),
+        )
 
-        assertThatThrownBy {
-            kotlinx.coroutines.runBlocking {
-                verifier.verify(case)
-            }
-        }.isInstanceOf(BackAnnotationException::class.java).hasMessage("broken witness")
+        val outcome = build(portfolio, output).verify(loadFirstCase())
+
+        assertThat(outcome.report.result.verdict).isEqualTo(VerificationVerdict.Passed)
+        assertThat(outcome.report.result.metadata.backendId).isEqualTo("answering")
+        assertThat(outcome.reportPath).exists()
+    }
+
+    @Test
+    suspend fun `a decided witness that cannot be read back fails the case with a report`(@TempDir output: Path) {
+        val portfolio = ScriptedPortfolio { _, _ ->
+            decisiveResult(VerificationVerdict.Failed).copy(inlinedWitness = brokenWitness())
+        }
+
+        val outcome = build(portfolio, output).verify(loadFirstCase())
+
+        assertThat(outcome.report.result.verdict).isEqualTo(VerificationVerdict.Errored)
+        assertThat(outcome.report.result.message).contains("broken witness")
+        assertThat(outcome.report.trace).isNull()
+        assertThat(outcome.witness).isNull()
+        assertThat(outcome.reportPath).exists()
     }
 
     @Test
@@ -414,6 +434,44 @@ class SemantifyrVerifierImplTest {
         }
     }
 
+    private fun brokenWitness(): InlinedWitness {
+        return mock<InlinedWitness> {
+            on {
+                initializedState
+            } doThrow IllegalStateException("broken witness")
+        }
+    }
+
+    private class RacingPortfolio(
+        private val tasks: List<PortfolioTask<*>>,
+    ) : VerificationPortfolio() {
+        override val id: String = "racing"
+        override val displayName: String = "racing"
+        override val description: String = "test-only"
+        override val executorKeys: Set<ExecutorKey<*>> = emptySet()
+        override val legs = tasks.map {
+            it.leg
+        }
+
+        override fun availability(environment: ExecutionEnvironment): AvailabilityReport {
+            return AvailabilityReport.Available
+        }
+
+        override suspend fun verify(
+            parentInjector: Injector,
+            request: BackendVerificationRequest,
+            gate: ConcurrencyGate,
+            environment: ExecutionEnvironment,
+            progress: ProgressContext,
+            readBack: suspend (BackendVerificationResult) -> BackendVerificationResult,
+        ): BackendVerificationResult {
+            val outcome = firstDecisive(startCase(parentInjector, request, gate, environment, progress, readBack)) {
+                legs(tasks)
+            }
+            return outcome.toBackendVerificationResult(Clock.System.now())
+        }
+    }
+
     private class ScriptedPortfolio(
         private val behavior: suspend (BackendVerificationRequest, ProgressContext) -> BackendVerificationResult,
     ) : VerificationPortfolio() {
@@ -436,6 +494,7 @@ class SemantifyrVerifierImplTest {
             gate: ConcurrencyGate,
             environment: ExecutionEnvironment,
             progress: ProgressContext,
+            readBack: suspend (BackendVerificationResult) -> BackendVerificationResult,
         ): BackendVerificationResult {
             invocations++
             return behavior(request, progress)

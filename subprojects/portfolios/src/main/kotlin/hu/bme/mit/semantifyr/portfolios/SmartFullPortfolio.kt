@@ -136,9 +136,10 @@ class SmartFullPortfolio(
         gate: ConcurrencyGate,
         environment: ExecutionEnvironment,
         progress: ProgressContext,
+        readBack: suspend (BackendVerificationResult) -> BackendVerificationResult,
     ): BackendVerificationResult {
         val startedAt = Clock.System.now()
-        val outcome = staged(startCase(parentInjector, request, gate, environment, progress), stages)
+        val outcome = staged(startCase(parentInjector, request, gate, environment, progress, readBack), stages)
         return outcome.toBackendVerificationResult(startedAt)
     }
 

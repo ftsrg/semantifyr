@@ -19,6 +19,7 @@ import hu.bme.mit.semantifyr.verifier.FakeConfig
 import hu.bme.mit.semantifyr.verifier.ProgressContext
 import hu.bme.mit.semantifyr.verifier.fakeMetadata
 import hu.bme.mit.semantifyr.verifier.fakeRequest
+import hu.bme.mit.semantifyr.verifier.noReadBack
 import hu.bme.mit.semantifyr.verifier.noopGate
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -64,6 +65,7 @@ private class TestPortfolio(
         gate: ConcurrencyGate,
         environment: ExecutionEnvironment,
         progress: ProgressContext,
+        readBack: suspend (BackendVerificationResult) -> BackendVerificationResult,
     ): BackendVerificationResult {
         error("TestPortfolio.verify is unused; tests call runFirstDecisive / runFirstNDecisive / runAll directly")
     }
@@ -73,7 +75,7 @@ private class TestPortfolio(
         timeout: Duration = Duration.INFINITE,
         progress: ProgressContext = ProgressContext.Silent,
     ): PortfolioCase {
-        return startCase(mock(), fakeRequest().copy(timeout = timeout), gate, ExecutionEnvironment.Empty, progress)
+        return startCase(mock(), fakeRequest().copy(timeout = timeout), gate, ExecutionEnvironment.Empty, progress, noReadBack)
     }
 
     suspend fun runFirstDecisive(

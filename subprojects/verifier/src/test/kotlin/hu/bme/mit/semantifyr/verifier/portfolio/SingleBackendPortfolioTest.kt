@@ -21,6 +21,7 @@ import hu.bme.mit.semantifyr.verifier.FakeBackend
 import hu.bme.mit.semantifyr.verifier.FakeConfig
 import hu.bme.mit.semantifyr.verifier.ProgressContext
 import hu.bme.mit.semantifyr.verifier.fakeMetadata
+import hu.bme.mit.semantifyr.verifier.noReadBack
 import hu.bme.mit.semantifyr.verifier.noopGate
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.params.ParameterizedTest
@@ -119,7 +120,7 @@ class SingleBackendPortfolioTest {
             )
         }
         val portfolio = SingleBackendPortfolio(backend, FakeConfig(soundness = soundness))
-        return portfolio.verify(parentInjector, request, noopGate, ExecutionEnvironment.Empty, ProgressContext.Silent)
+        return portfolio.verify(parentInjector, request, noopGate, ExecutionEnvironment.Empty, ProgressContext.Silent, noReadBack)
     }
 
     private fun request(property: Property): BackendVerificationRequest {

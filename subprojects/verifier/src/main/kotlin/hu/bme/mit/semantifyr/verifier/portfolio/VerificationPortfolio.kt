@@ -45,6 +45,7 @@ class PortfolioCase internal constructor(
     val gate: ConcurrencyGate,
     internal val environment: ExecutionEnvironment,
     val progress: ProgressContext,
+    internal val readBack: suspend (BackendVerificationResult) -> BackendVerificationResult,
     private val start: TimeMark,
 ) {
     val time: Duration = request.timeout
@@ -77,7 +78,7 @@ class PortfolioScope internal constructor(
 
     internal fun leg(task: PortfolioTask<*>, subPath: String) {
         leg(task.leg.id) {
-            task.leg.run(case.parentInjector, case.request.withSubPath(subPath), case.environment)
+            task.leg.run(case.parentInjector, case.request.withSubPath(subPath), case.environment, case.readBack)
         }
     }
 }
@@ -123,12 +124,14 @@ class PortfolioLeg<T : BackendConfig>(
         return environment.availability(backend.executorKey).isUsable
     }
 
+    // a run whose witness cannot be read back fails, so the portfolio carries on with its other runs
     suspend fun run(
         parentInjector: Injector,
         request: BackendVerificationRequest,
         environment: ExecutionEnvironment,
+        readBack: suspend (BackendVerificationResult) -> BackendVerificationResult,
     ): BackendVerificationResult {
-        return backend.verify(parentInjector, config, request, environment)
+        return readBack(backend.verify(parentInjector, config, request, environment))
     }
 }
 
@@ -248,6 +251,7 @@ abstract class VerificationPortfolio(
         gate: ConcurrencyGate,
         environment: ExecutionEnvironment,
         progress: ProgressContext,
+        readBack: suspend (BackendVerificationResult) -> BackendVerificationResult,
     ): BackendVerificationResult
 
     protected fun startCase(
@@ -256,8 +260,9 @@ abstract class VerificationPortfolio(
         gate: ConcurrencyGate,
         environment: ExecutionEnvironment,
         progress: ProgressContext,
+        readBack: suspend (BackendVerificationResult) -> BackendVerificationResult,
     ): PortfolioCase {
-        return PortfolioCase(parentInjector, request, gate, environment, progress, timeSource.markNow())
+        return PortfolioCase(parentInjector, request, gate, environment, progress, readBack, timeSource.markNow())
     }
 
     protected suspend fun firstDecisive(

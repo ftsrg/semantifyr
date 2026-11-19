@@ -23,7 +23,6 @@ enum class ExitCode(
     Undecided(6, "Inconclusive or NotSupported: a backend could not decide a case."),
     Timeout(7, "Timeout."),
     Errored(8, "Errored: a backend failed, or the portfolio has no available backend."),
-    BackAnnotation(9, "Back-annotation error: a backend returned a witness that could not be back-annotated."),
     Output(10, "Output error: the artifact directory cannot be created or written."),
     ;
 
