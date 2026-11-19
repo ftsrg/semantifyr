@@ -30,6 +30,9 @@ enum class SoundnessDirection {
         if (lowering == Exact) {
             return this
         }
+        if (this != Exact && this != lowering) {
+            error("A $this run cannot take a $lowering lowering")
+        }
         return lowering
     }
 }

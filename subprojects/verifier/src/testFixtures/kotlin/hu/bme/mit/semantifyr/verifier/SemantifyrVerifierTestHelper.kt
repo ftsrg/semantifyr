@@ -138,7 +138,7 @@ class SemantifyrVerifierTestHelper @Inject constructor(
                 val checker = backend.capabilityChecker(injector, config)
                 val unsupported = checker.check(inlinedOxsts)
                 if (unsupported.isEmpty()) {
-                    SupportedCase(case, checker.soundness(inlinedOxsts) == SoundnessDirection.Exact)
+                    SupportedCase(case, checker.soundness(SoundnessDirection.Exact, inlinedOxsts) == SoundnessDirection.Exact)
                 } else {
                     logger.info {
                         val refusals = unsupported.map {

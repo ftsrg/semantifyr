@@ -8,6 +8,7 @@ package hu.bme.mit.semantifyr.backend
 
 import hu.bme.mit.semantifyr.backend.execution.BackendExecutor
 import hu.bme.mit.semantifyr.backend.witness.InlinedWitness
+import hu.bme.mit.semantifyr.backend.witness.WitnessFailedException
 import hu.bme.mit.semantifyr.backend.witness.WitnessState
 import hu.bme.mit.semantifyr.backend.witness.WitnessStateValue
 import hu.bme.mit.semantifyr.backend.witness.linearInlinedWitness
@@ -65,7 +66,7 @@ class VerificationContextTest {
             return null
         }
 
-        override fun soundness(inlinedOxsts: InlinedOxsts): SoundnessDirection {
+        override fun loweringSoundness(inlinedOxsts: InlinedOxsts): SoundnessDirection {
             return SoundnessDirection.UnderApproximating
         }
     }
@@ -75,6 +76,7 @@ class VerificationContextTest {
         private val preparationFailure: Exception? = null,
         private val runStep: suspend () -> String? = { "pass" },
         private val witness: InlinedWitness? = null,
+        private val witnessFailure: WitnessFailedException? = null,
         inlinedOxsts: InlinedOxsts = modelChecking(OxstsFactory.createAG()),
         transitionCallTraces: TransitionCallTraceMap = TransitionCallTraceMap(emptyMap()),
         soundness: SoundnessDirection = SoundnessDirection.Exact,
@@ -111,6 +113,9 @@ class VerificationContextTest {
 
         override suspend fun buildWitness(rawVerdict: String?, artifacts: String): InlinedWitness? {
             phases += "witness $rawVerdict"
+            if (witnessFailure != null) {
+                throw witnessFailure
+            }
             return witness
         }
     }
@@ -200,6 +205,21 @@ class VerificationContextTest {
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Errored)
         assertThat(result.message).isEqualTo("scripted's trace could not be read back: scripted gave a Failed verdict without its trace")
+    }
+
+    @Test
+    suspend fun `a witness that cannot be built fails the run and keeps no verdict`() {
+        val result = ScriptedContext(
+            runStep = {
+                "fail"
+            },
+            witnessFailure = WitnessFailedException("a value beyond 32 bits"),
+        ).execute()
+
+        assertThat(result.verdict).isEqualTo(VerificationVerdict.Errored)
+        assertThat(result.isTrusted).isFalse
+        assertThat(result.inlinedWitness).isNull()
+        assertThat(result.message).isEqualTo("scripted's trace could not be read back: a value beyond 32 bits")
     }
 
     @Test

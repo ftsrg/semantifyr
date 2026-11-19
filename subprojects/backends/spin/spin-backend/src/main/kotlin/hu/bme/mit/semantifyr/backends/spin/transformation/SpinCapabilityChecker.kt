@@ -48,7 +48,7 @@ class SpinCapabilityChecker @Inject constructor(
         }
     }
 
-    override fun soundness(inlinedOxsts: InlinedOxsts): SoundnessDirection {
+    override fun loweringSoundness(inlinedOxsts: InlinedOxsts): SoundnessDirection {
         return wholeDelayLowering.soundness(inlinedOxsts)
     }
 

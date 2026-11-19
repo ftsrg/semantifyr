@@ -168,7 +168,7 @@ class GammaFrontendTestHelper {
             if (checker.check(inlinedOxsts).isNotEmpty()) {
                 return@withVerificationScope false
             }
-            val soundness = leg.config.soundness.throughLowering(checker.soundness(inlinedOxsts))
+            val soundness = checker.soundness(leg.config.soundness, inlinedOxsts)
             soundness.trusts(verdict, inlinedOxsts.property.expression)
         }
     }

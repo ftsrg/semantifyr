@@ -45,7 +45,7 @@ abstract class VerificationContext<TArtifacts, TRawVerdict>(
             if (unsupported.isNotEmpty()) {
                 return notSupported(metadata, unsupported)
             }
-            val soundness = configuredSoundness.throughLowering(capabilityChecker.soundness(request.inlinedOxsts))
+            val soundness = capabilityChecker.soundness(configuredSoundness, request.inlinedOxsts)
             executor.prepare()
             runVerification(metadata, soundness)
         } catch (c: CancellationException) {
