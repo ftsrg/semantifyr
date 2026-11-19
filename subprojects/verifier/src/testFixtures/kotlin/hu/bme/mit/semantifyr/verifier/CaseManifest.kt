@@ -16,6 +16,7 @@ import kotlin.io.path.readText
 enum class ManifestVerdict {
     Passed,
     Failed,
+    Unknown,
 }
 
 @Serializable
@@ -36,6 +37,7 @@ data class ManifestCase(
             return when (verdict) {
                 ManifestVerdict.Passed -> VerificationVerdict.Passed
                 ManifestVerdict.Failed -> VerificationVerdict.Failed
+                ManifestVerdict.Unknown -> error("Manifest case $name has no expected verdict")
             }
         }
 }
@@ -43,8 +45,13 @@ data class ManifestCase(
 @Serializable
 data class ManifestModel(
     val file: String,
+    val variant: String? = null,
     val cases: List<ManifestCase>,
 )
+
+private val manifestFormat = Json {
+    ignoreUnknownKeys = true
+}
 
 // the expected verdicts of the models beside it, in the shape the corpora share; the SysML v2 corpus adds keys of its own
 @Serializable
@@ -63,7 +70,7 @@ data class CaseManifest(
 
     companion object {
         fun load(directory: Path): CaseManifest {
-            return Json.decodeFromString(directory.resolve("manifest.json").readText())
+            return manifestFormat.decodeFromString(directory.resolve("manifest.json").readText())
         }
     }
 }
