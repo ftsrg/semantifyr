@@ -22,9 +22,20 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v7
+      - name: Make the dashboards of each environment
+        run: |
+          release="$RUNNER_TEMP/release"
+          mkdir "$release"
+          cp deploy/observability/* deploy/edge/deploy.sh "$release"
+          rm "$release"/env.example "$release"/live-*
+          for source in deploy/observability/live-*.json; do
+            name=${source##*/live-}
+            sed -e 's/@instance@/semantifyr-live/g' -e 's/@environment@/production/g' "$source" > "$release/production-$name"
+            sed -e 's/@instance@/semantifyr-live-staging/g' -e 's/@environment@/staging/g' "$source" > "$release/staging-$name"
+          done
       # Grafana skips a dashboard it cannot parse and stays healthy, so the deploy would not fail on it
       - name: Check the dashboards
-        run: jq empty deploy/observability/*.json
+        run: jq empty "$RUNNER_TEMP"/release/*.json
       - name: Configure SSH
         env:
           DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
@@ -40,4 +51,4 @@ jobs:
           printf 'Host live\n  HostName %s\n  Port %s\n  User %s\n  IdentityFile ~/.ssh/deploy\n' \
             "$DEPLOY_HOST" "$DEPLOY_PORT" "$DEPLOY_USER" > ~/.ssh/config
       - name: Deploy
-        run: tar -C deploy/observability --exclude env.example -cz . -C ../edge deploy.sh | ssh live observability
+        run: tar -C "$RUNNER_TEMP/release" -cz . | ssh live observability

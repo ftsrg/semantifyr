@@ -5,10 +5,25 @@
 apiVersion: 1
 
 providers:
-  - name: semantifyr
-    folder: Semantifyr
+  - name: live-production
+    folder: Semantifyr Live production
+    folderUid: live-production
     type: file
-    disableDeletion: true
+    disableDeletion: false
     allowUiUpdates: false
     options:
-      path: /etc/grafana/dashboards
+      path: /etc/grafana/dashboards/production
+  - name: live-staging
+    folder: Semantifyr Live staging
+    folderUid: live-staging
+    type: file
+    disableDeletion: false
+    allowUiUpdates: false
+    options:
+      path: /etc/grafana/dashboards/staging
+  - name: host
+    type: file
+    disableDeletion: false
+    allowUiUpdates: false
+    options:
+      path: /etc/grafana/dashboards/host
