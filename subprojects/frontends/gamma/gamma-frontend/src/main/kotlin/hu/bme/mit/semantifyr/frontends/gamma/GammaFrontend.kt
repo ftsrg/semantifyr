@@ -168,6 +168,9 @@ class GammaFrontend @Inject private constructor(
     }
 
     private fun loadWitnessModel(witnessPath: Path, baseDirectory: Path): InlinedOxsts {
+        require(witnessPath.toAbsolutePath().normalize().startsWith(baseDirectory.toAbsolutePath().normalize())) {
+            "The witness is not in the directory of its case"
+        }
         val compiledModelPath = GammaCompiler.modelPath(baseDirectory, oxstsFileExtension)
         require(witnessPath.isRegularFile()) {
             "Witness file does not exist: '$witnessPath'"

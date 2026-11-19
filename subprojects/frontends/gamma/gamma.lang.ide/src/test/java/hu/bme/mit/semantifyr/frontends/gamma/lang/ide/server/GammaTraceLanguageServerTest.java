@@ -158,18 +158,17 @@ class GammaTraceLanguageServerTest {
     }
 
     @Test
-    void aValidationNamingAWitnessThatDoesNotExistReturnsAnErroredResult() throws Exception {
+    void aValidationNamingAFileOutsideTheDirectoryOfItsCaseReturnsAnErroredResult() throws Exception {
         var location = crossroadsCase("RoadBCanGetGreen");
-        var missing = workspace.resolve("missing").resolve("witness.semantifyr");
 
         var result = (WitnessValidationResult) executeCommand(
                 "gamma.witness.validate",
-                CommandGson.INSTANCE.toJsonTree(new WitnessValidationRequest(
-                        location.getUri(), location.getRange(), null, uri(missing))));
+                CommandGson.INSTANCE.toJsonTree(
+                        new WitnessValidationRequest(location.getUri(), location.getRange(), null, location.getUri())));
 
         assertThat(result.status()).isEqualTo(WitnessValidationStatus.ERRORED);
         assertThat(result.report()).isNull();
-        assertThat(result.message()).contains(missing.toString());
+        assertThat(result.message()).contains("The witness is not in the directory of its case");
     }
 
     private Location crossroadsCase(String name) throws Exception {
