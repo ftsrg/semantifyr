@@ -27,7 +27,7 @@ class PortfoliosTest {
                 it.id
             },
             {
-                it.soundness
+                it.config.soundness
             },
         ).contains(
             tuple("theta:cegar-expl", SoundnessDirection.Exact),
@@ -48,7 +48,7 @@ class PortfoliosTest {
                 it.id
             },
             {
-                it.soundness
+                it.config.soundness
             },
         ).containsExactly(
             tuple("uppaal:default", SoundnessDirection.UnderApproximating),

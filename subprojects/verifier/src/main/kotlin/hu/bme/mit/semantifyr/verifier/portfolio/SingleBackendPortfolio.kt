@@ -30,11 +30,11 @@ class SingleBackendPortfolio<T : BackendConfig>(
     override val id: String = "${backend.id}-${configuration.id}"
     override val displayName: String = "${backend.id} ${configuration.id}"
     override val description: String = "Runs the ${configuration.id} configuration of ${backend.id} alone."
-    override val executorKeys: Set<ExecutorKey<*>> = setOf(leg.executorKey)
+    override val executorKeys: Set<ExecutorKey<*>> = setOf(leg.backend.executorKey)
     override val legs = listOf(leg)
 
     override fun availability(environment: ExecutionEnvironment): AvailabilityReport {
-        return environment.availability(leg.executorKey)
+        return environment.availability(leg.backend.executorKey)
     }
 
     override suspend fun verify(

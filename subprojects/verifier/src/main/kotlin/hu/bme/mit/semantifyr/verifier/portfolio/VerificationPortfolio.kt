@@ -118,11 +118,9 @@ class PortfolioLeg<T : BackendConfig>(
     val config: T,
 ) {
     val id = "${backend.id}:${config.id}"
-    val soundness = config.soundness
-    val executorKey = backend.executorKey
 
     fun isAvailable(environment: ExecutionEnvironment): Boolean {
-        return environment.availability(executorKey).isUsable
+        return environment.availability(backend.executorKey).isUsable
     }
 
     suspend fun run(

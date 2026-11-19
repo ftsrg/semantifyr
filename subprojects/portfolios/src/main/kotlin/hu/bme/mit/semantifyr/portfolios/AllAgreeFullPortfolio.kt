@@ -48,7 +48,7 @@ class AllAgreeFullPortfolio(
         PortfolioTask(spin, SpinConfig.SafeDfs, "spin-safe-dfs"),
     )
 
-    override val executorKeys: Set<ExecutorKey<*>> = tasks.map { it.leg.executorKey }.toSet()
+    override val executorKeys: Set<ExecutorKey<*>> = tasks.map { it.leg.backend.executorKey }.toSet()
     override val legs = tasks.map { it.leg }
 
     override fun availability(environment: ExecutionEnvironment): AvailabilityReport {

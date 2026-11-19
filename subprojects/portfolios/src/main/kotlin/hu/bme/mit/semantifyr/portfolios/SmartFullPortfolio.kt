@@ -108,7 +108,7 @@ class SmartFullPortfolio(
     }
 
     override val executorKeys: Set<ExecutorKey<*>> = stages.tasks.map {
-        it.leg.executorKey
+        it.leg.backend.executorKey
     }.toSet()
     override val legs = stages.tasks.map {
         it.leg
