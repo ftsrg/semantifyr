@@ -22,11 +22,17 @@ import hu.bme.mit.semantifyr.compiler.pipeline.instantiation.InstanceNames
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationConfig
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
 import hu.bme.mit.semantifyr.compiler.reader.SemantifyrLoader
+import hu.bme.mit.semantifyr.compiler.pipeline.utils.eAllOfType
+import hu.bme.mit.semantifyr.oxsts.lang.serializer.ExpressionSerializer
 import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssignmentOperation
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssumptionOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.CallSuffixExpression
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlineCall
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralInteger
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.NegationOperator
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.TransitionDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 import hu.bme.mit.semantifyr.verifier.ObservedParameter
 import hu.bme.mit.semantifyr.verifier.ObservedSlot
@@ -42,7 +48,6 @@ import hu.bme.mit.semantifyr.verifier.ReportTypeKind
 import hu.bme.mit.semantifyr.verifier.ReportValue
 import hu.bme.mit.semantifyr.verifier.VerificationCase
 import hu.bme.mit.semantifyr.verifier.discovery.VerificationCaseDiscoverer
-import hu.bme.mit.semantifyr.verifier.internal.VerificationArtifactWriter
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.assertj.core.api.Assertions.entry
@@ -51,7 +56,6 @@ import org.junit.jupiter.api.io.TempDir
 import java.math.BigInteger
 import java.nio.file.Path
 import kotlin.io.path.Path
-import kotlin.io.path.readText
 import kotlin.io.path.writeText
 import hu.bme.mit.semantifyr.backend.witness.WitnessState as InlinedWitnessState
 import hu.bme.mit.semantifyr.backend.witness.WitnessStateValue as InlinedWitnessStateValue
@@ -67,6 +71,9 @@ class BackAnnotationFidelityTest {
 
     @Inject
     private lateinit var discoverer: VerificationCaseDiscoverer
+
+    @Inject
+    private lateinit var expressionSerializer: ExpressionSerializer
 
     private val tracingCase = "semantifyr::verification::lang::tracing::TracedChoiceBranchReach"
     private val arraysCase = "semantifyr::verification::lang::arrays::ArraySlotIndependenceReach"
@@ -94,7 +101,7 @@ class BackAnnotationFidelityTest {
                 model.state(kitchenOn to true, hallOn to false, kitchenTracer to false, hallTracer to true),
             ),
         )
-        val annotated = backAnnotate(compilation, witness, output)
+        val annotated = backAnnotate(compilation, witness)
 
         val trace = annotated.trace
         assertThat(trace.initial.calls).isEmpty()
@@ -124,13 +131,13 @@ class BackAnnotationFidelityTest {
                 model.state(kitchenOn to true, hallOn to false, kitchenTracer to true, hallTracer to false),
             ),
         )
-        val annotated = backAnnotate(compilation, witness, output)
+        val annotated = backAnnotate(compilation, witness)
 
         assertThat(annotated.trace.states.last().values).contains(
             entry("root.kitchen.lamp.on", ReportValue.Bool(true)),
             entry("root.hall.lamp.on", ReportValue.Bool(false)),
         )
-        assertThat(annotated.witnessText).contains("root.kitchen.lamp.on == true")
+        assertThat(annotated.assumptions).contains("root.kitchen.lamp.on == true")
     }
 
     @Test
@@ -149,7 +156,7 @@ class BackAnnotationFidelityTest {
                 model.state(slots[0] to 1, slots[1] to 1, slots[2] to 4),
             ),
         )
-        val annotated = backAnnotate(compilation, witness, output)
+        val annotated = backAnnotate(compilation, witness)
 
         val trace = annotated.trace
         assertThat(trace.states[trace.initial.state].values).containsExactly(
@@ -170,7 +177,7 @@ class BackAnnotationFidelityTest {
             ObservedSlot(array = "root.slots", index = 2, size = 3),
             ObservedSlot(array = "root.slots", index = 1, size = 3),
         )
-        assertThat(annotated.witnessText).contains("root.slots[1] == 1")
+        assertThat(annotated.assumptions).contains("root.slots[1] == 1")
     }
 
     @Test
@@ -187,12 +194,12 @@ class BackAnnotationFidelityTest {
                 model.state(positionX to 1),
             ),
         )
-        val annotated = backAnnotate(compilation, witness, output)
+        val annotated = backAnnotate(compilation, witness)
 
         assertThat(annotated.trace.states.last().values).containsExactly(
             entry("root.robot.position", ReportValue.Record(mapOf("x" to ReportValue.Integer(BigInteger.ONE)))),
         )
-        assertThat(annotated.witnessText).contains("root.robot.position.x == 1")
+        assertThat(annotated.assumptions).contains("root.robot.position.x == 1")
     }
 
     @Test
@@ -215,14 +222,14 @@ class BackAnnotationFidelityTest {
                 model.state(slots[0] to secondId, slots[1] to secondId),
             ),
         )
-        val annotated = backAnnotate(compilation, witness, output)
+        val annotated = backAnnotate(compilation, witness)
 
         val trace = annotated.trace
         assertThat(trace.states[trace.initial.state].values).contains(
             entry("root.queue[0]", ReportValue.Text("root.second")),
             entry("root.queue[1]", ReportValue.Text("root.second")),
         )
-        assertThat(annotated.witnessText).contains("root.queue[0] == root.second")
+        assertThat(annotated.assumptions).contains("root.queue[0] == root.second")
     }
 
     @Test
@@ -238,23 +245,27 @@ class BackAnnotationFidelityTest {
                 model.state(kitchenOn to true, hallOn to false, kitchenTracer to true, hallTracer to false),
             ),
         )
-        val annotated = backAnnotate(compilation, witness, output)
+        val annotated = backAnnotate(compilation, witness)
 
         val trace = annotated.trace
         assertThat(trace.states[trace.initial.state].values).contains(
             entry("root.kitchen.lamp.on", ReportValue.Bool(false)),
             entry("root.hall.lamp.on", ReportValue.Bool(false)),
         )
-        assertThat(annotated.witnessText)
-            .contains("var step: int := 0")
-            .containsSubsequence(
-                "init {",
-                "assume(step == 0)",
-                "inline root.init()",
-                "assume(root.kitchen.lamp.on == false)",
-                "step := 1",
-                "}",
-            )
+        val init = annotated.witness.initTransition
+        assertThat(
+            annotated.witness.variables.single {
+                it.name == "step"
+            }.expression,
+        ).isInstanceOfSatisfying(LiteralInteger::class.java) {
+            assertThat(it.value).isZero()
+        }
+        assertThat(assumptions(init)).containsSubsequence(
+            "step == 0",
+            "root.kitchen.lamp.on == false",
+        )
+        assertThat(expressionSerializer.serialize(init.eAllOfType<InlineCall>().single().callExpression)).isEqualTo("root.init()")
+        assertThat(expressionSerializer.serialize(init.eAllOfType<AssignmentOperation>().single().expression)).isEqualTo("1")
     }
 
     @Test
@@ -270,7 +281,7 @@ class BackAnnotationFidelityTest {
                 model.state(kitchenOn to true, hallOn to false, kitchenTracer to true, hallTracer to false),
             ),
         )
-        val annotated = backAnnotate(compilation, witness, output)
+        val annotated = backAnnotate(compilation, witness)
 
         val trace = annotated.trace
         assertThat(trace.root).isEqualTo("root")
@@ -308,7 +319,7 @@ class BackAnnotationFidelityTest {
                 model.state(kitchenOn to false, hallOn to false, kitchenTracer to false, hallTracer to false),
             ),
         )
-        val annotated = backAnnotate(compilation, witness, output)
+        val annotated = backAnnotate(compilation, witness)
 
         val trace = annotated.trace
         assertThat(trace.transitions).containsExactly(
@@ -337,7 +348,7 @@ class BackAnnotationFidelityTest {
                 model.state("${readings}value_2" to 2, "${readings}valid_2" to true),
             ),
         )
-        val annotated = backAnnotate(compilation, witness, output)
+        val annotated = backAnnotate(compilation, witness)
 
         assertThat(annotated.trace.states.single().values).containsExactly(
             entry(
@@ -357,7 +368,7 @@ class BackAnnotationFidelityTest {
                 ObservedSlot(array = "root.store.readings", index = 2, size = 3),
             ),
         )
-        assertThat(annotated.witnessText).contains(
+        assertThat(annotated.assumptions).contains(
             "root.store.readings[2].value == 2",
             "root.store.readings[2].valid == true",
         )
@@ -379,7 +390,7 @@ class BackAnnotationFidelityTest {
                 model.state(item to 2, tracer to true, argument to 2),
             ),
         )
-        val annotated = backAnnotate(compilation, witness, output)
+        val annotated = backAnnotate(compilation, witness)
 
         assertThat(annotated.trace.steps.single().calls.single().arguments).containsExactly(
             entry("value", ReportValue.Integer(BigInteger.TWO)),
@@ -401,23 +412,23 @@ class BackAnnotationFidelityTest {
         val compilation = compile(case, output)
         val model = compilation.inlinedOxsts
         val witness = timedWitness(model)
-        val annotated = backAnnotate(compilation, witness, output)
+        val annotated = backAnnotate(compilation, witness)
 
-        assertThat(annotated.witnessText)
-            .containsPattern("witness of .*TimerFires timescale 6")
-            .contains("var time: clock := 0")
-            .containsSubsequence(
-                "assume(step == 1)",
-                "inline root.main()",
-                "assume(time == 15)",
-                "assume(root.timer.fired == true)",
-                "assume(root.timer.elapsed == 15)",
-                "step := 2",
-                "assume(step == 2)",
-                "inline root.main()",
-                "assume(time == 17)",
-                "assume(root.timer.elapsed == 17)",
-            )
+        assertThat(annotated.witness.timeScale).isEqualTo(6)
+        assertThat(
+            annotated.witness.variables.map {
+                it.name
+            },
+        ).contains("time")
+        assertThat(assumptions(annotated.witness.mainTransition)).containsSubsequence(
+            "step == 1",
+            "time == 15",
+            "root.timer.fired == true",
+            "root.timer.elapsed == 15",
+            "step == 2",
+            "time == 17",
+            "root.timer.elapsed == 17",
+        )
     }
 
     @Test
@@ -440,7 +451,7 @@ class BackAnnotationFidelityTest {
                 model.state(current to firstId, tracer to true),
             ),
         )
-        val annotated = backAnnotate(compilation, witness, output)
+        val annotated = backAnnotate(compilation, witness)
 
         val trace = annotated.trace
         val jobs = ReportType(ReportTypeKind.Feature, "semantifyr::verification::report::feature_typed::Scheduler::jobs")
@@ -472,12 +483,14 @@ class BackAnnotationFidelityTest {
                 model.state(tick to 1),
             ),
         )
-        val annotated = backAnnotate(compilation, witness, output)
+        val annotated = backAnnotate(compilation, witness)
 
         val trace = annotated.trace
         assertThat(trace.root).isEqualTo("root")
         assertThat(trace.states.last().values.values).containsExactly(ReportValue.Integer(BigInteger.ONE))
-        assertThat(annotated.witnessText).containsPattern("assume\\(.*counter\\.tick == 1\\)")
+        assertThat(annotated.assumptions).anySatisfy {
+            assertThat(it).matches(".*counter\\.tick == 1")
+        }
     }
 
     @Test
@@ -496,12 +509,12 @@ class BackAnnotationFidelityTest {
                 model.state(x to 1),
             ),
         )
-        val annotated = backAnnotate(compilation, witness, output)
+        val annotated = backAnnotate(compilation, witness)
 
         val trace = annotated.trace
         assertThat(trace.root).isEqualTo("root")
         assertThat(trace.states.last().values).containsEntry("root.x", ReportValue.Integer(BigInteger.ONE))
-        assertThat(annotated.witnessText).contains("assume(root.x == 1)")
+        assertThat(annotated.assumptions).contains("root.x == 1")
     }
 
     @Test
@@ -518,7 +531,7 @@ class BackAnnotationFidelityTest {
                 model.tracerState(tracers, true),
             ),
         )
-        val annotated = backAnnotate(compilation, witness, output)
+        val annotated = backAnnotate(compilation, witness)
 
         val press = annotated.trace.steps.single().calls.single()
         assertThat(press.self).isEqualTo("root.panel")
@@ -551,7 +564,7 @@ class BackAnnotationFidelityTest {
         )
 
         assertThatThrownBy {
-            backAnnotate(compilation, witness, output)
+            backAnnotate(compilation, witness)
         }.isInstanceOf(IllegalStateException::class.java).hasMessageContaining("ran without the call that encloses it")
     }
 
@@ -684,21 +697,25 @@ class BackAnnotationFidelityTest {
     private fun backAnnotate(
         compilation: FlattenedCompilationContext,
         witness: InlinedWitness,
-        output: Path,
     ): BackAnnotated {
         val classWitness = injector.getInstance(ClassWitnessTransformer::class.java).transform(witness, compilation)
         val trace = injector.getInstance(ReportTraceTransformer::class.java).transform(classWitness, compilation)
         val model = injector.getInstance(ClassWitnessBackAnnotator::class.java).createWitnessInlinedOxsts(trace, compilation, VerificationVerdict.Passed)
-        val witnessPath = injector.getInstance(VerificationArtifactWriter::class.java).writeWitness(model, output, "back-annotation")
-        return BackAnnotated(trace, witnessPath)
+        return BackAnnotated(trace, model)
     }
 
-    private class BackAnnotated(
+    private fun assumptions(transition: TransitionDeclaration): List<String> {
+        return transition.eAllOfType<AssumptionOperation>().map {
+            expressionSerializer.serialize(it.expression)
+        }.toList()
+    }
+
+    private inner class BackAnnotated(
         val trace: ReportTrace,
-        val witnessPath: Path,
+        val witness: InlinedOxsts,
     ) {
-        val witnessText: String
-            get() = witnessPath.readText()
+        val assumptions: List<String>
+            get() = assumptions(witness.initTransition) + assumptions(witness.mainTransition)
     }
 
     companion object {
