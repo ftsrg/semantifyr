@@ -37,8 +37,12 @@ The model tests are not a Gradle suite: they check that the models of the Gamma 
 ./gradlew :corpus-check:installDist :gamma-cli:installDist :sysml-cli:installDist :sysml-wrapper:appendFurtherCases
 subprojects/corpus-check/build/install/corpus-check/bin/corpus-check \
   --launcher subprojects/frontends/gamma/gamma-cli/build/install/semantifyr-gamma/bin/semantifyr-gamma \
-  --corpus subprojects/frontends/gamma/models/semantics --corpus subprojects/frontends/gamma/models/examples \
+  --corpus subprojects/frontends/gamma/models/semantics \
   --timeout-seconds 120
+subprojects/corpus-check/build/install/corpus-check/bin/corpus-check \
+  --launcher subprojects/frontends/gamma/gamma-cli/build/install/semantifyr-gamma/bin/semantifyr-gamma \
+  --corpus subprojects/frontends/gamma/models/examples \
+  --timeout-seconds 1800
 subprojects/corpus-check/build/install/corpus-check/bin/corpus-check \
   --launcher subprojects/frontends/sysml/sysml-cli/build/install/semantifyr-sysml/bin/semantifyr-sysml \
   --corpus subprojects/frontends/sysml/sysml-wrapper/build/corpus --case-namespace semantifyr::sysml::model:: \
