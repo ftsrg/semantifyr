@@ -58,7 +58,28 @@ jobs:
           path: subprojects/semantifyr-vscode/.vscode-test/vscode-*
           key: vscode-${{ runner.os }}-${{ hashFiles('subprojects/semantifyr-vscode/package.json') }}
       - name: Run Build
+        if: ${{ runner.os != 'Windows' }}
         run: ./gradlew build semanticTest integrationTest endToEndTest --continue
+      # temporary: the Windows runner is lost during the suites, and a sample a minute shows what runs out
+      - name: Run Build
+        if: ${{ runner.os == 'Windows' }}
+        shell: bash
+        run: |
+          sample=$(cat <<'SAMPLE'
+          $system = Get-CimInstance Win32_OperatingSystem; $all = @(Get-Process); $java = @($all | Where-Object Name -eq 'java'); 'sample {0:HH:mm:ss} freePhysicalMB={1:N0} freeCommitMB={2:N0} processes={3} java={4} javaPrivateMB={5:N0} cmd={6} conhost={7} handles={8}' -f (Get-Date), ($system.FreePhysicalMemory / 1KB), ($system.FreeVirtualMemory / 1KB), $all.Count, $java.Count, (($java | Measure-Object PrivateMemorySize64 -Sum).Sum / 1MB), @($all | Where-Object Name -eq 'cmd').Count, @($all | Where-Object Name -eq 'conhost').Count, ($all | Measure-Object HandleCount -Sum).Sum
+          SAMPLE
+          )
+          (
+            while true; do
+              powershell -NoProfile -Command "$sample"
+              sleep 60
+            done
+          ) &
+          sampler=$!
+          status=0
+          ./gradlew build semanticTest integrationTest endToEndTest --continue || status=$?
+          kill "$sampler"
+          exit "$status"
       - name: Publish to SonarCloud
         if: ${{ runner.os == 'Linux' }}
         env:
