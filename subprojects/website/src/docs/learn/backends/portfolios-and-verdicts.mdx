@@ -36,6 +36,8 @@ How the answers become one verdict is what tells the portfolios apart:
 - `all-agree` waits for every leg and reports the verdict its trusted legs agree on, naming any untrusted leg it overrules. Trusted legs that disagree make the case Errored, since one of them is unsound.
 - A single-backend portfolio reports its configuration's verdict when the leg's direction trusts it; otherwise the case is Inconclusive without a witness, and the message names the verdict it withheld, such as Spin's Passed on an `AG` property.
 
+A leg's answer counts only with its witness: a leg whose witness cannot be read back into the model fails as Errored, and the portfolio goes on with its other legs.
+
 When no trusted answer comes, the case is decided by how every leg last ended: Timeout when a leg ran out of time, was stopped at a window or at the time limit, or never got a place, Errored when every leg failed, Not supported when every leg refused the model, naming each leg and the constructs it refused, and Inconclusive otherwise; the message lists how every leg ended, for `smart` in every stage it ran. The time limit holds for the whole case, the compilation and the back-annotation of the witness included. The [command line's reference](../reference/command-line.mdx#verdicts) says how each verdict is reported, and [the portfolios](../reference/portfolios.mdx) lists each portfolio with its legs.
 
 ## Validation
