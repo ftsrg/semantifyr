@@ -169,6 +169,22 @@ public class ClockValidationTest {
     }
 
     @Test
+    void clockWhoseMultiplicityDoesNotEvaluateGetsNoClockError() {
+        var parsedPackage = parseHelper.parse("""
+            package test
+            class Timer {
+                var elapsed: clock[missing] := 0
+            }
+            """, CheckMode.ALL);
+
+        assertThat(parsedPackage.getIssues())
+                .isNotEmpty()
+                .noneSatisfy(issue -> {
+                    assertThat(issue.getCode()).isEqualTo(OxstsValidator.INCORRECT_CLOCK_USE);
+                });
+    }
+
+    @Test
     void comparisonWithAnArrayIsRejected() {
         var parsedPackage = parseHelper.parse("""
             package test

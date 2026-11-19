@@ -1107,13 +1107,7 @@ public class OxstsValidator extends AbstractOxstsValidator {
                 && domain != builtinSymbolResolver.stringDatatype(parameter)) {
             return;
         }
-        Modality modality;
-        try {
-            modality = modalityEvaluatorProvider.evaluate(argument.getExpression());
-        } catch (RuntimeException e) {
-            return;
-        }
-        if (modality == Modality.RUNTIME) {
+        if (evaluateModalitySafely(argument.getExpression()) == Modality.RUNTIME) {
             acceptError(
                     "A run-time argument of type '" + domain.getName() + "' cannot be recorded for the traced call.",
                     argument,
@@ -1701,13 +1695,8 @@ public class OxstsValidator extends AbstractOxstsValidator {
         if (compileTimeCandidate == null || EcoreUtil2.getContainerOfType(operation, InlinedOxsts.class) != null) {
             return;
         }
-        Modality modality;
-        try {
-            modality = modalityEvaluatorProvider.evaluate(compileTimeCandidate);
-        } catch (RuntimeException e) {
-            return;
-        }
-        if (!modality.isAtMost(Modality.COMPILE_TIME)) {
+        var modality = evaluateModalitySafely(compileTimeCandidate);
+        if (modality == null || !modality.isAtMost(Modality.COMPILE_TIME)) {
             return;
         }
         for (var leaf : NodeModelUtils.findActualNodeFor(operation).getLeafNodes()) {
@@ -1920,9 +1909,7 @@ public class OxstsValidator extends AbstractOxstsValidator {
             var boundType = leftClock ? rightType : leftType;
             var boundRange = boundType.getRange();
             if ((boundRange != null && (boundRange.getLowerBound() != 1 || boundRange.getUpperBound() != 1))
-                    || (!typeCompatibility.isInt(boundType, operator)
-                            && typeCompatibility.unwrappedDomain(boundType)
-                                    != builtinSymbolResolver.intDatatype(operator))) {
+                    || typeCompatibility.unwrappedDomain(boundType) != builtinSymbolResolver.intDatatype(operator)) {
                 acceptError(
                         "A clock is compared with an integer, found " + formatType(boundType) + ".",
                         operator,
@@ -2226,9 +2213,10 @@ public class OxstsValidator extends AbstractOxstsValidator {
             try {
                 range = multiplicityRangeEvaluator.evaluate(typeSpecification);
             } catch (RuntimeException e) {
-                range = null;
+                // a multiplicity that does not evaluate carries its own diagnostic
+                return;
             }
-            if (range == null || range.getLowerBound() != 1 || range.getUpperBound() != 1) {
+            if (range.getLowerBound() != 1 || range.getUpperBound() != 1) {
                 acceptError(
                         "A clock holds exactly one value, so it cannot be an array element or optional.",
                         typeSpecification,
@@ -2604,14 +2592,17 @@ public class OxstsValidator extends AbstractOxstsValidator {
         return name != null ? name : "<anonymous>";
     }
 
-    private void checkModalityAtMost(Expression expression, Modality upperBound, String messagePrefix) {
-        Modality actual;
+    private Modality evaluateModalitySafely(Expression expression) {
         try {
-            actual = modalityEvaluatorProvider.evaluate(expression);
+            return modalityEvaluatorProvider.evaluate(expression);
         } catch (RuntimeException e) {
-            return;
+            return null;
         }
-        if (!actual.isAtMost(upperBound)) {
+    }
+
+    private void checkModalityAtMost(Expression expression, Modality upperBound, String messagePrefix) {
+        var actual = evaluateModalitySafely(expression);
+        if (actual != null && !actual.isAtMost(upperBound)) {
             acceptError(messagePrefix + " (got modality " + actual + ").", expression, EXPRESSION_MODALITY_TOO_HIGH);
         }
     }
