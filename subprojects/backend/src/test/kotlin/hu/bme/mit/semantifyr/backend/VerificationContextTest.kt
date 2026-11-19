@@ -208,18 +208,18 @@ class VerificationContextTest {
     }
 
     @Test
-    suspend fun `a witness that cannot be built fails the run and keeps no verdict`() {
+    suspend fun `a trace value that cannot be read fails the run and keeps no verdict`() {
         val result = ScriptedContext(
             runStep = {
                 "fail"
             },
-            witnessFailure = WitnessFailedException("a value beyond 32 bits"),
+            witnessFailure = WitnessFailedException("the trace holds 1.5 for counter, which is no value of its type"),
         ).execute()
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Errored)
         assertThat(result.isTrusted).isFalse
         assertThat(result.inlinedWitness).isNull()
-        assertThat(result.message).isEqualTo("scripted's trace could not be read back: a value beyond 32 bits")
+        assertThat(result.message).isEqualTo("scripted's trace could not be read back: the trace holds 1.5 for counter, which is no value of its type")
     }
 
     @Test
