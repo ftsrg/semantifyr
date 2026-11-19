@@ -243,4 +243,28 @@ class WholeDelayTest {
             wholeDelay.restore(witness)
         }
     }
+
+    @Test
+    fun `a clock missing from a state fails the read-back`() {
+        val inlinedOxsts = parse(deadline)
+        val wholeDelay = wholeDelayLowering.lower(inlinedOxsts)!!
+        val late = inlinedOxsts.variables.first {
+            it.name == "late"
+        }
+        val witness = linearInlinedWitness(
+            inlinedOxsts,
+            listOf(
+                WitnessState(
+                    listOf(
+                        WitnessStateValue(late, OxstsFactory.createLiteralBoolean(false)),
+                    ),
+                ),
+            ),
+        )
+
+        val failure = assertThrows<WitnessFailedException> {
+            wholeDelay.restore(witness)
+        }
+        assertThat(failure.message).isEqualTo("the clock elapsed has no value in the trace")
+    }
 }

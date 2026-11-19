@@ -13,7 +13,6 @@ import hu.bme.mit.semantifyr.backend.witness.InlinedWitness
 import hu.bme.mit.semantifyr.backend.witness.WitnessClockValue
 import hu.bme.mit.semantifyr.backend.witness.WitnessFailedException
 import hu.bme.mit.semantifyr.backend.witness.WitnessState
-import hu.bme.mit.semantifyr.backend.witness.WitnessStateValue
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.eAllOfType
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.clock.ClockTestAnalysis
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.ConstantExpressionEvaluatorProvider
@@ -50,23 +49,22 @@ class WholeDelay(
     }
 
     private fun restoreState(state: WitnessState, previous: WitnessState?): WitnessState {
-        val saturations = clocks.associate {
-            it.variable to it.saturation
-        }
         val previousValues = previous?.clockValues.orEmpty().associate {
             it.variable to it.value
         }
-        val clockValues = mutableListOf<WitnessClockValue>()
-        val values = mutableListOf<WitnessStateValue>()
-        for (value in state.values) {
-            val saturation = saturations[value.variable]
-            if (saturation == null) {
-                values += value
-                continue
-            }
+        val clockVariables = clocks.map {
+            it.variable
+        }.toSet()
+        val values = state.values.filter {
+            it.variable !in clockVariables
+        }
+        val clockValues = clocks.map { clock ->
+            val value = state.values.firstOrNull {
+                it.variable == clock.variable
+            } ?: throw WitnessFailedException("the clock ${clock.variable.name} has no value in the trace")
             val raw = (value.value as? LiteralInteger)?.value
-                ?: throw WitnessFailedException("the clock ${value.variable.name} has no whole value in the trace")
-            clockValues += WitnessClockValue(value.variable, clockValue(value.variable, raw, saturation, previousValues, state.elapsed))
+                ?: throw WitnessFailedException("the clock ${clock.variable.name} has no whole value in the trace")
+            WitnessClockValue(clock.variable, clockValue(clock.variable, raw, clock.saturation, previousValues, state.elapsed))
         }
         return WitnessState(values, clockValues, state.elapsed)
     }
