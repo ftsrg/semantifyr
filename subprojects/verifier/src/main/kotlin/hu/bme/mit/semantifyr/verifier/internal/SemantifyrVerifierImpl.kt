@@ -336,7 +336,6 @@ class SemantifyrVerifierImpl @AssistedInject constructor(
         return BackendOutcomeWithDuration(result, duration)
     }
 
-    // a run whose witness cannot be read back fails, and the portfolio carries on with its other runs
     private inner class WitnessReadBack(
         private val compilation: FlattenedCompilationContext,
         private val qualifiedName: String,
