@@ -193,11 +193,7 @@ class GammaFrontendTestHelper {
         val witnessPath = result.outcome.witness?.path
         if (validationPortfolio != null && witnessPath != null) {
             val validation = frontend.validateWitness(gammaVerificationCase, witnessPath, validationPortfolio).report.result
-            assertThat(validation.verdict)
-                .describedAs(
-                    "Witness of ${portfolio.id} for ${gammaVerificationCase.qualifiedName} must re-verify Passed via ${validationPortfolio.id} (${validation.message ?: "no message"})",
-                )
-                .isEqualTo(VerificationVerdict.Passed)
+            assertVerdict("witness of ${portfolio.id} for ${gammaVerificationCase.qualifiedName} on ${validationPortfolio.id}", VerificationVerdict.Passed, validation)
         }
         return result
     }
