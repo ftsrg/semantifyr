@@ -182,6 +182,7 @@ public class OxstsValidator extends AbstractOxstsValidator {
     public static final String DECLARED_IN_ANOTHER_FILE = ISSUE_PREFIX + "DECLARED_IN_ANOTHER_FILE";
     public static final String INCORRECT_CLOCK_USE = ISSUE_PREFIX + "INCORRECT_CLOCK_USE";
     public static final String CLOCK_TEST_NOT_CLOSED = ISSUE_PREFIX + "CLOCK_TEST_NOT_CLOSED";
+    public static final String INCORRECT_TIME_SCALE = ISSUE_PREFIX + "INCORRECT_TIME_SCALE";
 
     @Inject
     protected BuiltinSymbolResolver builtinSymbolResolver;
@@ -2331,6 +2332,29 @@ public class OxstsValidator extends AbstractOxstsValidator {
                     null,
                     -1,
                     CLOCK_TEST_NOT_CLOSED);
+        }
+    }
+
+    @Check
+    public void checkTimeScale(InlinedOxsts inlinedOxsts) {
+        if (NodeModelUtils.findNodesForFeature(inlinedOxsts, OxstsPackage.Literals.INLINED_OXSTS__TIME_SCALE)
+                .isEmpty()) {
+            return;
+        }
+        if (!inlinedOxsts.isWitness()) {
+            acceptError(
+                    "Only a witness has a time scale.",
+                    inlinedOxsts,
+                    OxstsPackage.Literals.INLINED_OXSTS__TIME_SCALE,
+                    0,
+                    INCORRECT_TIME_SCALE);
+        } else if (inlinedOxsts.getTimeScale() < 1) {
+            acceptError(
+                    "A time scale is at least 1.",
+                    inlinedOxsts,
+                    OxstsPackage.Literals.INLINED_OXSTS__TIME_SCALE,
+                    0,
+                    INCORRECT_TIME_SCALE);
         }
     }
 
