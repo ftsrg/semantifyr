@@ -6,12 +6,15 @@
 
 package hu.bme.mit.semantifyr.backends.theta
 
+import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup
 import hu.bme.mit.semantifyr.verifier.SemantifyrVerifierTestHelper
 import hu.bme.mit.semantifyr.verifier.VerificationCase
 import hu.bme.mit.semantifyr.verifier.assumeBackendAvailable
+import hu.bme.mit.semantifyr.verifier.discovery.CaseFilter
 import hu.bme.mit.semantifyr.verifier.portfolio.SingleBackendPortfolio
 import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Named
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
@@ -45,6 +48,24 @@ class ThetaSemanticConformanceTest {
                 SemantifyrVerifierTestHelper.testArtifactRoot(ThetaSemanticConformanceTest::class.java).resolve("capability-check"),
             )
         }
+
+        @JvmStatic
+        fun `a whole-delay proof of a model whose clock tests are not all closed is Inconclusive`(): List<Arguments> {
+            val outputDirectory = SemantifyrVerifierTestHelper.testArtifactRoot(ThetaSemanticConformanceTest::class.java)
+            val proofs = CaseFilter.Matching {
+                !helper.expectsWitness(it, helper.expectedVerdictFromTags(it))
+            }
+            val loweredExactly = helper.collectAcceptedCasesAsArguments(context, ThetaBackend(), ThetaConfig.CegarExplPredCombined, outputDirectory.resolve("exact-lowering-check"), proofs).map {
+                nameOf(it)
+            }.toSet()
+            return helper.collectSupportedCasesAsArguments(context, ThetaBackend(), ThetaConfig.CegarExplPredCombined, outputDirectory.resolve("lowering-check"), proofs).filter {
+                nameOf(it) !in loweredExactly
+            }
+        }
+
+        private fun nameOf(arguments: Arguments): String {
+            return (arguments.get().single() as Named<*>).name
+        }
     }
 
     @ParameterizedTest
@@ -55,6 +76,18 @@ class ThetaSemanticConformanceTest {
             verificationCase,
             verificationPortfolio = SingleBackendPortfolio(ThetaBackend(), ThetaConfig.CegarExplPredCombined),
             outputDirectory = SemantifyrVerifierTestHelper.testArtifactRoot(ThetaSemanticConformanceTest::class.java),
+        )
+    }
+
+    @ParameterizedTest
+    @MethodSource
+    suspend fun `a whole-delay proof of a model whose clock tests are not all closed is Inconclusive`(verificationCase: VerificationCase) {
+        helper.checkTestModel(
+            context,
+            verificationCase,
+            verificationPortfolio = SingleBackendPortfolio(ThetaBackend(), ThetaConfig.CegarExplPredCombined),
+            outputDirectory = SemantifyrVerifierTestHelper.testArtifactRoot(ThetaSemanticConformanceTest::class.java),
+            expectedVerdict = VerificationVerdict.Inconclusive,
         )
     }
 }
