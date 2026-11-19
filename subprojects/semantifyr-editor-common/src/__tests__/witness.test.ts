@@ -17,13 +17,13 @@ import {
 import { WitnessValidationStatus } from "../wire.ts";
 
 describe("formatTraceCall", () => {
-    it("names the instance, the transition and the argument values", () => {
+    it("names the instance, the transition by its own name and the argument values", () => {
         expect(formatTraceCall({
             self: "root.lamp",
             transition: "example::Lamp::toggle",
             arguments: { brightness: 2, on: true, partner: null },
             calls: [],
-        })).toBe("root.lamp.example::Lamp::toggle(brightness=2, on=true, partner=null)");
+        })).toBe("root.lamp.toggle(brightness=2, on=true, partner=null)");
     });
 });
 

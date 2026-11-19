@@ -6,7 +6,7 @@
 
 import type React from 'react'
 import { useMemo } from 'react'
-import { isTimed, lastNameSegment, missingCallsMessage, shortenPath, traceCalls, type TraceCall, type TraceCallStep } from '@semantifyr/editor-common'
+import { lastNameSegment, missingCallsMessage, shortenPath, traceCalls, type TraceCall, type TraceCallStep } from '@semantifyr/editor-common'
 
 import { Icon } from '../ui/icons'
 import type { TraceViewProps } from './registry'
@@ -53,7 +53,6 @@ interface Band {
 interface CallStep {
   number: number
   step: TraceCallStep
-  elapsed: string | null
 }
 
 interface Diagram {
@@ -158,7 +157,8 @@ function layout(steps: readonly CallStep[], lifelines: readonly string[]): Diagr
   }))
   let width = (positions.at(-1) ?? environment) + COLUMN / 2
   let y = 0
-  const bands = steps.map(({ number, step, elapsed }) => {
+  const bands = steps.map(({ number, step }) => {
+    const elapsed = step.elapsed
     let time: ElapsedTime | null = null
     if (elapsed !== null) {
       time = { middle: y + TIME_ROW / 2, amount: elapsed }
@@ -252,10 +252,8 @@ function Arrow({ placed, caller, fromEnvironment }: { placed: PlacedCall, caller
 export function CallsView({ trace }: TraceViewProps): React.JSX.Element {
   const diagram = useMemo(() => {
     const calls = traceCalls(trace)
-    const timed = isTimed(trace)
     const steps = [calls.initialized, ...calls.steps].map((step, number) => {
-      const elapsed = timed && number > 0 ? String(trace.steps[number - 1]?.elapsed) : null
-      return { number, step, elapsed }
+      return { number, step }
     })
     return calls.lifelines.length > 0 ? layout(steps, calls.lifelines) : null
   }, [trace])

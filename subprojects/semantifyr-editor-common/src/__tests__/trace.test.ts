@@ -5,7 +5,7 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { formatReportValue, isTimed, lastNameSegment, shortenPath, traceCalls, traceStates } from "../trace.ts";
+import { formatReportValue, lastNameSegment, shortenPath, traceCalls, traceStates } from "../trace.ts";
 import type { ReportCall, ReportTrace } from "../wire.ts";
 
 function call(self: string, transition: string, calls: ReportCall[] = []): ReportCall {
@@ -43,33 +43,48 @@ describe("traceStates", () => {
         const states = traceStates(lamp);
 
         expect(states.start).toEqual([{ variable: "root.lamp.on", value: "false" }, { variable: "root.lamp.level", value: "0" }]);
-        expect(states.steps[0]).toEqual([
+        expect(states.steps[0]?.variables).toEqual([
             { variable: "root.lamp.on", value: "true", previous: "false", changed: true },
             { variable: "root.lamp.level", value: "0", previous: "0", changed: false },
         ]);
     });
 
     it("claims nothing for a value the target state does not hold", () => {
-        expect(traceStates(lamp).steps[1]).toEqual([{ variable: "root.lamp.on", value: "true", previous: "true", changed: false }]);
+        expect(traceStates(lamp).steps[1]?.variables).toEqual([{ variable: "root.lamp.on", value: "true", previous: "true", changed: false }]);
     });
 
-    it("compares a step back to an earlier state with its own source", () => {
-        expect(traceStates(lamp).steps[2]).toEqual([
+    it("compares a step back to an earlier state with its own source, claiming no change for a value the source does not hold", () => {
+        expect(traceStates(lamp).steps[2]?.variables).toEqual([
             { variable: "root.lamp.on", value: "false", previous: "true", changed: true },
-            { variable: "root.lamp.level", value: "0", previous: undefined, changed: true },
+            { variable: "root.lamp.level", value: "0", previous: undefined, changed: false },
         ]);
     });
 
 });
 
-describe("isTimed", () => {
-    it("holds for a model that keeps a clock or lets time pass, and not for one that does neither", () => {
-        const waited = trace({ states: [{ values: {} }, { values: {} }], steps: [{ source: 0, target: 1, elapsed: "3/2", calls: [] }] });
-        const clocked = trace({ variables: [{ variable: "root.timer", type: { kind: "datatype", name: "semantifyr::clock" }, slot: null }] });
+describe("elapsed time of a step", () => {
+    const step = { source: 0, target: 1, calls: [call("root.lamp", "Lamp::toggle")] };
 
-        expect(isTimed(waited)).toBe(true);
-        expect(isTimed(clocked)).toBe(true);
-        expect(isTimed(trace({ states: [{ values: {} }, { values: {} }], steps: [{ source: 0, target: 1, elapsed: 0, calls: [] }] }))).toBe(false);
+    function elapsed(timed: Partial<ReportTrace>): (string | null)[] {
+        const timedTrace = trace({ states: [{ values: {} }, { values: {} }], ...timed });
+        const [state] = traceStates(timedTrace).steps;
+        const [calls] = traceCalls(timedTrace).steps;
+        if (state === undefined || calls === undefined) {
+            throw new Error("the trace has no step");
+        }
+        return [state.elapsed, calls.elapsed];
+    }
+
+    it("is given in a model that keeps a clock or lets time pass, and not in one that does neither", () => {
+        const clock = [{ variable: "root.timer", type: { kind: "datatype" as const, name: "semantifyr::clock" }, slot: null }];
+
+        expect(elapsed({ steps: [{ ...step, elapsed: "3/2" }] })).toEqual(["3/2", "3/2"]);
+        expect(elapsed({ variables: clock, steps: [{ ...step, elapsed: 0 }] })).toEqual(["0", "0"]);
+        expect(elapsed({ steps: [{ ...step, elapsed: 0 }] })).toEqual([null, null]);
+    });
+
+    it("is not given for the step init makes", () => {
+        expect(traceCalls(trace({ states: [{ values: {} }, { values: {} }], steps: [{ ...step, elapsed: "3/2" }] })).initialized.elapsed).toBeNull();
     });
 });
 

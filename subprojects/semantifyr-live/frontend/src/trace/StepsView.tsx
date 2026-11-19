@@ -6,7 +6,7 @@
 
 import type React from 'react'
 import { useMemo } from 'react'
-import { isTimed, shortenPath, traceStates } from '@semantifyr/editor-common'
+import { shortenPath, traceStates } from '@semantifyr/editor-common'
 
 import { Icon } from '../ui/icons'
 import type { TraceViewProps } from './registry'
@@ -33,7 +33,6 @@ export function StepsView({ trace, verdict, expandedStep, expandStep }: TraceVie
   const states = useMemo(() => {
     return traceStates(trace)
   }, [trace])
-  const timed = isTimed(trace)
   return (
     <div className="steps" data-testid="trace-steps">
       <div className="step">
@@ -51,7 +50,7 @@ export function StepsView({ trace, verdict, expandedStep, expandStep }: TraceVie
           })}
         </div>
       </div>
-      {states.steps.map((variables, index) => {
+      {states.steps.map(({ elapsed, variables }, index) => {
         const final = index === states.steps.length - 1
         const open = expandedStep === index
         const changes = variables.filter((entry) => {
@@ -61,13 +60,13 @@ export function StepsView({ trace, verdict, expandedStep, expandStep }: TraceVie
           <div key={index} className={`step${final ? ` is-final status-${verdict}` : ''}${open ? ' is-open' : ''}`}>
             <span className="step-number">{index + 1}</span>
             <div className="step-items">
-              {timed
+              {elapsed !== null
                 ? (
                   <div className="step-item is-time">
                     <Icon name="clock" />
                     <span>
                       {'elapsed '}
-                      <span className="reference">{String(trace.steps[index]?.elapsed)}</span>
+                      <span className="reference">{elapsed}</span>
                     </span>
                   </div>
                 )

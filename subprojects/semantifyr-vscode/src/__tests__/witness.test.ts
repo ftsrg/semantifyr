@@ -35,7 +35,7 @@ describe('renderTrace', () => {
             '',
             'Calls:',
             '',
-            '- `root.lamp.lamp::Lamp::toggle(brightness=2)`',
+            '- `root.lamp.toggle(brightness=2)`',
             '',
             'Changes:',
             '',
@@ -96,7 +96,7 @@ describe('renderTrace', () => {
         const trace: ReportTrace = {
             ...counterexample,
             initial: { state: 0, calls: [] },
-            states: [{ values: {} }, { values: { 'root.mode': 'A | B' } }],
+            states: [{ values: { 'root.mode': 'A' } }, { values: { 'root.mode': 'A | B' } }],
             steps: [{ source: 0, target: 1, elapsed: 0, calls: [] }],
         };
         const passed = result('passed', trace);
@@ -113,7 +113,11 @@ describe('renderTrace', () => {
             '',
             'No calls.',
             '',
-            'No state.',
+            'State:',
+            '',
+            '| Variable | Value |',
+            '| --- | --- |',
+            '| `root.mode` | `A` |',
             '',
             '## Step 1',
             '',

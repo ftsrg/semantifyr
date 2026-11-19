@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import { formatReportValue } from "./trace.ts";
+import { formatReportValue, lastNameSegment } from "./trace.ts";
 import { type ReportCall, type SoundnessDirection, type WitnessValidationResult, WitnessValidationStatus } from "./wire.ts";
 
 export function traceStepLabel(index: number): string {
@@ -18,7 +18,7 @@ export function formatTraceCall(call: ReportCall): string {
     const argumentList = Object.entries(call.arguments).map(([parameter, value]) => {
         return `${parameter}=${formatReportValue(value)}`;
     }).join(", ");
-    return `${call.self}.${call.transition}(${argumentList})`;
+    return `${call.self}.${lastNameSegment(call.transition)}(${argumentList})`;
 }
 
 export function missingCallsMessage(reason: string): string {

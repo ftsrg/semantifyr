@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import type { ReportCall, ReportState, ReportTrace, ReportValue } from "./wire.ts";
+import type { ReportCall, ReportState, ReportStep, ReportTrace, ReportValue } from "./wire.ts";
 
 const CLOCK_TYPE = "semantifyr::clock";
 
@@ -20,9 +20,14 @@ export interface TraceVariable {
     changed: boolean;
 }
 
+export interface TraceStep {
+    elapsed: string | null;
+    variables: TraceVariable[];
+}
+
 export interface TraceStates {
     start: TraceValue[];
-    steps: TraceVariable[][];
+    steps: TraceStep[];
 }
 
 export interface TraceArgument {
@@ -42,6 +47,7 @@ export interface TraceCall {
 // the calls of one step, each before the calls it encloses, the first one the environment's call on the root instance
 export interface TraceCallStep {
     calls: TraceCall[];
+    elapsed: string | null;
 }
 
 export interface TraceCalls {
@@ -74,7 +80,7 @@ function valuesOf(state: ReportState | undefined): TraceValue[] {
     });
 }
 
-export function isTimed(trace: ReportTrace): boolean {
+function isTimed(trace: ReportTrace): boolean {
     return trace.steps.some((step) => {
         return step.elapsed !== 0;
     }) || trace.variables.some((variable) => {
@@ -82,15 +88,24 @@ export function isTimed(trace: ReportTrace): boolean {
     });
 }
 
+function elapsedOf(trace: ReportTrace): (step: ReportStep) => string | null {
+    const timed = isTimed(trace);
+    return (step) => {
+        return timed ? String(step.elapsed) : null;
+    };
+}
+
 export function traceStates(trace: ReportTrace): TraceStates {
+    const elapsed = elapsedOf(trace);
     const steps = trace.steps.map((step) => {
         const previous = new Map(valuesOf(trace.states[step.source]).map((entry) => {
             return [entry.variable, entry.value];
         }));
-        return valuesOf(trace.states[step.target]).map((entry) => {
+        const variables = valuesOf(trace.states[step.target]).map((entry) => {
             const before = previous.get(entry.variable);
-            return { ...entry, previous: before, changed: before !== entry.value };
+            return { ...entry, previous: before, changed: before !== undefined && before !== entry.value };
         });
+        return { elapsed: elapsed(step), variables };
     });
     return { start: valuesOf(trace.states[trace.initial.state]), steps };
 }
@@ -109,10 +124,10 @@ function flatten(entries: readonly ReportCall[], enclosing: number | null, depth
     }
 }
 
-function callStepOf(root: string, transition: string, entries: readonly ReportCall[]): TraceCallStep {
+function callStepOf(root: string, transition: string, entries: readonly ReportCall[], elapsed: string | null): TraceCallStep {
     const calls: TraceCall[] = [{ self: root, transition, arguments: [], enclosing: null, depth: 0 }];
     flatten(entries, 0, 1, calls);
-    return { calls };
+    return { calls, elapsed };
 }
 
 // the environment runs init once and main for every step after it, on the root instance; nothing recorded leaves nothing to show
@@ -123,11 +138,12 @@ export function traceCalls(trace: ReportTrace): TraceCalls {
         return calls.length > 0;
     });
     if (!recorded) {
-        return { initialized: { calls: [] }, steps: [], lifelines: [] };
+        return { initialized: { calls: [], elapsed: null }, steps: [], lifelines: [] };
     }
-    const initialized = callStepOf(trace.root, "init", trace.initial.calls);
+    const elapsed = elapsedOf(trace);
+    const initialized = callStepOf(trace.root, "init", trace.initial.calls, null);
     const steps = trace.steps.map((step) => {
-        return callStepOf(trace.root, "main", step.calls);
+        return callStepOf(trace.root, "main", step.calls, elapsed(step));
     });
     const lifelines = new Set<string>([trace.root]);
     for (const step of [initialized, ...steps]) {

@@ -12,7 +12,6 @@ import {
     missingCallsMessage,
     noWitnessMessage,
     type ReportCall,
-    isTimed,
     type ReportTrace,
     soundnessLabel,
     traceStates,
@@ -233,14 +232,15 @@ export function renderTrace(label: string, result: VerificationCaseResult, valid
     }
 
     const states = traceStates(trace);
-    const timed = isTimed(trace);
     lines.push("", `## ${traceStepLabel(0)}`, "", ...renderCalls(trace, trace.initial.calls), "", ...renderStart(states.start));
     trace.steps.forEach((step, index) => {
-        const elapsed = timed ? ["", `Elapsed: ${String(step.elapsed)}`] : [];
-        const changes = (states.steps[index] ?? []).filter((variable) => {
+        const state = states.steps[index];
+        const elapsed = state?.elapsed ?? null;
+        const time = elapsed === null ? [] : ["", `Elapsed: ${elapsed}`];
+        const changes = (state?.variables ?? []).filter((variable) => {
             return variable.changed;
         });
-        lines.push("", `## ${traceStepLabel(index + 1)}`, ...elapsed, "", ...renderCalls(trace, step.calls), "", ...renderChanges(changes));
+        lines.push("", `## ${traceStepLabel(index + 1)}`, ...time, "", ...renderCalls(trace, step.calls), "", ...renderChanges(changes));
     });
     return `${lines.join("\n")}\n`;
 }
