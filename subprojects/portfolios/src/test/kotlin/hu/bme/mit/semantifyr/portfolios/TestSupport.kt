@@ -46,6 +46,10 @@ val UnavailableKey: ExecutorKey<BackendExecutor> = ExecutorKey("fake-unavailable
     FakeExecutor(false)
 }
 
+val OtherUnavailableKey: ExecutorKey<BackendExecutor> = ExecutorKey("fake-also-unavailable", listOf("Install the other fake.")) {
+    FakeExecutor(false)
+}
+
 class PassingBackend<T : BackendConfig>(
     override val id: String = "passing",
     override val executorKey: ExecutorKey<BackendExecutor> = AvailableKey,

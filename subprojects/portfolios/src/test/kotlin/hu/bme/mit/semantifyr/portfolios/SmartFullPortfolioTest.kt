@@ -9,6 +9,7 @@ package hu.bme.mit.semantifyr.portfolios
 import com.google.inject.Injector
 import hu.bme.mit.semantifyr.backend.SoundnessDirection
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
+import hu.bme.mit.semantifyr.backend.execution.AvailabilityReport
 import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
 import hu.bme.mit.semantifyr.backends.uppaal.verification.UppaalConfig
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
@@ -167,13 +168,14 @@ class SmartFullPortfolioTest {
             theta = PassingBackend("theta", UnavailableKey),
             uppaal = PassingBackend("uppaal", UnavailableKey),
             nuxmv = PassingBackend("nuxmv", UnavailableKey),
-            spin = PassingBackend("spin", UnavailableKey),
+            spin = PassingBackend("spin", OtherUnavailableKey),
         )
 
         val result = portfolio.verify(parentInjector, stubRequest(output), gate, ExecutionEnvironment.Empty, ProgressContext.Silent, noReadBack)
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Inconclusive)
         assertThat(result.message).contains("No backend is installed")
+        assertThat((portfolio.availability() as AvailabilityReport.Unavailable).hints).containsExactly("Install the other fake.")
     }
 
     @Test

@@ -13,7 +13,6 @@ import hu.bme.mit.semantifyr.backend.BackendVerificationResult
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.backend.execution.AvailabilityReport
 import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
-import hu.bme.mit.semantifyr.backend.execution.ExecutorKey
 import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts
 import hu.bme.mit.semantifyr.verifier.portfolio.ConcurrencyGate
 import hu.bme.mit.semantifyr.verifier.portfolio.PortfolioLeg
@@ -120,7 +119,6 @@ class SemantifyrVerifierTestHelperTest {
         private val verdict: VerificationVerdict,
         private val available: Boolean = true,
     ) : VerificationPortfolio() {
-        override val executorKeys: Set<ExecutorKey<*>> = setOf(FakeExecutorKey)
         override val id: String = "fixed"
         override val displayName: String = id
         override val description: String = "test-only"

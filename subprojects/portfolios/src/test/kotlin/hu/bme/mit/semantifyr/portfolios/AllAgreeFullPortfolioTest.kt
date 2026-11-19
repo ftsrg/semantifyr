@@ -98,7 +98,7 @@ class AllAgreeFullPortfolioTest {
             theta = PassingBackend("theta", UnavailableKey),
             nuxmv = PassingBackend("nuxmv", UnavailableKey),
             uppaal = PassingBackend("uppaal", UnavailableKey),
-            spin = PassingBackend("spin", UnavailableKey),
+            spin = PassingBackend("spin", OtherUnavailableKey),
         )
 
         val result = portfolio.verify(parentInjector, stubRequest(output), gate, ExecutionEnvironment.Empty, ProgressContext.Silent, noReadBack)

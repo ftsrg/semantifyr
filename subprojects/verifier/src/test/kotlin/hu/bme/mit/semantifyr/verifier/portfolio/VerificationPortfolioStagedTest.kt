@@ -91,7 +91,6 @@ private class StagedPortfolio(
     override val id = "staged"
     override val displayName = id
     override val description = "staged test portfolio"
-    override val executorKeys: Set<ExecutorKey<*>> = emptySet()
     override val legs = stages.tasks.map {
         it.leg
     }
@@ -321,7 +320,7 @@ class VerificationPortfolioStagedTest {
         assertThat(currentTime).isEqualTo(60_000)
         assertThat(
             outcome.runs.map {
-                "${it.stage}: ${it.leg} ${it.end}"
+                "${it.stage}: ${it.legId} ${it.end}"
             },
         ).containsExactlyInAnyOrder(
             "first stage: fake:b Cut",

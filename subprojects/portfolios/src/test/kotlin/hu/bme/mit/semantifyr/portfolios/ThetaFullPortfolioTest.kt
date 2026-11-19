@@ -62,6 +62,6 @@ class ThetaFullPortfolioTest {
         val result = portfolio.verify(parentInjector, stubRequest(output), gate, ExecutionEnvironment.Empty, ProgressContext.Silent, noReadBack)
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Inconclusive)
-        assertThat(result.message).contains("Theta cannot be run")
+        assertThat(result.message).contains("fake-unavailable cannot be run")
     }
 }

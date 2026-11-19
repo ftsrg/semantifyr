@@ -11,9 +11,7 @@ import hu.bme.mit.semantifyr.backend.BackendConfig
 import hu.bme.mit.semantifyr.backend.BackendVerificationRequest
 import hu.bme.mit.semantifyr.backend.BackendVerificationResult
 import hu.bme.mit.semantifyr.backend.VerificationBackend
-import hu.bme.mit.semantifyr.backend.execution.AvailabilityReport
 import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
-import hu.bme.mit.semantifyr.backend.execution.ExecutorKey
 import hu.bme.mit.semantifyr.verifier.portfolio.ConcurrencyGate
 import hu.bme.mit.semantifyr.verifier.portfolio.PortfolioLeg
 import hu.bme.mit.semantifyr.verifier.portfolio.VerificationPortfolio
@@ -29,12 +27,7 @@ class EngineVerdictPortfolio<T : BackendConfig>(
     override val id = "${backend.id}-${configuration.id}"
     override val displayName = "${backend.id} ${configuration.id}"
     override val description = "The verdict of ${backend.id} ${configuration.id}, trusted or not"
-    override val executorKeys: Set<ExecutorKey<*>> = setOf(leg.backend.executorKey)
     override val legs = listOf(leg)
-
-    override fun availability(environment: ExecutionEnvironment): AvailabilityReport {
-        return environment.availability(leg.backend.executorKey)
-    }
 
     override suspend fun verify(
         parentInjector: Injector,

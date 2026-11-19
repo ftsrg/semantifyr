@@ -10,9 +10,7 @@ import com.google.inject.Injector
 import hu.bme.mit.semantifyr.backend.BackendVerificationRequest
 import hu.bme.mit.semantifyr.backend.BackendVerificationResult
 import hu.bme.mit.semantifyr.backend.VerificationBackend
-import hu.bme.mit.semantifyr.backend.execution.AvailabilityReport
 import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
-import hu.bme.mit.semantifyr.backend.execution.ExecutorKey
 import hu.bme.mit.semantifyr.backends.nuxmv.verification.NuxmvBackend
 import hu.bme.mit.semantifyr.backends.nuxmv.verification.NuxmvConfig
 import hu.bme.mit.semantifyr.backends.spin.verification.SpinBackend
@@ -107,27 +105,8 @@ class SmartFullPortfolio(
         }
     }
 
-    override val executorKeys: Set<ExecutorKey<*>> = stages.tasks.map {
-        it.leg.backend.executorKey
-    }.toSet()
     override val legs = stages.tasks.map {
         it.leg
-    }
-
-    override fun availability(environment: ExecutionEnvironment): AvailabilityReport {
-        val anyAvailable = stages.tasks.any {
-            it.leg.isAvailable(environment)
-        }
-        return if (anyAvailable) {
-            AvailabilityReport.Available
-        } else {
-            AvailabilityReport.Unavailable(
-                reason = "No backend is installed.",
-                hints = listOf(
-                    "Install at least one of Theta (theta-xsts-cli), nuXmv, Spin or Uppaal (verifyta).",
-                ),
-            )
-        }
     }
 
     override suspend fun verify(

@@ -12,7 +12,6 @@ import hu.bme.mit.semantifyr.backend.BackendVerificationResult
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.backend.execution.AvailabilityReport
 import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
-import hu.bme.mit.semantifyr.backend.execution.ExecutorKey
 import hu.bme.mit.semantifyr.cli.SMOKE_CASE
 import hu.bme.mit.semantifyr.cli.common.CaseFailureLine
 import hu.bme.mit.semantifyr.cli.common.CasePhase
@@ -28,7 +27,6 @@ import hu.bme.mit.semantifyr.verifier.FakeBackend
 import hu.bme.mit.semantifyr.verifier.FakeConfig
 import hu.bme.mit.semantifyr.verifier.ProgressContext
 import hu.bme.mit.semantifyr.verifier.VerificationReport
-import hu.bme.mit.semantifyr.verifier.fakeMetadata
 import hu.bme.mit.semantifyr.verifier.portfolio.ConcurrencyGate
 import hu.bme.mit.semantifyr.verifier.portfolio.PortfolioLeg
 import hu.bme.mit.semantifyr.verifier.portfolio.SingleBackendPortfolio
@@ -358,7 +356,6 @@ class VerifyCommandTest {
         override val id = "absent"
         override val displayName = id
         override val description = "test-only"
-        override val executorKeys = emptySet<ExecutorKey<*>>()
         override val legs = emptyList<PortfolioLeg<*>>()
 
         override fun availability(environment: ExecutionEnvironment): AvailabilityReport {

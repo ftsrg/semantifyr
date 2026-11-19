@@ -13,7 +13,6 @@ import hu.bme.mit.semantifyr.backend.SoundnessDirection
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.backend.execution.AvailabilityReport
 import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
-import hu.bme.mit.semantifyr.backend.execution.ExecutorKey
 import hu.bme.mit.semantifyr.verifier.FakeBackend
 import hu.bme.mit.semantifyr.verifier.FakeConfig
 import hu.bme.mit.semantifyr.verifier.ProgressContext
@@ -52,7 +51,6 @@ private class TestPortfolio(
 ) : VerificationPortfolio(timeSource) {
     override val displayName = id
     override val description = "test portfolio"
-    override val executorKeys: Set<ExecutorKey<*>> = emptySet()
     override val legs: List<PortfolioLeg<*>> = emptyList()
 
     override fun availability(environment: ExecutionEnvironment): AvailabilityReport {
@@ -715,7 +713,7 @@ class VerificationPortfolioTest {
         assertThat(outcome).isInstanceOf(PortfolioOutcome.Decided::class.java)
         assertThat(
             outcome.runs.map {
-                it.leg
+                it.legId
             },
         ).containsExactly("winner", "laggard")
         assertThat((outcome.runs[0].end as LegEnd.Finished).result.verdict).isEqualTo(VerificationVerdict.Passed)
@@ -832,7 +830,7 @@ class VerificationPortfolioTest {
 
             assertThat(invoked).hasSize(1)
             for (run in outcome.runs) {
-                if (run.leg in invoked) {
+                if (run.legId in invoked) {
                     assertThat(run.end).isInstanceOf(LegEnd.Finished::class.java)
                 } else {
                     assertThat(run.end).isEqualTo(LegEnd.NeverStarted)
