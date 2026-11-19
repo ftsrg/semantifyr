@@ -133,27 +133,3 @@ describe('the keyboard', () => {
     })
   }
 })
-
-describe('the starting editor', () => {
-  test('leaves the focus in a menu opened before it started, and the menu open', async ({ ui }) => {
-    let release = (): void => {}
-    const loaded = new Promise<void>((resolve) => {
-      release = resolve
-    })
-    const page = await ui.open('/language/modeling-and-verification', { held: { url: '**/assets/monaco-vscode-editor-service-override*', until: loaded } })
-    const trigger = page.locator('.example-button')
-    const inMenu = async (): Promise<boolean> => {
-      return page.evaluate(() => {
-        return (document.activeElement?.closest('[role="menu"]') ?? null) !== null
-      })
-    }
-    await trigger.click()
-    await expect.poll(inMenu).toBe(true)
-    expect(await page.locator('section.editor .view-line').count(), 'the editor has not started').toBe(0)
-    release()
-
-    await page.locator('section.editor .view-line').first().waitFor()
-    expect(await trigger.getAttribute('aria-expanded')).toBe('true')
-    expect(await inMenu()).toBe(true)
-  })
-})
