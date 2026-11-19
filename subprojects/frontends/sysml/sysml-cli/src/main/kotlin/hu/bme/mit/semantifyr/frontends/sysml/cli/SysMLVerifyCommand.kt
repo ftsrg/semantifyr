@@ -100,7 +100,7 @@ class SysMLVerifyCommand @Inject constructor(
 
         val exitCode = cases.maxOf { case ->
             verifyCase(output, case.qualifiedName) {
-                frontend.verify(case)
+                frontend.verify(case).outcome
             }
         }
         if (exitCode != ExitCode.Success) {
