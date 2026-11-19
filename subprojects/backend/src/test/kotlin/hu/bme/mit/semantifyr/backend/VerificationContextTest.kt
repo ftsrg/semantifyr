@@ -385,7 +385,7 @@ class VerificationContextTest {
     }
 }
 
-internal fun modelChecking(property: Expression): InlinedOxsts {
+private fun modelChecking(property: Expression): InlinedOxsts {
     return OxstsFactory.createInlinedOxsts().also {
         it.property = OxstsFactory.createPropertyDeclaration().also { declaration ->
             declaration.expression = property

@@ -20,7 +20,6 @@ import hu.bme.mit.semantifyr.backend.execution.ExecutorKey
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
 import hu.bme.mit.semantifyr.logging.warn
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.verifier.ProgressContext
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
@@ -115,8 +114,8 @@ data class LegRun(
 )
 
 class PortfolioLeg<T : BackendConfig>(
-    private val backend: VerificationBackend<T>,
-    private val config: T,
+    val backend: VerificationBackend<T>,
+    val config: T,
 ) {
     val id = "${backend.id}:${config.id}"
     val soundness = config.soundness
@@ -132,14 +131,6 @@ class PortfolioLeg<T : BackendConfig>(
         environment: ExecutionEnvironment,
     ): BackendVerificationResult {
         return backend.verify(parentInjector, config, request, environment)
-    }
-
-    suspend fun trusts(
-        parentInjector: Injector,
-        inlinedOxsts: InlinedOxsts,
-        verdict: VerificationVerdict,
-    ): Boolean {
-        return backend.trusts(parentInjector, config, inlinedOxsts, verdict)
     }
 }
 

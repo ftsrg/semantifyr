@@ -10,7 +10,6 @@ import com.google.inject.Injector
 import hu.bme.mit.semantifyr.backend.execution.BackendExecutor
 import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
 import hu.bme.mit.semantifyr.backend.execution.ExecutorKey
-import hu.bme.mit.semantifyr.backend.scopes.withVerificationScope
 import hu.bme.mit.semantifyr.backend.witness.InlinedWitness
 import hu.bme.mit.semantifyr.compiler.pipeline.context.FlatteningInfo
 import hu.bme.mit.semantifyr.compiler.pipeline.context.TransitionCallTraceMap
@@ -82,15 +81,4 @@ abstract class VerificationBackend<T : BackendConfig> {
     ): BackendVerificationResult
 
     abstract fun capabilityChecker(parentInjector: Injector, config: T): BackendCapabilityChecker
-
-    suspend fun trusts(
-        parentInjector: Injector,
-        config: T,
-        inlinedOxsts: InlinedOxsts,
-        verdict: VerificationVerdict,
-    ): Boolean {
-        return withVerificationScope {
-            capabilityChecker(parentInjector, config).support(inlinedOxsts, config.soundness).trusts(verdict, inlinedOxsts.property.expression)
-        }
-    }
 }

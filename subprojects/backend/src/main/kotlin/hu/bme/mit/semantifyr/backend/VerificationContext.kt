@@ -41,13 +41,13 @@ abstract class VerificationContext<TArtifacts, TRawVerdict>(
         logger.info { "[$backendId] starting verification (output=${request.artifactOutputPath})" }
 
         return try {
-            when (val support = capabilityChecker.support(request.inlinedOxsts, configuredSoundness)) {
-                is ModelSupport.Supported -> {
-                    executor.prepare()
-                    runVerification(metadata, support)
-                }
-                is ModelSupport.Unsupported -> notSupported(metadata, support.constructs)
+            val unsupported = capabilityChecker.check(request.inlinedOxsts)
+            if (unsupported.isNotEmpty()) {
+                return notSupported(metadata, unsupported)
             }
+            val soundness = configuredSoundness.throughLowering(capabilityChecker.soundness(request.inlinedOxsts))
+            executor.prepare()
+            runVerification(metadata, soundness)
         } catch (c: CancellationException) {
             logger.debug { "[$backendId] cancelled" }
             throw c
@@ -115,7 +115,7 @@ abstract class VerificationContext<TArtifacts, TRawVerdict>(
         return flatteningInfo.resolveOriginalVariable(holder, variable)
     }
 
-    private suspend fun runVerification(metadata: VerificationMetadata, support: ModelSupport.Supported): BackendVerificationResult {
+    private suspend fun runVerification(metadata: VerificationMetadata, soundness: SoundnessDirection): BackendVerificationResult {
         val (artifacts, preparationDuration) = measureTimedValue {
             prepare()
         }
@@ -128,7 +128,7 @@ abstract class VerificationContext<TArtifacts, TRawVerdict>(
 
         val verdict = interpret(rawVerdict, artifacts)
         val property = request.inlinedOxsts.property.expression
-        val isTrusted = support.trusts(verdict, property)
+        val isTrusted = soundness.trusts(verdict, property)
 
         val (witness, witnessDuration) = measureTimedValue {
             buildWitness(rawVerdict, artifacts)
@@ -155,7 +155,7 @@ abstract class VerificationContext<TArtifacts, TRawVerdict>(
                 },
             ),
             inlinedWitness = witness,
-            soundness = support.soundness,
+            soundness = soundness,
             isTrusted = isTrusted,
         )
     }

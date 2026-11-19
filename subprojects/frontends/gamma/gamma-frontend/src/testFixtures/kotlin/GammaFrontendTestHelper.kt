@@ -6,8 +6,10 @@
 
 package hu.bme.mit.semantifyr.frontends.gamma.testing
 
+import hu.bme.mit.semantifyr.backend.BackendConfig
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
+import hu.bme.mit.semantifyr.backend.scopes.withVerificationScope
 import hu.bme.mit.semantifyr.compiler.SemantifyrCompiler
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.ArtifactConfig
 import hu.bme.mit.semantifyr.frontends.gamma.GammaFrontend
@@ -23,9 +25,11 @@ import hu.bme.mit.semantifyr.frontends.gamma.reader.GammaReader
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
 import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.portfolios.Portfolios
 import hu.bme.mit.semantifyr.verifier.assertVerdict
 import hu.bme.mit.semantifyr.verifier.assumePortfolioAvailable
+import hu.bme.mit.semantifyr.verifier.portfolio.PortfolioLeg
 import hu.bme.mit.semantifyr.verifier.portfolio.VerificationPortfolio
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Named
@@ -141,7 +145,7 @@ class GammaFrontendTestHelper {
             trustDirectory.resolve("oxsts").resolve(gammaVerificationCase.qualifiedName),
         ).inlinedOxsts
         val givesTrustedVerdict = portfolio.legs.any {
-            it.isAvailable(environment) && it.trusts(oxstsInjector, inlinedOxsts, expectedVerdict)
+            it.isAvailable(environment) && isTrustedOn(it, inlinedOxsts, expectedVerdict)
         }
         if (givesTrustedVerdict) {
             checkVerificationCase(buildFrontend(portfolio, outputDirectory, environment = environment), gammaVerificationCase, expectedVerdict)
@@ -152,6 +156,21 @@ class GammaFrontendTestHelper {
         assertThat(result.verdict)
             .describedAs("${gammaVerificationCase.qualifiedName} has no trusted verdict on these backends (${result.message ?: "no message"})")
             .isIn(VerificationVerdict.Inconclusive, VerificationVerdict.Timeout)
+    }
+
+    private suspend fun <T : BackendConfig> isTrustedOn(
+        leg: PortfolioLeg<T>,
+        inlinedOxsts: InlinedOxsts,
+        verdict: VerificationVerdict,
+    ): Boolean {
+        return withVerificationScope {
+            val checker = leg.backend.capabilityChecker(oxstsInjector, leg.config)
+            if (checker.check(inlinedOxsts).isNotEmpty()) {
+                return@withVerificationScope false
+            }
+            val soundness = leg.config.soundness.throughLowering(checker.soundness(inlinedOxsts))
+            soundness.trusts(verdict, inlinedOxsts.property.expression)
+        }
     }
 
     suspend fun checkVerificationCaseOn(
