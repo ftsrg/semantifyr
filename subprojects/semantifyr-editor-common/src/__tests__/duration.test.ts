@@ -15,12 +15,16 @@ describe("isoDurationToMs", () => {
         ["PT1H", 3_600_000],
         ["P1DT1S", 86_401_000],
         ["P1W", 604_800_000],
+        ["PT-0.5S", -500],
+        ["-PT1M", -60_000],
     ])("reads %s as %d milliseconds", (iso, milliseconds) => {
         expect(isoDurationToMs(iso)).toBeCloseTo(milliseconds);
     });
 
-    it("counts a duration that does not parse as none", () => {
-        expect(isoDurationToMs("soon")).toBe(0);
+    it("refuses a text that is no duration", () => {
+        expect(() => {
+            return isoDurationToMs("soon");
+        }).toThrow("Not an ISO-8601 duration: soon");
     });
 });
 

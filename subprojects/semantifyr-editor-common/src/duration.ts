@@ -4,17 +4,20 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-const ISO_DURATION = /^P(?:(\d+(?:\.\d+)?)W)?(?:(\d+(?:\.\d+)?)D)?(?:T(?:(\d+(?:\.\d+)?)H)?(?:(\d+(?:\.\d+)?)M)?(?:(\d+(?:\.\d+)?)S)?)?$/;
+const AMOUNT = String.raw`(-?\d+(?:\.\d+)?)`;
+
+const ISO_DURATION = new RegExp(`^(-)?P(?:${AMOUNT}W)?(?:${AMOUNT}D)?(?:T(?:${AMOUNT}H)?(?:${AMOUNT}M)?(?:${AMOUNT}S)?)?$`);
 
 export function isoDurationToMs(iso: string): number {
     const match = ISO_DURATION.exec(iso);
     if (match === null) {
-        return 0;
+        throw new Error(`Not an ISO-8601 duration: ${iso}`);
     }
     const amount = (index: number): number => {
         return Number(match[index] ?? 0);
     };
-    return (amount(1) * 7 * 86400 + amount(2) * 86400 + amount(3) * 3600 + amount(4) * 60 + amount(5)) * 1000;
+    const sign = match[1] === undefined ? 1 : -1;
+    return sign * (amount(2) * 7 * 86400 + amount(3) * 86400 + amount(4) * 3600 + amount(5) * 60 + amount(6)) * 1000;
 }
 
 export function formatSeconds(milliseconds: number): string {
