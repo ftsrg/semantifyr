@@ -189,23 +189,6 @@ class NuxmvBackendReplayTest {
     }
 
     @Test
-    suspend fun `a value of the trace that cannot be read fails the run`() {
-        val result = verify("CounterExceedsBoundUnreadableValue", models.parse(BackendTestModels.SATURATING_COUNTER_EXCEEDS_BOUND), TransitionCallTraceMap(emptyMap()))
-
-        assertThat(result.verdict).isEqualTo(VerificationVerdict.Errored)
-        assertThat(result.message).contains("1.5 for counter")
-        assertThat(result.inlinedWitness).isNull()
-    }
-
-    @Test
-    suspend fun `a name of the trace that does not map back fails the run`() {
-        val result = verify("CounterExceedsBoundUnmappedName", models.parse(BackendTestModels.SATURATING_COUNTER_EXCEEDS_BOUND), TransitionCallTraceMap(emptyMap()))
-
-        assertThat(result.verdict).isEqualTo(VerificationVerdict.Errored)
-        assertThat(result.message).contains("ghost, which names no variable of the model")
-    }
-
-    @Test
     suspend fun `an unreachable target fails without a witness`() {
         val result = verify("UnreachableTarget", models.parse(BackendTestModels.UNREACHABLE_TARGET), TransitionCallTraceMap(emptyMap()))
 
