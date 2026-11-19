@@ -26,7 +26,6 @@ export function servedExample(language: ExampleLanguage, id: string): ServedExam
   return example
 }
 
-// the page's title for a served example, opened in its language or compiled under the library of its language
 export function titleOf(language: ExampleLanguage, id: string, shownIn: ExampleLanguage = language): string {
   const label = servedExample(language, id).label
   const shown = shownIn === language ? label : compiledLabel(label, LANGUAGES[language]?.name ?? language)
@@ -37,17 +36,13 @@ export interface OpenOptions {
   width?: number
   height?: number
   touch?: boolean
-  // runs in the page before its own scripts
   before?: () => void
-  // the page's requests to these addresses are answered once the promise has settled
   held?: { url: string, until: Promise<void> }
 }
 
 export interface Ui {
   backend: MockBackend
-  // opens an address of the live frontend; the first page fixes the context's viewport and touch input
   open: (address: string, options?: OpenOptions) => Promise<Page>
-  // a page of another site at the live address, holding the given markup, for a frame of the live frontend
   host: (markup: string, options?: OpenOptions) => Promise<Page>
   context: () => BrowserContext
 }
@@ -163,7 +158,6 @@ export function editor(page: Page) {
   }
 }
 
-// the classes of a row or mark that name its state
 export async function statesOf(locator: Locator, prefix: string): Promise<string[]> {
   return locator.evaluateAll((elements: Element[], prefixOfState: string) => {
     return elements.map((element) => {

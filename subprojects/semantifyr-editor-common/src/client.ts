@@ -66,7 +66,6 @@ export async function validateWitness(
     return await executeLocationCommand(client, validationCommand, location, options) as WitnessValidationResult | null;
 }
 
-// gamma.witness.validate takes the case and the witness its verification wrote, oxsts.case.validateWitness the back-annotated witness model
 export function witnessValidationLocation(
     caseLocation: VerificationCaseLocation,
     witnessUri: string,

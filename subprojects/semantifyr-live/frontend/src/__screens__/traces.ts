@@ -12,8 +12,6 @@ import { servedFlavors } from '../__tests__/fixtures/flavors'
 import { reportOf } from '../__tests__/fixtures/reports'
 import { seedLive, type Seed, type Seeded } from './seededLive'
 
-// A failed case of the level crossing with its trace in each language, and a Live that reads the trace's documents
-
 const SYSML_TRACE_URI = 'file:///workspace/traces/BarrierDownWhileTrainInCrossing.trace.sysml'
 const SYSML_WITNESS_URI = 'file:///workspace/.artifacts/snippet.semantifyr.sysml.model.BarrierDownWhileTrainInCrossing/witness.semantifyr'
 const GAMMA_TRACE_URI = 'file:///workspace/.artifacts/snippet.LevelCrossing.BarrierDownWhileTrainInCrossing/trace.get'
@@ -142,7 +140,6 @@ export interface Language {
   flavorId: string
   exampleId: string
   caseName: string
-  // where the example defines the case
   definition: string
   witnessUri: string
   // the language's own trace, absent for a Semantifyr model

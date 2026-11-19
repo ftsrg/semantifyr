@@ -33,6 +33,7 @@ public final class VerificationReportAdapter extends TypeAdapter<VerificationRep
             out.nullValue();
             return;
         }
+        // lsp4j's writer drops nulls, the report's TypeScript mirror declares its null fields present
         var serializeNulls = out.getSerializeNulls();
         out.setSerializeNulls(true);
         try {

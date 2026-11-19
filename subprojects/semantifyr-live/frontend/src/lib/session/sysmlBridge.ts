@@ -132,7 +132,6 @@ export interface SysmlBridgeOptions {
 export interface SysmlBridge {
   client: LspClient
   readMapping: () => Promise<SysmlMapping>
-  // keeps the OXSTS of the model open in the session, where its read-only document navigates
   showOxsts: (text: string) => void
   translateNotification: (method: string, params: unknown) => unknown
 }
