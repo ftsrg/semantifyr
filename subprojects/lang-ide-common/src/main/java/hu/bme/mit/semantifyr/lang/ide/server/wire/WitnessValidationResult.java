@@ -9,8 +9,7 @@ package hu.bme.mit.semantifyr.lang.ide.server.wire;
 import hu.bme.mit.semantifyr.verifier.VerificationOutcome;
 import hu.bme.mit.semantifyr.verifier.VerificationReport;
 
-public record WitnessValidationResult(
-        String status, String message, String portfolioId, VerificationReport report, String witnessUri) {
+public record WitnessValidationResult(String status, String message, String portfolioId, VerificationReport report) {
 
     public static WitnessValidationResult fromOutcome(VerificationOutcome outcome, String portfolioId) {
         var report = outcome.getReport();
@@ -18,19 +17,18 @@ public record WitnessValidationResult(
                 WitnessValidationStatus.of(report.getResult().getVerdict()),
                 report.getResult().getMessage(),
                 portfolioId,
-                report,
-                VerificationCaseResult.uriOf(outcome.getWitness()));
+                report);
     }
 
     public static WitnessValidationResult errored(String message, String portfolioId) {
-        return new WitnessValidationResult(WitnessValidationStatus.ERRORED, message, portfolioId, null, null);
+        return new WitnessValidationResult(WitnessValidationStatus.ERRORED, message, portfolioId, null);
     }
 
     public static WitnessValidationResult timedOut(String message, String portfolioId) {
-        return new WitnessValidationResult(WitnessValidationStatus.TIMEOUT, message, portfolioId, null, null);
+        return new WitnessValidationResult(WitnessValidationStatus.TIMEOUT, message, portfolioId, null);
     }
 
     public static WitnessValidationResult cancelled(String message, String portfolioId) {
-        return new WitnessValidationResult(WitnessValidationStatus.CANCELLED, message, portfolioId, null, null);
+        return new WitnessValidationResult(WitnessValidationStatus.CANCELLED, message, portfolioId, null);
     }
 }

@@ -183,7 +183,6 @@ function erroredValidation(error: unknown): WitnessValidationResult {
         message: error instanceof Error ? error.message : String(error),
         portfolioId: null,
         report: null,
-        witnessUri: null,
     };
 }
 

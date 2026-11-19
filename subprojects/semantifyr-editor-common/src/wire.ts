@@ -251,7 +251,6 @@ export interface WitnessValidationResult {
     message: string | null;
     portfolioId: string | null;
     report: VerificationReport | null;
-    witnessUri: string | null;
 }
 
 export const CompiledOxstsStatus = {

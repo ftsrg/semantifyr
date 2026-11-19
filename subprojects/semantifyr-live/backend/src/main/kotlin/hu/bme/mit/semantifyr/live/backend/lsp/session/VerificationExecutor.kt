@@ -12,7 +12,6 @@ import hu.bme.mit.semantifyr.lang.ide.server.commands.CommandGson
 import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseRequest
 import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseResult
 import hu.bme.mit.semantifyr.lang.ide.server.wire.WitnessValidationRequest
-import hu.bme.mit.semantifyr.lang.ide.server.wire.WitnessValidationResult
 import hu.bme.mit.semantifyr.live.backend.exceptions.SyntaxErrorException
 import hu.bme.mit.semantifyr.live.backend.lsp.document.SessionDocumentManager
 import hu.bme.mit.semantifyr.live.backend.lsp.service.SessionRequestManager
@@ -95,13 +94,6 @@ class LiveVerificationExecutor : VerificationExecutor {
                 result.report(),
                 clientUriOf(sessionDocumentManager, result.witnessUri()),
                 clientUriOf(sessionDocumentManager, result.traceUri()),
-            )
-            is WitnessValidationResult -> WitnessValidationResult(
-                result.status(),
-                result.message(),
-                result.portfolioId(),
-                result.report(),
-                clientUriOf(sessionDocumentManager, result.witnessUri()),
             )
             else -> result
         }

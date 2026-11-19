@@ -76,7 +76,7 @@ function stubOxsts(result = failedResult()) {
         case 'oxsts.case.verify':
           return Promise.resolve(result)
         case 'oxsts.case.validateWitness':
-          return Promise.resolve({ status: 'valid', message: null, portfolioId: null, report: null, witnessUri: null })
+          return Promise.resolve({ status: 'valid', message: null, portfolioId: null, report: null })
         default:
           return Promise.reject(new Error(`unexpected ${request.command}`))
       }

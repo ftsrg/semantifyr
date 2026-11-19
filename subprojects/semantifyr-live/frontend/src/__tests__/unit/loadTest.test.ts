@@ -201,7 +201,7 @@ describe('validateResult', () => {
   function fakeClient(): LspClient & { sendRequest: ReturnType<typeof vi.fn> } {
     return {
       sendRequest: vi.fn(async () => {
-        return { status: 'valid', message: null, portfolioId: 'smart', witnessUri: null, report: { kind: 're-check', result: { metrics: { totalDuration: 'PT2S' } } } }
+        return { status: 'valid', message: null, portfolioId: 'smart', report: { kind: 're-check', result: { metrics: { totalDuration: 'PT2S' } } } }
       }),
       sendNotification: () => {},
     }

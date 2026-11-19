@@ -73,7 +73,7 @@ describe('renderTrace', () => {
     });
 
     it('adds the witness validation below the verdict', () => {
-        const validation: WitnessValidationResult = { status: 'invalid', message: 'spurious', portfolioId: 'smart', report: null, witnessUri: null };
+        const validation: WitnessValidationResult = { status: 'invalid', message: 'spurious', portfolioId: 'smart', report: null };
 
         const document = renderTrace('Safe', result('failed', counterexample), validation);
 
@@ -85,7 +85,7 @@ describe('renderTrace', () => {
     });
 
     it('names the validation\'s backend, duration and soundness from its report', () => {
-        const validation: WitnessValidationResult = { status: 'valid', message: null, portfolioId: 'smart', report: validationReport(), witnessUri: null };
+        const validation: WitnessValidationResult = { status: 'valid', message: null, portfolioId: 'smart', report: validationReport() };
 
         const document = renderTrace('Safe', result('failed', counterexample), validation);
 
@@ -256,7 +256,7 @@ describe('WitnessView validation', () => {
     }
 
     function validation(status: WitnessValidationResult['status'], message: string | null = null): WitnessValidationResult {
-        return { status, message, portfolioId: 'smart', report: null, witnessUri: null };
+        return { status, message, portfolioId: 'smart', report: null };
     }
 
     function traceDocument(): string {

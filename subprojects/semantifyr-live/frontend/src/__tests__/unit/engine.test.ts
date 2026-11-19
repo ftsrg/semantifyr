@@ -172,7 +172,7 @@ describe('runAllVerifications', () => {
       if ((parameters as { command?: string }).command === 'gamma.case.verify') {
         return failedResult;
       }
-      return { status: 'valid', message: null, portfolioId: 'smart', report: null, witnessUri: null };
+      return { status: 'valid', message: null, portfolioId: 'smart', report: null };
     });
     const client: LspClient = { sendRequest, sendNotification: () => {} };
 

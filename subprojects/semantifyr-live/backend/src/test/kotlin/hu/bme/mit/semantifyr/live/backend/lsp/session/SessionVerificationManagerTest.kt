@@ -83,7 +83,7 @@ class SessionVerificationManagerTest {
     private fun result(kind: VerificationKind): Any {
         return when (kind) {
             VerificationKind.Verify -> VerificationCaseResult(VerificationStatus.PASSED, null, "smart", null, null, null)
-            VerificationKind.Validate -> WitnessValidationResult(WitnessValidationStatus.VALID, null, "smart", null, null)
+            VerificationKind.Validate -> WitnessValidationResult(WitnessValidationStatus.VALID, null, "smart", null)
         }
     }
 

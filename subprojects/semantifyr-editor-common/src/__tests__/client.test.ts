@@ -34,7 +34,7 @@ const token: CancellationToken = {
 
 describe("validateWitness", () => {
     it("sends the location, the witness and the portfolio as the command's one argument", async () => {
-        const validation = { status: "valid", message: null, portfolioId: "smart", report: null, witnessUri: null };
+        const validation = { status: "valid", message: null, portfolioId: "smart", report: null };
         const { client, sendRequest } = recordingClient(validation);
 
         const result = await validateWitness(client, "gamma.witness.validate", { ...caseLocation, witnessUri }, { portfolio: "smart" });
