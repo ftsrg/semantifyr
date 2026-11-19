@@ -29,7 +29,6 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.PropertyDeclaration
 import hu.bme.mit.semantifyr.verifier.discovery.CaseFilter
 import hu.bme.mit.semantifyr.verifier.discovery.VerificationCaseDiscoverer
 import hu.bme.mit.semantifyr.verifier.portfolio.VerificationPortfolio
-import hu.bme.mit.semantifyr.verifier.witness.WitnessValidator
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Named
 import org.junit.jupiter.params.provider.Arguments
@@ -316,7 +315,7 @@ class SemantifyrVerifierTestHelper @Inject constructor(
         val witness = reparsedContext.modelResources.last().contents.filterIsInstance<InlinedOxsts>().single()
 
         val verifier = buildVerifier(validationPortfolio, timeout, outputDirectory, environment)
-        val validation = WitnessValidator().validate(verifier, witness).outcome.report.result
+        val validation = verifier.verify(witness).report.result
         assertThat(validation.verdict)
             .describedAs("Reparsed witness for ${case.qualifiedName} must re-verify Passed via ${validationPortfolio.id} (${validation.message ?: "no message"})")
             .isEqualTo(VerificationVerdict.Passed)
@@ -338,7 +337,7 @@ class SemantifyrVerifierTestHelper @Inject constructor(
         logger.info { "Validating returned witness" }
 
         val verifier = buildVerifier(validation, timeout, outputDirectory, environment)
-        val result = WitnessValidator().validate(verifier, witness).outcome.report.result
+        val result = verifier.verify(witness).report.result
         assertThat(result.verdict)
             .describedAs("Witness for ${case.qualifiedName} (original verdict $originalVerdict) must re-verify Passed via ${validation.id} (${result.message ?: "no message"})")
             .isEqualTo(VerificationVerdict.Passed)

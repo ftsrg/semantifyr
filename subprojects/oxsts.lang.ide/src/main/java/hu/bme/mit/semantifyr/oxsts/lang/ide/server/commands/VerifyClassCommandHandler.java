@@ -22,8 +22,6 @@ import hu.bme.mit.semantifyr.verifier.SemantifyrVerifier;
 import hu.bme.mit.semantifyr.verifier.VerificationOutcome;
 import hu.bme.mit.semantifyr.verifier.discovery.VerificationCaseDiscoverer;
 import java.util.List;
-import kotlin.coroutines.EmptyCoroutineContext;
-import kotlinx.coroutines.BuildersKt;
 import org.eclipse.emf.common.util.URI;
 import org.eclipse.xtext.ide.server.ILanguageServerAccess;
 import org.eclipse.xtext.util.CancelIndicator;
@@ -116,9 +114,8 @@ public class VerifyClassCommandHandler
 
                 var match = verificationCaseDiscoverer.findByQualifiedName(context, targetQualifiedName);
 
-                var outcome = BuildersKt.<VerificationOutcome>runBlocking(
-                        EmptyCoroutineContext.INSTANCE,
-                        (scope, continuation) -> verifier.verify(match, progressContext, continuation));
+                VerificationOutcome outcome =
+                        runBlocking(continuation -> verifier.verify(match, progressContext, continuation));
                 LOGGER.info(
                         "LSP verify '{}' -> {}",
                         targetQualifiedName,

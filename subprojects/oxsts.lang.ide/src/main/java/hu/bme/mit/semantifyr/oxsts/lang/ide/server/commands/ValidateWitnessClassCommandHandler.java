@@ -15,7 +15,7 @@ import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseRequest;
 import hu.bme.mit.semantifyr.lang.ide.server.wire.WitnessValidationResult;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts;
 import hu.bme.mit.semantifyr.verifier.SemantifyrVerifier;
-import hu.bme.mit.semantifyr.verifier.witness.WitnessValidator;
+import hu.bme.mit.semantifyr.verifier.VerificationOutcome;
 import java.util.List;
 import org.eclipse.xtext.ide.server.ILanguageServerAccess;
 import org.eclipse.xtext.util.CancelIndicator;
@@ -32,9 +32,6 @@ public class ValidateWitnessClassCommandHandler
 
     @Inject
     protected Injector injector;
-
-    @Inject
-    protected WitnessValidator witnessValidator;
 
     @Override
     public String getId() {
@@ -88,10 +85,11 @@ public class ValidateWitnessClassCommandHandler
                         .build();
 
                 progressContext.checkIsCancelled();
-                var validationResult = witnessValidator.validateBlocking(verifier, inlinedOxsts, progressContext);
+                VerificationOutcome outcome =
+                        runBlocking(continuation -> verifier.verify(inlinedOxsts, progressContext, continuation));
                 LOGGER.info(
-                        "LSP validateWitness {}", validationResult.getClass().getSimpleName());
-                return WitnessValidationResult.fromValidation(validationResult, portfolio.getId());
+                        "LSP validateWitness {}", outcome.getReport().getResult().getVerdict());
+                return WitnessValidationResult.fromOutcome(outcome, portfolio.getId());
             } catch (Exception e) {
                 LOGGER.warn("Witness validation threw {}", e.getClass().getSimpleName(), e);
                 return WitnessValidationResult.errored(e.toString(), portfolio.getId());

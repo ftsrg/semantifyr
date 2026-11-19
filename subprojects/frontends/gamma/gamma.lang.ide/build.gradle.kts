@@ -13,7 +13,6 @@ dependencies {
     api(project(":lang-ide-common"))
     api(project(":gamma.lang"))
     implementation(project(":gamma-frontend"))
-    implementation(libs.kotlinx.coroutines.core)
 
     ideGenerated(project(":gamma.lang"))
 }

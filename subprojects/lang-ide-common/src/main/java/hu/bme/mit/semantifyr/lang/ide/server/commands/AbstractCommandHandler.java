@@ -13,6 +13,9 @@ import hu.bme.mit.semantifyr.lang.ide.server.concurrent.LockingRequestManager;
 import hu.bme.mit.semantifyr.lang.ide.server.concurrent.WorkManager;
 import java.util.List;
 import java.util.function.Supplier;
+import kotlin.coroutines.Continuation;
+import kotlin.coroutines.EmptyCoroutineContext;
+import kotlinx.coroutines.BuildersKt;
 import org.eclipse.emf.common.util.URI;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.lsp4j.ExecuteCommandParams;
@@ -26,6 +29,10 @@ import org.eclipse.xtext.resource.XtextResource;
 import org.eclipse.xtext.util.CancelIndicator;
 
 public abstract class AbstractCommandHandler<TRequest, TArgument> implements CommandHandler {
+
+    protected interface SuspendingCall<T> {
+        Object call(Continuation<? super T> continuation);
+    }
 
     @Inject
     private Provider<WorkManager> workManagerProvider;
@@ -60,6 +67,11 @@ public abstract class AbstractCommandHandler<TRequest, TArgument> implements Com
 
     protected <T> T performBackgroundWork(Supplier<T> work) {
         return requestManagerProvider.get().performBackgroundWork(work);
+    }
+
+    protected static <T> T runBlocking(SuspendingCall<T> call) throws InterruptedException {
+        return BuildersKt.runBlocking(
+                EmptyCoroutineContext.INSTANCE, (scope, continuation) -> call.call(continuation));
     }
 
     public abstract List<Object> serializeArguments(TArgument arguments);

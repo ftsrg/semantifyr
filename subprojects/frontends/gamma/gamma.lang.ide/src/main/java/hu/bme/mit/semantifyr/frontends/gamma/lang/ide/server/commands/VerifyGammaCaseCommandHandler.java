@@ -19,8 +19,6 @@ import hu.bme.mit.semantifyr.lang.ide.server.commands.CommandProgressContext;
 import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseRequest;
 import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseResult;
 import java.util.List;
-import kotlin.coroutines.EmptyCoroutineContext;
-import kotlinx.coroutines.BuildersKt;
 import org.eclipse.xtext.ide.server.ILanguageServerAccess;
 import org.eclipse.xtext.util.CancelIndicator;
 import org.slf4j.Logger;
@@ -99,9 +97,8 @@ public class VerifyGammaCaseCommandHandler
 
                 progressContext.checkIsCancelled();
 
-                var gammaResult = BuildersKt.<GammaVerificationResult>runBlocking(
-                        EmptyCoroutineContext.INSTANCE,
-                        (scope, continuation) -> frontend.verify(gammaCase, progressContext, continuation));
+                GammaVerificationResult gammaResult =
+                        runBlocking(continuation -> frontend.verify(gammaCase, progressContext, continuation));
                 LOGGER.info(
                         "LSP verify '{}' -> {}",
                         gammaCase.getQualifiedName(),

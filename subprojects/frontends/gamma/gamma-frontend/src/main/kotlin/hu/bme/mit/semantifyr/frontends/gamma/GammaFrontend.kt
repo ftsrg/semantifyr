@@ -30,8 +30,6 @@ import hu.bme.mit.semantifyr.verifier.VerificationOutcome
 import hu.bme.mit.semantifyr.verifier.boundedDirectoryName
 import hu.bme.mit.semantifyr.verifier.discovery.VerificationCaseDiscoverer
 import hu.bme.mit.semantifyr.verifier.portfolio.VerificationPortfolio
-import hu.bme.mit.semantifyr.verifier.witness.WitnessValidationResult
-import hu.bme.mit.semantifyr.verifier.witness.WitnessValidator
 import org.eclipse.xtext.EcoreUtil2
 import org.eclipse.xtext.resource.FileExtensionProvider
 import org.eclipse.xtext.resource.SaveOptions
@@ -155,7 +153,7 @@ class GammaFrontend @Inject private constructor(
         witnessPath: Path,
         portfolio: VerificationPortfolio = gammaFrontendConfiguration.portfolio,
         progress: ProgressContext = ProgressContext.Silent,
-    ): WitnessValidationResult {
+    ): VerificationOutcome {
         val qualifiedName = gammaVerificationCase.qualifiedName
         val baseDirectory = caseDirectory(gammaVerificationCase)
         val verificationDirectory = baseDirectory.resolve("verification")
@@ -164,11 +162,9 @@ class GammaFrontend @Inject private constructor(
         logger.info { "Validating witness for Gamma case '$qualifiedName' from '$witnessPath'" }
 
         val backAnnotatedModel = loadWitnessModel(witnessPath, baseDirectory)
-        val result = WitnessValidator().validate(verifier, backAnnotatedModel, progress)
-        logger.info {
-            "Witness validation for Gamma case '$qualifiedName' -> ${result.outcome.report.result.verdict} (${result::class.simpleName})"
-        }
-        return result
+        val outcome = verifier.verify(backAnnotatedModel, progress)
+        logger.info { "Witness validation for Gamma case '$qualifiedName' -> ${outcome.report.result.verdict}" }
+        return outcome
     }
 
     private fun loadWitnessModel(witnessPath: Path, baseDirectory: Path): InlinedOxsts {

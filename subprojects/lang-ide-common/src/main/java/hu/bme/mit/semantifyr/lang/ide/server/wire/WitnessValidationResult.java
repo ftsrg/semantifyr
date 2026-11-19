@@ -6,21 +6,16 @@
 
 package hu.bme.mit.semantifyr.lang.ide.server.wire;
 
+import hu.bme.mit.semantifyr.verifier.VerificationOutcome;
 import hu.bme.mit.semantifyr.verifier.VerificationReport;
-import hu.bme.mit.semantifyr.verifier.witness.WitnessValidationResult.Errored;
-import hu.bme.mit.semantifyr.verifier.witness.WitnessValidationResult.Inconclusive;
-import hu.bme.mit.semantifyr.verifier.witness.WitnessValidationResult.Invalid;
-import hu.bme.mit.semantifyr.verifier.witness.WitnessValidationResult.Valid;
 
 public record WitnessValidationResult(
         String status, String message, String portfolioId, VerificationReport report, String witnessUri) {
 
-    public static WitnessValidationResult fromValidation(
-            hu.bme.mit.semantifyr.verifier.witness.WitnessValidationResult validation, String portfolioId) {
-        var outcome = validation.getOutcome();
+    public static WitnessValidationResult fromOutcome(VerificationOutcome outcome, String portfolioId) {
         var report = outcome.getReport();
         return new WitnessValidationResult(
-                statusOf(validation),
+                WitnessValidationStatus.of(report.getResult().getVerdict()),
                 report.getResult().getMessage(),
                 portfolioId,
                 report,
@@ -37,15 +32,5 @@ public record WitnessValidationResult(
 
     public static WitnessValidationResult cancelled(String message, String portfolioId) {
         return new WitnessValidationResult(WitnessValidationStatus.CANCELLED, message, portfolioId, null, null);
-    }
-
-    private static String statusOf(hu.bme.mit.semantifyr.verifier.witness.WitnessValidationResult validation) {
-        return switch (validation) {
-            case Valid ignored -> WitnessValidationStatus.VALID;
-            case Invalid ignored -> WitnessValidationStatus.INVALID;
-            case Inconclusive ignored -> WitnessValidationStatus.INCONCLUSIVE;
-            case Errored ignored -> WitnessValidationStatus.ERRORED;
-            default -> throw new IllegalStateException("unknown validation result " + validation);
-        };
     }
 }

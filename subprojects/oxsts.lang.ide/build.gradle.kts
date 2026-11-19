@@ -14,7 +14,6 @@ dependencies {
     api(project(":oxsts.lang"))
     api(project(":lang-ide-common"))
     implementation(project(":portfolios"))
-    implementation(libs.kotlinx.coroutines.core)
 
     ideGenerated(project(":oxsts.lang"))
 
