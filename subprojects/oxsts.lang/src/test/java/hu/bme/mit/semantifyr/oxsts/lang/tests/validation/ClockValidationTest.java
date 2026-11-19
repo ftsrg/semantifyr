@@ -169,6 +169,22 @@ public class ClockValidationTest {
     }
 
     @Test
+    void conditionalWithAClockBranchAndAnIntegerBranchIsRejected() {
+        var parsedPackage = parseHelper.parse(TIMER + """
+                redefine tran {
+                    assume((if flag then elapsed else 5) >= 3)
+                }
+            }
+            """, CheckMode.ALL);
+
+        parsedPackage.assertNoResourceErrors();
+        assertThat(parsedPackage.getIssues())
+                .filteredOn(issue -> issue.getSeverity() == Severity.ERROR)
+                .extracting(issue -> issue.getCode())
+                .containsExactlyInAnyOrder(OxstsValidator.TYPE_MISMATCH, OxstsValidator.INCORRECT_CLOCK_USE);
+    }
+
+    @Test
     void clockWhoseMultiplicityDoesNotEvaluateGetsNoClockError() {
         var parsedPackage = parseHelper.parse("""
             package test
