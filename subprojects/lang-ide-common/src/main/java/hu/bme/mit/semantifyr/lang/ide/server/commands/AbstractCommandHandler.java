@@ -12,6 +12,7 @@ import com.google.inject.Provider;
 import hu.bme.mit.semantifyr.lang.ide.server.concurrent.LockingRequestManager;
 import hu.bme.mit.semantifyr.lang.ide.server.concurrent.WorkManager;
 import java.util.List;
+import java.util.concurrent.CancellationException;
 import java.util.function.Supplier;
 import kotlin.coroutines.Continuation;
 import kotlin.coroutines.EmptyCoroutineContext;
@@ -69,8 +70,14 @@ public abstract class AbstractCommandHandler<TRequest, TArgument> implements Com
         return requestManagerProvider.get().performBackgroundWork(work);
     }
 
-    protected static <T> T runBlocking(SuspendingCall<T> call) throws InterruptedException {
-        return BuildersKt.runBlocking(EmptyCoroutineContext.INSTANCE, (scope, continuation) -> call.call(continuation));
+    protected static <T> T runBlocking(SuspendingCall<T> call) {
+        try {
+            return BuildersKt.runBlocking(
+                    EmptyCoroutineContext.INSTANCE, (scope, continuation) -> call.call(continuation));
+        } catch (InterruptedException exception) {
+            Thread.currentThread().interrupt();
+            throw new CancellationException("The command was interrupted");
+        }
     }
 
     public abstract List<Object> serializeArguments(TArgument arguments);
