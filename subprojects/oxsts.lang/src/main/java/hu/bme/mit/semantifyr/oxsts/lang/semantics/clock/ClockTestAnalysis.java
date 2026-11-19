@@ -49,6 +49,8 @@ public class ClockTestAnalysis {
         }
     }
 
+    private record ClockSide(List<Expression> leaves, boolean everyBranchIsClock) {}
+
     @Inject
     private TypeCompatibility typeCompatibility;
 
@@ -71,30 +73,35 @@ public class ClockTestAnalysis {
     }
 
     public ClockTest clockTest(ComparisonOperator comparison) {
-        if (isClockValued(comparison.getLeft())) {
+        var left = sideOf(comparison.getLeft());
+        if (left.everyBranchIsClock()) {
             return new ClockTest(
-                    comparison,
-                    comparison.getLeft(),
-                    clockLeaves(comparison.getLeft()),
-                    comparison.getRight(),
-                    comparison.getOp());
+                    comparison, comparison.getLeft(), left.leaves(), comparison.getRight(), comparison.getOp());
         }
-        if (isClockValued(comparison.getRight())) {
+        var right = sideOf(comparison.getRight());
+        if (right.everyBranchIsClock()) {
             return new ClockTest(
                     comparison,
                     comparison.getRight(),
-                    clockLeaves(comparison.getRight()),
+                    right.leaves(),
                     comparison.getLeft(),
                     mirrored(comparison.getOp()));
         }
         return null;
     }
 
-    private boolean isClockValued(Expression expression) {
+    private ClockSide sideOf(Expression expression) {
         if (expression instanceof IfThenElse ifThenElse) {
-            return isClockValued(ifThenElse.getThen()) || isClockValued(ifThenElse.getElse());
+            var thenSide = sideOf(ifThenElse.getThen());
+            var elseSide = sideOf(ifThenElse.getElse());
+            var leaves = new ArrayList<>(thenSide.leaves());
+            leaves.addAll(elseSide.leaves());
+            return new ClockSide(leaves, thenSide.everyBranchIsClock() && elseSide.everyBranchIsClock());
         }
-        return expression != null && referencedClock(expression) != null;
+        if (expression != null && referencedClock(expression) != null) {
+            return new ClockSide(List.of(expression), true);
+        }
+        return new ClockSide(List.of(), false);
     }
 
     public List<ComparisonOperator> unclosedTests(TransitionDeclaration transition) {
@@ -231,7 +238,7 @@ public class ClockTestAnalysis {
     }
 
     private static boolean isClosed(ClockTest test, Boolean polarity, boolean inAssumption) {
-        if (!inAssumption || polarity == null || test.clockLeaves() == null) {
+        if (!inAssumption || polarity == null) {
             return false;
         }
         var op = polarity ? test.operator() : negated(test.operator());
@@ -261,9 +268,6 @@ public class ClockTestAnalysis {
     }
 
     private static boolean isReset(ClockTest test, Set<ClockPath> reset) {
-        if (test.clockLeaves() == null) {
-            return false;
-        }
         for (var leaf : test.clockLeaves()) {
             var path = pathOf(leaf);
             if (path == null || !reset.contains(path)) {
@@ -271,23 +275,6 @@ public class ClockTestAnalysis {
             }
         }
         return true;
-    }
-
-    private List<Expression> clockLeaves(Expression expression) {
-        if (expression instanceof IfThenElse ifThenElse) {
-            var thenLeaves = clockLeaves(ifThenElse.getThen());
-            var elseLeaves = clockLeaves(ifThenElse.getElse());
-            if (thenLeaves == null || elseLeaves == null) {
-                return null;
-            }
-            var leaves = new ArrayList<>(thenLeaves);
-            leaves.addAll(elseLeaves);
-            return leaves;
-        }
-        if (expression != null && referencedClock(expression) != null) {
-            return List.of(expression);
-        }
-        return null;
     }
 
     private static ClockPath pathOf(Expression expression) {
