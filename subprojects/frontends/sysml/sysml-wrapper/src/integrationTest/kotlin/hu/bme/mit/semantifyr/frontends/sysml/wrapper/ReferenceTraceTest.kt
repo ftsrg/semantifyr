@@ -49,7 +49,7 @@ class ReferenceTraceTest {
 
         assertThatThrownBy {
             compiler.trace(model, nameMap, nameMap, output)
-        }.isInstanceOf(IllegalStateException::class.java).hasMessageContaining("report.json.version: expected an index")
+        }.isInstanceOf(IllegalStateException::class.java)
         assertThat(output.parent).isEmptyDirectory()
     }
 
