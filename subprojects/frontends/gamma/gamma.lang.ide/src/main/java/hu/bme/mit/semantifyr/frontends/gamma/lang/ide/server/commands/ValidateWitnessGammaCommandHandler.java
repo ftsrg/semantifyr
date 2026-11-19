@@ -92,7 +92,7 @@ public class ValidateWitnessGammaCommandHandler
                 if (arguments.witnessUri() == null) {
                     LOGGER.info("LSP validate witness '{}' was given no witness", gammaCase.getQualifiedName());
                     return WitnessValidationResult.errored(
-                            "Case " + gammaCase.getQualifiedName() + " has no witness yet, verify it first",
+                            "The validation of case " + gammaCase.getQualifiedName() + " names no witness",
                             portfolio.getId());
                 }
                 var witnessPath = Path.of(URI.create(arguments.witnessUri()));

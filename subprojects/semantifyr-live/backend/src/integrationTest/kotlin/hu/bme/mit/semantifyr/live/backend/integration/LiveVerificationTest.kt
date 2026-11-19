@@ -183,11 +183,6 @@ class LiveVerificationTest {
                 val selectedCase = cases.pickByLabel("LeaderStatechartIdleReachable")
                 val request = VerificationCaseRequest(documentUri, selectedCase.location().range, "smart")
 
-                send(Frame.Text(LspWire.executeCommandRequest(id = 3, command = "gamma.witness.validate", arguments = listOf(request))))
-                val missing = awaitResponseFor(id = 3).resultAs(WitnessValidationResult::class.java)
-                assertThat(missing.status()).isEqualTo(WitnessValidationStatus.ERRORED)
-                assertThat(missing.message()).endsWith("has no witness yet, verify it first")
-
                 send(Frame.Text(LspWire.executeCommandRequest(id = 4, command = "gamma.case.verify", arguments = listOf(request))))
                 val verifyResult = awaitResponseFor(id = 4, timeout = 2.minutes).resultAs(VerificationCaseResult::class.java)
                 assertThat(verifyResult.status()).isEqualTo(expectedStatus("Simple.gamma", "LeaderStatechartIdleReachable"))

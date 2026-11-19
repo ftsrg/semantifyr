@@ -15,6 +15,7 @@ import hu.bme.mit.semantifyr.lang.ide.server.commands.CommandGson;
 import hu.bme.mit.semantifyr.lang.ide.server.wire.CompiledOxstsResult;
 import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseRequest;
 import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseSpecification;
+import hu.bme.mit.semantifyr.lang.ide.server.wire.WitnessValidationRequest;
 import hu.bme.mit.semantifyr.lang.ide.server.wire.WitnessValidationResult;
 import hu.bme.mit.semantifyr.lang.ide.server.wire.WitnessValidationStatus;
 import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup;
@@ -39,6 +40,7 @@ import org.eclipse.lsp4j.ExecuteCommandCapabilities;
 import org.eclipse.lsp4j.ExecuteCommandParams;
 import org.eclipse.lsp4j.InitializeParams;
 import org.eclipse.lsp4j.InitializedParams;
+import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.MessageActionItem;
 import org.eclipse.lsp4j.MessageParams;
 import org.eclipse.lsp4j.ProgressParams;
@@ -141,17 +143,8 @@ class GammaTraceLanguageServerTest {
     }
 
     @Test
-    void validatingTheWitnessOfACaseNotVerifiedYetReturnsAnErroredResult() throws Exception {
-        var model = copy(MODELS.resolve("examples/Crossroads.gamma"), "Crossroads.gamma");
-        initialize();
-        client.awaitDiagnostics(model);
-        var cases = (List<?>) executeCommand("gamma.case.discover", new JsonPrimitive(uri(model)));
-        var location = cases.stream()
-                .map(VerificationCaseSpecification.class::cast)
-                .filter(it -> it.label().equals("RoadBCanGetGreen"))
-                .findFirst()
-                .orElseThrow()
-                .location();
+    void aValidationNamingNoWitnessReturnsAnErroredResult() throws Exception {
+        var location = crossroadsCase("RoadBCanGetGreen");
 
         var result = (WitnessValidationResult) executeCommand(
                 "gamma.witness.validate",
@@ -159,9 +152,37 @@ class GammaTraceLanguageServerTest {
 
         assertThat(result.status()).isEqualTo(WitnessValidationStatus.ERRORED);
         assertThat(result.report()).isNull();
-        assertThat(result.message()).isEqualTo("Case Crossroads.RoadBCanGetGreen has no witness yet, verify it first");
+        assertThat(result.message()).isEqualTo("The validation of case Crossroads.RoadBCanGetGreen names no witness");
         assertThat(result.portfolioId())
                 .isEqualTo(Portfolios.INSTANCE.getDefault().getId());
+    }
+
+    @Test
+    void aValidationNamingAWitnessThatDoesNotExistReturnsAnErroredResult() throws Exception {
+        var location = crossroadsCase("RoadBCanGetGreen");
+        var missing = workspace.resolve("missing").resolve("witness.semantifyr");
+
+        var result = (WitnessValidationResult) executeCommand(
+                "gamma.witness.validate",
+                CommandGson.INSTANCE.toJsonTree(new WitnessValidationRequest(
+                        location.getUri(), location.getRange(), null, uri(missing))));
+
+        assertThat(result.status()).isEqualTo(WitnessValidationStatus.ERRORED);
+        assertThat(result.report()).isNull();
+        assertThat(result.message()).contains(missing.toString());
+    }
+
+    private Location crossroadsCase(String name) throws Exception {
+        var model = copy(MODELS.resolve("examples/Crossroads.gamma"), "Crossroads.gamma");
+        initialize();
+        client.awaitDiagnostics(model);
+        var cases = (List<?>) executeCommand("gamma.case.discover", new JsonPrimitive(uri(model)));
+        return cases.stream()
+                .map(VerificationCaseSpecification.class::cast)
+                .filter(it -> it.label().equals(name))
+                .findFirst()
+                .orElseThrow()
+                .location();
     }
 
     @Test
