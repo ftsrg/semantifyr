@@ -32,4 +32,10 @@ data class VerificationReport(
     val timeout: Duration,
     val result: VerificationResult,
     val trace: ReportTrace? = null,
-)
+) {
+    init {
+        require(version == REPORT_VERSION) {
+            "the report is of version $version, which this reader cannot read"
+        }
+    }
+}

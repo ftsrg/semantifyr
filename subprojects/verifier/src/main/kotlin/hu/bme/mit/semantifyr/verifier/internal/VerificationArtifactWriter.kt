@@ -28,6 +28,11 @@ class VerificationArtifactWriter @Inject constructor(
 
     private val logger by loggerFactory()
 
+    private val json = Json {
+        prettyPrint = true
+        encodeDefaults = true
+    }
+
     fun writeReport(caseDirectory: Path, report: VerificationReport): Path {
         val reportPath = caseDirectory.resolve("report.json")
         caseDirectory.createDirectories()
@@ -51,13 +56,6 @@ class VerificationArtifactWriter @Inject constructor(
         }
         logger.info { "[$qualifiedName] wrote witness artifact to $witnessPath" }
         return witnessPath
-    }
-
-    companion object {
-        internal val json = Json {
-            prettyPrint = true
-            encodeDefaults = true
-        }
     }
 
 }

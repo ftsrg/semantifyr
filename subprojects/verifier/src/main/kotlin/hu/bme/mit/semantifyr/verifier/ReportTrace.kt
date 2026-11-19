@@ -97,4 +97,22 @@ data class ReportTrace(
     val states: List<ReportState>,
     val steps: List<ReportStep>,
     val missingCalls: String? = null,
-)
+) {
+    init {
+        require(initial.state in states.indices) {
+            "the initial entry names the state ${initial.state}, which the trace does not hold"
+        }
+        for (step in steps) {
+            require(step.source in states.indices && step.target in states.indices) {
+                "a step goes from the state ${step.source} to ${step.target}, which the trace does not hold"
+            }
+        }
+        for (state in states) {
+            for ((key, value) in state.values) {
+                require(value !is ReportValue.Array) {
+                    "a state holds the array $key whole instead of slot by slot"
+                }
+            }
+        }
+    }
+}
