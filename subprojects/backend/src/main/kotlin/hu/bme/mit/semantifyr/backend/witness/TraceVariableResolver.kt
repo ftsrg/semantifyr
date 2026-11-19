@@ -18,7 +18,7 @@ class TraceVariableResolver(
     inlinedOxsts: InlinedOxsts,
     names: BackendVariableNames,
     private val addedNames: Set<String>,
-    private val trace: String,
+    private val traceDescription: String,
 ) {
 
     // a trace names state variables, so a state variable wins a name it shares with a local
@@ -34,7 +34,7 @@ class TraceVariableResolver(
         if (name in addedNames) {
             return null
         }
-        val variable = variablesByName[name] ?: throw WitnessFailedException("$trace holds $name, which names no variable of the model")
+        val variable = variablesByName[name] ?: throw WitnessFailedException("$traceDescription holds $name, which names no variable of the model")
         if (variable !in stateVariables) {
             return null
         }
