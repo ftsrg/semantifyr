@@ -77,8 +77,8 @@ class LiveVerificationExecutorTest {
 
     @Test
     fun `a witness URI and a trace URI inside the workspace are rewritten to the client's`() = runTest {
-        val witnessUri = "file:/abs/sessions/x/.artifacts/Case/witness.semantifyr"
-        val traceUri = "file:/abs/sessions/x/.artifacts/Case/trace.get"
+        val witnessUri = "file:///abs/sessions/x/.artifacts/Case/witness.semantifyr"
+        val traceUri = "file:///abs/sessions/x/.artifacts/Case/trace.get"
         val raw = VerificationCaseResult(
             "failed",
             "counterexample",

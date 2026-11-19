@@ -8,8 +8,7 @@ package hu.bme.mit.semantifyr.lang.ide.server.wire;
 
 import hu.bme.mit.semantifyr.verifier.VerificationOutcome;
 import hu.bme.mit.semantifyr.verifier.VerificationReport;
-import hu.bme.mit.semantifyr.verifier.VerificationWitness;
-import org.eclipse.emf.common.util.URI;
+import java.nio.file.Path;
 
 public record VerificationCaseResult(
         String status,
@@ -19,7 +18,7 @@ public record VerificationCaseResult(
         String witnessUri,
         String traceUri) {
 
-    public static VerificationCaseResult fromOutcome(VerificationOutcome outcome, String portfolioId, String traceUri) {
+    public static VerificationCaseResult fromOutcome(VerificationOutcome outcome, String portfolioId, Path tracePath) {
         var report = outcome.getReport();
         var result = report.getResult();
         return new VerificationCaseResult(
@@ -27,15 +26,12 @@ public record VerificationCaseResult(
                 result.getMessage(),
                 portfolioId,
                 report,
-                uriOf(outcome.getWitness()),
-                traceUri);
+                outcome.getWitness() == null ? null : uriOf(outcome.getWitness().getPath()),
+                tracePath == null ? null : uriOf(tracePath));
     }
 
-    static String uriOf(VerificationWitness witness) {
-        return witness == null
-                ? null
-                : URI.createFileURI(witness.getPath().toAbsolutePath().toString())
-                        .toString();
+    private static String uriOf(Path path) {
+        return path.toAbsolutePath().toUri().toString();
     }
 
     public static VerificationCaseResult errored(String message, String portfolioId) {

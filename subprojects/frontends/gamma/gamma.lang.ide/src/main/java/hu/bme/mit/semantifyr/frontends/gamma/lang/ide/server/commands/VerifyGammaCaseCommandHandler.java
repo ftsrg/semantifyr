@@ -118,8 +118,7 @@ public class VerifyGammaCaseCommandHandler
 
     private static VerificationCaseResult toCaseResult(GammaVerificationResult gammaResult, String portfolioId) {
         var witness = gammaResult.getWitness();
-        var traceUri =
-                witness == null ? null : witness.getGammaTracePath().toUri().toString();
-        return VerificationCaseResult.fromOutcome(gammaResult.getOutcome(), portfolioId, traceUri);
+        var tracePath = witness == null ? null : witness.getGammaTracePath();
+        return VerificationCaseResult.fromOutcome(gammaResult.getOutcome(), portfolioId, tracePath);
     }
 }
