@@ -102,7 +102,7 @@ open class UppaalCapabilityChecker @Inject constructor(
         }
         val comparison = parent as? ComparisonOperator ?: return false
         val test = clockTestAnalysis.clockTest(comparison) ?: return false
-        if (test.clock !== clockSide || test.clockLeaves == null) {
+        if (test.clock !== clockSide) {
             return false
         }
         return isGuard(comparison)

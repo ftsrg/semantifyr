@@ -105,7 +105,7 @@ class WholeDelayLowering @Inject constructor(
             val test = clockTestAnalysis.clockTest(comparison) ?: continue
             val evaluation = constantExpressionEvaluatorProvider.evaluate(test.bound) as? IntegerEvaluation
                 ?: error("A clock bound is no compile-time integer")
-            for (leaf in test.clockLeaves.orEmpty()) {
+            for (leaf in test.clockLeaves) {
                 val clock = clockTestAnalysis.referencedClock(leaf)
                 largestBounds[clock] = maxOf(largestBounds[clock] ?: 0, evaluation.value)
             }

@@ -172,7 +172,7 @@ class UppaalGuardTransformer @Inject constructor(
             }
             return thenLeaves + elseLeaves
         }
-        val clock = clockTestAnalysis.referencedClock(expression) ?: throw BackendUnsupportedException("Uppaal reads a clock only in comparisons with a constant")
+        val clock = clockTestAnalysis.referencedClock(expression) ?: error("The validator refuses a clock side with a branch that is no clock")
         return listOf(ClockLeaf(listOf(UppaalGuard(emptyList(), emptyList())), clock))
     }
 
