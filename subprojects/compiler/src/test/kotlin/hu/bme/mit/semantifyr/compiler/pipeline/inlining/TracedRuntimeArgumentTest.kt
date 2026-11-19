@@ -13,6 +13,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssignmentOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ElementReference
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralBoolean
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralInteger
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.LocalVarDeclarationOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -33,8 +34,25 @@ class TracedRuntimeArgumentTest : FlatteningTestBase() {
             it.expression is ElementReference
         }
         assertThat(records).singleElement().satisfies({
-            assertThat((it.expression as ElementReference).element.name).isNotEqualTo(recorded.variable.name)
+            val temporary = (it.expression as ElementReference).element as LocalVarDeclarationOperation
+            assertThat(((temporary.expression as ElementReference).element as VariableDeclaration).name).endsWith("count")
         })
+    }
+
+    @Test
+    fun `a recorded boolean argument starts false`() {
+        val recorded = flatten("BooleanArgument", MODEL).recordedVariable()
+
+        assertThat(recorded.typeSpecification.domain.name).isEqualTo("bool")
+        assertThat((recorded.expression as LiteralBoolean).isValue).isFalse()
+    }
+
+    @Test
+    fun `a recorded enum argument starts at the enum's first literal`() {
+        val recorded = flatten("EnumArgument", MODEL).recordedVariable()
+
+        assertThat(recorded.typeSpecification.domain.name).isEqualTo("Mode")
+        assertThat((recorded.expression as ElementReference).element.name).isEqualTo("Off")
     }
 
     @Test
@@ -74,6 +92,10 @@ class TracedRuntimeArgumentTest : FlatteningTestBase() {
         }
     }
 
+    private fun FlattenedCompilationContext.recordedVariable(): VariableDeclaration {
+        return transitionCallTraces.getTransitionCallTrace(tracer()).recordedArguments.single().variable
+    }
+
     private fun FlattenedCompilationContext.writesOf(variable: VariableDeclaration): List<AssignmentOperation> {
         return inlinedOxsts.eAllOfType<AssignmentOperation>().filter {
             (it.reference as? ElementReference)?.element === variable
@@ -90,6 +112,26 @@ class TracedRuntimeArgumentTest : FlatteningTestBase() {
                 @Trace
                 tran send(value: int) {
                     item := value
+                }
+            }
+
+            enum Mode {
+                Off,
+                On,
+            }
+
+            class Switch {
+                var mode: Mode := Mode::Off
+                var enabled: bool := false
+
+                @Trace
+                tran set(next: Mode) {
+                    mode := next
+                }
+
+                @Trace
+                tran enable(value: bool) {
+                    enabled := value
                 }
             }
 
@@ -118,6 +160,40 @@ class TracedRuntimeArgumentTest : FlatteningTestBase() {
 
                 prop {
                     return AG port.item >= 0
+                }
+            }
+
+            @VerificationCase
+            class BooleanArgument {
+                contains device: Switch
+                var requested: bool := false
+
+                redefine tran {
+                    havoc(requested)
+                    inline device.enable(requested)
+                }
+
+                prop {
+                    return AG true
+                }
+            }
+
+            @VerificationCase
+            class EnumArgument {
+                contains device: Switch
+                var requested: Mode := Mode::Off
+
+                redefine tran {
+                    choice {
+                        requested := Mode::Off
+                    } or {
+                        requested := Mode::On
+                    }
+                    inline device.set(requested)
+                }
+
+                prop {
+                    return AG true
                 }
             }
 
