@@ -21,7 +21,7 @@ class TraceVariableResolver(
     private val trace: String,
 ) {
 
-    // a state variable keeps a name that a local shares, as Theta's unmangled names allow
+    // a trace names state variables, so a state variable wins a name it shares with a local
     private val variablesByName = inlinedOxsts.eAllOfType<VariableDeclaration>().associateBy {
         names.nameOf(it)
     } + inlinedOxsts.variables.associateBy {
