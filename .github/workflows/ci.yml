@@ -150,7 +150,7 @@ jobs:
         with:
           gradle-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
       - name: Install the browser
-        timeout-minutes: 5
+        timeout-minutes: 15
         uses: ./.github/actions/browsers
         with:
           browsers: ${{ matrix.browser }}
@@ -270,7 +270,7 @@ jobs:
         run: npm ci --ignore-scripts
       - name: Install the browsers for the live flows
         id: browsers
-        timeout-minutes: 5
+        timeout-minutes: 15
         uses: ./.github/actions/browsers
         with:
           browsers: chromium firefox webkit
