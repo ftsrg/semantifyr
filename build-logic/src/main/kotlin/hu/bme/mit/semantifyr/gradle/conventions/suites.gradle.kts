@@ -54,3 +54,12 @@ testing {
 tasks.named("check") {
     dependsOn(testing.suites.named("adapterTest"))
 }
+
+tasks.register("continuousIntegration") {
+    group = LifecycleBasePlugin.VERIFICATION_GROUP
+    dependsOn(
+        testing.suites.named("semanticTest"),
+        testing.suites.named("integrationTest"),
+        testing.suites.named("endToEndTest"),
+    )
+}

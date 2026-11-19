@@ -267,9 +267,14 @@ val applicationTest = tasks.register<NpmTask>("applicationTest") {
     inputs.files(cloneSysmlWorker)
 }
 
-tasks.register("uiTest") {
+val uiTest = tasks.register("uiTest") {
     group = "verification"
     dependsOn(screenTest, applicationTest)
+}
+
+tasks.register("continuousIntegration") {
+    group = "verification"
+    dependsOn(uiTest)
 }
 
 // a picture holds the fonts and the rendering of the browser and the system it is taken on

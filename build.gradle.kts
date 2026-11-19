@@ -9,7 +9,7 @@ plugins {
     alias(libs.plugins.kotlin.serialization) apply false
     alias(libs.plugins.sonarqube)
     alias(libs.plugins.dokka)
-    jacoco
+    `jacoco-report-aggregation`
 }
 
 val javadocModules = listOf("oxsts.lang", "oxsts.model")
@@ -32,6 +32,9 @@ val apiDocsDirectory = layout.buildDirectory.dir("api")
 
 dependencies {
     subprojects.forEach { subproject ->
+        subproject.plugins.withId("hu.bme.mit.semantifyr.gradle.conventions.jvm") {
+            jacocoAggregation(project(subproject.path))
+        }
         subproject.plugins.withId("org.jetbrains.kotlin.jvm") {
             if (subproject.name !in javadocModules) {
                 dokka(project(subproject.path))
@@ -75,44 +78,43 @@ configurations.consumable("apiDocsElements") {
     }
 }
 
-fun suiteTasks(vararg suites: String): List<TaskCollection<Task>> {
-    return subprojects.map { subproject ->
-        subproject.tasks.matching {
-            it.name in suites
-        }
+val suiteReportTasks = listOf(
+    "test",
+    "adapterTest",
+    "semanticTest",
+    "integrationTest",
+    "endToEndTest",
+).map { suite ->
+    reporting.reports.register<JacocoCoverageReport>("${suite}CoverageReport") {
+        testSuiteName = suite
+    }.flatMap {
+        it.reportTask
     }
 }
 
-tasks.register("continuousIntegration") {
-    group = "verification"
-    dependsOn(
-        suiteTasks(
-            "semanticTest",
-            "integrationTest",
-            "endToEndTest",
-            "uiTest",
-        ),
-    )
-}
-
-// the coverage of every suite that ran, over the main code of every module
 val coverageReport = tasks.register<JacocoReport>("coverageReport") {
     group = "verification"
+
+    suiteReportTasks.forEach { reportTask ->
+        executionData.from(
+            reportTask.map {
+                it.executionData
+            },
+        )
+        sourceDirectories.from(
+            reportTask.map {
+                it.sourceDirectories
+            },
+        )
+        classDirectories.from(
+            reportTask.map {
+                it.classDirectories
+            },
+        )
+    }
+
     reports {
         xml.required = true
-    }
-    subprojects.forEach { subproject ->
-        subproject.plugins.withId("hu.bme.mit.semantifyr.gradle.conventions.jvm") {
-            val main = subproject.extensions.getByType<SourceSetContainer>().getByName("main")
-            sourceDirectories.from(main.allSource.srcDirs)
-            classDirectories.from(main.output)
-            executionData.from(
-                subproject.fileTree(subproject.layout.buildDirectory.dir("jacoco")) {
-                    include("*.exec")
-                },
-            )
-            mustRunAfter(subproject.tasks.withType<Test>())
-        }
     }
 }
 

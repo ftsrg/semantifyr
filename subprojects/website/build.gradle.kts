@@ -332,7 +332,7 @@ val npmCheck = tasks.register<NpmTask>("npmCheck") {
 
 val walkBrowser = testChromium("The keyboard walk needs")
 
-tasks.register<NpmTask>("uiTest") {
+val uiTest = tasks.register<NpmTask>("uiTest") {
     group = "verification"
     val testBrowser = testBrowser()
     onlyIf("the walk runs in Chromium alone") {
@@ -350,6 +350,11 @@ tasks.register<NpmTask>("uiTest") {
 
     stampOnSuccess()
     outputs.cacheIf { true }
+}
+
+tasks.register("continuousIntegration") {
+    group = "verification"
+    dependsOn(uiTest)
 }
 
 // written for the alias @phases
