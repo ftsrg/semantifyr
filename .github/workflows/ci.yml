@@ -126,6 +126,103 @@ jobs:
           compression-level: 0
           retention-days: 1
 
+  model-test-packages:
+    name: Build the Model Tests
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Set up the toolchain
+        uses: ./.github/actions/toolchain
+        with:
+          gradle-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
+      - name: Install the harness, the launchers and the SysML v2 corpus
+        run: ./gradlew :corpus-check:installDist :gamma-cli:installDist :sysml-cli:installDist :sysml-wrapper:appendFurtherCases
+      - name: Pack them
+        run: >-
+          tar -czf "$RUNNER_TEMP/model-tests.tar.gz" -C subprojects
+          corpus-check/build/install
+          frontends/gamma/gamma-cli/build/install
+          frontends/sysml/sysml-cli/build/install
+          frontends/sysml/sysml-wrapper/build/corpus
+      - name: Upload them
+        uses: actions/upload-artifact@v7
+        with:
+          name: model-tests
+          path: ${{ runner.temp }}/model-tests.tar.gz
+          compression-level: 0
+          retention-days: 1
+
+  model-tests-gamma:
+    name: Model tests (gamma)
+    needs: model-test-packages
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+      - name: Set up JDK
+        uses: actions/setup-java@v6
+        with:
+          java-version: 25
+          distribution: temurin
+      - name: Install the backends
+        uses: ./.github/actions/backends
+      - name: Download the model tests
+        uses: actions/download-artifact@v8
+        with:
+          name: model-tests
+          path: ${{ runner.temp }}
+      - name: Unpack the model tests
+        run: tar -xzf "$RUNNER_TEMP/model-tests.tar.gz" -C subprojects
+      - name: Run the model tests
+        run: >-
+          subprojects/corpus-check/build/install/corpus-check/bin/corpus-check
+          --launcher subprojects/frontends/gamma/gamma-cli/build/install/semantifyr-gamma/bin/semantifyr-gamma
+          --corpus subprojects/frontends/gamma/models/semantics
+          --corpus subprojects/frontends/gamma/models/examples
+          --timeout-seconds 120
+
+  model-tests-sysml:
+    name: Model tests (sysml)
+    needs: model-test-packages
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+      - name: Set up JDK
+        uses: actions/setup-java@v6
+        with:
+          java-version: 25
+          distribution: temurin
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+      - name: Install the backends
+        uses: ./.github/actions/backends
+      - name: Download the model tests
+        uses: actions/download-artifact@v8
+        with:
+          name: model-tests
+          path: ${{ runner.temp }}
+      - name: Unpack the model tests
+        run: tar -xzf "$RUNNER_TEMP/model-tests.tar.gz" -C subprojects
+      - name: Run the model tests
+        run: >-
+          subprojects/corpus-check/build/install/corpus-check/bin/corpus-check
+          --launcher subprojects/frontends/sysml/sysml-cli/build/install/semantifyr-sysml/bin/semantifyr-sysml
+          --corpus subprojects/frontends/sysml/sysml-wrapper/build/corpus
+          --case-namespace semantifyr::sysml::model::
+          --timeout-seconds 120
+
   ui-tests:
     name: UI Tests (${{ matrix.browser }})
     permissions:
