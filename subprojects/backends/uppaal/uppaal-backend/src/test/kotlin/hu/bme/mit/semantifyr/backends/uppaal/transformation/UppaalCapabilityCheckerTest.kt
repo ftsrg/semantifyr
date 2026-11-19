@@ -160,6 +160,106 @@ class UppaalCapabilityCheckerTest : UppaalTransformationTestBase() {
         )
     }
 
+    private fun clockModel(tran: String): String {
+        return """
+            var elapsed : clock := 0
+            var flag : bool := false
+            var late : bool := false
+            var count : int := 0
+            init {
+            }
+            tran {
+            ${tran.trimIndent().replace("\n", "\n            ")}
+            }
+            prop {
+                AG !late
+            }
+        """
+    }
+
+    @Test
+    fun `a clock read outside the condition of an assumption or an if is reported`() {
+        val stored = clockModel(
+            """
+                assume(elapsed <= 1)
+                late := elapsed >= 2
+            """,
+        )
+        val conditionalValue = clockModel(
+            """
+                assume(elapsed <= 1)
+                count := if (elapsed >= 1) then 1 else 0
+            """,
+        )
+        val localInitializer = clockModel(
+            """
+                var early : bool := elapsed <= 1
+                late := !early
+            """,
+        )
+        val comparedWithBoolean = clockModel(
+            """
+                assume((elapsed >= 2) == flag)
+                late := true
+            """,
+        )
+        val conditionalValueInAssumption = clockModel(
+            """
+                assume(count == (if (elapsed >= 1) then 1 else 0))
+                late := true
+            """,
+        )
+
+        val description = "clocks read outside the conditions of assumptions and ifs"
+        assertThat(unsupported(stored)).containsExactly(description)
+        assertThat(unsupported(conditionalValue)).containsExactly(description)
+        assertThat(unsupported(localInitializer)).containsExactly(description)
+        assertThat(unsupported(comparedWithBoolean)).containsExactly(description)
+        assertThat(unsupported(conditionalValueInAssumption)).containsExactly(description)
+    }
+
+    @Test
+    fun `clock tests in the conditions of assumptions and ifs pass`() {
+        val unsupported = unsupported(
+            clockModel(
+                """
+                    assume(elapsed <= 5 && !(elapsed < 2))
+                    assume(if (flag) then elapsed <= 3 else elapsed >= 4)
+                    if (elapsed >= 4 || flag) {
+                        late := true
+                    }
+                    elapsed := 0
+                """,
+            ),
+        )
+
+        assertThat(unsupported).isEmpty()
+    }
+
+    @Test
+    fun `a clock bound beyond the magnitude verifyta takes is reported`() {
+        val atLimit = clockModel(
+            """
+                assume(elapsed <= 1073741822)
+                assume(elapsed >= -1073741822)
+            """,
+        )
+        val aboveLimit = clockModel(
+            """
+                assume(elapsed >= 1073741823)
+            """,
+        )
+        val belowLimit = clockModel(
+            """
+                assume(elapsed >= -1073741823)
+            """,
+        )
+
+        assertThat(unsupported(atLimit)).isEmpty()
+        assertThat(unsupported(aboveLimit)).containsExactly("clock bounds beyond 1073741822")
+        assertThat(unsupported(belowLimit)).containsExactly("clock bounds beyond 1073741822")
+    }
+
     @Test
     fun `arithmetic over an unbounded integer is reported only when the property depends on it`() {
         val unsupported = unsupported(

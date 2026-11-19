@@ -11,6 +11,8 @@ import hu.bme.mit.semantifyr.backend.UnsupportedConstruct
 import hu.bme.mit.semantifyr.backend.transformation.HavocValueCollector
 import hu.bme.mit.semantifyr.backend.transformation.IntegerRangeChecker
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.eAllOfType
+import hu.bme.mit.semantifyr.oxsts.lang.semantics.clock.ClockTestAnalysis
+import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.ConstantExpressionEvaluatorProvider
 import hu.bme.mit.semantifyr.oxsts.lang.utils.OxstsUtils
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.HavocOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
@@ -20,8 +22,10 @@ class UppaalOverApproximationCapabilityChecker @Inject constructor(
     integerRangeChecker: IntegerRangeChecker,
     uppaalDeclarationsBuilder: UppaalDeclarationsBuilder,
     uppaalVariableTransformer: UppaalVariableTransformer,
+    clockTestAnalysis: ClockTestAnalysis,
+    constantExpressionEvaluatorProvider: ConstantExpressionEvaluatorProvider,
     private val havocValueCollector: HavocValueCollector,
-) : UppaalCapabilityChecker(integerRangeChecker, uppaalDeclarationsBuilder, uppaalVariableTransformer) {
+) : UppaalCapabilityChecker(integerRangeChecker, uppaalDeclarationsBuilder, uppaalVariableTransformer, clockTestAnalysis, constantExpressionEvaluatorProvider) {
 
     override fun checkModel(inlinedOxsts: InlinedOxsts): List<UnsupportedConstruct> {
         val havoced = inlinedOxsts.eAllOfType<HavocOperation>().map {
