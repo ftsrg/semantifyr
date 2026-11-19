@@ -23,7 +23,7 @@ class ErroringPortfolio(
     override val displayName: String = id
     override val description: String = "test-only"
     override val executorKeys: Set<ExecutorKey<*>> = emptySet()
-    override val legs: List<PortfolioLeg> = emptyList()
+    override val legs: List<PortfolioLeg<*>> = emptyList()
 
     val invocations = AtomicInteger(0)
 

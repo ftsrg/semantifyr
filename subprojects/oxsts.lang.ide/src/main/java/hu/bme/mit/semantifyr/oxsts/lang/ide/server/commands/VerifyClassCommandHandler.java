@@ -19,8 +19,11 @@ import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseResult;
 import hu.bme.mit.semantifyr.oxsts.lang.naming.OxstsQualifiedNameProvider;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration;
 import hu.bme.mit.semantifyr.verifier.SemantifyrVerifier;
+import hu.bme.mit.semantifyr.verifier.VerificationOutcome;
 import hu.bme.mit.semantifyr.verifier.discovery.VerificationCaseDiscoverer;
 import java.util.List;
+import kotlin.coroutines.EmptyCoroutineContext;
+import kotlinx.coroutines.BuildersKt;
 import org.eclipse.emf.common.util.URI;
 import org.eclipse.xtext.ide.server.ILanguageServerAccess;
 import org.eclipse.xtext.util.CancelIndicator;
@@ -113,12 +116,16 @@ public class VerifyClassCommandHandler
 
                 var match = verificationCaseDiscoverer.findByQualifiedName(context, targetQualifiedName);
 
-                var dto = verifier.verifyBlocking(match, progressContext);
-                LOGGER.info("LSP verify '{}' -> {}", targetQualifiedName, dto.getVerdict());
-                var result = VerificationCaseResult.fromDto(dto, portfolio.getId());
-                var trace = result.trace();
-                if (serverSettings.keepsTemporaryArtifacts() && trace != null && trace.witnessUri() != null) {
-                    witnessOwners.record(URI.createURI(trace.witnessUri()), caseResource);
+                var outcome = BuildersKt.<VerificationOutcome>runBlocking(
+                        EmptyCoroutineContext.INSTANCE,
+                        (scope, continuation) -> verifier.verify(match, progressContext, continuation));
+                LOGGER.info(
+                        "LSP verify '{}' -> {}",
+                        targetQualifiedName,
+                        outcome.getReport().getResult().getVerdict());
+                var result = VerificationCaseResult.fromOutcome(outcome, portfolio.getId(), null);
+                if (serverSettings.keepsTemporaryArtifacts() && result.witnessUri() != null) {
+                    witnessOwners.record(URI.createURI(result.witnessUri()), caseResource);
                 }
                 return result;
             } catch (Exception e) {

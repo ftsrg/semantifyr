@@ -8,8 +8,9 @@ package hu.bme.mit.semantifyr.verifier
 
 import com.google.inject.Inject
 import com.google.inject.Injector
-import com.google.inject.Module
-import hu.bme.mit.semantifyr.backend.BackendCapabilityChecker
+import hu.bme.mit.semantifyr.backend.BackendConfig
+import hu.bme.mit.semantifyr.backend.SoundnessDirection
+import hu.bme.mit.semantifyr.backend.VerificationBackend
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
 import hu.bme.mit.semantifyr.backend.scopes.withVerificationScopeBlocking
@@ -88,31 +89,66 @@ class SemantifyrVerifierTestHelper @Inject constructor(
         }
     }
 
-    fun collectAcceptedCasesAsArguments(
+    fun <T : BackendConfig> collectAcceptedCasesAsArguments(
         context: SemantifyrModelContext,
-        backendModule: Module,
-        capabilityChecker: Class<out BackendCapabilityChecker>,
+        backend: VerificationBackend<T>,
+        config: T,
         outputDirectory: Path,
         filter: CaseFilter = CaseFilter.All,
     ): List<Arguments> {
-        val backendInjector = injector.createChildInjector(backendModule)
-        val compiler = SemantifyrCompiler(injector, ArtifactConfig.NONE)
-        return collectVerificationCases(context, filter).filter { case ->
-            val inlinedOxsts = compiler.compile(case.classDeclaration, outputDirectory.resolve(caseDirectoryName(case))).inlinedOxsts
-            val unsupported = withVerificationScopeBlocking {
-                backendInjector.getInstance(capabilityChecker).check(inlinedOxsts)
+        return collectSupportedCases(context, backend, config, outputDirectory, filter).filter {
+            if (it.loweredExactly) {
+                return@filter true
             }
-            if (unsupported.isNotEmpty()) {
-                logger.info {
-                    val refusals = unsupported.map {
-                        it.description
-                    }.distinct().joinToString()
-                    "Leaving out ${case.qualifiedName}: ${capabilityChecker.simpleName} refuses $refusals"
+            logger.info { "Leaving out ${it.case.qualifiedName}: ${backend.id} approximates the model in its lowering" }
+            false
+        }.map {
+            Arguments.of(Named.of(it.case.qualifiedName, it.case))
+        }
+    }
+
+    fun <T : BackendConfig> collectSupportedCasesAsArguments(
+        context: SemantifyrModelContext,
+        backend: VerificationBackend<T>,
+        config: T,
+        outputDirectory: Path,
+        filter: CaseFilter = CaseFilter.All,
+    ): List<Arguments> {
+        return collectSupportedCases(context, backend, config, outputDirectory, filter).map {
+            Arguments.of(Named.of(it.case.qualifiedName, it.case))
+        }
+    }
+
+    private class SupportedCase(
+        val case: VerificationCase,
+        val loweredExactly: Boolean,
+    )
+
+    private fun <T : BackendConfig> collectSupportedCases(
+        context: SemantifyrModelContext,
+        backend: VerificationBackend<T>,
+        config: T,
+        outputDirectory: Path,
+        filter: CaseFilter,
+    ): List<SupportedCase> {
+        val compiler = SemantifyrCompiler(injector, ArtifactConfig.NONE)
+        return collectVerificationCases(context, filter).mapNotNull { case ->
+            val inlinedOxsts = compiler.compile(case.classDeclaration, outputDirectory.resolve(caseDirectoryName(case))).inlinedOxsts
+            withVerificationScopeBlocking {
+                val checker = backend.capabilityChecker(injector, config)
+                val unsupported = checker.check(inlinedOxsts)
+                if (unsupported.isEmpty()) {
+                    SupportedCase(case, checker.soundness(inlinedOxsts) == SoundnessDirection.Exact)
+                } else {
+                    logger.info {
+                        val refusals = unsupported.map {
+                            it.description
+                        }.distinct().joinToString()
+                        "Leaving out ${case.qualifiedName}: ${backend.id} refuses $refusals"
+                    }
+                    null
                 }
             }
-            unsupported.isEmpty()
-        }.map {
-            Arguments.of(Named.of(it.qualifiedName, it))
         }
     }
 
@@ -127,31 +163,36 @@ class SemantifyrVerifierTestHelper @Inject constructor(
         optimization: OptimizationConfig? = null,
         validationPortfolio: VerificationPortfolio? = null,
     ) {
-        val result = runVerificationCase(context, case, verificationPortfolio, outputDirectory, timeout, environment, optimization = optimization)
-        assertVerdict(case.qualifiedName, expectedVerdict, result)
+        val outcome = runVerificationCase(context, case, verificationPortfolio, outputDirectory, timeout, environment, optimization = optimization)
+        assertVerdict(case.qualifiedName, expectedVerdict, outcome.report.result)
 
         if (expectsWitness(case, expectedVerdict)) {
-            assertThat(result.trace)
-                .describedAs("verdict $expectedVerdict for ${case.qualifiedName} must carry a Trace")
+            val witness = outcome.witness?.model
+            assertThat(witness)
+                .describedAs("verdict $expectedVerdict for ${case.qualifiedName} must carry a back-annotated witness")
                 .isNotNull()
-            val trace = requireNotNull(result.trace)
-            assertThat(trace.backAnnotatedModel.classDeclaration)
+            requireNotNull(witness)
+            assertThat(witness.classDeclaration)
                 .describedAs("back-annotated model for ${case.qualifiedName} must reference the verified class")
                 .isNotNull()
-            assertThat(trace.backAnnotatedModel.isWitness)
+            assertThat(witness.isWitness)
                 .describedAs("back-annotated InlinedOxsts for ${case.qualifiedName} must be flagged as a witness")
                 .isTrue()
 
-            assertThat(listOf(trace.witnessState.initializedStep) + trace.witnessState.steps)
+            val trace = outcome.report.trace
+            assertThat(trace)
+                .describedAs("the report of ${case.qualifiedName} must carry a trace")
+                .isNotNull()
+            assertThat(requireNotNull(trace).states)
                 .describedAs("witness for ${case.qualifiedName} must carry state values, or it re-verifies vacuously")
                 .anySatisfy {
                     assertThat(it.values).isNotEmpty()
                 }
 
-            assertWitnessFilesPersisted(outputDirectory, case)
+            assertWitnessFilesPersisted(outcome, case)
 
             if (validationPortfolio != null) {
-                assertWitnessRevalidates(case, trace, validationPortfolio, outputDirectory, timeout, environment, expectedVerdict)
+                assertWitnessRevalidates(case, witness, validationPortfolio, outputDirectory, timeout, environment, expectedVerdict)
             }
         }
     }
@@ -173,23 +214,22 @@ class SemantifyrVerifierTestHelper @Inject constructor(
         }
     }
 
-    private fun assertWitnessFilesPersisted(artifactsRoot: Path, case: VerificationCase) {
-        val caseDirectory = artifactsRoot.resolve(caseDirectoryName(case))
-        val witnessFile = caseDirectory.resolve("witness.semantifyr")
-        val traceFile = caseDirectory.resolve("trace.json")
+    private fun assertWitnessFilesPersisted(outcome: VerificationOutcome, case: VerificationCase) {
+        val witnessFile = outcome.witness?.path
+        val reportFile = outcome.reportPath
 
-        assertThat(witnessFile.exists())
-            .describedAs("witness.semantifyr must be written for ${case.qualifiedName} at $witnessFile")
-            .isTrue()
-        assertThat(witnessFile.fileSize())
+        assertThat(witnessFile)
+            .describedAs("witness.semantifyr must be written for ${case.qualifiedName}")
+            .isNotNull()
+        assertThat(requireNotNull(witnessFile).fileSize())
             .describedAs("witness.semantifyr for ${case.qualifiedName} must be non-empty")
             .isGreaterThan(0)
 
-        assertThat(traceFile.exists())
-            .describedAs("trace.json must be written for ${case.qualifiedName} at $traceFile")
+        assertThat(reportFile.exists())
+            .describedAs("report.json must be written for ${case.qualifiedName} at $reportFile")
             .isTrue()
-        assertThat(traceFile.fileSize())
-            .describedAs("trace.json for ${case.qualifiedName} must be non-empty")
+        assertThat(reportFile.fileSize())
+            .describedAs("report.json for ${case.qualifiedName} must be non-empty")
             .isGreaterThan(0)
     }
 
@@ -217,7 +257,7 @@ class SemantifyrVerifierTestHelper @Inject constructor(
         environment: ExecutionEnvironment = ExecutionEnvironment.Empty,
         artifacts: ArtifactConfig = ArtifactConfig.ALL,
         optimization: OptimizationConfig? = null,
-    ): VerificationResult {
+    ): VerificationOutcome {
         val verifier = buildVerifier(verificationPortfolio, timeout, outputDirectory, environment, artifacts, optimization)
         return verifier.verify(case)
     }
@@ -236,17 +276,19 @@ class SemantifyrVerifierTestHelper @Inject constructor(
         logger.info { "Checking test case $case (artifacts at $outputDirectory)" }
 
         assumePortfolioAvailable(verificationPortfolio, environment)
-        val result = runVerificationCase(context, case, verificationPortfolio, outputDirectory, timeout, environment)
+        val outcome = runVerificationCase(context, case, verificationPortfolio, outputDirectory, timeout, environment)
+        val result = outcome.report.result
         assertVerdict(case.qualifiedName, expectedVerdict, result, backendDiagnostics(outputDirectory, case))
         logger.info { "Result: ${result.verdict}" }
 
         if (validationPortfolio == null || !expectsWitness(case, expectedVerdict)) {
             return
         }
-        assertThat(result.trace)
+        val witness = outcome.witness?.model
+        assertThat(witness)
             .describedAs("verdict $expectedVerdict for ${case.qualifiedName} must carry a witness")
             .isNotNull()
-        assertWitnessRevalidates(case, requireNotNull(result.trace), validationPortfolio, outputDirectory, validationTimeout, environment, expectedVerdict)
+        assertWitnessRevalidates(case, requireNotNull(witness), validationPortfolio, outputDirectory, validationTimeout, environment, expectedVerdict)
     }
 
     suspend fun checkWitnessReparses(
@@ -256,37 +298,35 @@ class SemantifyrVerifierTestHelper @Inject constructor(
         outputDirectory: Path,
         timeout: Duration = 1.minutes,
         environment: ExecutionEnvironment = ExecutionEnvironment.Empty,
-    ): VerificationResult {
+        validationPortfolio: VerificationPortfolio = verificationPortfolio,
+    ): VerificationOutcome {
         val context = semantifyrLoader.loadStandaloneModel(modelPath)
         val case = verificationCaseDiscoverer.findByQualifiedName(context, qualifiedName)
-        val result = runVerificationCase(context, case, verificationPortfolio, outputDirectory, timeout, environment)
-        assertThat(result.trace)
-            .describedAs("${case.qualifiedName} must carry a witness, got ${result.verdict} (${result.message ?: "no message"})")
-            .isNotNull()
+        val outcome = runVerificationCase(context, case, verificationPortfolio, outputDirectory, timeout, environment)
 
-        val witnessPath = outputDirectory.resolve(caseDirectoryName(case)).resolve("witness.semantifyr")
-        assertThat(witnessPath.exists())
-            .describedAs("witness.semantifyr must be written for ${case.qualifiedName} at $witnessPath")
-            .isTrue()
+        val witnessPath = outcome.witness?.path
+        assertThat(witnessPath)
+            .describedAs("witness.semantifyr must be written for ${case.qualifiedName}")
+            .isNotNull()
 
         val reparsedContext = semantifyrLoader.startContext()
             .loadModel(modelPath)
-            .loadModel(witnessPath)
+            .loadModel(requireNotNull(witnessPath))
             .buildAndResolve()
         val witness = reparsedContext.modelResources.last().contents.filterIsInstance<InlinedOxsts>().single()
 
-        val verifier = buildVerifier(verificationPortfolio, timeout, outputDirectory, environment)
-        val outcome = WitnessValidator().validate(verifier, witness)
-        assertThat(outcome.isValid)
-            .describedAs("Reparsed witness for ${case.qualifiedName} must re-verify Passed via ${verificationPortfolio.id} but got ${outcome.verification.verdict} (${outcome.verification.message ?: "no message"})")
-            .isTrue()
+        val verifier = buildVerifier(validationPortfolio, timeout, outputDirectory, environment)
+        val validation = WitnessValidator().validate(verifier, witness).outcome.report.result
+        assertThat(validation.verdict)
+            .describedAs("Reparsed witness for ${case.qualifiedName} must re-verify Passed via ${validationPortfolio.id} (${validation.message ?: "no message"})")
+            .isEqualTo(VerificationVerdict.Passed)
 
-        return result
+        return outcome
     }
 
     private suspend fun assertWitnessRevalidates(
         case: VerificationCase,
-        trace: Trace,
+        witness: InlinedOxsts,
         validation: VerificationPortfolio,
         outputDirectory: Path,
         timeout: Duration,
@@ -298,10 +338,10 @@ class SemantifyrVerifierTestHelper @Inject constructor(
         logger.info { "Validating returned witness" }
 
         val verifier = buildVerifier(validation, timeout, outputDirectory, environment)
-        val outcome = WitnessValidator().validate(verifier, trace)
-        assertThat(outcome.isValid)
-            .describedAs("Witness for ${case.qualifiedName} (original verdict $originalVerdict) must re-verify Passed via ${validation.id} but got ${outcome.verification.verdict} (${outcome.verification.message ?: "no message"})")
-            .isTrue()
+        val result = WitnessValidator().validate(verifier, witness).outcome.report.result
+        assertThat(result.verdict)
+            .describedAs("Witness for ${case.qualifiedName} (original verdict $originalVerdict) must re-verify Passed via ${validation.id} (${result.message ?: "no message"})")
+            .isEqualTo(VerificationVerdict.Passed)
     }
 
     private fun backendDiagnostics(outputDirectory: Path, case: VerificationCase): String {

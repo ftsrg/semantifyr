@@ -4,11 +4,12 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import type { TraceEntry, VerificationTrace, WitnessStateStep } from '@semantifyr/editor-common'
+import type { Fraction, ReportCall, ReportState, ReportTrace } from '@semantifyr/editor-common'
 
 import { findExample, liveFlavors } from '../examples'
 import type { VerificationCaseState } from '../lib/verification/engine'
 import { servedFlavors } from '../__tests__/fixtures/flavors'
+import { reportOf } from '../__tests__/fixtures/reports'
 import { seedLive, type Seed, type Seeded } from './seededLive'
 
 // A failed case of the level crossing with its trace in each language, and a Live that reads the trace's documents
@@ -70,32 +71,32 @@ const TEXTS: Readonly<Record<string, string>> = {
   [OXSTS_WITNESS_URI]: WITNESS,
 }
 
-function call(self: string, transition: string, inner: TraceEntry[] | null = null, argument?: string): TraceEntry {
+function call(self: string, transition: string, calls: ReportCall[] = [], argument?: string): ReportCall {
   return {
     self: `root.system.${self}`,
-    calledTransition: `semantifyr::sysml::${transition}`,
-    arguments: argument === undefined ? [] : [{ parameter: 'item', value: `semantifyr::sysml::model::${argument}` }],
-    innerTraces: inner,
+    transition: `semantifyr::sysml::${transition}`,
+    arguments: argument === undefined ? {} : { item: `semantifyr::sysml::model::${argument}` },
+    calls,
   }
 }
 
-function values(entries: Readonly<Record<string, string>>): WitnessStateStep {
+function values(entries: Readonly<Record<string, string | null>>): ReportState {
   return {
-    values: Object.entries(entries).map(([variable, value]) => {
-      if (value === 'nothing') {
-        return { variable: `root.system.${variable}`, value }
+    values: Object.fromEntries(Object.entries(entries).map(([variable, value]) => {
+      if (value === null) {
+        return [`root.system.${variable}`, null]
       }
-      return { variable: `root.system.${variable}`, value: value.startsWith('global_') ? `semantifyr::sysml::model::${value}` : `root.system.${value}` }
-    }),
+      return [`root.system.${variable}`, value.startsWith('global_') ? `semantifyr::sysml::model::${value}` : `root.system.${value}`]
+    })),
   }
 }
 
 const START = {
   'trackA.Behaviour.activeState': 'trackA.Behaviour.Free',
   'trackB.Behaviour.activeState': 'trackB.Behaviour.Free',
-  'trackB.controller.outgoingItem': 'nothing',
+  'trackB.controller.outgoingItem': null,
   'controller.Behaviour.activeState': 'controller.Behaviour.Idle',
-  'controller.barrier.outgoingItem': 'nothing',
+  'controller.barrier.outgoingItem': null,
   'barrier.Behaviour.activeState': 'barrier.Behaviour.Up',
 }
 
@@ -103,42 +104,37 @@ const STEP_ONE = { ...START, 'trackB.Behaviour.activeState': 'trackB.Behaviour.A
 const STEP_TWO = { ...STEP_ONE, 'controller.Behaviour.activeState': 'controller.Behaviour.TrainPresent', 'controller.barrier.outgoingItem': 'global_Lower' }
 const STEP_THREE = { ...STEP_TWO, 'trackA.Behaviour.activeState': 'trackA.Behaviour.InCrossing', 'barrier.Behaviour.activeState': 'barrier.Behaviour.Down' }
 
-const CALLS = {
-  initializedStep: { traces: [] },
-  steps: [
-    {
-      traces: [
-        call('trackB.Behaviour.UnnamedTransitionUsage1', 'states::Transition::fire', [call('trackB.controller', 'ports::Port::setOutgoingItem', null, 'global_TrainApproaching')]),
-        call('passTime', 'verification::VerificationCaseDefinition::passTime'),
-      ],
-    },
-    {
-      traces: [
-        call('controller.Behaviour.UnnamedTransitionUsage6', 'states::Transition::fire', [call('controller.barrier', 'ports::Port::setOutgoingItem', null, 'global_Lower')]),
-      ],
-    },
-    {
-      traces: [
-        call('trackA.Behaviour.UnnamedTransitionUsage3', 'states::Transition::fire'),
-      ],
-    },
+const CALLS = [
+  [
+    call('trackB.Behaviour.UnnamedTransitionUsage1', 'states::Transition::fire', [call('trackB.controller', 'ports::Port::setOutgoingItem', [], 'global_TrainApproaching')]),
   ],
-}
-
-const STATES = {
-  initializedStep: values(START),
-  steps: [
-    values(STEP_ONE),
-    values(STEP_TWO),
-    values(STEP_THREE),
+  [
+    call('controller.Behaviour.UnnamedTransitionUsage6', 'states::Transition::fire', [call('controller.barrier', 'ports::Port::setOutgoingItem', [], 'global_Lower')]),
   ],
-}
+  [
+    call('trackA.Behaviour.UnnamedTransitionUsage3', 'states::Transition::fire'),
+  ],
+]
 
-function traceOf(witnessUri: string, recorded = true): VerificationTrace {
+const ELAPSED: readonly Fraction[] = [
+  1,
+  '3/2',
+  0,
+]
+
+function traceOf(recorded: boolean, timed: boolean): ReportTrace {
   return {
-    callTrace: recorded ? CALLS : { initializedStep: { traces: [] }, steps: CALLS.steps.map(() => ({ traces: [] })) },
-    witnessState: STATES,
-    witnessUri,
+    root: 'root',
+    transitions: [],
+    variables: Object.keys(START).map((variable) => {
+      return { variable: `root.system.${variable}`, type: { kind: 'class', name: 'semantifyr::Anything' }, slot: null }
+    }),
+    initial: { state: 0, calls: [] },
+    states: [values(START), values(STEP_ONE), values(STEP_TWO), values(STEP_THREE)],
+    steps: CALLS.map((calls, index) => {
+      return { source: index, target: index + 1, elapsed: timed ? ELAPSED[index] ?? 0 : 0, calls: recorded ? calls : [] }
+    }),
+    missingCalls: null,
   }
 }
 
@@ -148,16 +144,20 @@ export interface Language {
   caseName: string
   // where the example defines the case
   definition: string
-  traceUri: string
+  witnessUri: string
+  // the language's own trace, absent for a Semantifyr model
+  traceUri?: string
 }
 
 export const LANGUAGES: Readonly<Record<string, Language>> = {
-  sysml: { flavorId: 'sysml', exampleId: 'level-crossing', caseName: 'BarrierDownWhileTrainInCrossing', definition: 'verification def BarrierDownWhileTrainInCrossing', traceUri: SYSML_TRACE_URI },
-  gamma: { flavorId: 'gamma', exampleId: 'level-crossing', caseName: 'BarrierDownWhileTrainInCrossing', definition: 'verification case BarrierDownWhileTrainInCrossing', traceUri: GAMMA_TRACE_URI },
-  oxsts: { flavorId: 'oxsts', exampleId: 'level-crossing', caseName: 'BarrierDownWhileTrainInCrossing', definition: 'class BarrierDownWhileTrainInCrossing', traceUri: OXSTS_WITNESS_URI },
+  sysml: { flavorId: 'sysml', exampleId: 'level-crossing', caseName: 'BarrierDownWhileTrainInCrossing', definition: 'verification def BarrierDownWhileTrainInCrossing', witnessUri: SYSML_WITNESS_URI, traceUri: SYSML_TRACE_URI },
+  gamma: { flavorId: 'gamma', exampleId: 'level-crossing', caseName: 'BarrierDownWhileTrainInCrossing', definition: 'verification case BarrierDownWhileTrainInCrossing', witnessUri: GAMMA_WITNESS_URI, traceUri: GAMMA_TRACE_URI },
+  oxsts: { flavorId: 'oxsts', exampleId: 'level-crossing', caseName: 'BarrierDownWhileTrainInCrossing', definition: 'class BarrierDownWhileTrainInCrossing', witnessUri: OXSTS_WITNESS_URI },
 }
 
-export function caseState(language: Language, options: { validated: boolean, recorded: boolean }): VerificationCaseState {
+const VALIDATION = reportOf({ verdict: 'Passed', backendId: 'spin:safe', seconds: 0.6, soundness: 'UnderApproximating', kind: 're-check' })
+
+export function caseState(language: Language, options: { validated: boolean, recorded: boolean, timed?: boolean }): VerificationCaseState {
   const flavor = liveFlavors(servedFlavors).find((candidate) => {
     return candidate.id === language.flavorId
   })
@@ -170,12 +170,12 @@ export function caseState(language: Language, options: { validated: boolean, rec
     caseInfo: { id: language.caseName, label: language.caseName, location: { uri: fileUri, range: { start: { line, character: 0 }, end: { line, character: 1 } } } },
     status: 'failed',
     resultStatus: 'failed',
-    metrics: { totalDuration: 'PT2.9S', preparationDuration: 'PT0S', verificationDuration: 'PT2.9S', backAnnotationDuration: 'PT0S' },
-    backendId: 'theta:cegar',
     portfolioId: 'smart',
-    trace: traceOf(language.traceUri, options.recorded),
+    report: reportOf({ verdict: 'Failed', backendId: 'theta:cegar', seconds: 2.9, soundness: 'UnderApproximating', trace: traceOf(options.recorded, options.timed ?? false) }),
+    witnessUri: language.witnessUri,
+    ...(language.traceUri ? { traceUri: language.traceUri } : {}),
     ...(options.validated
-      ? { waited: 30_000, validationWaited: 4_000, witnessValidation: 'valid' as const, validationMetrics: { totalDuration: 'PT0.6S', preparationDuration: 'PT0S', verificationDuration: 'PT0.6S', backAnnotationDuration: 'PT0S' }, validationBackendId: 'spin:safe', validationPortfolioIdUsed: 'smart' }
+      ? { waited: 30_000, validationWaited: 4_000, witnessValidation: 'valid' as const, validationReport: VALIDATION, validationPortfolioIdUsed: 'smart' }
       : {}),
   }
 }
@@ -186,9 +186,6 @@ export function seedWithTrace(language: Language, state: VerificationCaseState, 
   if (runtime) {
     runtime.api.readDocument = (uri) => {
       return Promise.resolve(TEXTS[uri] ?? null)
-    }
-    runtime.witnessUriOf = (uri) => {
-      return uri === SYSML_TRACE_URI ? SYSML_WITNESS_URI : undefined
     }
   }
   return seeded

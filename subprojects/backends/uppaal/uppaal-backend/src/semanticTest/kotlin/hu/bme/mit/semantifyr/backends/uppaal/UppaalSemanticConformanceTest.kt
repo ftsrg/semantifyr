@@ -6,9 +6,7 @@
 
 package hu.bme.mit.semantifyr.backends.uppaal
 
-import hu.bme.mit.semantifyr.backends.uppaal.transformation.UppaalCapabilityChecker
 import hu.bme.mit.semantifyr.backends.uppaal.verification.UppaalBackend
-import hu.bme.mit.semantifyr.backends.uppaal.verification.UppaalBackendModule
 import hu.bme.mit.semantifyr.backends.uppaal.verification.UppaalConfig
 import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup
 import hu.bme.mit.semantifyr.verifier.EngineVerdictPortfolio
@@ -46,8 +44,8 @@ class UppaalSemanticConformanceTest {
         fun `OXSTS Simple Test Suite Passes`(): List<Arguments> {
             return helper.collectAcceptedCasesAsArguments(
                 context,
-                UppaalBackendModule(),
-                UppaalCapabilityChecker::class.java,
+                UppaalBackend(),
+                UppaalConfig.Default,
                 SemantifyrVerifierTestHelper.testArtifactRoot(UppaalSemanticConformanceTest::class.java).resolve("capability-check"),
                 CaseFilter.Matching {
                     it.qualifiedName !in uppaalUndecidedCases

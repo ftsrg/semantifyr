@@ -8,6 +8,9 @@ package hu.bme.mit.semantifyr.backends.uppaal.trace
 
 import java.io.File
 
+// a symbolic state also lists its zone's bounds, such as lap-total<=0, which are no values
+private val VALUE_ASSIGNMENT = Regex("^([^<>=!]+)=([^<>=]+)$")
+
 class UppaalTraceParser {
 
     fun parse(logFile: File): UppaalTrace? {
@@ -74,16 +77,8 @@ class UppaalTraceParser {
     }
 
     private fun splitAssignment(token: String): Assignment? {
-        val index = token.indexOf('=')
-        if (index <= 0 || index == token.length - 1) {
-            return null
-        }
-        val name = token.substring(0, index).trim()
-        val value = token.substring(index + 1).trim()
-        if (name.isEmpty() || value.isEmpty()) {
-            return null
-        }
-        return Assignment(name, value)
+        val match = VALUE_ASSIGNMENT.matchEntire(token) ?: return null
+        return Assignment(match.groupValues[1], match.groupValues[2])
     }
 
     private data class Assignment(

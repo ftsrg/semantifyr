@@ -16,7 +16,7 @@ These pages specify the language, one construct a page, for lookup in any order;
 ## The Pages
 
 - Foundations: [Lexical Structure](foundations/lexical-structure.md), [Packages and Imports](foundations/packages-and-imports.md), [Datatypes](foundations/datatypes.md), [Types](foundations/types.md), [Expressions](foundations/expressions.md).
-- Classes and Behaviour: [Classes](classes-and-behaviour/classes.md), [Variables](classes-and-behaviour/variables.md), [Features](classes-and-behaviour/features.md), [Properties](classes-and-behaviour/properties.md), [Transitions](classes-and-behaviour/transitions.md), [Operations](classes-and-behaviour/operations.md), [Inline Operations](classes-and-behaviour/inline-operations.md).
+- Classes and Behaviour: [Classes](classes-and-behaviour/classes.md), [Variables](classes-and-behaviour/variables.md), [Features](classes-and-behaviour/features.md), [Properties](classes-and-behaviour/properties.md), [Transitions](classes-and-behaviour/transitions.md), [Operations](classes-and-behaviour/operations.md), [Time](classes-and-behaviour/time.md), [Inline Operations](classes-and-behaviour/inline-operations.md).
 - Library and Output: [Annotations](library-and-output/annotations.md), [Standard Library](library-and-output/standard-library.md), [Inlined Models](library-and-output/inlined-models.md), [What Is Supported](library-and-output/supported.mdx).
 
 ## The Language at a Glance
@@ -26,7 +26,8 @@ The language borrows familiar object-oriented vocabulary, but every concept has 
 - [**Classes**](classes-and-behaviour/classes.md) describe parts of the modeled system. They contain [variables](classes-and-behaviour/variables.md) (state), [features](classes-and-behaviour/features.md) (structure), [transitions](classes-and-behaviour/transitions.md) (behavior), and [properties](classes-and-behaviour/properties.md) (queries).
 - [**Variables**](classes-and-behaviour/variables.md) hold *runtime* values tracked by the model checker.
 - [**Features**](classes-and-behaviour/features.md) describe *structural* relationships. 
-- [**Transitions**](classes-and-behaviour/transitions.md) describe how state changes over time. 
+- [**Transitions**](classes-and-behaviour/transitions.md) describe how state changes from step to step. 
+- [**Time**](classes-and-behaviour/time.md) passes before every main step and is read through clocks.
 - [**Properties**](classes-and-behaviour/properties.md) are pure functions returning a value. 
 - [**Inline operations**](classes-and-behaviour/inline-operations.md) are *compile-time* macros that expand library behavior across the structure of a concrete model.
 - [**Lexical structure**](foundations/lexical-structure.md) gives the names, comments and literals, and [**Types**](foundations/types.md) the type of every expression and when a value fits where it is used.

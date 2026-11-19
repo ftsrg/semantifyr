@@ -22,6 +22,33 @@ import org.junit.jupiter.api.Test
 
 class ReachingDefinitionsAnalysisTest : AnalysisTestBase() {
     @Test
+    fun `a clock read at the start of a step sees no single write, since it waited since then`() {
+        val (inlined, result) = runReachingDefinitions(
+            """
+                inlined oxsts of semantifyr::Anything
+                var elapsed: clock := 0
+                init {
+                    elapsed := 0
+                }
+                tran {
+                    assume(elapsed >= 6)
+                }
+                prop {
+                    AG true
+                }
+            """,
+        )
+
+        val elapsed = inlined.varNamed("elapsed")
+        val read = inlined.mainTransition.eAllOfType<ElementReference>().first {
+            it.element === elapsed
+        }
+        val definitions = result.definitionsOf[read]!!
+
+        assertThat(definitions).contains(elapsed as EObject)
+    }
+
+    @Test
     fun `property read after a single init write sees only that write`() {
         val (inlined, result) = runReachingDefinitions(
             """

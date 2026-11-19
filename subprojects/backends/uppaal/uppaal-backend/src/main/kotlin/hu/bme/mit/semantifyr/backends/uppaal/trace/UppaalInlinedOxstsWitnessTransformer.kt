@@ -8,9 +8,12 @@ package hu.bme.mit.semantifyr.backends.uppaal.trace
 
 import com.google.inject.Inject
 import hu.bme.mit.semantifyr.backend.witness.InlinedWitness
+import hu.bme.mit.semantifyr.backend.witness.TraceVariableResolver
+import hu.bme.mit.semantifyr.backend.witness.WitnessFailedException
 import hu.bme.mit.semantifyr.backend.witness.WitnessState
 import hu.bme.mit.semantifyr.backend.witness.WitnessStateValue
 import hu.bme.mit.semantifyr.backend.witness.linearInlinedWitness
+import hu.bme.mit.semantifyr.backends.uppaal.transformation.UppaalClockEdge
 import hu.bme.mit.semantifyr.backends.uppaal.transformation.UppaalVariableKind
 import hu.bme.mit.semantifyr.backends.uppaal.transformation.UppaalVariableTransformer
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
@@ -25,53 +28,75 @@ class UppaalInlinedOxstsWitnessTransformer @Inject constructor(
     private val uppaalVariableTransformer: UppaalVariableTransformer,
 ) {
 
-    fun transform(inlinedOxsts: InlinedOxsts, trace: UppaalTrace): InlinedWitness {
-        val nameToVariable = inlinedOxsts.variables.associateBy {
-            uppaalVariableTransformer.nameOf(it)
-        }
-        val boundaryStates = trace.states.filter {
-            it.isOxstsBoundary()
+    private val uppaalDelaySolver = UppaalDelaySolver()
+
+    fun transform(
+        inlinedOxsts: InlinedOxsts,
+        trace: UppaalTrace,
+        clockEdges: Map<String, UppaalClockEdge>,
+    ): InlinedWitness {
+        val resolver = TraceVariableResolver(inlinedOxsts, uppaalVariableTransformer, emptySet(), "Uppaal's trace")
+        val clocks = inlinedOxsts.variables.filter {
+            uppaalVariableTransformer.kindOf(it) == UppaalVariableKind.Clock
         }
 
         val running = mutableMapOf<VariableDeclaration, Expression>()
         val updated = mutableSetOf<VariableDeclaration>()
 
-        val states = boundaryStates.mapNotNull {
-            updateRunningValues(it, nameToVariable, running, updated)
-            if (it.isStable()) {
-                buildWitnessState(inlinedOxsts.variables, running, updated)
-            } else {
-                null
+        val stableValues = mutableListOf<List<WitnessStateValue>>()
+        val steps = mutableListOf<List<UppaalClockEdge>>()
+        var stepEdges = mutableListOf<UppaalClockEdge>()
+        for (state in trace.states) {
+            state.locations.firstNotNullOfOrNull {
+                clockEdges[it.substringAfter('.')]
+            }?.let {
+                stepEdges += it
+            }
+            if (!state.isOxstsBoundary()) {
+                continue
+            }
+            updateRunningValues(state, resolver, running, updated)
+            if (state.isStable()) {
+                stableValues += valuesOf(inlinedOxsts.variables, running, updated)
+                steps += stepEdges
+                stepEdges = mutableListOf()
             }
         }
 
-        require(states.isNotEmpty()) {
-            "Cannot build witness from an Uppaal trace without an initialized state"
+        if (stableValues.isEmpty()) {
+            throw WitnessFailedException("Uppaal's trace has no initialized state")
         }
 
+        val timedStates = uppaalDelaySolver.solve(clocks, steps)
+        val states = stableValues.zip(timedStates) { values, timed ->
+            WitnessState(values, timed.clockValues, timed.elapsed)
+        }
         return linearInlinedWitness(inlinedOxsts, states)
     }
 
     private fun updateRunningValues(
         state: UppaalTraceState,
-        nameToVariable: Map<String, VariableDeclaration>,
+        resolver: TraceVariableResolver,
         running: MutableMap<VariableDeclaration, Expression>,
         updated: MutableSet<VariableDeclaration>,
     ) {
         for ((name, raw) in state.variableValues) {
-            val variable = nameToVariable[name] ?: continue
-            val value = parseValue(variable, raw) ?: continue
-            running[variable] = value
+            val variable = resolver.stateVariableOf(name) ?: continue
+            val kind = uppaalVariableTransformer.kindOf(variable)
+            if (kind == UppaalVariableKind.Clock) {
+                continue
+            }
+            running[variable] = parseValue(variable, kind, raw) ?: throw WitnessFailedException("Uppaal's trace holds $raw for $name, which is no value of its type")
             updated += variable
         }
     }
 
-    private fun buildWitnessState(
+    private fun valuesOf(
         variables: List<VariableDeclaration>,
         running: Map<VariableDeclaration, Expression>,
         updated: Set<VariableDeclaration>,
-    ): WitnessState {
-        val values = variables.mapNotNull { variable ->
+    ): List<WitnessStateValue> {
+        return variables.mapNotNull { variable ->
             if (variable !in updated) {
                 return@mapNotNull null
             }
@@ -79,7 +104,6 @@ class UppaalInlinedOxstsWitnessTransformer @Inject constructor(
                 WitnessStateValue(variable, it.copy())
             }
         }
-        return WitnessState(values)
     }
 
     private fun UppaalTraceState.isOxstsBoundary(): Boolean {
@@ -94,15 +118,18 @@ class UppaalInlinedOxstsWitnessTransformer @Inject constructor(
         }
     }
 
-    private fun parseValue(variable: VariableDeclaration, raw: String): Expression? {
-        val kind = uppaalVariableTransformer.describe(variable).kind
+    private fun parseValue(
+        variable: VariableDeclaration,
+        kind: UppaalVariableKind?,
+        raw: String,
+    ): Expression? {
         return when (kind) {
             UppaalVariableKind.Integer -> raw.toIntOrNull()?.let {
                 OxstsFactory.createLiteralInteger(it)
             }
             UppaalVariableKind.Boolean -> parseBooleanValue(raw)
             UppaalVariableKind.Enum -> parseEnumValue(variable, raw)
-            UppaalVariableKind.Clock -> null
+            UppaalVariableKind.Clock, null -> null
         }
     }
 

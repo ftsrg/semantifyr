@@ -15,7 +15,6 @@ import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseRequest;
 import hu.bme.mit.semantifyr.lang.ide.server.wire.WitnessValidationResult;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts;
 import hu.bme.mit.semantifyr.verifier.SemantifyrVerifier;
-import hu.bme.mit.semantifyr.verifier.VerificationResultDtoKt;
 import hu.bme.mit.semantifyr.verifier.witness.WitnessValidator;
 import java.util.List;
 import org.eclipse.xtext.ide.server.ILanguageServerAccess;
@@ -92,8 +91,7 @@ public class ValidateWitnessClassCommandHandler
                 var validationResult = witnessValidator.validateBlocking(verifier, inlinedOxsts, progressContext);
                 LOGGER.info(
                         "LSP validateWitness {}", validationResult.getClass().getSimpleName());
-                var dto = VerificationResultDtoKt.toJavaDto(validationResult);
-                return WitnessValidationResult.fromDto(dto, portfolio.getId());
+                return WitnessValidationResult.fromValidation(validationResult, portfolio.getId());
             } catch (Exception e) {
                 LOGGER.warn("Witness validation threw {}", e.getClass().getSimpleName(), e);
                 return WitnessValidationResult.errored(e.toString(), portfolio.getId());

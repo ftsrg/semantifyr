@@ -18,7 +18,7 @@ const REPOSITORY = fileURLToPath(new URL('../../../../../', import.meta.url))
 
 describe('the language switch', () => {
   test('offers SysML v2, Gamma and the Semantifyr Language, and opens a session of the language chosen', async ({ ui }) => {
-    const page = await ui.open('/language/intersection')
+    const page = await ui.open('/language/modeling-and-verification')
     await casesListed(page)
 
     expect(await page.locator('.language-switch [role=group] button').allInnerTexts()).toEqual(['SysML v2', 'Gamma', 'Semantifyr'])
@@ -30,7 +30,7 @@ describe('the language switch', () => {
   })
 
   test('lists the libraries under the Semantifyr Language, and a flavour opens its own session', async ({ ui }) => {
-    const page = await ui.open('/language/intersection')
+    const page = await ui.open('/language/modeling-and-verification')
     await casesListed(page)
 
     await page.locator('.flavour-button').click()
@@ -147,14 +147,12 @@ function stepsOf(count: number, seed: number): { step: Step, wait: number }[] {
   })
 }
 
-// the editor takes the focus once it has started, which closes a menu opened before, so a closed menu is opened again
-async function opened(trigger: Locator, content: Locator): Promise<void> {
+// a click shows its menu once the page handles it, which a busy page does after the click has returned
+async function open(trigger: Locator): Promise<void> {
+  await trigger.click()
   await expect.poll(async () => {
-    if (await trigger.getAttribute('aria-expanded') !== 'true') {
-      await trigger.click()
-    }
-    return content.count()
-  }).toBeGreaterThan(0)
+    return trigger.getAttribute('aria-expanded')
+  }).toBe('true')
 }
 
 async function take(page: Page, step: Step): Promise<void> {
@@ -167,12 +165,12 @@ async function take(page: Page, step: Step): Promise<void> {
       if (await flavour.count() === 0) {
         return
       }
-      await opened(flavour, page.getByRole('menuitem'))
+      await open(flavour)
       await page.getByRole('menuitem', { name: new RegExp(step.name) }).click()
       return
     }
     case 'example': {
-      await opened(page.locator('.example-button'), page.getByRole('menuitem'))
+      await open(page.locator('.example-button'))
       const item = page.getByRole('menuitem', { name: new RegExp(`^${step.name}`) })
       if (await item.count() === 0) {
         await page.getByRole('menuitem').first().click()
@@ -190,7 +188,7 @@ async function take(page: Page, step: Step): Promise<void> {
     }
     case 'library': {
       const documents = page.locator('.documents-group:not([aria-label="Selected case"]):not([aria-label="Model"]) .menu-item')
-      await opened(page.getByRole('button', { name: 'Read-only documents' }), documents)
+      await open(page.getByRole('button', { name: 'Read-only documents' }))
       await documents.first().click()
       return
     }
@@ -252,7 +250,7 @@ function exampleOf(path: string): string {
 
 describe('switching many times', () => {
   test('ends every switch of language, flavour and example, in varied order and timing, with the cases listed and the marks of the shown document alone', async ({ ui }) => {
-    const page = await ui.open('/language/intersection', { height: 5800 })
+    const page = await ui.open('/language/modeling-and-verification', { height: 5800 })
     const done: string[] = []
     for (const { step, wait } of stepsOf(44, 7)) {
       await take(page, step)

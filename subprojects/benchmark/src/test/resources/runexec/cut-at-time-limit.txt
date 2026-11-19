@@ -1,0 +1,9 @@
+starttime=2026-11-17T08:45:08.231477+01:00
+terminationreason=walltime
+exitsignal=9
+walltime=2.007904615951702s
+cputime=0.004454s
+memory=782336B
+pressure-cpu-some=0.002832s
+pressure-io-some=0s
+pressure-memory-some=0s

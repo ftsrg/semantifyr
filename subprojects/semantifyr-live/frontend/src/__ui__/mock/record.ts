@@ -8,16 +8,9 @@ import { readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { parseArgs } from 'node:util'
 import { chromium, type BrowserContext, type Page } from 'playwright'
-import type {
-  CompiledOxstsResult,
-  Range,
-  VerificationCaseResult,
-  VerificationCaseSpecification,
-  WitnessValidationResult,
-} from '@semantifyr/editor-common'
 
-import { FIXTURES_DIRECTORY, textKey, type AdminFixture, type Diagnostic, type FlavorFixture, type ProgressValue, type RestFixture } from './fixtures.ts'
-import { isNotification, isRequest, parseMessage, type Message, type MessageId, type RequestMessage } from './jsonRpc.ts'
+import { FIXTURES_DIRECTORY, type AdminFixture, type RestFixture } from './fixtures.ts'
+import { fixturesOf, type RecordedSession, type Transcript } from './transcript.ts'
 
 const usage = `Usage: npm run ui:record -- [options]
 
@@ -27,28 +20,6 @@ Records what a live server answers while a browser walks every example of every 
   --admin-user-header <h>   the header the server reads the admin user from; without it the admin fixture is kept
   --transcript <file>       write the raw exchanges here, or with --replay read them from here
   --replay                  build the fixtures from --transcript without a browser`
-
-interface RecordedMessage {
-  from: 'client' | 'server'
-  text: string
-}
-
-interface RecordedSession {
-  url: string
-  messages: RecordedMessage[]
-}
-
-interface RecordedRest {
-  url: string
-  method: string
-  status: number
-  body: string
-}
-
-interface Transcript {
-  rest: RecordedRest[]
-  sessions: RecordedSession[]
-}
 
 const SETTLED_TIMEOUT_MS = 4 * 60 * 1000
 const RUN_TIMEOUT_MS = 10 * 60 * 1000
@@ -191,7 +162,7 @@ async function record(liveUrl: string, adminUserHeader: string | undefined): Pro
       console.error('a scenario failed, the recording goes on without it', error)
     })
   }
-  await attempt(cancelRuns(context, liveUrl, '/language/hierarchy'))
+  await attempt(cancelRuns(context, liveUrl, '/language/extending-the-library'))
   for (const address of ['/language', '/language?library=gamma', '/language?library=sysml', '/gamma', '/sysml']) {
     await attempt(walkExamples(context, liveUrl, address))
   }
@@ -199,7 +170,7 @@ async function record(liveUrl: string, adminUserHeader: string | undefined): Pro
   const running = context.newPage().then(async (page) => {
     const embed = await context.newPage()
     await embed.goto(`${liveUrl}/gamma/level-crossing?view=embed`)
-    await page.goto(`${liveUrl}/language/hierarchy`)
+    await page.goto(`${liveUrl}/language/extending-the-library`)
     await settled(page)
     await page.locator('.results').getByRole('button', { name: 'Verify all', exact: true }).click()
     if (adminUserHeader !== undefined) {
@@ -215,157 +186,13 @@ async function record(liveUrl: string, adminUserHeader: string | undefined): Pro
     await page.close()
   })
   await attempt(running)
-  for (const address of ['/language/intersection', '/language/level-crossing', '/language/level-crossing?library=gamma', '/language/level-crossing?library=sysml', '/gamma/level-crossing', '/sysml/level-crossing']) {
+  for (const address of ['/language/modeling-and-verification', '/language/level-crossing', '/language/level-crossing?library=gamma', '/language/level-crossing?library=sysml', '/gamma/level-crossing', '/sysml/level-crossing']) {
     await attempt(verifyAndRead(context, liveUrl, address))
   }
   await browser.close()
   const info = await fetch(`${liveUrl}/api/info`)
   transcript.rest.push({ url: info.url, method: 'GET', status: info.status, body: await info.text() })
   return { transcript, admin }
-}
-
-interface Pending {
-  message: RequestMessage
-  key: string | null
-}
-
-function emptyFixture(): FlavorFixture {
-  return { initialize: null, sessionInfo: null, documents: {}, results: {}, validations: {}, reads: {}, verifyProgress: [], validateProgress: [] }
-}
-
-function sameStart(left: Range, right: Range): boolean {
-  return left.start.line === right.start.line && left.start.character === right.start.character
-}
-
-// the answers the mock replays, filed by flavor and by the text of the document they were given for
-function fixturesOf(transcript: Transcript): Map<string, FlavorFixture> {
-  const fixtures = new Map<string, FlavorFixture>()
-  for (const session of transcript.sessions) {
-    const flavorId = decodeURIComponent(new URL(session.url).pathname.split('/').at(-1) ?? '')
-    let fixture = fixtures.get(flavorId)
-    if (!fixture) {
-      fixture = emptyFixture()
-      fixtures.set(flavorId, fixture)
-    }
-    const texts = new Map<string, string>()
-    const discovered = new Map<string, VerificationCaseSpecification[]>()
-    const pending = new Map<MessageId, Pending>()
-    const progress = new Map<string, ProgressValue[]>()
-    const progressOf = new Map<MessageId, string>()
-    const documentOf = (uri: string) => {
-      const text = texts.get(uri)
-      if (text === undefined) {
-        return null
-      }
-      const key = textKey(text)
-      fixture.documents[key] ??= {}
-      return fixture.documents[key]
-    }
-    const caseAt = (uri: string, range: Range): string | null => {
-      return discovered.get(uri)?.find((candidate) => {
-        return sameStart(candidate.location.range, range)
-      })?.id ?? null
-    }
-    let lastRun: { id: MessageId, kind: 'verify' | 'validate' } | null = null
-    for (const recorded of session.messages) {
-      const message: Message = parseMessage(recorded.text)
-      if (recorded.from === 'client') {
-        if (isNotification(message)) {
-          if (message.method === 'textDocument/didOpen') {
-            const { textDocument } = message.params as { textDocument: { uri: string, text: string } }
-            texts.set(textDocument.uri, textDocument.text)
-          }
-          if (message.method === 'textDocument/didChange') {
-            const { textDocument, contentChanges } = message.params as { textDocument: { uri: string }, contentChanges: { text: string }[] }
-            texts.set(textDocument.uri, contentChanges.at(-1)?.text ?? '')
-          }
-        } else if (isRequest(message)) {
-          const argument = (message.params as { arguments?: unknown[] } | undefined)?.arguments?.[0]
-          const uri = typeof argument === 'string' ? argument : (argument as { uri?: string } | undefined)?.uri
-          pending.set(message.id, { message, key: uri !== undefined && texts.has(uri) ? textKey(texts.get(uri) ?? '') : null })
-          const command = (message.params as { command?: string } | undefined)?.command ?? ''
-          if (command.endsWith('.case.verify')) {
-            lastRun = { id: message.id, kind: 'verify' }
-          } else if (command.endsWith('.validateWitness') || command.endsWith('.witness.validate')) {
-            lastRun = { id: message.id, kind: 'validate' }
-          }
-        }
-        continue
-      }
-      if (isNotification(message)) {
-        if (message.method === 'textDocument/publishDiagnostics') {
-          const { uri, diagnostics } = message.params as { uri: string, diagnostics: Diagnostic[] }
-          const document = documentOf(uri)
-          if (document) {
-            document.diagnostics = diagnostics
-          }
-        }
-        if (message.method === '$/progress') {
-          const { token, value } = message.params as { token: string, value: ProgressValue }
-          progress.get(token)?.push(value)
-        }
-        continue
-      }
-      if (isRequest(message)) {
-        if (message.method === 'window/workDoneProgress/create' && lastRun !== null) {
-          const { token } = message.params as { token: string }
-          progress.set(token, [])
-          progressOf.set(lastRun.id, token)
-        }
-        continue
-      }
-      const request = pending.get(message.id ?? -1)
-      if (!request || message.error !== undefined) {
-        continue
-      }
-      pending.delete(message.id ?? -1)
-      const { method, params } = request.message
-      if (method === 'initialize') {
-        fixture.initialize = message.result
-      } else if (method === 'semantifyr/live/session/info') {
-        fixture.sessionInfo = message.result as FlavorFixture['sessionInfo']
-      } else if (method === 'semantifyr/live/session/document/read') {
-        fixture.reads[(params as { uri: string }).uri] = (message.result as { text: string | null } | null)?.text ?? null
-      } else if (method === 'workspace/executeCommand') {
-        const { command, arguments: commandArguments } = params as { command: string, arguments: unknown[] }
-        if (command.endsWith('.case.discover')) {
-          const uri = commandArguments[0] as string
-          const cases = message.result as VerificationCaseSpecification[]
-          discovered.set(uri, cases)
-          if (request.key !== null) {
-            fixture.documents[request.key] = { ...fixture.documents[request.key], cases }
-          }
-        } else if (command.endsWith('.compiled.oxsts')) {
-          if (request.key !== null) {
-            fixture.documents[request.key] = { ...fixture.documents[request.key], compiled: message.result as CompiledOxstsResult }
-          }
-        } else {
-          const location = commandArguments[0] as { uri: string, range: Range }
-          const caseId = caseAt(location.uri, location.range)
-          const token = progressOf.get(message.id ?? -1)
-          const values = token === undefined ? [] : progress.get(token) ?? []
-          if (command.endsWith('.case.verify')) {
-            const result = message.result as VerificationCaseResult
-            if (caseId !== null && result.status !== 'errored') {
-              fixture.results[caseId] = result
-            }
-            if (values.at(-1)?.kind === 'end' && values.length > fixture.verifyProgress.length) {
-              fixture.verifyProgress = values
-            }
-          } else {
-            const result = message.result as WitnessValidationResult
-            if (result.status !== 'errored') {
-              fixture.validations[caseId ?? location.uri] = result
-            }
-            if (values.at(-1)?.kind === 'end' && values.length > fixture.validateProgress.length) {
-              fixture.validateProgress = values
-            }
-          }
-        }
-      }
-    }
-  }
-  return fixtures
 }
 
 function restOf(transcript: Transcript): RestFixture {

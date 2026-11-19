@@ -61,6 +61,14 @@ public class TypeCompatibility {
         return isDomain(typeEvaluation, builtinSymbolResolver.stringDatatype(context));
     }
 
+    public boolean isClock(TypeEvaluation typeEvaluation, EObject context) {
+        return typeEvaluation != null && isClock(typeEvaluation.getDomain(), context);
+    }
+
+    public boolean isClock(DomainDeclaration domain, EObject context) {
+        return domain != null && domain == builtinSymbolResolver.clockDatatype(context);
+    }
+
     public boolean isDomain(TypeEvaluation typeEvaluation, DomainDeclaration expected) {
         if (typeEvaluation == null || expected == null) {
             return false;

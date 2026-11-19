@@ -17,6 +17,7 @@ import type { VerificationCaseState, VerificationState } from '../lib/verificati
 import { modelOxstsTabOf } from '../lib/workspace/libraryTabs'
 import { ShellRoot } from '../shells/ShellRoot'
 import { ABOUT, CASE_MESSAGES, DOCUMENTATION, noCases, PRIVACY_URL, SOURCE_CODE_URL, TRACE_HINTS, VALIDATION, WEBSITE_URL } from '../texts'
+import { reportOf } from '../__tests__/fixtures/reports'
 import { caseOf, CONNECTED, finished, seedLive, type Seed } from './seededLive'
 import { settledOn } from './settled'
 
@@ -286,7 +287,7 @@ const STATES: Readonly<Record<string, ScreenState>> = {
     },
   },
   'inconclusive-without-message': {
-    seed: { verification: discovered([{ caseInfo: BARRIER, status: 'inconclusive', resultStatus: 'inconclusive', metrics: { totalDuration: 'PT2.9S', preparationDuration: 'PT0S', verificationDuration: 'PT2.9S', backAnnotationDuration: 'PT0S' }, backendId: 'theta', portfolioId: 'smart' }, finished(TWO_TRAINS, 'passed', 0.8)], 'done'), selection: BARRIER.id },
+    seed: { verification: discovered([{ caseInfo: BARRIER, status: 'inconclusive', resultStatus: 'inconclusive', report: reportOf({ verdict: 'Inconclusive', backendId: 'theta', seconds: 2.9 }), portfolioId: 'smart' }, finished(TWO_TRAINS, 'passed', 0.8)], 'done'), selection: BARRIER.id },
     expectState: () => {
       expect(text(`.case-row[data-case="${BARRIER.id}"]`)).toContain(CASE_MESSAGES.inconclusive)
       expect(text('.empty-hint')).toBe(TRACE_HINTS.inconclusive)

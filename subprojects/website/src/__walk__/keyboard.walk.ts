@@ -26,8 +26,8 @@ const FOCUSABLE = [
   '[tabindex]',
 ].join(', ');
 
-// a lesson's step, which embeds its examples
-const LESSON = '/learn/language/lessons/one-light/';
+// a lesson, which embeds its stages
+const LESSON = '/learn/language/lessons/modeling-and-verification/';
 
 const PHONE = { width: 375, height: 812 };
 
@@ -377,6 +377,10 @@ describe('the keyboard', () => {
   });
 
   test('opens a lesson\'s example into its editor and finds the focus back on its control once it closes', async ({ walk }) => {
+    // live's mock records no lesson stage, and the walk is about the focus, not the cases
+    walk.backend.answer('discover', () => {
+      return [];
+    });
     const page = await walk.open(LESSON);
     const control = page.getByRole('button', { name: 'Open', exact: true }).first();
     await tabTo(page, control, 'the example\'s control', 120);
@@ -394,7 +398,7 @@ describe('the keyboard', () => {
       return frame.locator('.monaco-editor .view-lines').first().innerText().catch(() => {
         return '';
       });
-    }, { timeout: 120_000 }).toContain('package');
+    }, { timeout: 120_000 }).toContain('LightColor');
     await expect.poll(editorFocused, { message: 'the opened example has the focus in its editor' }).toBe(true);
     const close = page.getByRole('button', { name: 'Close the editor' });
     await tabTo(page, close, 'the control that closes the editor', 12);

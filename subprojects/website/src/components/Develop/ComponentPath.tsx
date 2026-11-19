@@ -72,7 +72,7 @@ export const PATH: PathBox[] = [
   {
     id: 'verifier',
     title: 'Verifier',
-    line: 'makes the evidence a witness, a Semantifyr model',
+    line: 'makes the evidence a report and a witness',
     section: 'verifier',
     kind: 'component',
   },

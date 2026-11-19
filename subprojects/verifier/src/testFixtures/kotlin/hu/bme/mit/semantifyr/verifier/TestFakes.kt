@@ -7,6 +7,7 @@
 package hu.bme.mit.semantifyr.verifier
 
 import com.google.inject.Injector
+import hu.bme.mit.semantifyr.backend.BackendCapabilityChecker
 import hu.bme.mit.semantifyr.backend.BackendConfig
 import hu.bme.mit.semantifyr.backend.BackendVerificationRequest
 import hu.bme.mit.semantifyr.backend.BackendVerificationResult
@@ -17,6 +18,8 @@ import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.backend.execution.BackendExecutor
 import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
 import hu.bme.mit.semantifyr.backend.execution.ExecutorKey
+import hu.bme.mit.semantifyr.compiler.pipeline.context.TransitionCallTraceMap
+import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationConfig
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration
 import hu.bme.mit.semantifyr.verifier.portfolio.ConcurrencyGate
@@ -26,6 +29,7 @@ import java.nio.file.Paths
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Clock
+import kotlin.time.Duration.Companion.minutes
 
 fun fakeCase(qualifiedName: String = "pkg.Foo", vararg tags: String): VerificationCase {
     return VerificationCase(
@@ -51,6 +55,7 @@ fun fakeRequest(): BackendVerificationRequest {
             }
         },
         artifactOutputPath = Paths.get(System.getProperty("java.io.tmpdir")),
+        transitionCallTraces = TransitionCallTraceMap(emptyMap()),
     )
 }
 
@@ -65,16 +70,38 @@ fun fakeVerificationResult(
     verdict: VerificationVerdict = VerificationVerdict.Passed,
     backendId: String? = "test",
     metrics: VerificationMetrics = VerificationMetrics(),
-    trace: Trace? = null,
     message: String? = null,
 ): VerificationResult {
     return VerificationResult(
         metadata = fakeMetadata(backendId),
         verdict = verdict,
         metrics = metrics,
-        trace = trace,
         message = message,
     )
+}
+
+@JvmOverloads
+fun fakeVerificationReport(
+    verdict: VerificationVerdict = VerificationVerdict.Passed,
+    backendId: String? = "test",
+    kind: ReportKind = ReportKind.Run,
+    metrics: VerificationMetrics = VerificationMetrics(),
+    trace: ReportTrace? = null,
+): VerificationReport {
+    return VerificationReport(
+        version = REPORT_VERSION,
+        kind = kind,
+        verificationCase = "pkg::Foo",
+        portfolioId = "test",
+        optimization = OptimizationConfig.ALL,
+        timeout = 1.minutes,
+        result = fakeVerificationResult(verdict, backendId, metrics),
+        trace = trace,
+    )
+}
+
+fun fakeVerificationOutcome(verdict: VerificationVerdict = VerificationVerdict.Passed): VerificationOutcome {
+    return VerificationOutcome(fakeVerificationReport(verdict), Paths.get("report.json"), null)
 }
 
 class AlwaysAvailableExecutor : BackendExecutor {
@@ -94,6 +121,10 @@ class FakeBackend(
     override val id: String,
     private val behavior: suspend () -> BackendVerificationResult,
 ) : VerificationBackend<FakeConfig>() {
+
+    override fun capabilityChecker(parentInjector: Injector, config: FakeConfig): BackendCapabilityChecker {
+        return BackendCapabilityChecker.Unlimited
+    }
     override val executorKey = FakeExecutorKey
 
     val invocations = AtomicInteger(0)

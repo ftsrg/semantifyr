@@ -15,6 +15,7 @@ import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
 import hu.bme.mit.semantifyr.backend.witness.InlinedWitness
 import hu.bme.mit.semantifyr.backend.witness.WitnessState
+import hu.bme.mit.semantifyr.compiler.pipeline.context.TransitionCallTraceMap
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
 import hu.bme.mit.semantifyr.verifier.FakeBackend
 import hu.bme.mit.semantifyr.verifier.FakeConfig
@@ -54,10 +55,10 @@ class SingleBackendPortfolioTest {
         @JvmStatic
         fun untrustedResults(): List<Arguments> {
             return listOf(
-                Arguments.of(SoundnessDirection.UnderApproximating, VerificationVerdict.Passed, Property.AG, "spin's Passed on an AG property is not trusted: the leg is under-approximating"),
-                Arguments.of(SoundnessDirection.UnderApproximating, VerificationVerdict.Failed, Property.EF, "spin's Failed on an EF property is not trusted: the leg is under-approximating"),
-                Arguments.of(SoundnessDirection.OverApproximating, VerificationVerdict.Failed, Property.AG, "spin's Failed on an AG property is not trusted: the leg is over-approximating"),
-                Arguments.of(SoundnessDirection.OverApproximating, VerificationVerdict.Passed, Property.EF, "spin's Passed on an EF property is not trusted: the leg is over-approximating"),
+                Arguments.of(SoundnessDirection.UnderApproximating, VerificationVerdict.Passed, Property.AG, "spin:fake's Passed on an AG property is not trusted: the leg is under-approximating"),
+                Arguments.of(SoundnessDirection.UnderApproximating, VerificationVerdict.Failed, Property.EF, "spin:fake's Failed on an EF property is not trusted: the leg is under-approximating"),
+                Arguments.of(SoundnessDirection.OverApproximating, VerificationVerdict.Failed, Property.AG, "spin:fake's Failed on an AG property is not trusted: the leg is over-approximating"),
+                Arguments.of(SoundnessDirection.OverApproximating, VerificationVerdict.Passed, Property.EF, "spin:fake's Passed on an EF property is not trusted: the leg is over-approximating"),
             )
         }
     }
@@ -132,6 +133,7 @@ class SingleBackendPortfolioTest {
         return BackendVerificationRequest(
             inlinedOxsts = inlinedOxsts,
             artifactOutputPath = Paths.get(System.getProperty("java.io.tmpdir")),
+            transitionCallTraces = TransitionCallTraceMap(emptyMap()),
         )
     }
 
@@ -139,7 +141,6 @@ class SingleBackendPortfolioTest {
         return InlinedWitness(
             initializedState = WitnessState(emptyList()),
             transitionStates = emptyList(),
-            nextStateMap = emptyMap(),
             inlinedOxsts = OxstsFactory.createInlinedOxsts(),
         )
     }

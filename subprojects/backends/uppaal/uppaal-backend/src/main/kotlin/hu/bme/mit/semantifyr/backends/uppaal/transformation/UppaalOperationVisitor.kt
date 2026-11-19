@@ -30,6 +30,7 @@ class UppaalOperationVisitor @AssistedInject constructor(
     @Assisted("sourceId") private var sourceId: String,
     @Assisted("targetId") private var targetId: String,
     private val uppaalExpressionTransformer: UppaalExpressionTransformer,
+    private val uppaalGuardTransformer: UppaalGuardTransformer,
     private val uppaalVariableTransformer: UppaalVariableTransformer,
     private val havocValueCollector: HavocValueCollector,
 ) : BackendOperationVisitor<Unit>() {
@@ -83,34 +84,56 @@ class UppaalOperationVisitor @AssistedInject constructor(
     override fun visit(operation: AssignmentOperation) {
         val variable = OxstsUtils.requireVariableReference(operation.reference)
         val name = uppaalVariableTransformer.nameOf(variable)
-        val assignment = if (uppaalVariableTransformer.isClock(variable)) {
-            renderClockReset(name, operation)
-        } else {
-            "$name = ${uppaalExpressionTransformer.transform(operation.expression)}"
+        if (uppaalVariableTransformer.kindOf(variable) == UppaalVariableKind.Clock) {
+            renderClockReset(variable, name, operation)
+            return
         }
+        val assignment = "$name = ${uppaalExpressionTransformer.transform(operation.expression)}"
         context.edges += UppaalEdge(sourceId, targetId, assignment = assignment)
     }
 
-    private fun renderClockReset(name: String, operation: AssignmentOperation): String {
+    private fun renderClockReset(
+        variable: VariableDeclaration,
+        name: String,
+        operation: AssignmentOperation,
+    ) {
         val literal = operation.expression as? LiteralInteger
         if (literal?.value != 0) {
             throw BackendUnsupportedException("Uppaal resets clock $name only to 0")
         }
-        return "$name = 0"
+        val location = context.freshClockLocation(UppaalClockEdge.Reset(variable))
+        context.edges += UppaalEdge(sourceId, location.id, assignment = "$name = 0")
+        context.edges += UppaalEdge(location.id, targetId)
     }
 
     override fun visit(operation: AssumptionOperation) {
-        val guard = uppaalExpressionTransformer.transform(operation.expression)
-        context.edges += UppaalEdge(sourceId, targetId, guard = guard)
+        renderGuarded(sourceId, targetId, uppaalGuardTransformer.disjunctsOf(operation.expression))
+    }
+
+    private fun renderGuarded(
+        source: String,
+        target: String,
+        guards: List<UppaalGuard>,
+    ) {
+        for (guard in guards) {
+            val rendered = uppaalGuardTransformer.render(guard)
+            if (guard.clockAtoms.isEmpty()) {
+                context.edges += UppaalEdge(source, target, guard = rendered)
+            } else {
+                val location = context.freshClockLocation(UppaalClockEdge.Test(guard.clockAtoms))
+                context.edges += UppaalEdge(source, location.id, guard = rendered)
+                context.edges += UppaalEdge(location.id, target)
+            }
+        }
     }
 
     override fun visit(operation: IfOperation) {
-        val guard = uppaalExpressionTransformer.transform(operation.guard)
-        val negated = "!($guard)"
+        val guards = uppaalGuardTransformer.disjunctsOf(operation.guard)
+        val negated = uppaalGuardTransformer.disjunctsOfNegated(operation.guard)
         val savedSource = sourceId
         val savedTarget = targetId
 
-        renderIfBranch(savedSource, savedTarget, guard, operation.body)
+        renderIfBranch(savedSource, savedTarget, guards, operation.body)
         renderElseBranch(savedSource, savedTarget, negated, operation.`else`)
 
         sourceId = savedSource
@@ -120,11 +143,11 @@ class UppaalOperationVisitor @AssistedInject constructor(
     private fun renderIfBranch(
         savedSource: String,
         savedTarget: String,
-        guard: String,
+        guards: List<UppaalGuard>,
         body: Operation,
     ) {
         val thenEntry = context.freshCommitted("then")
-        context.edges += UppaalEdge(savedSource, thenEntry.id, guard = guard)
+        renderGuarded(savedSource, thenEntry.id, guards)
         sourceId = thenEntry.id
         targetId = savedTarget
         visit(body)
@@ -133,11 +156,11 @@ class UppaalOperationVisitor @AssistedInject constructor(
     private fun renderElseBranch(
         savedSource: String,
         savedTarget: String,
-        negatedGuard: String,
+        negatedGuards: List<UppaalGuard>,
         elseBranch: Operation?,
     ) {
         val elseEntry = context.freshCommitted("else")
-        context.edges += UppaalEdge(savedSource, elseEntry.id, guard = negatedGuard)
+        renderGuarded(savedSource, elseEntry.id, negatedGuards)
         if (elseBranch == null) {
             context.edges += UppaalEdge(elseEntry.id, savedTarget)
             return
@@ -160,15 +183,12 @@ class UppaalOperationVisitor @AssistedInject constructor(
 
     private fun havoc(variable: VariableDeclaration) {
         val name = uppaalVariableTransformer.nameOf(variable)
-        if (uppaalVariableTransformer.isClock(variable)) {
-            throw BackendUnsupportedException("Uppaal does not support havoc on clock $name")
-        }
         val described = uppaalVariableTransformer.describe(variable)
         when (described.kind) {
             UppaalVariableKind.Integer -> renderIntegerHavoc(variable, name)
             UppaalVariableKind.Boolean -> renderBooleanHavoc(name)
             UppaalVariableKind.Enum -> renderEnumHavoc(described, name)
-            UppaalVariableKind.Clock -> error("unreachable: clock handled above")
+            UppaalVariableKind.Clock -> throw BackendUnsupportedException("Uppaal does not support havoc on clock $name")
         }
     }
 

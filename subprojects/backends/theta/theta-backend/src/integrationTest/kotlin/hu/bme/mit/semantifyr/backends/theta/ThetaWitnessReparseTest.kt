@@ -7,12 +7,15 @@
 package hu.bme.mit.semantifyr.backends.theta
 
 import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup
+import hu.bme.mit.semantifyr.verifier.ReportValue
 import hu.bme.mit.semantifyr.verifier.SemantifyrVerifierTestHelper
 import hu.bme.mit.semantifyr.verifier.assumeBackendAvailable
 import hu.bme.mit.semantifyr.verifier.portfolio.SingleBackendPortfolio
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.entry
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
+import java.math.BigInteger
 import kotlin.io.path.Path
 
 class ThetaWitnessReparseTest {
@@ -34,61 +37,53 @@ class ThetaWitnessReparseTest {
 
     @Test
     suspend fun `traced choice branch witness reparses and re-verifies`() {
-        val result = helper.checkWitnessReparses(
+        val checked = helper.checkWitnessReparses(
             modelPath = Path("build/test-models/semantic/tracing.semantifyr"),
             qualifiedName = "semantifyr::verification::lang::tracing::TracedChoiceBranchReach",
             verificationPortfolio = portfolio,
             outputDirectory = outputDirectory,
         )
 
-        val callTrace = requireNotNull(result.trace).callTrace
-        assertThat(callTrace.steps).isNotEmpty().allSatisfy {
-            assertThat(it.traces).hasSize(1)
+        assertThat(requireNotNull(checked.report.trace).steps).isNotEmpty().allSatisfy {
+            assertThat(it.calls).hasSize(1)
         }
     }
 
     @Test
     suspend fun `array witness reparses and re-verifies`() {
-        val result = helper.checkWitnessReparses(
+        val checked = helper.checkWitnessReparses(
             modelPath = Path("build/test-models/semantic/arrays.semantifyr"),
             qualifiedName = "semantifyr::verification::lang::arrays::ArraySlotIndependenceReach",
             verificationPortfolio = portfolio,
             outputDirectory = outputDirectory,
         )
 
-        val finalState = requireNotNull(result.trace).witnessState.steps.last().values.map {
-            it.variable to it.value
-        }
-        assertThat(finalState).contains(
-            "root.slots[0]" to "1",
-            "root.slots[1]" to "1",
-            "root.slots[2]" to "1",
+        assertThat(requireNotNull(checked.report.trace).states.last().values).contains(
+            entry("root.slots[0]", ReportValue.Integer(BigInteger.ONE)),
+            entry("root.slots[1]", ReportValue.Integer(BigInteger.ONE)),
+            entry("root.slots[2]", ReportValue.Integer(BigInteger.ONE)),
         )
     }
 
     @Test
-    suspend fun `witness of an array of records sized from a binding names the slot and then the field, holds no value of a size of none, and reparses and re-verifies`() {
-        val result = helper.checkWitnessReparses(
+    suspend fun `witness of an array of records sized from a binding reparses and re-verifies`() {
+        val checked = helper.checkWitnessReparses(
             modelPath = Path("build/test-models/semantic/records.semantifyr"),
             qualifiedName = "semantifyr::verification::lang::records::RecordArrayRuntimeIndexReach",
             verificationPortfolio = portfolio,
             outputDirectory = outputDirectory,
         )
 
-        val finalState = requireNotNull(result.trace).witnessState.steps.last().values.map {
-            it.variable to it.value
-        }
-        assertThat(finalState).contains(
-            "root.store.readings[2].value" to "2",
-            "root.store.readings[2].valid" to "true",
+        assertThat(requireNotNull(checked.report.trace).states.last().values).contains(
+            entry(
+                "root.store.readings[2]",
+                ReportValue.Record(
+                    mapOf(
+                        "value" to ReportValue.Integer(BigInteger.TWO),
+                        "valid" to ReportValue.Bool(true),
+                    ),
+                ),
+            ),
         )
-        val namedVariables = requireNotNull(result.trace).witnessState.steps.flatMap {
-            it.values
-        }.map {
-            it.variable
-        }
-        assertThat(namedVariables).isNotEmpty().noneMatch {
-            it.startsWith("root.none.")
-        }
     }
 }

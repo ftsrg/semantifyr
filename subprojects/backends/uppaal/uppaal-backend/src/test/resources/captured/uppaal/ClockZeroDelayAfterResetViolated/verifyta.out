@@ -1,0 +1,96 @@
+Options for the verification:
+  Generating shortest trace
+  Search order is breadth first
+  Using conservative space optimisation
+  Seed is 1794767132
+  State space representation uses minimal constraint systems with future testing
+  Using HashMap + Compress integers for discrete state storage
+[2K
+Verifying formula 1 at model.q:1
+[2K -- Formula is NOT satisfied.
+ -- Showing witness trace:
+
+State:
+( Model.Start )
+__root__late=0
+__root__lap<=0 and __root__lap-__root__total<=0 and __root__total<=0 and __root__total-__root__lap<=0
+
+Transition:
+  Model.Start->Model.Running { 1, tau, 1 }
+
+State:
+( Model.Running )
+__root__late=0
+__root__lap-__root__total<=0 and __root__total-__root__lap<=0
+
+Transition:
+  Model.Running->Model.clock_loc_1 { __root__lap <= 1, tau, 1 }
+
+State:
+( Model.clock_loc_1 )
+__root__late=0
+__root__lap<=1 and __root__lap-__root__total<=0 and __root__total<=1 and __root__total-__root__lap<=0
+
+Transition:
+  Model.clock_loc_1->Model.seq_loc_0 { 1, tau, 1 }
+
+State:
+( Model.seq_loc_0 )
+__root__late=0
+__root__lap<=1 and __root__lap-__root__total<=0 and __root__total<=1 and __root__total-__root__lap<=0
+
+Transition:
+  Model.seq_loc_0->Model.clock_loc_3 { __root__total <= 1, tau, 1 }
+
+State:
+( Model.clock_loc_3 )
+__root__late=0
+__root__lap<=1 and __root__lap-__root__total<=0 and __root__total<=1 and __root__total-__root__lap<=0
+
+Transition:
+  Model.clock_loc_3->Model.seq_loc_2 { 1, tau, 1 }
+
+State:
+( Model.seq_loc_2 )
+__root__late=0
+__root__lap<=1 and __root__lap-__root__total<=0 and __root__total<=1 and __root__total-__root__lap<=0
+
+Transition:
+  Model.seq_loc_2->Model.clock_loc_5 { 1, tau, __root__lap := 0 }
+
+State:
+( Model.clock_loc_5 )
+__root__late=0
+__root__lap<=0 and __root__lap-__root__total<=0 and __root__total<=1 and __root__total-__root__lap<=1
+
+Transition:
+  Model.clock_loc_5->Model.seq_loc_4 { 1, tau, 1 }
+
+State:
+( Model.seq_loc_4 )
+__root__late=0
+__root__lap<=0 and __root__lap-__root__total<=0 and __root__total<=1 and __root__total-__root__lap<=1
+
+Transition:
+  Model.seq_loc_4->Model.clock_loc_7 { __root__total >= 1, tau, 1 }
+
+State:
+( Model.clock_loc_7 )
+__root__late=0
+__root__total>=1 and __root__lap<=0 and __root__lap-__root__total<=-1 and __root__total<=1 and __root__total-__root__lap<=1
+
+Transition:
+  Model.clock_loc_7->Model.seq_loc_6 { 1, tau, 1 }
+
+State:
+( Model.seq_loc_6 )
+__root__late=0
+__root__total>=1 and __root__lap<=0 and __root__lap-__root__total<=-1 and __root__total<=1 and __root__total-__root__lap<=1
+
+Transition:
+  Model.seq_loc_6->Model.Running { 1, tau, __root__late := true }
+
+State:
+( Model.Running )
+__root__late=1
+__root__total>=1 and __root__lap-__root__total<=-1 and __root__total-__root__lap<=1

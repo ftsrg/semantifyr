@@ -11,8 +11,10 @@ import com.google.inject.Injector
 import com.google.inject.assistedinject.Assisted
 import com.google.inject.assistedinject.AssistedInject
 import com.google.inject.assistedinject.FactoryModuleBuilder
+import hu.bme.mit.semantifyr.backend.BackendCapabilityChecker
 import hu.bme.mit.semantifyr.backend.BackendVerificationRequest
 import hu.bme.mit.semantifyr.backend.BackendVerificationResult
+import hu.bme.mit.semantifyr.backend.SoundnessDirection
 import hu.bme.mit.semantifyr.backend.VerificationBackend
 import hu.bme.mit.semantifyr.backend.VerificationContext
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
@@ -28,7 +30,9 @@ import hu.bme.mit.semantifyr.backends.theta.backannotation.InlinedWitnessTransfo
 import hu.bme.mit.semantifyr.backends.theta.backannotation.XstsWitnessTransformer
 import hu.bme.mit.semantifyr.backends.theta.trace.ThetaLogVerdictParser
 import hu.bme.mit.semantifyr.backends.theta.trace.ThetaVerdict
+import hu.bme.mit.semantifyr.backends.theta.transformation.xsts.ThetaArtifacts
 import hu.bme.mit.semantifyr.backends.theta.transformation.xsts.ThetaCapabilityChecker
+import hu.bme.mit.semantifyr.backends.theta.transformation.xsts.ThetaHornCapabilityChecker
 import hu.bme.mit.semantifyr.backends.theta.transformation.xsts.ThetaModelTransformer
 import hu.bme.mit.semantifyr.backends.theta.transformation.xsts.XstsModelCreator
 import hu.bme.mit.semantifyr.logging.debug
@@ -36,7 +40,6 @@ import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.warn
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AG
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.EF
-import hu.bme.mit.semantifyr.xsts.lang.xsts.XstsModel
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import java.nio.file.Path
@@ -57,9 +60,17 @@ class ThetaBackend : VerificationBackend<ThetaConfig>() {
         val injector = parentInjector.createChildInjector(ThetaBackendModule())
         return withVerificationScope {
             val factory = injector.getInstance(ThetaVerificationContext.Factory::class.java)
-            val context = factory.create(config, executor, request)
+            val context = factory.create(config, executor, request, capabilityChecker(parentInjector, config))
             context.execute()
         }
+    }
+
+    override fun capabilityChecker(parentInjector: Injector, config: ThetaConfig): BackendCapabilityChecker {
+        val injector = parentInjector.createChildInjector(ThetaBackendModule())
+        if (config.soundness == SoundnessDirection.OverApproximating) {
+            return injector.getInstance(ThetaHornCapabilityChecker::class.java)
+        }
+        return injector.getInstance(ThetaCapabilityChecker::class.java)
     }
 }
 
@@ -76,7 +87,7 @@ class ThetaVerificationContext @AssistedInject constructor(
     @param:Assisted private val config: ThetaConfig,
     @param:Assisted override val executor: ThetaXstsExecutor,
     @Assisted request: BackendVerificationRequest,
-    override val capabilityChecker: ThetaCapabilityChecker,
+    @Assisted capabilityChecker: BackendCapabilityChecker,
     private val thetaModelTransformer: ThetaModelTransformer,
     private val xstsModelCreator: XstsModelCreator,
     private val thetaLogVerdictParser: ThetaLogVerdictParser,
@@ -84,24 +95,25 @@ class ThetaVerificationContext @AssistedInject constructor(
     private val cexWitnessTransformer: CexWitnessTransformer,
     private val xstsWitnessTransformer: XstsWitnessTransformer,
     private val inlinedWitnessTransformer: InlinedWitnessTransformer,
-) : VerificationContext<XstsModel, ThetaVerdict>(
+) : VerificationContext<ThetaArtifacts, ThetaVerdict>(
     backendId = "theta:${config.id}",
-    soundness = config.soundness,
+    configuredSoundness = config.soundness,
     request = request,
+    capabilityChecker = capabilityChecker,
 ) {
 
     private val artifactManager = ThetaArtifactManager(request.artifactOutputPath)
 
-    override suspend fun prepare(): XstsModel {
+    override suspend fun prepare(): ThetaArtifacts {
         currentCoroutineContext().ensureActive()
         logger.info { "[$backendId] transforming InlinedOxsts -> XSTS" }
-        val xsts = thetaModelTransformer.transform(request.inlinedOxsts, artifactManager.xstsUri)
+        val artifacts = thetaModelTransformer.transform(request.inlinedOxsts, artifactManager.xstsUri)
         currentCoroutineContext().ensureActive()
-        xstsModelCreator.save(xsts)
-        return xsts
+        xstsModelCreator.save(artifacts.xsts)
+        return artifacts
     }
 
-    override suspend fun run(artifacts: XstsModel): ThetaVerdict? {
+    override suspend fun run(artifacts: ThetaArtifacts): ThetaVerdict? {
         currentCoroutineContext().ensureActive()
         val workingDir = artifactManager.xstsFile.parentFile
         val cexRelPath = artifactManager.cexFile.relativeTo(workingDir).path
@@ -126,7 +138,7 @@ class ThetaVerificationContext @AssistedInject constructor(
         }
     }
 
-    override fun interpret(rawVerdict: ThetaVerdict?, artifacts: XstsModel): VerificationVerdict {
+    override fun interpret(rawVerdict: ThetaVerdict?, artifacts: ThetaArtifacts): VerificationVerdict {
         val property = request.inlinedOxsts.property.expression
         return when {
             property is AG && rawVerdict == ThetaVerdict.Unsafe -> VerificationVerdict.Failed
@@ -136,19 +148,20 @@ class ThetaVerificationContext @AssistedInject constructor(
         }
     }
 
-    override suspend fun buildWitness(rawVerdict: ThetaVerdict?, artifacts: XstsModel): InlinedWitness? {
+    override suspend fun buildWitness(rawVerdict: ThetaVerdict?, artifacts: ThetaArtifacts): InlinedWitness? {
         if (!artifactManager.cexFile.exists()) {
             return null
         }
         return buildInlinedWitness(artifacts, artifactManager.cexFile.toPath())
     }
 
-    private fun buildInlinedWitness(xsts: XstsModel, cexPath: Path): InlinedWitness {
+    private fun buildInlinedWitness(artifacts: ThetaArtifacts, cexPath: Path): InlinedWitness {
         logger.info { "[$backendId] building the inlined witness from CEX" }
         val cexModel = cexReader.loadCexModel(cexPath)
         val cexWitness = cexWitnessTransformer.transform(cexModel)
-        val xstsWitness = xstsWitnessTransformer.transform(xsts, cexWitness)
-        return inlinedWitnessTransformer.transform(request.inlinedOxsts, xstsWitness)
+        val xstsWitness = xstsWitnessTransformer.transform(artifacts.xsts, cexWitness)
+        val witness = inlinedWitnessTransformer.transform(request.inlinedOxsts, xstsWitness, artifacts.addedNames)
+        return artifacts.wholeDelay?.restore(witness) ?: witness
     }
 
     interface Factory {
@@ -156,6 +169,7 @@ class ThetaVerificationContext @AssistedInject constructor(
             config: ThetaConfig,
             executor: ThetaXstsExecutor,
             request: BackendVerificationRequest,
+            capabilityChecker: BackendCapabilityChecker,
         ): ThetaVerificationContext
     }
 }

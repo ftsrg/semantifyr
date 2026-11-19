@@ -5,6 +5,7 @@
  */
 
 import com.google.inject.Inject
+import hu.bme.mit.semantifyr.backend.witness.Fraction
 import hu.bme.mit.semantifyr.frontends.gamma.GammaCompiler
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.ArithmeticUnaryOperator
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.ComparisonOperator
@@ -23,13 +24,12 @@ import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.VariableReferenceExpress
 import hu.bme.mit.semantifyr.frontends.gamma.lang.tests.InjectWithGamma
 import hu.bme.mit.semantifyr.frontends.gamma.reader.GammaReader
 import hu.bme.mit.semantifyr.frontends.gamma.trace.GammaTraceGenerator
-import hu.bme.mit.semantifyr.verifier.witness.CallTrace
-import hu.bme.mit.semantifyr.verifier.witness.CallTraceStep
-import hu.bme.mit.semantifyr.verifier.witness.TraceArgument
-import hu.bme.mit.semantifyr.verifier.witness.TraceEntry
-import hu.bme.mit.semantifyr.verifier.witness.WitnessState
-import hu.bme.mit.semantifyr.verifier.witness.WitnessStateStep
-import hu.bme.mit.semantifyr.verifier.witness.WitnessStateValue
+import hu.bme.mit.semantifyr.verifier.ReportCall
+import hu.bme.mit.semantifyr.verifier.ReportInitialEntry
+import hu.bme.mit.semantifyr.verifier.ReportState
+import hu.bme.mit.semantifyr.verifier.ReportStep
+import hu.bme.mit.semantifyr.verifier.ReportTrace
+import hu.bme.mit.semantifyr.verifier.ReportValue
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
@@ -59,9 +59,9 @@ class GammaTraceGeneratorTest {
             listOf(
                 raise(RAISE_INPUT_EVENT, "root.component._measure", "root.component._measure.interface._level"),
             ),
-            listOf(
-                WitnessStateValue("root.component._Main.activeState", "root.component._Main._Holding"),
-                WitnessStateValue("root.component._measure.interface._level._value.value", "7"),
+            mapOf(
+                "root.component._Main.activeState" to instance("root.component._Main._Holding"),
+                "root.component._measure.interface._level._value.value" to ReportValue.Integer(7.toBigInteger()),
             ),
         )
 
@@ -76,10 +76,10 @@ class GammaTraceGeneratorTest {
             "History.gamma",
             "TransitionToTheHistoryNodeRestoresTheLastState",
             emptyList(),
-            listOf(
-                WitnessStateValue("root.component._Main.activeState", "root.component._Main._Paused"),
-                WitnessStateValue("root.component._Main._Working._Progress.activeState", "nothing"),
-                WitnessStateValue("root.component._Main._Working._Progress._ProgressHistory.lastState", "root.component._Main._Working._Progress._Second"),
+            mapOf(
+                "root.component._Main.activeState" to instance("root.component._Main._Paused"),
+                "root.component._Main._Working._Progress.activeState" to ReportValue.Null,
+                "root.component._Main._Working._Progress._ProgressHistory.lastState" to instance("root.component._Main._Working._Progress._Second"),
             ),
         )
 
@@ -98,9 +98,9 @@ class GammaTraceGeneratorTest {
                 raise(RAISE_INPUT_EVENT, "root.component._asker._control", "root.component._asker._control.interface._start"),
                 raise(SET_OUTPUT_EVENT, "root.component._asker._link", "root.component._asker._link.interface._ask"),
             ),
-            listOf(
-                WitnessStateValue("root.component._asker._Main.activeState", "root.component._asker._Main._Sent"),
-                WitnessStateValue("root.component._answerer._Main.activeState", "root.component._answerer._Main._Asked"),
+            mapOf(
+                "root.component._asker._Main.activeState" to instance("root.component._asker._Main._Sent"),
+                "root.component._answerer._Main.activeState" to instance("root.component._answerer._Main._Asked"),
             ),
         )
 
@@ -113,14 +113,14 @@ class GammaTraceGeneratorTest {
     }
 
     @Test
-    fun `the trace has a step per witness step after an initialization step that resets`() {
+    fun `the trace has a step per report step after an initialization step that resets`() {
         val trace = generateSteps(
             "Events.gamma",
             "BothEventsOfAPortAreRaisedInOneStep",
-            listOf(WitnessStateValue("root.component._Main.activeState", "root.component._Main._Idle")),
+            mapOf("root.component._Main.activeState" to instance("root.component._Main._Idle")),
             listOf(
-                emptyList<TraceEntry>() to listOf(WitnessStateValue("root.component._Main.activeState", "root.component._Main._Idle")),
-                emptyList<TraceEntry>() to listOf(WitnessStateValue("root.component._Main.activeState", "root.component._Main._Idle")),
+                emptyList<ReportCall>() to mapOf("root.component._Main.activeState" to instance("root.component._Main._Idle")),
+                emptyList<ReportCall>() to mapOf("root.component._Main.activeState" to instance("root.component._Main._Idle")),
             ),
         )
 
@@ -134,7 +134,7 @@ class GammaTraceGeneratorTest {
         val trace = generateSteps(
             "Events.gamma",
             "BothEventsOfAPortAreRaisedInOneStep",
-            listOf(WitnessStateValue("root.component._Main.activeState", "root.component._Main._Idle")),
+            mapOf("root.component._Main.activeState" to instance("root.component._Main._Idle")),
             emptyList(),
         )
 
@@ -145,29 +145,46 @@ class GammaTraceGeneratorTest {
     }
 
     @Test
-    fun `the time advance of the traced component is an elapse of a second before the schedule`() {
+    fun `a step's elapsed time is an elapse in milliseconds of the model's unit before the schedule`() {
         val trace = generate(
             "Events.gamma",
             "BothEventsOfAPortAreRaisedInOneStep",
             listOf(
                 raise(RAISE_INPUT_EVENT, "root.component._control", "root.component._control.interface._start"),
-                TraceEntry("root", PASS_TIME, emptyList(), null),
             ),
-            listOf(WitnessStateValue("root.component._Main.activeState", "root.component._Main._Idle")),
+            mapOf("root.component._Main.activeState" to instance("root.component._Main._Idle")),
+            elapsed = Fraction.of(3),
+            timeUnitMilliseconds = 500,
         )
 
         val step = trace.steps.last()
         assertThat(actTypes(step)).containsExactly(RaiseEventAct::class.java, TimeElapseAct::class.java, ScheduleAct::class.java)
-        assertThat((step.acts[1] as TimeElapseAct).time).isEqualTo(1000)
+        val elapse = step.acts[1] as TimeElapseAct
+        assertThat(listOf(elapse.time, elapse.denominator)).containsExactly(1500, 1)
     }
 
     @Test
-    fun `a step without the time advance has no elapse`() {
+    fun `a fractional elapsed time is an elapse of exact milliseconds with a denominator`() {
+        val trace = generate(
+            "Events.gamma",
+            "BothEventsOfAPortAreRaisedInOneStep",
+            emptyList(),
+            mapOf("root.component._Main.activeState" to instance("root.component._Main._Idle")),
+            elapsed = Fraction.of(1, 3),
+            timeUnitMilliseconds = 1000,
+        )
+
+        val elapse = trace.steps.last().acts.filterIsInstance<TimeElapseAct>().single()
+        assertThat(listOf(elapse.time, elapse.denominator)).containsExactly(1000, 3)
+    }
+
+    @Test
+    fun `a step that passes no time has no elapse`() {
         val trace = generate(
             "Events.gamma",
             "BothEventsOfAPortAreRaisedInOneStep",
             listOf(raise(RAISE_INPUT_EVENT, "root.component._control", "root.component._control.interface._start")),
-            listOf(WitnessStateValue("root.component._Main.activeState", "root.component._Main._Idle")),
+            mapOf("root.component._Main.activeState" to instance("root.component._Main._Idle")),
         )
 
         assertThat(actTypes(trace.steps.last())).containsExactly(RaiseEventAct::class.java, ScheduleAct::class.java)
@@ -178,8 +195,8 @@ class GammaTraceGeneratorTest {
         val trace = generate(
             "Events.gamma",
             "BothEventsOfAPortAreRaisedInOneStep",
-            listOf(TraceEntry("root.component._Main.transition_Idle_to_Sent", FIRE, emptyList(), null)),
-            listOf(WitnessStateValue("root.component._Main.activeState", "root.component._Main._Sent")),
+            listOf(ReportCall("root.component._Main.transition_Idle_to_Sent", FIRE, emptyMap(), emptyList())),
+            mapOf("root.component._Main.activeState" to instance("root.component._Main._Sent")),
         )
 
         assertThat(trace.steps.last().asserts.filterIsInstance<RaiseEventAct>()).isEmpty()
@@ -190,8 +207,8 @@ class GammaTraceGeneratorTest {
         val trace = generate(
             "Events.gamma",
             "BothEventsOfAPortAreRaisedInOneStep",
-            listOf(TraceEntry("root.component._Main.transition_Idle_to_Sent", FIRE, emptyList(), null)),
-            listOf(WitnessStateValue("root.component._Main.activeState", "root.component._Main._Sent")),
+            listOf(ReportCall("root.component._Main.transition_Idle_to_Sent", FIRE, emptyMap(), emptyList())),
+            mapOf("root.component._Main.activeState" to instance("root.component._Main._Sent")),
         )
 
         val fired = trace.steps.last().asserts.filterIsInstance<FiredTransitionExpression>().single()
@@ -204,8 +221,8 @@ class GammaTraceGeneratorTest {
         val trace = generate(
             "Triggers.gamma",
             "TransitionOnTheSecondTriggerFires",
-            listOf(TraceEntry("root.component._Main.transition_Idle_to_Active_on_control_second", FIRE, emptyList(), null)),
-            listOf(WitnessStateValue("root.component._Main.activeState", "root.component._Main._Active")),
+            listOf(ReportCall("root.component._Main.transition_Idle_to_Active_on_control_second", FIRE, emptyMap(), emptyList())),
+            mapOf("root.component._Main.activeState" to instance("root.component._Main._Active")),
         )
 
         val fired = trace.steps.last().asserts.filterIsInstance<FiredTransitionExpression>().single()
@@ -219,7 +236,7 @@ class GammaTraceGeneratorTest {
             "Triggers.gamma",
             "TransitionOnTheSecondTriggerFires",
             emptyList(),
-            listOf(WitnessStateValue("root.component._entered.value", "2")),
+            mapOf("root.component._entered.value" to ReportValue.Integer(2.toBigInteger())),
         )
 
         val comparison = trace.steps.last().asserts.filterIsInstance<ComparisonOperator>().single()
@@ -233,7 +250,7 @@ class GammaTraceGeneratorTest {
             "Triggers.gamma",
             "TransitionOnTheSecondTriggerFires",
             emptyList(),
-            listOf(WitnessStateValue("root.component._entered.value", "-3")),
+            mapOf("root.component._entered.value" to ReportValue.Integer(-3.toBigInteger())),
         )
 
         val comparison = trace.steps.last().asserts.filterIsInstance<ComparisonOperator>().single()
@@ -247,7 +264,7 @@ class GammaTraceGeneratorTest {
             "GuardEvaluation.gamma",
             "BeginningOfStepGuardMissesTheWriteOfItsStep",
             emptyList(),
-            listOf(WitnessStateValue("root.component._written.value", "true")),
+            mapOf("root.component._written.value" to ReportValue.Bool(true)),
         )
 
         val comparison = trace.steps.last().asserts.filterIsInstance<ComparisonOperator>().single()
@@ -263,51 +280,58 @@ class GammaTraceGeneratorTest {
     private fun generate(
         modelFile: String,
         caseName: String,
-        traces: List<TraceEntry>,
-        values: List<WitnessStateValue>,
+        calls: List<ReportCall>,
+        values: Map<String, ReportValue>,
+        elapsed: Fraction = Fraction.ZERO,
+        timeUnitMilliseconds: Int = 1000,
     ): ExecutionTrace {
-        return generateSteps(modelFile, caseName, emptyList(), listOf(traces to values))
+        return generateSteps(modelFile, caseName, emptyMap(), listOf(calls to values), elapsed, timeUnitMilliseconds)
     }
 
     private fun generateSteps(
         modelFile: String,
         caseName: String,
-        initialValues: List<WitnessStateValue>,
-        steps: List<Pair<List<TraceEntry>, List<WitnessStateValue>>>,
+        initialValues: Map<String, ReportValue>,
+        steps: List<Pair<List<ReportCall>, Map<String, ReportValue>>>,
+        elapsed: Fraction = Fraction.ZERO,
+        timeUnitMilliseconds: Int = 1000,
     ): ExecutionTrace {
         val gammaPackage = gammaReader.readGammaFile(SEMANTICS.resolve(modelFile).toFile())
         val nameMap = gammaCompiler.compile(gammaPackage, temporaryDirectory.resolve("model.semantifyr"))
         val verificationCase = gammaPackage.verificationCases.single {
             it.name == caseName
         }
-        val callTrace = CallTrace(
-            CallTraceStep(emptyList()),
-            steps.map {
-                CallTraceStep(it.first)
+        val trace = ReportTrace(
+            root = "root",
+            transitions = emptyList(),
+            variables = emptyList(),
+            initial = ReportInitialEntry(0, emptyList()),
+            states = listOf(ReportState(initialValues)) + steps.map {
+                ReportState(it.second)
+            },
+            steps = steps.mapIndexed { index, step ->
+                ReportStep(index, index + 1, elapsed, step.first)
             },
         )
-        val witnessState = WitnessState(
-            WitnessStateStep(initialValues),
-            steps.map {
-                WitnessStateStep(it.second)
-            },
-        )
-        return gammaTraceGenerator.generate(verificationCase, callTrace, witnessState, nameMap)
+        return gammaTraceGenerator.generate(verificationCase, trace, nameMap, timeUnitMilliseconds)
+    }
+
+    private fun instance(path: String): ReportValue {
+        return ReportValue.Text(path)
     }
 
     private fun raise(
-        calledTransition: String,
+        transition: String,
         port: String,
         event: String,
-    ): TraceEntry {
-        return TraceEntry(port, calledTransition, listOf(TraceArgument("event", event)), null)
+    ): ReportCall {
+        return ReportCall(port, transition, mapOf("event" to instance(event)), emptyList())
     }
 
     companion object {
         private val SEMANTICS = Path("..", "models", "semantics")
         private const val RAISE_INPUT_EVENT = "semantifyr::gamma::ports::Port::raiseInputEvent"
         private const val SET_OUTPUT_EVENT = "semantifyr::gamma::ports::Port::setOutputEvent"
-        private const val PASS_TIME = "semantifyr::gamma::verification::GammaVerificationCase::passTime"
         private const val FIRE = "semantifyr::gamma::statecharts::Transition::fire"
     }
 }

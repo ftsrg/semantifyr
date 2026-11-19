@@ -8,6 +8,7 @@ package hu.bme.mit.semantifyr.backends.nuxmv.trace
 
 data class NuxmvTraceState(
     val variableValues: Map<String, String>,
+    val inputValues: Map<String, String>,
 )
 
 data class NuxmvTrace(

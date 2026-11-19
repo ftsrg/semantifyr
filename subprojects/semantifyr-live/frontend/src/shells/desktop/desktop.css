@@ -229,7 +229,6 @@
 .status-message .case-ref { font-family: var(--font-mono); font-size: 11px; color: var(--text-primary); }
 .status-message .button-link { color: inherit; }
 .status-end { display: flex; align-items: center; gap: var(--space-6); color: var(--text-tertiary); }
-.status-tab-hint { white-space: nowrap; }
 .status-language { display: inline-flex; align-items: center; gap: var(--space-3); color: var(--text-secondary); }
 .status-language .language-mark { width: 12px; height: 12px; }
 

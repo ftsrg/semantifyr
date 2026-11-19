@@ -9,7 +9,7 @@ package hu.bme.mit.semantifyr.frontends.gamma.lang.ide.server.commands;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
 import hu.bme.mit.semantifyr.frontends.gamma.GammaFrontend;
-import hu.bme.mit.semantifyr.frontends.gamma.GammaVerificationResultDto;
+import hu.bme.mit.semantifyr.frontends.gamma.GammaVerificationResult;
 import hu.bme.mit.semantifyr.frontends.gamma.discovery.GammaVerificationCaseDiscoverer;
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.VerificationCaseDeclaration;
 import hu.bme.mit.semantifyr.lang.ide.server.OxstsInjector;
@@ -18,8 +18,9 @@ import hu.bme.mit.semantifyr.lang.ide.server.commands.AbstractCommandHandler;
 import hu.bme.mit.semantifyr.lang.ide.server.commands.CommandProgressContext;
 import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseRequest;
 import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseResult;
-import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationTrace;
 import java.util.List;
+import kotlin.coroutines.EmptyCoroutineContext;
+import kotlinx.coroutines.BuildersKt;
 import org.eclipse.xtext.ide.server.ILanguageServerAccess;
 import org.eclipse.xtext.util.CancelIndicator;
 import org.slf4j.Logger;
@@ -98,11 +99,13 @@ public class VerifyGammaCaseCommandHandler
 
                 progressContext.checkIsCancelled();
 
-                var gammaResult = frontend.verifyBlocking(gammaCase, progressContext);
+                var gammaResult = BuildersKt.<GammaVerificationResult>runBlocking(
+                        EmptyCoroutineContext.INSTANCE,
+                        (scope, continuation) -> frontend.verify(gammaCase, progressContext, continuation));
                 LOGGER.info(
                         "LSP verify '{}' -> {}",
                         gammaCase.getQualifiedName(),
-                        gammaResult.getVerification().getVerdict());
+                        gammaResult.getOutcome().getReport().getResult().getVerdict());
 
                 return toCaseResult(gammaResult, portfolio.getId());
             } catch (Exception e) {
@@ -116,18 +119,10 @@ public class VerifyGammaCaseCommandHandler
         });
     }
 
-    // the witness pane shows the trace in the case's own language
-    private static VerificationCaseResult toCaseResult(GammaVerificationResultDto gammaResult, String portfolioId) {
-        var result = VerificationCaseResult.fromDtoWithoutTrace(gammaResult.getVerification(), portfolioId);
+    private static VerificationCaseResult toCaseResult(GammaVerificationResult gammaResult, String portfolioId) {
         var witness = gammaResult.getWitness();
-        if (witness == null) {
-            return result;
-        }
-        var trace = new VerificationTrace(
-                witness.getTrace().getCallTrace(),
-                witness.getTrace().getWitnessState(),
-                witness.getGammaTracePath().toUri().toString());
-        return new VerificationCaseResult(
-                result.status(), result.message(), result.backendId(), result.portfolioId(), result.metrics(), trace);
+        var traceUri =
+                witness == null ? null : witness.getGammaTracePath().toUri().toString();
+        return VerificationCaseResult.fromOutcome(gammaResult.getOutcome(), portfolioId, traceUri);
     }
 }

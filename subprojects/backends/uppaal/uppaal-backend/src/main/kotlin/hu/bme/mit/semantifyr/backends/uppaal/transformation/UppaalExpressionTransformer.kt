@@ -39,7 +39,11 @@ class UppaalExpressionTransformer @Inject constructor(
     override fun visit(expression: ComparisonOperator): String {
         val left = visit(expression.left)
         val right = visit(expression.right)
-        val op = when (expression.op) {
+        return "($left ${operatorOf(expression.op)} $right)"
+    }
+
+    fun operatorOf(op: ComparisonOp): String {
+        return when (op) {
             ComparisonOp.LESS -> "<"
             ComparisonOp.LESS_EQ -> "<="
             ComparisonOp.GREATER -> ">"
@@ -47,7 +51,6 @@ class UppaalExpressionTransformer @Inject constructor(
             ComparisonOp.EQ -> "=="
             ComparisonOp.NOT_EQ -> "!="
         }
-        return "($left $op $right)"
     }
 
     override fun visit(expression: ArithmeticBinaryOperator): String {

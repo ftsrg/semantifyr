@@ -41,6 +41,12 @@ final class DocumentationFences {
     private static final Pattern SERVED_IMPORT =
             Pattern.compile("^import\\s+\\w+\\s+from\\s+'@served-examples/oxsts/([\\w-]+)';?$");
 
+    private static final Pattern LESSON_STAGE_IMPORT =
+            Pattern.compile("^import\\s+\\w+\\s+from\\s+'@lesson-stages/([\\w-]+)';?$");
+
+    // the page-models plugin of docusaurus.config.ts imports a lesson's stage from here
+    private static final String LESSON_STAGES = "oxsts-test-models/tutorial";
+
     private static final Pattern PAGE_COMMENT = Pattern.compile("<!--[\\s\\S]*?-->|\\{/\\*[\\s\\S]*?\\*/}");
 
     private static final String HIDE_START = "// hide-start";
@@ -93,8 +99,8 @@ final class DocumentationFences {
 
     record ServedExamples(List<ServedExample> examples) {}
 
-    // the OXSTS files the pages import, through the source aliases or as served examples by their address, which their
-    // own tests check
+    // the OXSTS files the pages import, through the source aliases, as served examples by their address or as lessons'
+    // stages by their name, which their own tests check
     static List<Path> importedModels() throws IOException {
         Map<String, String> aliases;
         try (var reader = Files.newBufferedReader(SOURCE_ALIASES)) {
@@ -120,6 +126,17 @@ final class DocumentationFences {
                             .orElseThrow(() -> new IllegalStateException(
                                     "the registry serves no /language/" + served.group(1) + " for " + page));
                     var model = repository.resolve(example.file()).normalize();
+                    if (!models.contains(model)) {
+                        models.add(model);
+                    }
+                    continue;
+                }
+                var stage = LESSON_STAGE_IMPORT.matcher(line.strip());
+                if (stage.matches()) {
+                    var model = repository
+                            .resolve(LESSON_STAGES)
+                            .resolve(stage.group(1) + ".semantifyr")
+                            .normalize();
                     if (!models.contains(model)) {
                         models.add(model);
                     }

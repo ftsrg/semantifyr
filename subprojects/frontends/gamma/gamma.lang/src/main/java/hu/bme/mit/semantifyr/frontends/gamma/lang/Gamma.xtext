@@ -419,7 +419,7 @@ ScheduleAct:
 ;
 
 TimeElapseAct:
-    'elapse' time=INT
+    'elapse' time=INT ('/' denominator=INT)?
 ;
 
 RaiseEventAct:

@@ -7,10 +7,11 @@
 package hu.bme.mit.semantifyr.verifier.portfolio
 
 import com.google.inject.Injector
+import hu.bme.mit.semantifyr.backend.BackendConfig
 import hu.bme.mit.semantifyr.backend.BackendMetrics
 import hu.bme.mit.semantifyr.backend.BackendVerificationRequest
 import hu.bme.mit.semantifyr.backend.BackendVerificationResult
-import hu.bme.mit.semantifyr.backend.SoundnessDirection
+import hu.bme.mit.semantifyr.backend.VerificationBackend
 import hu.bme.mit.semantifyr.backend.VerificationMetadata
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.backend.execution.AvailabilityReport
@@ -76,7 +77,7 @@ class PortfolioScope internal constructor(
 
     internal fun leg(task: PortfolioTask<*>, subPath: String) {
         leg(task.leg.id) {
-            task.run(case.parentInjector, case.request.withSubPath(subPath), case.environment)
+            task.leg.run(case.parentInjector, case.request.withSubPath(subPath), case.environment)
         }
     }
 }
@@ -112,10 +113,24 @@ data class LegRun(
     val end: LegEnd,
 )
 
-data class PortfolioLeg(
-    val id: String,
-    val soundness: SoundnessDirection,
-)
+class PortfolioLeg<T : BackendConfig>(
+    val backend: VerificationBackend<T>,
+    val config: T,
+) {
+    val id = "${backend.id}:${config.id}"
+
+    fun isAvailable(environment: ExecutionEnvironment): Boolean {
+        return environment.availability(backend.executorKey).isUsable
+    }
+
+    suspend fun run(
+        parentInjector: Injector,
+        request: BackendVerificationRequest,
+        environment: ExecutionEnvironment,
+    ): BackendVerificationResult {
+        return backend.verify(parentInjector, config, request, environment)
+    }
+}
 
 fun BackendVerificationRequest.withSubPath(subpath: String): BackendVerificationRequest {
     return this.copy(artifactOutputPath = artifactOutputPath.resolve(subpath))
@@ -223,7 +238,7 @@ abstract class VerificationPortfolio(
     abstract val displayName: String
     abstract val description: String
     abstract val executorKeys: Set<ExecutorKey<*>>
-    abstract val legs: List<PortfolioLeg>
+    abstract val legs: List<PortfolioLeg<*>>
 
     abstract fun availability(environment: ExecutionEnvironment = ExecutionEnvironment.Empty): AvailabilityReport
 
@@ -384,7 +399,7 @@ abstract class VerificationPortfolio(
             return PortfolioOutcome.NoDecision(availability.reason, emptyList())
         }
         val available = stages.tasks.filter {
-            it.isAvailable(case.environment)
+            it.leg.isAvailable(case.environment)
         }
         if (available.size <= case.slots) {
             logger.info { "$id: racing ${available.size} configurations on ${case.slots} slots (timeout ${case.time})" }

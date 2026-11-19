@@ -35,7 +35,7 @@ abstract class AbstractState : StateNode {
     abstract tran deferTransitions()
     abstract tran activateRecursive()
     abstract tran deactivateRecursive(deactivate: bool)
-    abstract tran passTime()
+    abstract tran sendTimeSignals()
 
     abstract tran enterRecursive(commonState: StateNode, child: AbstractState[0..1])
     abstract tran exitRecursive(commonState: StateNode, child: AbstractState[0..1])
@@ -141,12 +141,12 @@ class State : AbstractState {
         }
     }
 
-    redefine tran passTime() {
+    redefine tran sendTimeSignals() {
         inline for (transition in transitions) {
-            inline transition.passTime()
+            inline transition.sendTimeSignal()
         }
         inline for (state in states) {
-            inline state.passTime()
+            inline state.sendTimeSignals()
         }
     }
 
@@ -257,8 +257,10 @@ class Transition {
         inline to.enter(commonState)
     }
 
-    tran passTime() {
-        inline acceptAction.passTime()
+    tran sendTimeSignal() {
+        if (from.isActive()) {
+            inline acceptAction.sendTimeSignal()
+        }
     }
 
     tran initialize() {
@@ -320,9 +322,9 @@ class ParallelState : AbstractState {
         }
     }
 
-    redefine tran passTime() {
+    redefine tran sendTimeSignals() {
         inline for (state in states) {
-            inline state.passTime()
+            inline state.sendTimeSignals()
         }
     }
 

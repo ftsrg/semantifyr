@@ -4,39 +4,42 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import type {
-  VerificationCaseResult,
-  VerificationMetrics,
-  VerificationTrace,
-} from '@semantifyr/editor-common';
+import type { VerificationCaseResult, VerificationReport } from '@semantifyr/editor-common';
 
-export const sampleMetrics: VerificationMetrics = {
-  totalDuration: 'PT1S',
-  preparationDuration: 'PT0.1S',
-  verificationDuration: 'PT0.8S',
-  backAnnotationDuration: 'PT0S',
-};
+import { reportOf } from './reports';
 
-export const sampleTrace: VerificationTrace = {
-  callTrace: { initializedStep: { traces: [] }, steps: [] },
-  witnessState: { initializedStep: { values: [] }, steps: [] },
-  witnessUri: 'inmemory:///workspace/snippet.witness.semantifyr',
-};
+export const sampleReport = reportOf({
+  verdict: 'Failed',
+  backendId: 'theta-cegar',
+  seconds: 1,
+  soundness: 'UnderApproximating',
+  trace: {
+    root: 'root',
+    transitions: [],
+    variables: [],
+    initial: { state: 0, calls: [] },
+    states: [{ values: {} }],
+    steps: [],
+    missingCalls: null,
+  },
+})
+
+export const sampleValidationReport: VerificationReport = { ...sampleReport, kind: 're-check', trace: null };
 
 export const passedResult: VerificationCaseResult = {
   status: 'passed',
   message: null,
-  backendId: 'theta-cegar',
   portfolioId: 'smart',
-  metrics: sampleMetrics,
-  trace: null,
+  report: { ...sampleReport, trace: null },
+  witnessUri: null,
+  traceUri: null,
 };
 
 export const failedResult: VerificationCaseResult = {
   status: 'failed',
   message: 'property fails',
-  backendId: 'theta-cegar',
   portfolioId: 'smart',
-  metrics: sampleMetrics,
-  trace: sampleTrace,
+  report: sampleReport,
+  witnessUri: 'inmemory:///workspace/snippet.witness.semantifyr',
+  traceUri: null,
 };

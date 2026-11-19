@@ -11,7 +11,8 @@ import com.google.inject.Singleton
 import hu.bme.mit.semantifyr.lang.ide.server.commands.CommandGson
 import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseRequest
 import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseResult
-import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationTrace
+import hu.bme.mit.semantifyr.lang.ide.server.wire.WitnessValidationRequest
+import hu.bme.mit.semantifyr.lang.ide.server.wire.WitnessValidationResult
 import hu.bme.mit.semantifyr.live.backend.exceptions.SyntaxErrorException
 import hu.bme.mit.semantifyr.live.backend.lsp.document.SessionDocumentManager
 import hu.bme.mit.semantifyr.live.backend.lsp.service.SessionRequestManager
@@ -40,8 +41,16 @@ class LiveVerificationExecutor : VerificationExecutor {
     ): Any? {
         ensureDocumentAvailable(sessionRequestManager, sessionDocumentManager, params)
         rejectSyntaxErrors(sessionRequestManager, sessionDocumentManager, params)
-        val result = sessionRequestManager.executeCommand(params).await()
-        return rewriteWitnessUri(sessionDocumentManager, result)
+        val result = sessionRequestManager.executeCommand(withServerWitnessUri(sessionDocumentManager, params)).await()
+        return withClientUris(sessionDocumentManager, result)
+    }
+
+    private fun withServerWitnessUri(sessionDocumentManager: SessionDocumentManager, params: ExecuteCommandParams): ExecuteCommandParams {
+        val argument = params.arguments?.firstOrNull() as? JsonElement ?: return params
+        val request = CommandGson.INSTANCE.fromJson(argument, WitnessValidationRequest::class.java) ?: return params
+        val witnessUri = request.witnessUri() ?: return params
+        val serverRequest = WitnessValidationRequest(request.uri(), request.range(), request.portfolio(), sessionDocumentManager.clientToServer(witnessUri))
+        return ExecuteCommandParams(params.command, listOf(CommandGson.INSTANCE.toJsonTree(serverRequest)))
     }
 
     private suspend fun ensureDocumentAvailable(
@@ -77,24 +86,33 @@ class LiveVerificationExecutor : VerificationExecutor {
         throw SyntaxErrorException("The model has a syntax error at line ${syntaxError.line}, column ${syntaxError.column}: ${syntaxError.message}")
     }
 
-    private fun rewriteWitnessUri(sessionDocumentManager: SessionDocumentManager, result: Any?): Any? {
-        if (result !is VerificationCaseResult) {
-            return result
+    private fun withClientUris(sessionDocumentManager: SessionDocumentManager, result: Any?): Any? {
+        return when (result) {
+            is VerificationCaseResult -> VerificationCaseResult(
+                result.status(),
+                result.message(),
+                result.portfolioId(),
+                result.report(),
+                clientUriOf(sessionDocumentManager, result.witnessUri()),
+                clientUriOf(sessionDocumentManager, result.traceUri()),
+            )
+            is WitnessValidationResult -> WitnessValidationResult(
+                result.status(),
+                result.message(),
+                result.portfolioId(),
+                result.report(),
+                clientUriOf(sessionDocumentManager, result.witnessUri()),
+            )
+            else -> result
         }
-        val trace = result.trace() ?: return result
-        val serverUri = trace.witnessUri() ?: return result
+    }
+
+    private fun clientUriOf(sessionDocumentManager: SessionDocumentManager, serverUri: String?): String? {
+        serverUri ?: return null
         val clientUri = sessionDocumentManager.toClientUri(serverUri)
         if (clientUri == serverUri) {
-            logger.warn { "Witness URI is not inside the workspace, leaving it untouched: $serverUri" }
-            return result
+            logger.warn { "Artifact URI is not inside the workspace, leaving it untouched: $serverUri" }
         }
-        return VerificationCaseResult(
-            result.status(),
-            result.message(),
-            result.backendId(),
-            result.portfolioId(),
-            result.metrics(),
-            VerificationTrace(trace.callTrace(), trace.witnessState(), clientUri),
-        )
+        return clientUri
     }
 }

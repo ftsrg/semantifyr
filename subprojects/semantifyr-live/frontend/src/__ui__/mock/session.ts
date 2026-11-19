@@ -510,7 +510,7 @@ export class MockSession {
     this.active.delete(id)
     this.announce()
     if (abort.signal.aborted && kind === 'Validate') {
-      return { status: 'errored', verdict: null, message: 'java.util.concurrent.CancellationException', backendId: null, portfolioId: active.portfolioId, metrics: null }
+      return { status: 'errored', message: 'java.util.concurrent.CancellationException', portfolioId: active.portfolioId, report: null, witnessUri: null }
     }
     return result
   }
@@ -524,7 +524,7 @@ export class MockSession {
   private recordedResult(caseRequest: CaseRequest): VerificationCaseResult {
     const recorded = caseRequest.caseId === null ? undefined : this.fixture.results[caseRequest.caseId]
     const result = recorded ?? Object.values(this.fixture.results).find((candidate) => {
-      return candidate.status === 'passed' && !candidate.trace
+      return candidate.status === 'passed' && !candidate.report?.trace
     })
     if (result === undefined) {
       throw new Unanswered(`${this.flavorId}: no recorded result for ${caseRequest.caseId}`)

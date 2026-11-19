@@ -60,10 +60,12 @@ class GammaVerificationTests {
             outputDirectory = artifactRoot,
         )
 
-        val witness = helper.checkVerificationCase(frontend, gammaVerificationCase, entry.case.expectedVerdict).witness
+        val result = helper.checkVerificationCase(frontend, gammaVerificationCase, entry.case.expectedVerdict)
+        val witness = result.witness
 
         assertThat(witness).describedAs("An EF case that passes has a witness").isNotNull()
         assertThat(witness!!.gammaTracePath).exists()
-        assertThat(witness.gammaTrace.steps).hasSize(1 + witness.trace.witnessState.steps.size)
+        val reportTrace = requireNotNull(result.outcome.report.trace)
+        assertThat(witness.gammaTrace.steps).hasSize(1 + reportTrace.steps.size)
     }
 }

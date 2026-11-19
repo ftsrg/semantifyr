@@ -11,6 +11,7 @@ import com.google.inject.Injector
 import com.google.inject.assistedinject.Assisted
 import com.google.inject.assistedinject.AssistedInject
 import com.google.inject.assistedinject.FactoryModuleBuilder
+import hu.bme.mit.semantifyr.backend.BackendCapabilityChecker
 import hu.bme.mit.semantifyr.backend.BackendVerificationRequest
 import hu.bme.mit.semantifyr.backend.BackendVerificationResult
 import hu.bme.mit.semantifyr.backend.VerificationBackend
@@ -21,6 +22,7 @@ import hu.bme.mit.semantifyr.backend.scopes.VerificationScope
 import hu.bme.mit.semantifyr.backend.scopes.VerificationScoped
 import hu.bme.mit.semantifyr.backend.scopes.withVerificationScope
 import hu.bme.mit.semantifyr.backend.witness.InlinedWitness
+import hu.bme.mit.semantifyr.backend.witness.WitnessFailedException
 import hu.bme.mit.semantifyr.backends.spin.SpinExecutionSpecification
 import hu.bme.mit.semantifyr.backends.spin.SpinExecutor
 import hu.bme.mit.semantifyr.backends.spin.SpinExecutorKey
@@ -56,9 +58,13 @@ class SpinBackend : VerificationBackend<SpinConfig>() {
         val injector = parentInjector.createChildInjector(SpinBackendModule())
         return withVerificationScope {
             val factory = injector.getInstance(SpinVerificationContext.Factory::class.java)
-            val context = factory.create(config, executor, request)
+            val context = factory.create(config, executor, request, capabilityChecker(parentInjector, config))
             context.execute()
         }
+    }
+
+    override fun capabilityChecker(parentInjector: Injector, config: SpinConfig): BackendCapabilityChecker {
+        return parentInjector.createChildInjector(SpinBackendModule()).getInstance(SpinCapabilityChecker::class.java)
     }
 }
 
@@ -76,15 +82,16 @@ class SpinVerificationContext @AssistedInject constructor(
     @param:Assisted private val config: SpinConfig,
     @param:Assisted override val executor: SpinExecutor,
     @Assisted request: BackendVerificationRequest,
-    override val capabilityChecker: SpinCapabilityChecker,
+    @Assisted capabilityChecker: BackendCapabilityChecker,
     private val spinModelTransformer: SpinModelTransformer,
     private val spinTraceParser: SpinTraceParser,
     private val spinLogVerdictParser: SpinLogVerdictParser,
     private val spinInlinedOxstsWitnessTransformer: SpinInlinedOxstsWitnessTransformer,
 ) : VerificationContext<SpinArtifacts, SpinVerdict>(
     backendId = "spin:${config.id}",
-    soundness = config.soundness,
+    configuredSoundness = config.soundness,
     request = request,
+    capabilityChecker = capabilityChecker,
 ) {
 
     private val artifactManager = SpinArtifactManager(request.artifactOutputPath)
@@ -198,16 +205,12 @@ class SpinVerificationContext @AssistedInject constructor(
         )
         val replayResult = executor.replayTrail(replaySpec)
         if (replayResult.exitCode != 0 && replayResult.exitCode != 1) {
-            logger.warn { "[$backendId] spin replay failed with exit code ${replayResult.exitCode}; witness not produced" }
-            return null
+            throw WitnessFailedException("Spin's replay of its trail failed with exit code ${replayResult.exitCode}")
         }
-        val trace = spinTraceParser.parse(artifactManager.replayLogFile)
-        if (trace == null) {
-            logger.warn { "[$backendId] no parseable steps in spin replay; witness not produced" }
-            return null
-        }
+        val trace = spinTraceParser.parse(artifactManager.replayLogFile) ?: return null
         logger.info { "[$backendId] parsed Spin trace with ${trace.states.size} state(s); building witness" }
-        return spinInlinedOxstsWitnessTransformer.transform(request.inlinedOxsts, trace)
+        val witness = spinInlinedOxstsWitnessTransformer.transform(request.inlinedOxsts, trace, artifacts.addedNames)
+        return artifacts.wholeDelay?.restore(witness) ?: witness
     }
 
     interface Factory {
@@ -215,6 +218,7 @@ class SpinVerificationContext @AssistedInject constructor(
             config: SpinConfig,
             executor: SpinExecutor,
             request: BackendVerificationRequest,
+            capabilityChecker: BackendCapabilityChecker,
         ): SpinVerificationContext
     }
 }

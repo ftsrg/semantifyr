@@ -21,18 +21,20 @@ import hu.bme.mit.semantifyr.verifier.ProgressContext
 import kotlin.time.Clock
 
 class SingleBackendPortfolio<T : BackendConfig>(
-    val backend: VerificationBackend<T>,
-    val configuration: T,
+    backend: VerificationBackend<T>,
+    configuration: T,
 ) : VerificationPortfolio() {
+
+    private val leg = PortfolioLeg(backend, configuration)
 
     override val id: String = "${backend.id}-${configuration.id}"
     override val displayName: String = "${backend.id} ${configuration.id}"
     override val description: String = "Runs the ${configuration.id} configuration of ${backend.id} alone."
-    override val executorKeys: Set<ExecutorKey<*>> = setOf(backend.executorKey)
-    override val legs = listOf(PortfolioLeg("${backend.id}:${configuration.id}", configuration.soundness))
+    override val executorKeys: Set<ExecutorKey<*>> = setOf(leg.backend.executorKey)
+    override val legs = listOf(leg)
 
     override fun availability(environment: ExecutionEnvironment): AvailabilityReport {
-        return environment.availability(backend.executorKey)
+        return environment.availability(leg.backend.executorKey)
     }
 
     override suspend fun verify(
@@ -44,7 +46,7 @@ class SingleBackendPortfolio<T : BackendConfig>(
     ): BackendVerificationResult {
         val startedAt = Clock.System.now()
         val backendResult = gate.withPermit {
-            backend.verify(parentInjector, configuration, request, environment)
+            leg.run(parentInjector, request, environment)
         }
         return PortfolioOutcome.Decided(withholdUntrusted(backendResult, request)).toBackendVerificationResult(startedAt)
     }
@@ -68,7 +70,7 @@ class SingleBackendPortfolio<T : BackendConfig>(
             verdict = VerificationVerdict.Inconclusive,
             isTrusted = false,
             inlinedWitness = null,
-            message = "${backend.id}'s ${result.verdict} on an $property property is not trusted: the leg is $direction",
+            message = "${leg.id}'s ${result.verdict} on an $property property is not trusted: the leg is $direction",
         )
     }
 }

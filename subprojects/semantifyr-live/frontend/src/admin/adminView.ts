@@ -4,9 +4,11 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
+import { isoDurationToMs } from '@semantifyr/editor-common'
+
 import type { FlavorInfo, SessionInfo } from '../lib/api'
 import { SYSML_FLAVOR_INFO } from '../lib/session/sysmlBridge'
-import { formatDuration, isoDurationToMs } from '../lib/util/duration'
+import { formatDuration } from '../lib/util/duration'
 
 const KIND_LABELS: Readonly<Record<string, string>> = {
   'full': 'Full',

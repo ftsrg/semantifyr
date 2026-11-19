@@ -7,6 +7,7 @@
 package hu.bme.mit.semantifyr.verifier.portfolio
 
 import com.google.inject.Injector
+import hu.bme.mit.semantifyr.backend.BackendCapabilityChecker
 import hu.bme.mit.semantifyr.backend.BackendVerificationRequest
 import hu.bme.mit.semantifyr.backend.BackendVerificationResult
 import hu.bme.mit.semantifyr.backend.VerificationBackend
@@ -50,6 +51,10 @@ private class RecordingBackend(
     private val answers: Map<String, Answer>,
     override val executorKey: ExecutorKey<BackendExecutor>,
 ) : VerificationBackend<FakeConfig>() {
+
+    override fun capabilityChecker(parentInjector: Injector, config: FakeConfig): BackendCapabilityChecker {
+        return BackendCapabilityChecker.Unlimited
+    }
     override val id = "fake"
 
     val starts = mutableListOf<String>()
@@ -92,7 +97,7 @@ private class StagedPortfolio(
 
     override fun availability(environment: ExecutionEnvironment): AvailabilityReport {
         val anyAvailable = stages.tasks.any {
-            it.isAvailable(environment)
+            it.leg.isAvailable(environment)
         }
         return if (anyAvailable) {
             AvailabilityReport.Available

@@ -18,6 +18,7 @@ import org.eclipse.emf.ecore.EObject
 data class UppaalArtifacts(
     val modelXml: String,
     val query: String,
+    val clockEdges: Map<String, UppaalClockEdge>,
 )
 
 class UppaalModelTransformer @Inject constructor(
@@ -28,18 +29,19 @@ class UppaalModelTransformer @Inject constructor(
 ) {
 
     fun transform(inlinedOxsts: InlinedOxsts): UppaalArtifacts {
-        val nta = buildNta(inlinedOxsts)
+        val context = UppaalEmissionContext()
+        val nta = buildNta(inlinedOxsts, context)
         val modelXml = uppaalIrSerializer.serialize(nta)
         val query = uppaalPropertyTransformer.transform(inlinedOxsts.property)
-        return UppaalArtifacts(modelXml, query)
+        return UppaalArtifacts(modelXml, query, context.clockEdges.toMap())
     }
 
-    internal fun buildNta(inlinedOxsts: InlinedOxsts): UppaalNta {
+    internal fun buildNta(inlinedOxsts: InlinedOxsts, context: UppaalEmissionContext = UppaalEmissionContext()): UppaalNta {
         val locals = collectLocalVariables(inlinedOxsts)
         val allVariables = inlinedOxsts.variables + locals
         val enums = collectEnumDeclarations(allVariables)
         val declarations = uppaalDeclarationsBuilder.build(inlinedOxsts, allVariables, enums)
-        val template = uppaalTemplateBuilder.build(inlinedOxsts)
+        val template = uppaalTemplateBuilder.build(inlinedOxsts, context)
         return UppaalNta(declarations, listOf(template))
     }
 

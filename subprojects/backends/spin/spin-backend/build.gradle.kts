@@ -6,7 +6,6 @@
 
 plugins {
     id("hu.bme.mit.semantifyr.gradle.conventions.backend")
-    id("hu.bme.mit.semantifyr.gradle.conventions.sysml-crossroads")
     kotlin("jvm")
     kotlin("plugin.serialization")
 }

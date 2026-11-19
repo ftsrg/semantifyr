@@ -26,7 +26,7 @@ export interface ServedExample {
   reason: string;
   page: string;
   cases: string[];
-  // a lesson's step, which its page runs and live's menu does not list
+  // a model its page runs, which live's menu does not list
   hidden?: boolean;
 }
 

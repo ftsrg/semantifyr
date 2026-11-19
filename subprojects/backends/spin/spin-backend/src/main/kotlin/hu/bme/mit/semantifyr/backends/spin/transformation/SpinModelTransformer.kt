@@ -7,6 +7,9 @@
 package hu.bme.mit.semantifyr.backends.spin.transformation
 
 import com.google.inject.Inject
+import hu.bme.mit.semantifyr.backend.transformation.WHOLE_DELAY_VARIABLE_NAME
+import hu.bme.mit.semantifyr.backend.transformation.WholeDelay
+import hu.bme.mit.semantifyr.backend.transformation.WholeDelayLowering
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.EnumDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
@@ -20,15 +23,19 @@ data class SpinArtifacts(
     val promela: String,
     val property: SpinProperty,
     val vectorSize: Int,
+    val wholeDelay: WholeDelay?,
+    val addedNames: Set<String>,
 )
 
 class SpinModelTransformer @Inject constructor(
     private val spinPropertyTransformer: SpinPropertyTransformer,
     private val spinDeclarationRenderer: SpinDeclarationRenderer,
     private val spinProctypeRenderer: SpinProctypeRenderer,
+    private val wholeDelayLowering: WholeDelayLowering,
 ) {
 
     fun transform(inlinedOxsts: InlinedOxsts): SpinArtifacts {
+        val wholeDelay = wholeDelayLowering.lower(inlinedOxsts)
         val globals = inlinedOxsts.variables
         val enums = collectEnumDeclarations(inlinedOxsts)
         val property = spinPropertyTransformer.transform(inlinedOxsts.property)
@@ -37,11 +44,20 @@ class SpinModelTransformer @Inject constructor(
         spinDeclarationRenderer.renderEnums(builder, enums)
         spinDeclarationRenderer.renderGlobals(builder, globals)
         spinDeclarationRenderer.renderStableFlag(builder)
-        spinProctypeRenderer.renderInitProctype(builder, inlinedOxsts)
+        if (wholeDelay != null) {
+            spinDeclarationRenderer.renderDelay(builder)
+        }
+        spinProctypeRenderer.renderInitProctype(builder, inlinedOxsts, wholeDelay)
         builder.appendLine()
         builder.appendLine("ltl p { ${property.ltl} }")
 
-        return SpinArtifacts(builder.toString(), property, vectorSizeOf(inlinedOxsts))
+        val addedNames = setOfNotNull(
+            SPIN_STABLE_FLAG,
+            WHOLE_DELAY_VARIABLE_NAME.takeIf {
+                wholeDelay != null
+            },
+        )
+        return SpinArtifacts(builder.toString(), property, vectorSizeOf(inlinedOxsts), wholeDelay, addedNames)
     }
 
     private fun vectorSizeOf(inlinedOxsts: InlinedOxsts): Int {

@@ -11,8 +11,8 @@ import {
   type Location,
   type VerificationCaseResult,
   type VerificationCaseSpecification,
-  type VerificationMetrics,
-  type VerificationTrace,
+  type VerificationReport,
+  type WitnessValidationLocation,
   type WitnessValidationResult,
   type WitnessValidationStatus,
   verifyCase,
@@ -26,23 +26,12 @@ import {
 
 import type { ActiveVerificationInfo, VerificationState as ServerState } from '../api/types'
 
-export type VerificationCaseLocation = Location
-
 export type {
-  CallTrace,
-  CallTraceStep,
   Location,
   Range,
-  TraceArgument,
-  TraceEntry,
   VerificationCaseRequest,
   VerificationCaseResult,
   VerificationCaseSpecification,
-  VerificationMetrics,
-  VerificationTrace,
-  WitnessState,
-  WitnessStateStep,
-  WitnessStateValue,
   WitnessValidationStatus,
 } from '@semantifyr/editor-common'
 
@@ -65,7 +54,9 @@ export interface VerificationCaseState {
   caseInfo: VerificationCaseSpecification
   status: VerificationCaseStatus
   message?: string
-  trace?: VerificationTrace
+  report?: VerificationReport
+  witnessUri?: string
+  traceUri?: string
   witnessValidation?: WitnessValidationStatus
   validationMessage?: string | undefined
   // True between the trace arriving and the follow-up validateWitness resolving.
@@ -85,11 +76,8 @@ export interface VerificationCaseState {
   waited?: number
   validationAskedAt?: number
   validationWaited?: number
-  metrics?: VerificationMetrics
-  backendId?: string
   portfolioId?: string
-  validationMetrics?: VerificationMetrics
-  validationBackendId?: string
+  validationReport?: VerificationReport
   validationPortfolioIdUsed?: string
   // the status of the result shown, kept while a new run of the case is queued or running
   resultStatus?: VerificationCaseStatus
@@ -227,7 +215,7 @@ function withReport(caseState: VerificationCaseState, active: readonly ActiveVer
     }
   }
   if (caseState.validating === true) {
-    const witnessUri = caseState.trace?.witnessUri
+    const witnessUri = caseState.witnessUri
     const reported = reportedState(active, 'Validate', (location) => {
       return location.uri === witnessUri || sameStart(location, caseState.caseInfo.location)
     })
@@ -349,18 +337,18 @@ export interface RunVerificationOptions {
 interface VerifyOutcome {
   status: VerificationCaseStatus
   message?: string
-  trace?: VerificationTrace
-  metrics?: VerificationMetrics
-  backendId?: string
+  report?: VerificationReport
+  witnessUri?: string
+  traceUri?: string
 }
 
 function toVerifyOutcome(response: VerificationCaseResult | null): VerifyOutcome {
   return {
     status: parseResultStatus(response),
     ...(response?.message != null ? { message: response.message } : {}),
-    ...(response?.trace ? { trace: response.trace } : {}),
-    ...(response?.metrics ? { metrics: response.metrics } : {}),
-    ...(response?.backendId ? { backendId: response.backendId } : {}),
+    ...(response?.report ? { report: response.report } : {}),
+    ...(response?.witnessUri ? { witnessUri: response.witnessUri } : {}),
+    ...(response?.traceUri ? { traceUri: response.traceUri } : {}),
   }
 }
 
@@ -378,9 +366,9 @@ function applyVerifyOutcome(
     resultStatus: outcome.status,
     outdated: caseState.editedDuringRun === true,
     ...(outcome.message != null ? { message: outcome.message } : {}),
-    ...(outcome.trace ? { trace: outcome.trace } : {}),
-    ...(outcome.metrics ? { metrics: outcome.metrics } : {}),
-    ...(outcome.backendId ? { backendId: outcome.backendId } : {}),
+    ...(outcome.report ? { report: outcome.report } : {}),
+    ...(outcome.witnessUri ? { witnessUri: outcome.witnessUri } : {}),
+    ...(outcome.traceUri ? { traceUri: outcome.traceUri } : {}),
     ...(portfolioId !== undefined ? { portfolioId } : {}),
   }
 }
@@ -425,7 +413,7 @@ function maybeDispatchAutoValidation(
   setState: StateUpdater,
   options: RunVerificationOptions,
 ): void {
-  const witnessUri = outcome.trace?.witnessUri
+  const witnessUri = outcome.witnessUri
   if (!witnessUri) {
     return
   }
@@ -727,15 +715,14 @@ export function verifySingleCase(
 export interface WitnessValidationOutcome {
   status: WitnessValidationStatus
   message?: string
-  metrics?: VerificationMetrics
-  backendId?: string
+  report?: VerificationReport
   portfolioId?: string
 }
 
 export async function validateWitness(
   client: LspClient,
   validateCommand: string,
-  location: VerificationCaseLocation,
+  location: WitnessValidationLocation,
   options: RunVerificationOptions = {},
   token?: CancellationToken,
 ): Promise<WitnessValidationOutcome> {
@@ -757,13 +744,12 @@ function toValidationOutcome(response: WitnessValidationResult | null): WitnessV
   return {
     status: witnessValidationStatusOf(response),
     ...(response?.message != null ? { message: response.message } : {}),
-    ...(response?.metrics ? { metrics: response.metrics } : {}),
-    ...(response?.backendId ? { backendId: response.backendId } : {}),
+    ...(response?.report ? { report: response.report } : {}),
     ...(response?.portfolioId ? { portfolioId: response.portfolioId } : {}),
   }
 }
 
-function withoutValidationReport(caseState: VerificationCaseState): VerificationCaseState {
+function withoutValidationServerStateAndAskedAt(caseState: VerificationCaseState): VerificationCaseState {
   const { validationServerState: _validationServerState, validationAskedAt: _validationAskedAt, ...rest } = caseState
   return rest
 }
@@ -772,19 +758,19 @@ function applyValidationOutcome(
   caseState: VerificationCaseState,
   outcome: WitnessValidationOutcome,
 ): VerificationCaseState {
+  const { validationReport: _validationReport, ...rest } = withoutValidationServerStateAndAskedAt(caseState)
   return {
-    ...withoutValidationReport(caseState),
+    ...rest,
     validating: false,
     witnessValidation: outcome.status,
     validationMessage: outcome.message,
-    ...(outcome.metrics ? { validationMetrics: outcome.metrics } : {}),
-    ...(outcome.backendId ? { validationBackendId: outcome.backendId } : {}),
+    ...(outcome.report ? { validationReport: outcome.report } : {}),
     ...(outcome.portfolioId ? { validationPortfolioIdUsed: outcome.portfolioId } : {}),
   }
 }
 
 function askedForValidation(caseState: VerificationCaseState): VerificationCaseState {
-  const { validationWaited: _validationWaited, ...rest } = withoutValidationReport(caseState)
+  const { validationWaited: _validationWaited, ...rest } = withoutValidationServerStateAndAskedAt(caseState)
   return { ...rest, validating: true, validationAskedAt: Date.now() }
 }
 
@@ -792,7 +778,7 @@ export function dispatchAutoValidation(
   client: LspClient,
   validateCommand: string,
   caseId: string,
-  location: VerificationCaseLocation,
+  location: WitnessValidationLocation,
   setState: StateUpdater,
   options: { validationPortfolioId?: string | undefined } = {},
 ): void {

@@ -7,12 +7,17 @@
 package hu.bme.mit.semantifyr.backends.theta.transformation.xsts
 
 import com.google.inject.Inject
+import hu.bme.mit.semantifyr.backend.BackendUnsupportedException
+import hu.bme.mit.semantifyr.backend.transformation.WHOLE_DELAY_VARIABLE_NAME
+import hu.bme.mit.semantifyr.backend.transformation.WholeDelay
+import hu.bme.mit.semantifyr.backend.transformation.WholeDelayLowering
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ElementReference
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.EnumDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.TransitionDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 import hu.bme.mit.semantifyr.xsts.lang.xsts.BooleanOp
+import hu.bme.mit.semantifyr.xsts.lang.xsts.ComparisonOp
 import hu.bme.mit.semantifyr.xsts.lang.xsts.SequenceOperation
 import hu.bme.mit.semantifyr.xsts.lang.xsts.Transition
 import hu.bme.mit.semantifyr.xsts.lang.xsts.XstsModel
@@ -21,15 +26,23 @@ import org.eclipse.emf.common.util.URI
 private typealias XstsTransition = Transition
 private typealias XstsSequenceOperation = SequenceOperation
 
+class ThetaArtifacts(
+    val xsts: XstsModel,
+    val wholeDelay: WholeDelay?,
+    val addedNames: Set<String>,
+)
+
 class ThetaModelTransformer @Inject constructor(
     private val thetaOperationTransformer: ThetaOperationTransformer,
     private val thetaPropertyTransformer: ThetaPropertyTransformer,
     private val thetaDomainTransformer: ThetaDomainTransformer,
     private val thetaVariableTransformer: ThetaVariableTransformer,
     private val xstsModelCreator: XstsModelCreator,
+    private val wholeDelayLowering: WholeDelayLowering,
 ) {
 
-    fun transform(inlinedOxsts: InlinedOxsts, xstsUri: URI): XstsModel {
+    fun transform(inlinedOxsts: InlinedOxsts, xstsUri: URI): ThetaArtifacts {
+        val wholeDelay = wholeDelayLowering.lower(inlinedOxsts)
         val xsts = xstsModelCreator.createEmptyXsts(xstsUri)
 
         for (variableDeclaration in inlinedOxsts.variables) {
@@ -43,6 +56,9 @@ class ThetaModelTransformer @Inject constructor(
         xsts.init = transform(inlinedOxsts.initTransition)
         xsts.property = thetaPropertyTransformer.transform(inlinedOxsts.property)
 
+        if (wholeDelay != null) {
+            waitBeforeEveryStep(xsts, wholeDelay)
+        }
         excludeDeclarationValuation(xsts)
 
         xsts.enumDeclarations += inlinedOxsts.eAllContents().asSequence().mapNotNull {
@@ -55,7 +71,90 @@ class ThetaModelTransformer @Inject constructor(
             thetaDomainTransformer.transform(it)
         }.distinct()
 
-        return xsts
+        val addedNames = setOfNotNull(
+            INITIALIZED_FLAG_NAME,
+            WHOLE_DELAY_VARIABLE_NAME.takeIf {
+                wholeDelay != null
+            },
+        )
+        return ThetaArtifacts(xsts, wholeDelay, addedNames)
+    }
+
+    private fun waitBeforeEveryStep(xsts: XstsModel, wholeDelay: WholeDelay) {
+        val delay = XstsFactory.createTopLevelVariableDeclaration().also {
+            it.name = WHOLE_DELAY_VARIABLE_NAME
+            it.type = XstsFactory.createIntegerType()
+            it.expression = integerLiteral(0)
+        }
+        xsts.variableDeclarations += delay
+
+        for (branch in xsts.tran.branches) {
+            val wait = listOf(
+                XstsFactory.createHavocOperation().also {
+                    it.reference = XstsFactory.createElementReferenceExpression().also { reference ->
+                        reference.element = delay
+                    }
+                },
+                XstsFactory.createAssumptionOperation().also {
+                    it.expression = XstsFactory.createBooleanOperator().also { range ->
+                        range.left = comparison(reference(delay), ComparisonOp.GREATER_EQ, integerLiteral(0))
+                        range.op = BooleanOp.AND
+                        range.right = comparison(reference(delay), ComparisonOp.LESS_EQ, saturationLiteral(wholeDelay.longestDelay))
+                    }
+                },
+            ) + wholeDelay.clocks.map {
+                advance(thetaVariableTransformer.transformTopLevel(it.variable), delay, it.saturation)
+            }
+            branch.steps.addAll(0, wait)
+        }
+    }
+
+    private fun advance(
+        clock: XstsTopLevelVariableDeclaration,
+        delay: XstsTopLevelVariableDeclaration,
+        saturation: Long,
+    ): XstsOperation {
+        return XstsFactory.createAssignmentOperation().also {
+            it.reference = reference(clock)
+            it.expression = XstsFactory.createIfThenElseExpression().also { saturated ->
+                saturated.guard = comparison(sum(clock, delay), ComparisonOp.GREATER_EQ, saturationLiteral(saturation))
+                saturated.then = saturationLiteral(saturation)
+                saturated.`else` = sum(clock, delay)
+            }
+        }
+    }
+
+    private fun sum(clock: XstsTopLevelVariableDeclaration, delay: XstsTopLevelVariableDeclaration): XstsExpression {
+        return XstsFactory.createArithmeticBinaryOperator().also {
+            it.left = reference(clock)
+            it.op = XstsArithmeticOp.ADD
+            it.right = reference(delay)
+        }
+    }
+
+    private fun comparison(
+        left: XstsExpression,
+        op: ComparisonOp,
+        right: XstsExpression,
+    ): XstsExpression {
+        return XstsFactory.createComparisonOperator().also {
+            it.left = left
+            it.op = op
+            it.right = right
+        }
+    }
+
+    private fun saturationLiteral(saturation: Long): XstsExpression {
+        if (saturation > Int.MAX_VALUE) {
+            throw BackendUnsupportedException("An XSTS integer literal cannot hold the clock saturation $saturation")
+        }
+        return integerLiteral(saturation.toInt())
+    }
+
+    private fun integerLiteral(value: Int): XstsExpression {
+        return XstsFactory.createLiteralInteger().also {
+            it.value = value
+        }
     }
 
     // Theta's CEGAR configurations test the property on the declaration valuation too, which is not a state

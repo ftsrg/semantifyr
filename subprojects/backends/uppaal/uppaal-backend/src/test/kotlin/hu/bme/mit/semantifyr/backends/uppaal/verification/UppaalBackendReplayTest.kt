@@ -13,17 +13,21 @@ import hu.bme.mit.semantifyr.backend.BackendVerificationRequest
 import hu.bme.mit.semantifyr.backend.BackendVerificationResult
 import hu.bme.mit.semantifyr.backend.SoundnessDirection
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
+import hu.bme.mit.semantifyr.backend.boolean
 import hu.bme.mit.semantifyr.backend.enumeration
 import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
 import hu.bme.mit.semantifyr.backend.integer
+import hu.bme.mit.semantifyr.backend.witness.Fraction
 import hu.bme.mit.semantifyr.backends.uppaal.ReplayingUppaalExecutor
 import hu.bme.mit.semantifyr.backends.uppaal.UppaalExecutionResult
 import hu.bme.mit.semantifyr.backends.uppaal.UppaalExecutionSpecification
 import hu.bme.mit.semantifyr.backends.uppaal.UppaalExecutor
 import hu.bme.mit.semantifyr.backends.uppaal.UppaalExecutorKey
+import hu.bme.mit.semantifyr.compiler.pipeline.context.TransitionCallTraceMap
 import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.entry
 import org.junit.jupiter.api.Test
 import java.nio.file.Path
 import kotlin.io.path.Path
@@ -46,18 +50,20 @@ class UppaalBackendReplayTest {
     private suspend fun verify(
         case: String,
         inlinedOxsts: InlinedOxsts,
+        transitionCallTraces: TransitionCallTraceMap,
         artifactDirectory: Path = cleanArtifactDirectory(case),
     ): BackendVerificationResult {
         val environment = ExecutionEnvironment.builder().put(UppaalExecutorKey) {
             ReplayingUppaalExecutor(case)
         }.build()
-        val request = BackendVerificationRequest(inlinedOxsts, artifactDirectory)
+        val request = BackendVerificationRequest(inlinedOxsts, artifactDirectory, transitionCallTraces = transitionCallTraces)
         return UppaalBackend().verify(injector, UppaalConfig.Default, request, environment)
     }
 
     private suspend fun verifyFixture(file: String, className: String): BackendVerificationResult {
         val artifactDirectory = cleanArtifactDirectory(className)
-        return verify(className, models.compile(file, className, artifactDirectory), artifactDirectory)
+        val compilation = models.compileFlattened(file, className, artifactDirectory)
+        return verify(className, compilation.inlinedOxsts, compilation.transitionCallTraces, artifactDirectory)
     }
 
     @Test
@@ -77,8 +83,44 @@ class UppaalBackendReplayTest {
     }
 
     @Test
+    suspend fun `a clock trace states each step's exact elapsed time, a strict test's on a grid of one half`() {
+        val result = verifyFixture("clocks", "ClockStrictTestDenseReach")
+
+        assertThat(result.verdict).isEqualTo(VerificationVerdict.Passed)
+        val witness = result.inlinedWitness!!
+        assertThat(witness.initializedState.elapsed).isEqualTo(Fraction.ZERO)
+        assertThat(
+            witness.transitionStates.map {
+                it.elapsed
+            },
+        ).containsExactly(Fraction.of(1, 2))
+        assertThat(witness.transitionStates.single().boolean("\$\$root\$\$between")).isTrue()
+    }
+
+    @Test
+    suspend fun `a clock trace states every kept clock's value after the step`() {
+        val result = verifyFixture("clocks", "ClockZeroDelayAfterResetViolated")
+
+        assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
+        val states = result.inlinedWitness!!.transitionStates
+        assertThat(
+            states.map {
+                it.elapsed
+            },
+        ).containsExactly(Fraction.of(1))
+        assertThat(
+            states.single().clockValues.associate {
+                it.variable.name to it.value
+            },
+        ).containsExactly(
+            entry("\$\$root\$\$lap", Fraction.ZERO),
+            entry("\$\$root\$\$total", Fraction.of(1)),
+        )
+    }
+
+    @Test
     suspend fun `a model verifyta rejects is Errored with verifyta's message`() {
-        val result = verify("RejectedModel", models.parse(BackendTestModels.SATURATING_COUNTER_EXCEEDS_BOUND))
+        val result = verify("RejectedModel", models.parse(BackendTestModels.SATURATING_COUNTER_EXCEEDS_BOUND), TransitionCallTraceMap(emptyMap()))
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Errored)
         assertThat(result.message).contains("Duplicate definition of On.")
@@ -86,7 +128,7 @@ class UppaalBackendReplayTest {
 
     @Test
     suspend fun `a violated invariant fails with a witness through the violating states`() {
-        val result = verify("CounterExceedsBound", models.parse(BackendTestModels.SATURATING_COUNTER_EXCEEDS_BOUND))
+        val result = verify("CounterExceedsBound", models.parse(BackendTestModels.SATURATING_COUNTER_EXCEEDS_BOUND), TransitionCallTraceMap(emptyMap()))
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
         val witness = result.inlinedWitness!!
@@ -99,8 +141,25 @@ class UppaalBackendReplayTest {
     }
 
     @Test
+    suspend fun `a value of the trace that cannot be read fails the run`() {
+        val result = verify("CounterExceedsBoundUnreadableValue", models.parse(BackendTestModels.SATURATING_COUNTER_EXCEEDS_BOUND), TransitionCallTraceMap(emptyMap()))
+
+        assertThat(result.verdict).isEqualTo(VerificationVerdict.Errored)
+        assertThat(result.message).contains("1.5 for counter")
+        assertThat(result.inlinedWitness).isNull()
+    }
+
+    @Test
+    suspend fun `a name of the trace that does not map back fails the run`() {
+        val result = verify("CounterExceedsBoundUnmappedName", models.parse(BackendTestModels.SATURATING_COUNTER_EXCEEDS_BOUND), TransitionCallTraceMap(emptyMap()))
+
+        assertThat(result.verdict).isEqualTo(VerificationVerdict.Errored)
+        assertThat(result.message).contains("ghost, which names no variable of the model")
+    }
+
+    @Test
     suspend fun `an unreachable target fails without a witness`() {
-        val result = verify("UnreachableTarget", models.parse(BackendTestModels.UNREACHABLE_TARGET))
+        val result = verify("UnreachableTarget", models.parse(BackendTestModels.UNREACHABLE_TARGET), TransitionCallTraceMap(emptyMap()))
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
         assertThat(result.inlinedWitness).isNull()
@@ -139,6 +198,7 @@ class UppaalBackendReplayTest {
                     }
                 """,
             ),
+            TransitionCallTraceMap(emptyMap()),
         )
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.NotSupported)
@@ -167,7 +227,7 @@ class UppaalBackendReplayTest {
                 }
             """,
         )
-        val request = BackendVerificationRequest(inlinedOxsts, artifactDirectory)
+        val request = BackendVerificationRequest(inlinedOxsts, artifactDirectory, transitionCallTraces = TransitionCallTraceMap(emptyMap()))
 
         val result = UppaalBackend().verify(injector, UppaalConfig.OverApproximation, request, environment)
 
@@ -209,6 +269,7 @@ class UppaalBackendReplayTest {
                     }
                 """,
             ),
+            TransitionCallTraceMap(emptyMap()),
         )
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.NotSupported)
@@ -233,7 +294,7 @@ class UppaalBackendReplayTest {
                 }
             }
         }.build()
-        val request = BackendVerificationRequest(models.parse(BackendTestModels.SATURATING_COUNTER_EXCEEDS_BOUND), artifactDirectory)
+        val request = BackendVerificationRequest(models.parse(BackendTestModels.SATURATING_COUNTER_EXCEEDS_BOUND), artifactDirectory, transitionCallTraces = TransitionCallTraceMap(emptyMap()))
         val result = UppaalBackend().verify(injector, UppaalConfig.Default, request, environment)
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.NotSupported)

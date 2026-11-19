@@ -158,7 +158,7 @@ class GammaTraceLanguageServerTest {
                 CommandGson.INSTANCE.toJsonTree(VerificationCaseRequest.fromLocation(location, null)));
 
         assertThat(result.status()).isEqualTo(WitnessValidationStatus.ERRORED);
-        assertThat(result.verdict()).isNull();
+        assertThat(result.report()).isNull();
         assertThat(result.message()).isEqualTo("Case Crossroads.RoadBCanGetGreen has no witness yet, verify it first");
         assertThat(result.portfolioId())
                 .isEqualTo(Portfolios.INSTANCE.getDefault().getId());

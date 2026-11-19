@@ -7,7 +7,7 @@
 import type React from 'react'
 import { useEffect, useRef, useState } from 'react'
 import { editor as monacoEditor, Uri } from 'monaco-editor'
-import type { VerificationTrace } from '@semantifyr/editor-common'
+import type { ReportTrace } from '@semantifyr/editor-common'
 
 import type { LanguageRuntime } from '../lib/language/types'
 import { openDerivedDocument, typingOptionsOf, whenMonacoReady } from '../lib/session/monaco'
@@ -104,7 +104,7 @@ export async function openTraceText(live: Live, runtime: LanguageRuntime | null,
   }
 }
 
-function useTraceText(source: TraceTextSource | null, runtime: LanguageRuntime | null, trace: VerificationTrace): TraceText {
+function useTraceText(source: TraceTextSource | null, runtime: LanguageRuntime | null, trace: ReportTrace): TraceText {
   const [text, setText] = useState<TraceText>({ state: 'loading' })
   const fileUri = source?.fileUri ?? null
   const languageId = source?.languageId ?? ''

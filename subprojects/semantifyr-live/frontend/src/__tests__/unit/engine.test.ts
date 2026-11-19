@@ -24,8 +24,8 @@ import { sampleCase } from '../fixtures/cases';
 import {
   failedResult,
   passedResult,
-  sampleMetrics,
-  sampleTrace,
+  sampleReport,
+  sampleValidationReport,
 } from '../fixtures/verification-results';
 
 function captureStates(): {
@@ -44,7 +44,7 @@ function captureStates(): {
 const noopProgress = (_: (parameters: unknown) => void) => () => {};
 
 describe('runAllVerifications', () => {
-  it('sends every case at once and folds in each verdict with its metrics + backendId', async () => {
+  it('sends every case at once and folds in each verdict with its report', async () => {
     const responses = [passedResult, failedResult];
     const sendRequest = vi.fn<LspClient['sendRequest']>(async () => responses.shift() ?? null);
     const client: LspClient = { sendRequest, sendNotification: () => {} };
@@ -66,10 +66,10 @@ describe('runAllVerifications', () => {
 
     const final = states.at(-1)!;
     expect(final.cases.map((verificationCase) => verificationCase.status)).toEqual(['passed', 'failed']);
-    expect(final.cases[0]!.metrics?.totalDuration).toBe('PT1S');
-    expect(final.cases[0]!.backendId).toBe('theta-cegar');
+    expect(final.cases[0]!.report).toEqual(passedResult.report);
     expect(final.cases[0]!.portfolioId).toBe('smart');
-    expect(final.cases[1]!.trace).toBeDefined();
+    expect(final.cases[1]!.report).toEqual(failedResult.report);
+    expect(final.cases[1]!.witnessUri).toBe(failedResult.witnessUri);
     expect(final.message).toMatch(/not every case passed/i);
 
     expect(sendRequest.mock.calls[0]![1]).toEqual({
@@ -135,9 +135,8 @@ describe('runAllVerifications', () => {
       return {
         status: 'valid',
         message: null,
-        metrics: sampleMetrics,
-        backendId: 'theta-cegar',
         portfolioId: 'smart',
+        report: sampleValidationReport,
       };
     });
     const client: LspClient = { sendRequest, sendNotification: () => {} };
@@ -164,16 +163,16 @@ describe('runAllVerifications', () => {
     });
     expect(sendRequest).toHaveBeenCalledTimes(2);
     expect(states.some((state) => state.cases[0]?.validating === true)).toBe(true);
-    expect(states.at(-1)!.cases[0]!.validationBackendId).toBe('theta-cegar');
+    expect(states.at(-1)!.cases[0]!.validationReport).toEqual(sampleValidationReport);
   });
 
-  it('sends the case location instead of the witness location when the command validates by case', async () => {
+  it('sends the case location and the witness its verification wrote when the command validates by case', async () => {
     const gammaCase = { ...sampleCase('a'), location: { uri: 'file:///workspace/snippet.gamma', range: { start: { line: 4, character: 0 }, end: { line: 6, character: 1 } } } };
     const sendRequest = vi.fn<LspClient['sendRequest']>(async (_method, parameters) => {
       if ((parameters as { command?: string }).command === 'gamma.case.verify') {
         return failedResult;
       }
-      return { status: 'valid', verdict: 'passed', message: null, backendId: null, portfolioId: 'smart', metrics: null };
+      return { status: 'valid', message: null, portfolioId: 'smart', report: null, witnessUri: null };
     });
     const client: LspClient = { sendRequest, sendNotification: () => {} };
 
@@ -191,14 +190,15 @@ describe('runAllVerifications', () => {
     await vi.waitFor(() => {
       expect(states.at(-1)!.cases[0]!.witnessValidation).toBe('valid');
     });
-    const parameters = sendRequest.mock.calls[1]![1] as { command: string; arguments: { uri: string; range: unknown }[] };
+    const parameters = sendRequest.mock.calls[1]![1] as { command: string; arguments: { uri: string; range: unknown; witnessUri?: string }[] };
     expect(parameters.command).toBe('gamma.witness.validate');
     expect(parameters.arguments[0]!.uri).toBe(gammaCase.location.uri);
     expect(parameters.arguments[0]!.range).toEqual(gammaCase.location.range);
+    expect(parameters.arguments[0]!.witnessUri).toBe(failedResult.witnessUri);
   });
 
   it('skips auto-validation when the trace has no witnessUri', async () => {
-    const noWitnessFail: VerificationCaseResult = { ...failedResult, trace: { ...sampleTrace, witnessUri: null } };
+    const noWitnessFail: VerificationCaseResult = { ...failedResult, witnessUri: null };
     const sendRequest = vi.fn<LspClient['sendRequest']>(async () => noWitnessFail);
     const client: LspClient = { sendRequest, sendNotification: () => {} };
 
@@ -332,9 +332,8 @@ describe('validateWitness', () => {
     const sendRequest = vi.fn<LspClient['sendRequest']>(async () => ({
       status: 'invalid',
       message: 'spurious counterexample',
-      backendId: 'theta-bmc',
       portfolioId: 'smart',
-      metrics: sampleMetrics,
+      report: sampleValidationReport,
     }));
     const client: LspClient = { sendRequest, sendNotification: () => {} };
 
@@ -345,7 +344,7 @@ describe('validateWitness', () => {
       { portfolioId: 'smart' },
     );
     expect(outcome.status).toBe('invalid');
-    expect(outcome.backendId).toBe('theta-bmc');
+    expect(outcome.report).toEqual(sampleValidationReport);
     expect(outcome.portfolioId).toBe('smart');
 
     const callArguments = sendRequest.mock.calls[0]!;
@@ -383,9 +382,8 @@ describe('dispatchAutoValidation', () => {
   it('flips validating=true synchronously and folds the validation result back in', async () => {
     const sendRequest = vi.fn<LspClient['sendRequest']>(async () => ({
       status: 'valid',
-      backendId: 'theta-cegar',
       portfolioId: 'smart',
-      metrics: sampleMetrics,
+      report: sampleValidationReport,
     }));
     const client: LspClient = { sendRequest, sendNotification: () => {} };
 
@@ -393,7 +391,7 @@ describe('dispatchAutoValidation', () => {
     setState({
       phase: 'done',
       discovery: 'discovered',
-      cases: [{ caseInfo: sampleCase('a'), status: 'failed', trace: sampleTrace }],
+      cases: [{ caseInfo: sampleCase('a'), status: 'failed', report: sampleReport, witnessUri: failedResult.witnessUri! }],
     });
 
     dispatchAutoValidation(
@@ -414,7 +412,7 @@ describe('dispatchAutoValidation', () => {
       const last = states.at(-1)!;
       expect(last.cases[0]!.witnessValidation).toBe('valid');
       expect(last.cases[0]!.validating).toBe(false);
-      expect(last.cases[0]!.validationBackendId).toBe('theta-cegar');
+      expect(last.cases[0]!.validationReport).toEqual(sampleValidationReport);
       expect(last.cases[0]!.validationPortfolioIdUsed).toBe('smart');
     });
   });
@@ -464,9 +462,9 @@ describe('the server\'s report of the session\'s verifications', () => {
     const validating: VerificationState = {
       phase: 'done',
       discovery: 'discovered',
-      cases: [{ caseInfo: caseOnLine('a', 1), status: 'failed', validating: true, trace: sampleTrace }],
+      cases: [{ caseInfo: caseOnLine('a', 1), status: 'failed', validating: true, report: sampleReport, witnessUri: failedResult.witnessUri! }],
     };
-    const witness = { uri: sampleTrace.witnessUri!, range: { start: { line: 0, character: 0 }, end: { line: 0, character: 0 } } };
+    const witness = { uri: failedResult.witnessUri!, range: { start: { line: 0, character: 0 }, end: { line: 0, character: 0 } } };
     expect(applyServerReport(validating, [entry('Validate', 'Queued', witness)], 0).cases[0]).toMatchObject({ validationServerState: 'Queued' });
   });
 });

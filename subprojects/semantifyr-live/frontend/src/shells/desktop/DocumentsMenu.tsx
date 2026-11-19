@@ -80,8 +80,8 @@ function TraceEntry({ view, label, runtime, close }: { view: TraceView | undefin
   const selected = verification.cases.find((caseState) => {
     return caseState.caseInfo.id === selection
   })
-  const trace = selected?.trace ?? null
-  const source = selected && trace ? view.source({ trace, caseName: caseRowOf(selected).name, runtime }) : null
+  const trace = selected?.report?.trace ?? null
+  const source = selected && trace ? view.source({ witnessUri: selected.witnessUri ?? null, traceUri: selected.traceUri ?? null, caseName: caseRowOf(selected).name }) : null
   return (
     <Entry
       label={label}

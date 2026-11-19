@@ -15,16 +15,20 @@ import hu.bme.mit.semantifyr.lang.ide.server.OxstsInjector;
 import hu.bme.mit.semantifyr.lang.ide.server.ServerSettings;
 import hu.bme.mit.semantifyr.lang.ide.server.commands.AbstractCommandHandler;
 import hu.bme.mit.semantifyr.lang.ide.server.commands.CommandProgressContext;
-import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseRequest;
+import hu.bme.mit.semantifyr.lang.ide.server.wire.WitnessValidationRequest;
 import hu.bme.mit.semantifyr.lang.ide.server.wire.WitnessValidationResult;
+import java.net.URI;
+import java.nio.file.Path;
 import java.util.List;
+import kotlin.coroutines.EmptyCoroutineContext;
+import kotlinx.coroutines.BuildersKt;
 import org.eclipse.xtext.ide.server.ILanguageServerAccess;
 import org.eclipse.xtext.util.CancelIndicator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class ValidateWitnessGammaCommandHandler
-        extends AbstractCommandHandler<VerificationCaseRequest, ValidateWitnessCommandParams> {
+        extends AbstractCommandHandler<WitnessValidationRequest, ValidateWitnessCommandParams> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ValidateWitnessGammaCommandHandler.class);
 
@@ -52,20 +56,22 @@ public class ValidateWitnessGammaCommandHandler
 
     @Override
     public List<Object> serializeArguments(ValidateWitnessCommandParams arguments) {
-        return List.of(VerificationCaseRequest.fromLocation(
-                getLocation(arguments.caseDeclaration()), arguments.portfolioId()));
+        var location = getLocation(arguments.caseDeclaration());
+        return List.of(new WitnessValidationRequest(
+                location.getUri(), location.getRange(), arguments.portfolioId(), arguments.witnessUri()));
     }
 
     @Override
-    protected Class<VerificationCaseRequest> getRequestType() {
-        return VerificationCaseRequest.class;
+    protected Class<WitnessValidationRequest> getRequestType() {
+        return WitnessValidationRequest.class;
     }
 
     @Override
     protected ValidateWitnessCommandParams resolveArgument(
-            VerificationCaseRequest request, ILanguageServerAccess access, CancelIndicator cancelIndicator) {
+            WitnessValidationRequest request, ILanguageServerAccess access, CancelIndicator cancelIndicator) {
         var element = getElement(access, request.toLocation());
-        return new ValidateWitnessCommandParams((VerificationCaseDeclaration) element, request.portfolio());
+        return new ValidateWitnessCommandParams(
+                (VerificationCaseDeclaration) element, request.portfolio(), request.witnessUri());
     }
 
     @Override
@@ -84,6 +90,14 @@ public class ValidateWitnessGammaCommandHandler
 
         return performBackgroundWork(() -> {
             try {
+                if (arguments.witnessUri() == null) {
+                    LOGGER.info("LSP validate witness '{}' was given no witness", gammaCase.getQualifiedName());
+                    return WitnessValidationResult.errored(
+                            "Case " + gammaCase.getQualifiedName() + " has no witness yet, verify it first",
+                            portfolio.getId());
+                }
+                var witnessPath = Path.of(URI.create(arguments.witnessUri()));
+
                 var frontend = GammaFrontend.builder()
                         .gammaInjector(gammaInjector)
                         .oxstsInjector(oxstsInjector.get())
@@ -95,23 +109,18 @@ public class ValidateWitnessGammaCommandHandler
                         .optimization(serverSettings.resolveOptimizationConfig())
                         .build();
 
-                var witnessPath = frontend.findWitness(gammaCase);
-                if (witnessPath == null) {
-                    LOGGER.info("LSP validate witness '{}' found no witness", gammaCase.getQualifiedName());
-                    return WitnessValidationResult.errored(
-                            "Case " + gammaCase.getQualifiedName() + " has no witness yet, verify it first",
-                            portfolio.getId());
-                }
-
                 progressContext.checkIsCancelled();
 
-                var validation = frontend.validateWitnessBlocking(gammaCase, witnessPath, progressContext);
+                var validation = BuildersKt.<hu.bme.mit.semantifyr.verifier.witness.WitnessValidationResult>runBlocking(
+                        EmptyCoroutineContext.INSTANCE,
+                        (scope, continuation) -> frontend.validateWitness(
+                                gammaCase, witnessPath, portfolio, progressContext, continuation));
                 LOGGER.info(
                         "LSP validate witness '{}' -> {}",
                         gammaCase.getQualifiedName(),
-                        validation.getVerification().getVerdict());
+                        validation.getOutcome().getReport().getResult().getVerdict());
 
-                return WitnessValidationResult.fromDto(validation, portfolio.getId());
+                return WitnessValidationResult.fromValidation(validation, portfolio.getId());
             } catch (Exception e) {
                 LOGGER.error(
                         "LSP validate witness '{}' threw {}",

@@ -69,7 +69,7 @@ describe('the portfolio settings', () => {
 
   test('show a validation that fails on its row, which validates again when asked', async ({ ui }) => {
     ui.backend.answer('validate', (_request, recorded) => {
-      return { ...recorded(), status: 'invalid', verdict: 'passed', message: 'The witness does not reproduce the violation' }
+      return { ...recorded(), status: 'invalid', message: 'The witness does not reproduce the violation' }
     })
     const page = await ui.open(LEVEL_CROSSING)
     await casesListed(page)

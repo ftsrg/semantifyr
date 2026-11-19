@@ -49,6 +49,7 @@ interface TraceState {
   language: string
   validated?: boolean
   recorded?: boolean
+  timed?: boolean
   view: string
   act?: () => Promise<void>
   expectState: () => Promise<void> | void
@@ -93,12 +94,13 @@ const STATES_BY_NAME: Readonly<Record<string, TraceState>> = {
         return head.textContent
       })
       expect(heads.slice(0, 3)).toEqual(['environment', 'root', '…UnnamedTransitionUsage1'])
-      expect(heads).toHaveLength(8)
+      expect(heads).toHaveLength(7)
       expect(document.querySelector('.calls-head:nth-child(3)')?.getAttribute('title')).toBe('root.system.trackB.Behaviour.UnnamedTransitionUsage1')
       // the environment calls the root once in every step, and every recorded call has its caller's arrow
       expect(count('.call-arrow.from-environment')).toBe(count('.band'))
-      expect(count('.call-arrow:not(.from-environment)')).toBe(6)
+      expect(count('.call-arrow:not(.from-environment)')).toBe(5)
       expect(count('.call-arrow-label')).toBeGreaterThan(0)
+      expect(count('[data-testid=calls-elapsed]'), 'an untimed trace shows no time').toBe(0)
       for (const label of document.querySelectorAll('.call-arrow-label')) {
         const [line, head] = [...label.parentElement!.querySelectorAll('path')].map((path) => {
           return path.getBoundingClientRect()
@@ -107,6 +109,28 @@ const STATES_BY_NAME: Readonly<Record<string, TraceState>> = {
         expect(text.left, `${label.textContent} inside its arrow`).toBeGreaterThanOrEqual(Math.min(line!.left, head!.left) - 0.5)
         expect(text.right, `${label.textContent} inside its arrow`).toBeLessThanOrEqual(Math.max(line!.right, head!.right) + 0.5)
       }
+    },
+  },
+  'sysml-calls-timed': {
+    language: 'sysml',
+    timed: true,
+    view: 'calls',
+    expectState: () => {
+      const times = [...document.querySelectorAll('[data-testid=calls-elapsed]')]
+      expect(times.map((time) => {
+        return time.querySelector('text')?.textContent
+      })).toEqual(['1', '3/2', '0'])
+      for (const amount of ['1', '3/2', '0']) {
+        expect(page.getByRole('img', { name: `elapsed ${amount}`, exact: true }).elements(), `the time ${amount} named for a screen reader`).toHaveLength(1)
+      }
+      const bands = [...document.querySelectorAll('.band-fill')].map((band) => {
+        return band.getBoundingClientRect()
+      })
+      times.forEach((time, index) => {
+        const clock = time.getBoundingClientRect()
+        expect(clock.top, `the time of step ${index + 1} below the step before it`).toBeGreaterThanOrEqual(bands[index]!.bottom - 0.5)
+        expect(clock.bottom, `the time of step ${index + 1} above its step`).toBeLessThanOrEqual(bands[index + 1]!.top + 0.5)
+      })
     },
   },
   'sysml-witness': {
@@ -137,7 +161,7 @@ const STATES_BY_NAME: Readonly<Record<string, TraceState>> = {
     language: 'gamma',
     view: 'calls',
     expectState: () => {
-      expect(count('.call')).toBe(10)
+      expect(count('.call')).toBe(9)
     },
   },
   'gamma-witness': {
@@ -161,7 +185,7 @@ const STATES_BY_NAME: Readonly<Record<string, TraceState>> = {
     language: 'oxsts',
     view: 'calls',
     expectState: () => {
-      expect(count('.call')).toBe(10)
+      expect(count('.call')).toBe(9)
     },
   },
   'oxsts-witness': {
@@ -185,8 +209,8 @@ const STATES_BY_NAME: Readonly<Record<string, TraceState>> = {
     validated: true,
     view: 'own',
     expectState: () => {
-      expect(text('[data-testid=run-details]')).toContain('2.9 s, waited 30 s, Smart, decided by Theta')
-      expect(text('[data-testid=run-details]')).toContain('validated, 0.6 s, waited 4.0 s, Smart, decided by Spin')
+      expect(text('[data-testid=run-details]')).toContain('2.9 s, waited 30 s, Smart, decided by Theta, under-approximating')
+      expect(text('[data-testid=run-details]')).toContain('validated, 0.6 s, waited 4.0 s, Smart, decided by Spin, under-approximating')
     },
   },
   'run-details-not-validated': {
@@ -302,8 +326,8 @@ describe('the trace area', () => {
   for (const colorMode of ['light', 'dark'] as const) {
     for (const [name, state] of Object.entries(STATES_BY_NAME)) {
       it(`shows ${name} in the desktop column in the ${colorMode} theme`, async () => {
-          const language = LANGUAGES[state.language]!
-        const { live, shell } = seedWithTrace(language, caseState(language, { validated: state.validated ?? false, recorded: state.recorded ?? true }))
+        const language = LANGUAGES[state.language]!
+        const { live, shell } = seedWithTrace(language, caseState(language, { validated: state.validated ?? false, recorded: state.recorded ?? true, timed: state.timed ?? false }))
         const container = document.createElement('div')
         document.body.append(container)
         const root = createRoot(container)

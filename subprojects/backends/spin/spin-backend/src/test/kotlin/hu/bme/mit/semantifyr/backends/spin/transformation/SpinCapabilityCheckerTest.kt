@@ -35,13 +35,16 @@ class SpinCapabilityCheckerTest : SpinTransformationTestBase() {
                 var counter : int := 0
                 var flag : bool := false
                 var color : test::colors::Color := test::colors::Color::Red
+                var elapsed : clock := 0
                 init {
                     havoc(flag)
                 }
                 tran {
                     choice {
                         assume(counter < 3)
+                        assume(elapsed <= 2)
                         counter := counter + 1
+                        elapsed := 0
                     } or {
                         if (flag) {
                             color := test::colors::Color::Green
@@ -199,5 +202,37 @@ class SpinCapabilityCheckerTest : SpinTransformationTestBase() {
         )
 
         assertThat(unsupported).isEmpty()
+    }
+
+    private fun unsupportedWithClockBound(bound: Int): List<String> {
+        return unsupported(
+            """
+                var elapsed : clock := 0
+                var late : bool := false
+                init {
+                }
+                tran {
+                    choice {
+                        assume(elapsed >= $bound)
+                        late := true
+                        elapsed := 0
+                    } or {
+                    }
+                }
+                prop {
+                    AG !late
+                }
+            """,
+        )
+    }
+
+    @Test
+    fun `the largest clock bound whose whole delay stays within 32 bits is accepted`() {
+        assertThat(unsupportedWithClockBound(1073741822)).isEmpty()
+    }
+
+    @Test
+    fun `a clock bound one above it is reported, since the clock and its delay would reach 2 to the 31`() {
+        assertThat(unsupportedWithClockBound(1073741823)).containsExactly("clocks that a whole delay may carry beyond the 32-bit range")
     }
 }

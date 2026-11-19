@@ -1,0 +1,30 @@
+witness of example::blinker::BlinkerSwitchesBetweenTwoAndThree timescale 2
+
+var step: int := 0
+
+var time: clock := 0
+
+contains root: example::blinker::BlinkerSwitchesBetweenTwoAndThree
+
+init {
+    assume(step == 0)
+    inline root.init()
+    assume(root.switchedBetween == false)
+    assume(root.running == 0)
+    assume(root.blinker.since == 0)
+    step := 1
+}
+
+tran {
+    assume(step == 1)
+    inline root.main()
+    assume(time == 5)
+    assume(root.switchedBetween == true)
+    assume(root.running == 5)
+    assume(root.blinker.since == 0)
+    step := 2
+}
+
+prop {
+    root.prop()
+}

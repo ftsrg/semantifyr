@@ -4,26 +4,8 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import { type TraceEntry, type WitnessState, type WitnessValidationResult, WitnessValidationStatus } from "./wire.ts";
-
-export interface WitnessStateChange {
-    variable: string;
-    value: string;
-    previous: string | undefined;
-}
-
-export function witnessStateChanges(state: WitnessState): WitnessStateChange[][] {
-    const current = new Map<string, string>();
-    return [state.initializedStep, ...state.steps].map((step) => {
-        const changes = step.values.map((value) => {
-            return { variable: value.variable, value: value.value, previous: current.get(value.variable) };
-        }).filter((change) => change.value !== change.previous);
-        for (const change of changes) {
-            current.set(change.variable, change.value);
-        }
-        return changes;
-    });
-}
+import { formatReportValue } from "./trace.ts";
+import { type ReportCall, type SoundnessDirection, type WitnessValidationResult, WitnessValidationStatus } from "./wire.ts";
 
 export function traceStepLabel(index: number): string {
     if (index === 0) {
@@ -32,11 +14,26 @@ export function traceStepLabel(index: number): string {
     return `Step ${String(index)}`;
 }
 
-export function formatTraceCall(entry: TraceEntry): string {
-    const argumentList = entry.arguments.map((argument) => {
-        return `${argument.parameter}=${argument.value}`;
+export function formatTraceCall(call: ReportCall): string {
+    const argumentList = Object.entries(call.arguments).map(([parameter, value]) => {
+        return `${parameter}=${formatReportValue(value)}`;
     }).join(", ");
-    return `${entry.self}.${entry.calledTransition}(${argumentList})`;
+    return `${call.self}.${call.transition}(${argumentList})`;
+}
+
+export function missingCallsMessage(reason: string): string {
+    return `The calls of this trace could not be obtained: ${reason}`;
+}
+
+export function soundnessLabel(soundness: SoundnessDirection): string {
+    switch (soundness) {
+        case "Exact":
+            return "exact";
+        case "OverApproximating":
+            return "over-approximating";
+        case "UnderApproximating":
+            return "under-approximating";
+    }
 }
 
 export function noWitnessMessage(caseLabel: string): string {

@@ -20,8 +20,11 @@ class NuxmvTraceParser {
     private fun parseLines(lines: Sequence<String>): NuxmvTrace? {
         val states = mutableListOf<NuxmvTraceState>()
         val running = mutableMapOf<String, String>()
+        val runningInputs = mutableMapOf<String, String>()
+        var stateInputs = emptyMap<String, String>()
         var inTrace = false
         var inState = false
+        var inInput = false
         var pendingState = false
 
         for (raw in lines) {
@@ -36,17 +39,24 @@ class NuxmvTraceParser {
             when {
                 line.startsWith("-> State:") -> {
                     if (pendingState) {
-                        states += NuxmvTraceState(running.toMap())
+                        states += NuxmvTraceState(running.toMap(), stateInputs)
+                    }
+                    stateInputs = if (inInput) {
+                        runningInputs.toMap()
+                    } else {
+                        emptyMap()
                     }
                     pendingState = true
                     inState = true
+                    inInput = false
                 }
                 line.startsWith("-> Input:") -> {
                     if (pendingState) {
-                        states += NuxmvTraceState(running.toMap())
+                        states += NuxmvTraceState(running.toMap(), stateInputs)
                         pendingState = false
                     }
                     inState = false
+                    inInput = true
                 }
                 line.startsWith("--") || line.isEmpty() -> {
                     // separator / comment line
@@ -54,21 +64,23 @@ class NuxmvTraceParser {
                 line.startsWith("Trace ") -> {
                     // start of a follow-up trace block; commit pending and continue
                     if (pendingState) {
-                        states += NuxmvTraceState(running.toMap())
+                        states += NuxmvTraceState(running.toMap(), stateInputs)
                         pendingState = false
                     }
+                    inInput = false
                 }
                 inState -> {
                     val (name, value) = splitAssignment(line) ?: continue
                     running[name] = value
                 }
-                else -> {
-                    // input section line - ignore aux inputVariables
+                inInput -> {
+                    val (name, value) = splitAssignment(line) ?: continue
+                    runningInputs[name] = value
                 }
             }
         }
         if (pendingState) {
-            states += NuxmvTraceState(running.toMap())
+            states += NuxmvTraceState(running.toMap(), stateInputs)
         }
         if (states.isEmpty()) {
             return null

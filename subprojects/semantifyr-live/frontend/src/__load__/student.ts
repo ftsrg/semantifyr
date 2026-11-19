@@ -6,9 +6,9 @@
 
 import { CancellationTokenSource, createMessageConnection, type MessageConnection } from 'vscode-jsonrpc/node'
 import { ConsoleLogger, toSocket, WebSocketMessageReader, WebSocketMessageWriter } from 'vscode-ws-jsonrpc'
-import { parse, toSeconds } from 'iso8601-duration'
 import {
   discoverVerificationCases,
+  isoDurationToMs,
   verifyCase,
   VerificationStatus,
   type FlavorInfo,
@@ -129,7 +129,7 @@ function caseName(verificationCase: VerificationCaseSpecification): string {
 }
 
 function milliseconds(duration: string | undefined): number | null {
-  return duration ? toSeconds(parse(duration)) * 1000 : null
+  return duration ? isoDurationToMs(duration) : null
 }
 
 function diagnosticsListener(connection: MessageConnection, uri: string) {
@@ -194,7 +194,7 @@ export interface ValidationRequest {
 
 // as the editor's auto-validation: every result with a witness, sent by case where the flavor validates by case
 export async function validateResult(client: LspClient, running: RunningTracker, request: ValidationRequest): Promise<ValidationRun | null> {
-  const witnessUri = request.result?.trace?.witnessUri
+  const witnessUri = request.result?.witnessUri
   const command = request.flavor.validateWitnessCommand
   if (!witnessUri || !command) {
     return null
@@ -215,7 +215,7 @@ export async function validateResult(client: LspClient, running: RunningTracker,
     message: outcome.message ?? null,
     wallMs: performance.now() - sentAt,
     queueMs: runningAt === null ? null : runningAt - sentAt,
-    serverMs: milliseconds(outcome.metrics?.totalDuration),
+    serverMs: milliseconds(outcome.report?.result.metrics.totalDuration),
   }
 }
 
@@ -346,7 +346,7 @@ export async function runStudent(student: number, round: number, options: Studen
           sentAtMs: sentAt,
           wallMs: result.elapsedMs,
           queueMs: runningAt === null ? null : runningAt - sentAt,
-          serverMs: milliseconds(result.value?.metrics?.totalDuration),
+          serverMs: milliseconds(result.value?.report?.result.metrics.totalDuration),
         }
       }
       if (options.oneAtATime) {

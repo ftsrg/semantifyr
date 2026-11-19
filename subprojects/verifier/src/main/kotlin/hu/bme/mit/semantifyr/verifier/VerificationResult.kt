@@ -10,7 +10,6 @@ import hu.bme.mit.semantifyr.backend.SoundnessDirection
 import hu.bme.mit.semantifyr.backend.VerificationMetadata
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.Transient
 
 @Serializable
 data class VerificationResult(
@@ -19,7 +18,6 @@ data class VerificationResult(
     val soundness: SoundnessDirection = SoundnessDirection.Exact,
     val isTrusted: Boolean = verdict.isDecisive,
     val metrics: VerificationMetrics,
-    @Transient val trace: Trace? = null,
     val message: String? = null,
 ) {
     val isPassed: Boolean

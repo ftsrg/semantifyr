@@ -355,6 +355,7 @@ object Gamma : MetaPackage(
 
     object TimeElapseAct : MetaClass(Act) {
         val time by attribute(EInt)
+        val denominator by attribute(EInt, default = 1)
     }
 
     object RaiseEventAct : MetaClass(Act, InstanceElementExpression) {

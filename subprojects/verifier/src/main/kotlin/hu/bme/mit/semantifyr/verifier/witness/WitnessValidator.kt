@@ -10,30 +10,26 @@ import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.verifier.ProgressContext
 import hu.bme.mit.semantifyr.verifier.SemantifyrVerifier
-import hu.bme.mit.semantifyr.verifier.Trace
-import hu.bme.mit.semantifyr.verifier.VerificationResult
+import hu.bme.mit.semantifyr.verifier.VerificationOutcome
 import kotlinx.coroutines.runBlocking
 
 sealed class WitnessValidationResult {
-    abstract val verification: VerificationResult
+    abstract val outcome: VerificationOutcome
 
-    data class Valid(override val verification: VerificationResult) : WitnessValidationResult()
-    data class Invalid(override val verification: VerificationResult) : WitnessValidationResult()
-    data class Inconclusive(override val verification: VerificationResult) : WitnessValidationResult()
-    data class Errored(override val verification: VerificationResult) : WitnessValidationResult()
-
-    val isValid = this is Valid
-    val isInvalid = this is Invalid
+    class Valid(override val outcome: VerificationOutcome) : WitnessValidationResult()
+    class Invalid(override val outcome: VerificationOutcome) : WitnessValidationResult()
+    class Inconclusive(override val outcome: VerificationOutcome) : WitnessValidationResult()
+    class Errored(override val outcome: VerificationOutcome) : WitnessValidationResult()
 
     companion object {
         @JvmStatic
-        fun from(verification: VerificationResult): WitnessValidationResult = when (verification.verdict) {
-            VerificationVerdict.Passed -> Valid(verification)
-            VerificationVerdict.Failed -> Invalid(verification)
-            VerificationVerdict.Inconclusive -> Inconclusive(verification)
-            VerificationVerdict.Timeout -> Inconclusive(verification)
-            VerificationVerdict.Errored -> Errored(verification)
-            VerificationVerdict.NotSupported -> Inconclusive(verification)
+        fun from(outcome: VerificationOutcome): WitnessValidationResult = when (outcome.report.result.verdict) {
+            VerificationVerdict.Passed -> Valid(outcome)
+            VerificationVerdict.Failed -> Invalid(outcome)
+            VerificationVerdict.Inconclusive -> Inconclusive(outcome)
+            VerificationVerdict.Timeout -> Inconclusive(outcome)
+            VerificationVerdict.Errored -> Errored(outcome)
+            VerificationVerdict.NotSupported -> Inconclusive(outcome)
         }
     }
 }
@@ -42,30 +38,10 @@ class WitnessValidator {
 
     suspend fun validate(
         verifier: SemantifyrVerifier,
-        trace: Trace,
-        progress: ProgressContext = ProgressContext.Silent,
-    ): WitnessValidationResult {
-        return validate(verifier, trace.backAnnotatedModel, progress)
-    }
-
-    suspend fun validate(
-        verifier: SemantifyrVerifier,
         backAnnotatedModel: InlinedOxsts,
         progress: ProgressContext = ProgressContext.Silent,
     ): WitnessValidationResult {
-        val verification = verifier.verify(backAnnotatedModel, progress)
-        return WitnessValidationResult.from(verification)
-    }
-
-    @JvmOverloads
-    fun validateBlocking(
-        verifier: SemantifyrVerifier,
-        trace: Trace,
-        progress: ProgressContext = ProgressContext.Silent,
-    ): WitnessValidationResult {
-        return runBlocking {
-            validate(verifier, trace, progress)
-        }
+        return WitnessValidationResult.from(verifier.verify(backAnnotatedModel, progress))
     }
 
     @JvmOverloads

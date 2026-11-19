@@ -42,10 +42,10 @@ semantifyr verify level-crossing.semantifyr --artifact-directory artifacts
 
 ```text
 Verifying example::levelcrossing::BarrierDownWhileTrainInCrossing ...
-  FAILED (2.722987532s)
+  FAILED (2.203420429s)
   report: /tmp/level-crossing/artifacts/level-crossing.example.levelcrossing.BarrierDownWhileTr-e3f8b4e8/report.json
 Verifying example::levelcrossing::TwoTrainsCanBeInTheCrossing ...
-  PASSED (510.379622ms)
+  PASSED (500.711637ms)
   report: /tmp/level-crossing/artifacts/level-crossing.example.levelcrossing.TwoTrainsCanBeInTheCrossing/report.json
 ```
 
@@ -67,9 +67,7 @@ first
 mapping.json
 pipeline
 report.json
-trace.json
-witness.json
 witness.semantifyr
 ```
 
-Beside the report and the compiled models under `pipeline/`, each backend run has a directory of its own in its stage's directory, such as `first/theta-bmc`, and `witness.semantifyr`, `witness.json` and `trace.json` are the [witness](../language/specification/library-and-output/inlined-models.md#witnesses) of the run that breaks the case. [Artifacts](../reference/artifacts.mdx) describes each file.
+Beside the compiled models under `pipeline/`, each backend run has a directory of its own in its stage's directory, such as `first/theta-bmc`; `report.json` holds the verdict and the run that breaks the case, and `witness.semantifyr` is the [witness](../language/specification/library-and-output/inlined-models.md#witnesses) derived from it. [Artifacts](../reference/artifacts.mdx) describes each file.

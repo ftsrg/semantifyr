@@ -24,10 +24,10 @@ dependencies {
     implementation(project(":logging"))
     implementation(project(":utils"))
     implementation(libs.kotlinx.coroutines.core)
-
-    testImplementation(libs.kotlinx.serialization.json)
+    implementation(libs.kotlinx.serialization.json)
 
     testFixturesImplementation(libs.kotlinx.serialization.json)
+    testFixturesImplementation(project(":logging"))
     testFixturesApi(project(":gamma.lang"))
     testFixturesApi(testFixtures(project(":gamma.lang")))
     testFixturesApi(testFixtures(project(":verifier")))

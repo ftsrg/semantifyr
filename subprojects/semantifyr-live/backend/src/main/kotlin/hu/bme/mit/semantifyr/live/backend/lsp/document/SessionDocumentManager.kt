@@ -244,7 +244,7 @@ class SessionDocumentManager @Inject constructor(
         return path
     }
 
-    private fun clientToServer(clientUri: String): String {
+    fun clientToServer(clientUri: String): String {
         return clientUri.replace(CLIENT_PREFIX, serverPrefix)
     }
 

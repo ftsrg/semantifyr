@@ -11,8 +11,7 @@ import { LanguageMark, VerdictMark } from '@semantifyr/editor-common/marks'
 import { useStore } from '../../lib/stores/useStore'
 import { CLOSING_LINE_MS, shellStatus, type ShellStatus } from '../../lib/workspace/shellStatus'
 import { useCurrentVerification, useLive } from '../../lib/workspace/liveContext'
-import { tabFocusKey } from '../../lib/session/tabbedEditor'
-import { languageWithLibrary, NO_PROBLEMS, PROBLEMS, problemsLabel, tabHint } from '../../texts'
+import { languageWithLibrary, NO_PROBLEMS, PROBLEMS, problemsLabel } from '../../texts'
 import { Icon } from '../../ui/icons'
 import { useFlavor, useLanguage, useNow } from '../hooks'
 import { useShell } from '../shellContext'
@@ -155,7 +154,6 @@ export function StatusBar(): React.JSX.Element {
       <StatusMessage />
       <span className="status-end">
         <ProblemCounts />
-        {readOnly || !cursor ? null : <span className="status-tab-hint">{tabHint(tabFocusKey())}</span>}
         <span>{readOnly ? 'Read-only' : cursor ? `Ln ${cursor.line}, Col ${cursor.column}` : ''}</span>
         {flavor && language
           ? (

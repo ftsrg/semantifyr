@@ -13,6 +13,7 @@ import hu.bme.mit.semantifyr.compiler.pipeline.expression.InstanceEvaluation
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.evaluateTyped
 import hu.bme.mit.semantifyr.compiler.pipeline.instantiation.Instance
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
+import hu.bme.mit.semantifyr.compiler.pipeline.utils.copy
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.eAllOfType
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.sourceError
 import hu.bme.mit.semantifyr.compiler.scopes.CompilationScoped
@@ -22,27 +23,50 @@ import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.ExpressionEvaluatio
 import hu.bme.mit.semantifyr.oxsts.lang.utils.OxstsUtils
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssignmentOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.CallSuffixExpression
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ElementReference
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.EnumDeclaration
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.FeatureDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlineOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.LocalVarDeclarationOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Operation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ParameterDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.TransitionDeclaration
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.TypeSpecification
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 import org.eclipse.emf.ecore.EObject
 import org.eclipse.emf.ecore.util.EcoreUtil
 import org.eclipse.xtext.EcoreUtil2
 
-class ArgumentTrace(
-    val parameterDeclaration: ParameterDeclaration,
-    val evaluation: ExpressionEvaluation,
-)
+sealed interface ArgumentTrace {
+    val parameterDeclaration: ParameterDeclaration
+
+    class Constant(
+        override val parameterDeclaration: ParameterDeclaration,
+        val evaluation: ExpressionEvaluation,
+    ) : ArgumentTrace
+
+    class Recorded(
+        override val parameterDeclaration: ParameterDeclaration,
+        val variable: VariableDeclaration,
+    ) : ArgumentTrace
+}
 
 class TransitionCallTrace(
     val self: InstanceEvaluation,
     val transitionDeclaration: TransitionDeclaration,
     val arguments: List<ArgumentTrace>,
     val parent: TransitionCallTrace?,
+) {
+    val recordedArguments: List<ArgumentTrace.Recorded>
+        get() = arguments.filterIsInstance<ArgumentTrace.Recorded>()
+}
+
+class TracedCall(
+    val tracerAssignment: AssignmentOperation,
+    val argumentRecords: List<AssignmentOperation>,
 )
 
 @CompilationScoped
@@ -63,25 +87,28 @@ class TransitionCallTraceTransformer @Inject constructor(
         transitionDeclaration: TransitionDeclaration,
         callExpression: CallSuffixExpression,
         body: Operation,
-    ): AssignmentOperation {
-        val tracerVariable = createTracerVariable(transitionDeclaration)
+        runtimeArguments: Map<ParameterDeclaration, LocalVarDeclarationOperation>,
+    ): TracedCall {
+        val tracerIndex = tracerCount++
+        val tracerVariable = createTracerVariable(tracerIndex, transitionDeclaration)
         val parent = findEnclosingTracer(callExpression)
 
         val evaluator = compileTimeExpressionEvaluatorProvider.getEvaluator(instance)
         val transitionCallTrace = TransitionCallTrace(
             self = InstanceEvaluation(containerInstance),
             transitionDeclaration = transitionDeclaration,
-            arguments = transitionDeclaration.parameters.mapIndexedNotNull { index, parameter ->
+            arguments = transitionDeclaration.parameters.withIndex().mapNotNull { (index, parameter) ->
+                val temporary = runtimeArguments[parameter]
+                if (temporary != null) {
+                    return@mapNotNull ArgumentTrace.Recorded(parameter, createArgumentVariable(tracerIndex, parameter, temporary))
+                }
                 OxstsUtils.getArgumentFor(callExpression.arguments, parameter, index)?.let {
                     val evaluation = try {
                         evaluator.evaluateTyped(ExpressionEvaluation::class.java, it.expression)
                     } catch (_: EvaluationFailureException) {
                         sourceError(it.expression, "The argument of traced transition '${transitionDeclaration.name}' is not evaluable at compile time")
                     }
-                    ArgumentTrace(
-                        parameter,
-                        evaluation,
-                    )
+                    ArgumentTrace.Constant(parameter, evaluation)
                 }
             },
             parent = parent,
@@ -90,7 +117,15 @@ class TransitionCallTraceTransformer @Inject constructor(
 
         val tracerAssignment = createTracerAssignment(tracerVariable, value = true)
         tracerAssignments[tracerAssignment] = transitionCallTrace
-        return tracerAssignment
+        return TracedCall(
+            tracerAssignment,
+            transitionCallTrace.recordedArguments.map {
+                OxstsFactory.createAssignmentOperation().also { record ->
+                    record.reference = OxstsFactory.createElementReference(it.variable)
+                    record.expression = OxstsFactory.createElementReference(runtimeArguments.getValue(it.parameterDeclaration))
+                }
+            },
+        )
     }
 
     fun inheritEnclosingTrace(operation: InlineOperation, expansion: Operation) {
@@ -98,15 +133,17 @@ class TransitionCallTraceTransformer @Inject constructor(
         enclose(expansion, enclosingTrace)
     }
 
+    fun observedVariables(): Set<VariableDeclaration> {
+        return variablesOf(tracerAssignments.entries).toSet()
+    }
+
     fun declareTracers(inlinedOxsts: InlinedOxsts) {
-        val tracerVariables = tracerAssignments.keys.map {
-            it.tracerVariable
-        }
+        val tracerVariables = variablesOf(tracerAssignments.entries)
         if (tracerVariables.isNotEmpty()) {
             inlinedOxsts.variables += tracerVariables
             for (branch in inlinedOxsts.mainTransition.branches) {
                 for (variable in tracerVariables.reversed()) {
-                    branch.steps.addFirst(createTracerAssignment(variable, value = false))
+                    branch.steps.addFirst(createReset(variable))
                 }
             }
         }
@@ -117,9 +154,10 @@ class TransitionCallTraceTransformer @Inject constructor(
         val (calledTraces, uncalledTraces) = tracerAssignments.entries.partition {
             EcoreUtil.isAncestor(inlinedOxsts, it.key)
         }
-        val uncalledVariables = uncalledTraces.map {
-            it.key.tracerVariable
-        }.toSet()
+        val uncalledVariables = variablesOf(uncalledTraces).toSet()
+        for ((assignment, _) in uncalledTraces) {
+            tracerAssignments.remove(assignment)
+        }
         if (uncalledVariables.isNotEmpty()) {
             val resets = inlinedOxsts.eAllOfType<AssignmentOperation>().filter {
                 (it.reference as? ElementReference)?.element in uncalledVariables
@@ -131,23 +169,89 @@ class TransitionCallTraceTransformer @Inject constructor(
         }
         return TransitionCallTraceMap(
             calledTraces.associate {
-                it.key.tracerVariable to it.value
+                it.key.assignedVariable to it.value
             },
         )
     }
 
-    private fun createTracerVariable(context: EObject): VariableDeclaration {
-        return OxstsFactory.createVariableDeclaration().also {
-            it.name = TransitionTracerNames.tracerName(tracerCount++)
-            it.typeSpecification = OxstsFactory.createTypeSpecification().also {
-                it.domain = builtinSymbolResolver.boolDatatype(context)
+    private fun variablesOf(traces: Collection<Map.Entry<AssignmentOperation, TransitionCallTrace>>): List<VariableDeclaration> {
+        return traces.flatMap { (assignment, trace) ->
+            listOf(assignment.assignedVariable) + trace.recordedArguments.map {
+                it.variable
             }
-            it.expression = OxstsFactory.createLiteralBoolean(false)
+        }
+    }
+
+    private fun createTracerVariable(tracerIndex: Int, context: EObject): VariableDeclaration {
+        return createObservationVariable(
+            name = TransitionTracerNames.tracerName(tracerIndex),
+            typeSpecification = OxstsFactory.createTypeSpecification().also {
+                it.domain = builtinSymbolResolver.boolDatatype(context)
+            },
+            initialValue = OxstsFactory.createLiteralBoolean(false),
+            context = context,
+        )
+    }
+
+    private fun createArgumentVariable(
+        tracerIndex: Int,
+        parameter: ParameterDeclaration,
+        temporary: LocalVarDeclarationOperation,
+    ): VariableDeclaration {
+        val declaredDomain = parameter.typeSpecification.domain
+        val domain = if (declaredDomain is FeatureDeclaration) {
+            declaredDomain.typeSpecification.domain
+        } else {
+            declaredDomain
+        }
+        val typeSpecification = OxstsFactory.createTypeSpecification().also {
+            it.domain = domain
+        }
+        val initialValue = when {
+            domain === builtinSymbolResolver.intDatatype(parameter) -> OxstsFactory.createLiteralInteger(0)
+            domain === builtinSymbolResolver.boolDatatype(parameter) -> OxstsFactory.createLiteralBoolean(false)
+            domain is EnumDeclaration -> OxstsFactory.createElementReference(domain.literals.first())
+            domain is ClassDeclaration -> {
+                typeSpecification.multiplicity = OxstsFactory.createDefiniteMultiplicity().also {
+                    it.expression = OxstsFactory.createRangeExpression().also { range ->
+                        range.left = OxstsFactory.createLiteralInteger(0)
+                        range.right = OxstsFactory.createLiteralInteger(1)
+                    }
+                }
+                OxstsFactory.createLiteralNothing()
+            }
+            else -> sourceError(temporary, "A run-time argument of type '${domain.name}' cannot be recorded for the traced call.")
+        }
+        return createObservationVariable(
+            name = TransitionTracerNames.argumentName(tracerIndex, parameter.name),
+            typeSpecification = typeSpecification,
+            initialValue = initialValue,
+            context = parameter,
+        )
+    }
+
+    private fun createObservationVariable(
+        name: String,
+        typeSpecification: TypeSpecification,
+        initialValue: Expression,
+        context: EObject,
+    ): VariableDeclaration {
+        return OxstsFactory.createVariableDeclaration().also {
+            it.name = name
+            it.typeSpecification = typeSpecification
+            it.expression = initialValue
             it.annotation = OxstsFactory.createAnnotationContainer().also {
                 it.annotations += OxstsFactory.createAnnotation().also {
                     it.declaration = builtinSymbolResolver.nonOptimizableAnnotation(context)
                 }
             }
+        }
+    }
+
+    private fun createReset(variable: VariableDeclaration): AssignmentOperation {
+        return OxstsFactory.createAssignmentOperation().also {
+            it.reference = OxstsFactory.createElementReference(variable)
+            it.expression = variable.expression.copy()
         }
     }
 
@@ -169,7 +273,7 @@ class TransitionCallTraceTransformer @Inject constructor(
         return enclosingTraces[inlineOperation]
     }
 
-    private val AssignmentOperation.tracerVariable: VariableDeclaration
+    private val AssignmentOperation.assignedVariable: VariableDeclaration
         get() = (reference as ElementReference).element as VariableDeclaration
 
 }

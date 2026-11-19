@@ -11,7 +11,7 @@ import type { VerificationCaseResult, VerificationCaseSpecification, WitnessVali
 import { VerificationTestController, type VerificationTestControllerConfig } from '../clients/verification-test-controller.js';
 import { WitnessView } from '../witness.js';
 import { registerOutputChannel } from '../outputChannel.js';
-import { counterexample, modelUri, reachableCase, resolutionNote, result, safeCase } from './fixtures.js';
+import { counterexample, modelUri, reachableCase, resolutionNote, result, safeCase, witnessUri } from './fixtures.js';
 import { CancellationTokenSource, createExtensionContext, openDocument, resetVscode, state, type TestController, type TestItem, Uri, window } from './stubs/vscode.js';
 import { LanguageClient } from './stubs/vscode-languageclient-node.js';
 
@@ -332,7 +332,7 @@ describe('verification', () => {
 
 describe('witness validation', () => {
     const byCase = { validateWitnessCommand: 'gamma.witness.validate', validateWitnessByCase: true };
-    const valid: WitnessValidationResult = { status: 'valid', verdict: 'failed', message: null, backendId: 'theta-bmc', portfolioId: 'smart', metrics: null };
+    const valid: WitnessValidationResult = { status: 'valid', message: null, portfolioId: 'smart', report: null, witnessUri: null };
 
     function validateWitnessOf(item: TestItem) {
         return state.commands.get('semantifyr.witness.validate')!(item);
@@ -358,7 +358,7 @@ describe('witness validation', () => {
         expect(event.message.contextValue).toBe('semantifyr.witness.validatable');
     });
 
-    it('sends the case location for a validation by case', async () => {
+    it('sends the case location and the witness for a validation by case', async () => {
         await setUp(byCase);
         verify = () => result('failed', counterexample);
         validate = () => valid;
@@ -368,9 +368,9 @@ describe('witness validation', () => {
 
         expect(requests.at(-1)).toEqual({
             method: 'workspace/executeCommand',
-            parameters: { command: 'gamma.witness.validate', arguments: [{ uri: modelUri, range: safeCase.location.range }] },
+            parameters: { command: 'gamma.witness.validate', arguments: [{ uri: modelUri, range: safeCase.location.range, witnessUri }] },
         });
-        expect(window.showInformationMessage).toHaveBeenLastCalledWith('Safe: Witness valid (backend theta-bmc, portfolio smart)');
+        expect(window.showInformationMessage).toHaveBeenLastCalledWith('Safe: Witness valid (portfolio smart)');
     });
 
     it('sends the witness location for a validation by witness', async () => {
@@ -382,7 +382,7 @@ describe('witness validation', () => {
         await validateWitnessOf(caseItem('lamp::Safe'));
 
         expect((requests.at(-1)!.parameters as ExecuteCommandParams).arguments).toEqual([
-            { uri: counterexample.witnessUri, range: { start: { line: 0, character: 0 }, end: { line: 0, character: 0 } } },
+            { uri: witnessUri, range: { start: { line: 0, character: 0 }, end: { line: 0, character: 0 } } },
         ]);
     });
 
@@ -417,7 +417,7 @@ describe('witness validation', () => {
         expect(validations()).toHaveLength(1);
         const event = testRun.events.at(-1) as { kind: string; message: { message: string } };
         expect(event.kind).toBe('failed');
-        expect(event.message.message).toBe('property violated\nValidation: Witness valid (backend theta-bmc, portfolio smart)');
+        expect(event.message.message).toBe('property violated\nValidation: Witness valid (portfolio smart)');
     });
 
     it('validates the witness of an OXSTS case at the witness model, which may lie outside the workspace', async () => {
@@ -443,7 +443,7 @@ describe('witness validation', () => {
 
         await run([caseItem('lamp::Safe')]);
 
-        expect((validations()[0]!.parameters as ExecuteCommandParams).arguments).toEqual([{ uri: modelUri, range: safeCase.location.range, portfolio: 'all-agree' }]);
+        expect((validations()[0]!.parameters as ExecuteCommandParams).arguments).toEqual([{ uri: modelUri, range: safeCase.location.range, witnessUri, portfolio: 'all-agree' }]);
     });
 
     it('adds the validation of a passed verdict with a witness to the output at the case', async () => {
@@ -455,7 +455,7 @@ describe('witness validation', () => {
         const testRun = await run([caseItem('lamp::Reachable')]);
 
         expect(testRun.outcome(caseItem('lamp::Reachable'))).toBe('passed');
-        expect(testRun.output.map((output) => output.text)).toEqual(['Validation: Witness invalid (backend theta-bmc, portfolio smart) - spurious\r\n']);
+        expect(testRun.output.map((output) => output.text)).toEqual(['Validation: Witness invalid (portfolio smart) - spurious\r\n']);
     });
 
     it('validates nothing when auto-validation is off or the result has no witness', async () => {

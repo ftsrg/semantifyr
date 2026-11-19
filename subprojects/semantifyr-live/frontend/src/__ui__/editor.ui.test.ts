@@ -9,9 +9,19 @@ import { describe, expect } from 'vitest'
 
 import { editorKeysOf } from '../testBrowser'
 import { casesListed, editor, results, statesOf, test } from './harness'
+import { flavorFixture } from './mock/fixtures'
 
 const BUILTIN = 'file:///workspace/.semantifyr/builtin/standard.semantifyr'
-const TRACE_ANNOTATION_LINE = 80
+
+function recordedLine(flavorId: string, uri: string, text: string): number {
+  const line = flavorFixture(flavorId).reads[uri]?.split('\n').indexOf(text) ?? -1
+  if (line < 0) {
+    throw new Error(`the ${flavorId} recording reads no line '${text}' in ${uri}`)
+  }
+  return line
+}
+
+const TRACE_ANNOTATION_LINE = recordedLine('oxsts', BUILTIN, 'annotation Trace')
 const BARRIER = '_BarrierDownWhileTrainInCrossing'
 
 // the text of the line the cursor is on in the document shown
@@ -34,7 +44,7 @@ describe('going to a definition', () => {
       const position = { line: TRACE_ANNOTATION_LINE, character: 11 }
       return [{ uri: BUILTIN, range: { start: position, end: position } }]
     })
-    const page = await ui.open('/language/intersection')
+    const page = await ui.open('/language/semantic-libraries')
     await casesListed(page)
 
     await page.locator('section.editor .view-line', { hasText: '@Trace' }).first().click()
@@ -49,7 +59,7 @@ describe('going to a definition', () => {
     await page.keyboard.press('Alt+ArrowLeft')
     await expect.poll(async () => {
       return editor(page).selectedTab.innerText()
-    }).toContain('intersection.semantifyr')
+    }).toContain('semantic-libraries.semantifyr')
   })
 })
 
@@ -73,7 +83,7 @@ function opened(session: { received: unknown[] }): string[] {
 
 describe('going to a definition from inside a read-only document', () => {
   test('of a library names the library file by its server address, sends no copy of it, and lands at the answer', async ({ ui }) => {
-    const STRING_LINE = 34
+    const STRING_LINE = recordedLine('oxsts', BUILTIN, 'extern datatype string')
     ui.backend.answer('feature', (request, recorded) => {
       if (request.method !== 'textDocument/definition') {
         return recorded()
@@ -82,7 +92,7 @@ describe('going to a definition from inside a read-only document', () => {
       const position = { line, character: 0 }
       return [{ uri: BUILTIN, range: { start: position, end: position } }]
     })
-    const page = await ui.open('/language/intersection')
+    const page = await ui.open('/language/semantic-libraries')
     await casesListed(page)
     await page.locator('section.editor .view-line', { hasText: '@Trace' }).first().click()
     await page.keyboard.press('F12')
@@ -108,7 +118,7 @@ describe('going to a definition from inside a read-only document', () => {
       if (request.method !== 'textDocument/definition') {
         return recorded()
       }
-      const position = { line: 48, character: 6 }
+      const position = { line: recordedLine('gamma', STATECHARTS, 'class Statechart : Component {'), character: 6 }
       return [{ uri: STATECHARTS, range: { start: position, end: position } }]
     })
     const page = await ui.open('/gamma/level-crossing', { height: 1600 })
@@ -189,5 +199,34 @@ describe('the margin', () => {
     await expect.poll(async () => {
       return statesOf(editor(page).marks, 'verdict-glyph-')
     }).toEqual(['failed', 'not-run'])
+  })
+})
+
+describe('the starting editor', () => {
+  test('leaves the focus in a menu opened before it started, and the menu open', async ({ ui }) => {
+    let release = (): void => {}
+    const loaded = new Promise<void>((resolve) => {
+      release = resolve
+    })
+    const page = await ui.open('/language/modeling-and-verification', { held: { url: '**/assets/monaco-vscode-editor-service-override*', until: loaded } })
+    const trigger = page.locator('.example-button')
+    const inMenu = async (): Promise<boolean> => {
+      return page.evaluate(() => {
+        return (document.activeElement?.closest('[role="menu"]') ?? null) !== null
+      })
+    }
+    await trigger.click()
+    await expect.poll(inMenu).toBe(true)
+    expect(await page.locator('section.editor .view-line').count(), 'the editor has not started').toBe(0)
+    release()
+
+    // the status bar shows the cursor only once the editor has started, after it would have taken the focus
+    await expect.poll(async () => {
+      return {
+        started: (await page.locator('.statusbar').innerText()).includes('Ln 1, Col 1'),
+        expanded: await trigger.getAttribute('aria-expanded'),
+        inMenu: await inMenu(),
+      }
+    }).toEqual({ started: true, expanded: 'true', inMenu: true })
   })
 })

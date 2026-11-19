@@ -122,8 +122,8 @@ describe('the rows', () => {
     ui.backend.answer('verify', (request, recorded) => {
       const name = request.caseId?.split('::').at(-1)
       return name === BARRIER
-        ? { ...recorded(), status: 'timeout', message: 'The portfolio timed out after 60 s', trace: null }
-        : { ...recorded(), status: 'errored', message: 'The backend crashed', trace: null }
+        ? { ...recorded(), status: 'timeout', message: 'The portfolio timed out after 60 s', report: null, witnessUri: null }
+        : { ...recorded(), status: 'errored', message: 'The backend crashed', report: null, witnessUri: null }
     })
     const page = await opened(ui)
 

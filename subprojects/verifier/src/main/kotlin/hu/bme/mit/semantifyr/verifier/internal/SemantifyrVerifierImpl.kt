@@ -27,21 +27,25 @@ import hu.bme.mit.semantifyr.logging.warn
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.verifier.BackAnnotationException
 import hu.bme.mit.semantifyr.verifier.ProgressContext
+import hu.bme.mit.semantifyr.verifier.REPORT_VERSION
+import hu.bme.mit.semantifyr.verifier.ReportKind
+import hu.bme.mit.semantifyr.verifier.ReportTrace
 import hu.bme.mit.semantifyr.verifier.SemantifyrVerifier
-import hu.bme.mit.semantifyr.verifier.Trace
 import hu.bme.mit.semantifyr.verifier.VerificationCase
 import hu.bme.mit.semantifyr.verifier.VerificationMetrics
+import hu.bme.mit.semantifyr.verifier.VerificationOutcome
 import hu.bme.mit.semantifyr.verifier.VerificationReport
 import hu.bme.mit.semantifyr.verifier.VerificationResult
+import hu.bme.mit.semantifyr.verifier.VerificationWitness
 import hu.bme.mit.semantifyr.verifier.VerifierMetrics
 import hu.bme.mit.semantifyr.verifier.caseDirectory
+import hu.bme.mit.semantifyr.verifier.caseRecheckDirectory
 import hu.bme.mit.semantifyr.verifier.discovery.VerificationCaseDiscoverer
 import hu.bme.mit.semantifyr.verifier.portfolio.LimitedConcurrencyGate
 import hu.bme.mit.semantifyr.verifier.portfolio.VerificationPortfolio
-import hu.bme.mit.semantifyr.verifier.reportPath
-import hu.bme.mit.semantifyr.verifier.witness.CallTraceTransformer
 import hu.bme.mit.semantifyr.verifier.witness.ClassWitnessBackAnnotator
 import hu.bme.mit.semantifyr.verifier.witness.ClassWitnessTransformer
+import hu.bme.mit.semantifyr.verifier.witness.ReportTraceTransformer
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
@@ -51,6 +55,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runInterruptible
 import kotlinx.coroutines.withTimeout
 import org.eclipse.emf.ecore.util.EcoreUtil
+import java.io.IOException
 import java.nio.file.Path
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.io.path.createDirectories
@@ -79,7 +84,7 @@ class SemantifyrVerifierImpl @AssistedInject constructor(
     @param:Assisted private val semantifyrVerifierConfiguration: SemantifyrVerifierConfiguration,
     private val classWitnessTransformer: ClassWitnessTransformer,
     private val classWitnessBackAnnotator: ClassWitnessBackAnnotator,
-    private val callTraceTransformer: CallTraceTransformer,
+    private val reportTraceTransformer: ReportTraceTransformer,
     private val trivialVerifier: TrivialVerifier,
     private val verificationArtifactWriter: VerificationArtifactWriter,
     private val verificationCaseDiscoverer: VerificationCaseDiscoverer,
@@ -98,38 +103,38 @@ class SemantifyrVerifierImpl @AssistedInject constructor(
         semantifyrVerifierConfiguration.maxConcurrency,
     )
 
-    override suspend fun verify(verificationCase: VerificationCase, progressContext: ProgressContext): VerificationResult {
+    override suspend fun verify(verificationCase: VerificationCase, progressContext: ProgressContext): VerificationOutcome {
         val deadline = markNow() + semantifyrVerifierConfiguration.timeout
         progressContext.reportProgress("Compiling ${verificationCase.qualifiedName}")
         logger.info { "Compiling '${verificationCase.qualifiedName}'" }
         val caseDirectory = prepareDirectory(caseDirectoryFor(verificationCase))
-        return compileAndVerify(verificationCase, caseDirectory, progressContext, deadline) {
+        return compileAndVerify(verificationCase, ReportKind.Run, caseDirectory, progressContext, deadline) {
             compiler.compile(verificationCase.classDeclaration, caseDirectory)
         }
     }
 
-    override suspend fun verify(inlinedOxsts: InlinedOxsts, progressContext: ProgressContext): VerificationResult {
+    override suspend fun verify(inlinedOxsts: InlinedOxsts, progressContext: ProgressContext): VerificationOutcome {
         val case = verificationCaseDiscoverer.caseOf(inlinedOxsts.classDeclaration)
         val deadline = markNow() + semantifyrVerifierConfiguration.timeout
         progressContext.reportProgress("Compiling ${case.qualifiedName}")
         logger.info { "Compiling inlined of '${case.qualifiedName}'" }
-        // the model re-verified here usually lies in the case directory, a witness the verify left there, so the run keeps out of the verify's artifacts
-        val validationDirectory = prepareDirectory(caseDirectoryFor(case).resolve("validation"))
+        val validationDirectory = prepareDirectory(caseRecheckDirectory(semantifyrVerifierConfiguration.outputDirectory, case))
         val clone = semantifyrLoader.fromResourceSet(inlinedOxsts.eResource().resourceSet, emptyMap())
             .resourceSet
             .getEObject(EcoreUtil.getURI(inlinedOxsts), true) as InlinedOxsts
-        return compileAndVerify(case, validationDirectory, progressContext, deadline) {
+        return compileAndVerify(case, ReportKind.Recheck, validationDirectory, progressContext, deadline) {
             compiler.compile(clone, validationDirectory)
         }
     }
 
     private suspend fun compileAndVerify(
         case: VerificationCase,
+        kind: ReportKind,
         caseDirectory: Path,
         progress: ProgressContext,
         deadline: ValueTimeMark,
         compile: () -> FlattenedCompilationContext,
-    ): VerificationResult {
+    ): VerificationOutcome {
         val compilationMark = markNow()
         val compilation = try {
             runInTimeout(progress, deadline) {
@@ -153,19 +158,19 @@ class SemantifyrVerifierImpl @AssistedInject constructor(
                 ),
                 message = "Timeout (${semantifyrVerifierConfiguration.timeout}) exceeded while compiling.",
             )
-            writeReport(case, caseDirectory, result)
-            return result
+            return writeArtifacts(case, kind, caseDirectory, result, null)
         }
-        return verifyCompilation(compilation, case, caseDirectory, progress, deadline)
+        return verifyCompilation(compilation, case, kind, caseDirectory, progress, deadline)
     }
 
     private suspend fun verifyCompilation(
         compilation: FlattenedCompilationContext,
         case: VerificationCase,
+        kind: ReportKind,
         caseDirectory: Path,
         progress: ProgressContext,
         deadline: ValueTimeMark,
-    ): VerificationResult {
+    ): VerificationOutcome {
         val qualifiedName = case.qualifiedName
         val startedAt = Clock.System.now()
         logger.info { "Verifying case '$qualifiedName' with portfolio '${semantifyrVerifierConfiguration.portfolio.id}' (timeout=${semantifyrVerifierConfiguration.timeout})" }
@@ -211,19 +216,19 @@ class SemantifyrVerifierImpl @AssistedInject constructor(
         }
 
         val backAnnotationMark = markNow()
-        val (outcome, trace, verifierBackAnnotationDuration) = try {
+        val (outcome, backAnnotation, verifierBackAnnotationDuration) = try {
             val witness = backendResult.inlinedWitness
             if (witness == null) {
                 BackAnnotationOutcome(backendResult, null, Duration.ZERO)
             } else {
-                val trace = runInTimeout(progress, deadline) {
+                val backAnnotation = runInTimeout(progress, deadline) {
                     runInterruptible {
                         backAnnotateWitness(witness, backendResult, compilation, qualifiedName)
                     }
                 }
                 val duration = backAnnotationMark.elapsedNow()
                 logger.info { "[$qualifiedName] back-annotation completed in $duration" }
-                BackAnnotationOutcome(backendResult, trace, duration)
+                BackAnnotationOutcome(backendResult, backAnnotation, duration)
             }
         } catch (_: TimeoutCancellationException) {
             logger.info {
@@ -259,33 +264,55 @@ class SemantifyrVerifierImpl @AssistedInject constructor(
                     portfolioDuration = portfolioDuration,
                 ),
             ),
-            trace = trace,
             message = outcome.message,
         )
 
         logger.info { "Case '$qualifiedName' -> ${result.verdict} in $totalDuration - ${result.message ?: "no message"}" }
 
-        writeReport(case, caseDirectory, result)
-        if (trace != null) {
-            verificationArtifactWriter.writeWitnessArtifacts(trace, caseDirectory, qualifiedName)
-        }
-
-        return result
+        return writeArtifacts(case, kind, caseDirectory, result, backAnnotation)
     }
 
-    private fun writeReport(
+    private fun writeArtifacts(
         case: VerificationCase,
+        kind: ReportKind,
         caseDirectory: Path,
         result: VerificationResult,
-    ) {
+        backAnnotation: BackAnnotation?,
+    ): VerificationOutcome {
         val report = VerificationReport(
+            version = REPORT_VERSION,
+            kind = kind,
             verificationCase = case.qualifiedName,
             portfolioId = semantifyrVerifierConfiguration.portfolio.id,
             optimization = semantifyrVerifierConfiguration.optimizationConfiguration,
             timeout = semantifyrVerifierConfiguration.timeout,
             result = result,
+            trace = backAnnotation?.reportTrace,
         )
-        verificationArtifactWriter.writeReport(reportPath(caseDirectory), report)
+        val reportPath = verificationArtifactWriter.writeReport(caseDirectory, report)
+        return VerificationOutcome(
+            report,
+            reportPath,
+            backAnnotation?.let {
+                writeWitness(it.witness, caseDirectory, case.qualifiedName)
+            },
+        )
+    }
+
+    // a witness that cannot be written keeps its verdict
+    private fun writeWitness(
+        model: InlinedOxsts,
+        caseDirectory: Path,
+        qualifiedName: String,
+    ): VerificationWitness? {
+        try {
+            return VerificationWitness(model, verificationArtifactWriter.writeWitness(model, caseDirectory, qualifiedName))
+        } catch (exception: IOException) {
+            logger.warn(exception) { "[$qualifiedName] failed to write the witness" }
+        } catch (exception: RuntimeException) {
+            logger.warn(exception) { "[$qualifiedName] failed to serialize the witness" }
+        }
+        return null
     }
 
     private suspend fun runBackend(
@@ -308,6 +335,7 @@ class SemantifyrVerifierImpl @AssistedInject constructor(
             inlinedOxsts = inlinedOxsts,
             artifactOutputPath = caseDirectory,
             flatteningInfo = compilation.flatteningInfo,
+            transitionCallTraces = compilation.transitionCallTraces,
             timeout = deadline - markNow(),
         )
 
@@ -322,16 +350,16 @@ class SemantifyrVerifierImpl @AssistedInject constructor(
         backendResult: BackendVerificationResult,
         compilation: FlattenedCompilationContext,
         qualifiedName: String,
-    ): Trace {
+    ): BackAnnotation {
         logger.info { "[$qualifiedName] back-annotating witness from ${backendResult.metadata.backendId ?: "?"}" }
         val classWitness = classWitnessTransformer.transform(witness, compilation)
+        val reportTrace = reportTraceTransformer.transform(classWitness, compilation)
         val backAnnotatedModel = classWitnessBackAnnotator.createWitnessInlinedOxsts(
-            classWitness,
+            reportTrace,
+            compilation,
             backendResult.verdict,
         )
-        val witnessState = callTraceTransformer.transformWitnessState(classWitness)
-        val callTrace = callTraceTransformer.transformCallTrace(classWitness, compilation.transitionCallTraces)
-        return Trace(backAnnotatedModel, witnessState, callTrace)
+        return BackAnnotation(backAnnotatedModel, reportTrace)
     }
 
     private suspend inline fun <T> runInTimeout(
@@ -379,9 +407,14 @@ class SemantifyrVerifierImpl @AssistedInject constructor(
         val portfolioDuration: Duration,
     )
 
+    private class BackAnnotation(
+        val witness: InlinedOxsts,
+        val reportTrace: ReportTrace,
+    )
+
     private data class BackAnnotationOutcome(
         val result: BackendVerificationResult,
-        val trace: Trace?,
+        val backAnnotation: BackAnnotation?,
         val backAnnotationDuration: Duration,
     )
 

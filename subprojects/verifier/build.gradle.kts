@@ -27,3 +27,7 @@ dependencies {
     testFixturesImplementation(project(":logging"))
     testFixturesImplementation(libs.kotlinx.serialization.json)
 }
+
+tasks.test {
+    inputs.dir(rootProject.layout.projectDirectory.dir("oxsts-test-models/witness")).withPathSensitivity(PathSensitivity.RELATIVE)
+}

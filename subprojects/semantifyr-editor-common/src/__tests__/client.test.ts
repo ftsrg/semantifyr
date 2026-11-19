@@ -33,16 +33,16 @@ const token: CancellationToken = {
 };
 
 describe("validateWitness", () => {
-    it("sends the location and the portfolio as the command's one argument", async () => {
-        const validation = { status: "valid", verdict: "failed", message: null, backendId: "theta-bmc", portfolioId: "smart", metrics: null };
+    it("sends the location, the witness and the portfolio as the command's one argument", async () => {
+        const validation = { status: "valid", message: null, portfolioId: "smart", report: null, witnessUri: null };
         const { client, sendRequest } = recordingClient(validation);
 
-        const result = await validateWitness(client, "gamma.witness.validate", caseLocation, { portfolio: "smart" });
+        const result = await validateWitness(client, "gamma.witness.validate", { ...caseLocation, witnessUri }, { portfolio: "smart" });
 
         expect(result).toEqual(validation);
         expect(sendRequest.mock.calls).toEqual([[
             "workspace/executeCommand",
-            { command: "gamma.witness.validate", arguments: [{ ...caseLocation, portfolio: "smart" }] },
+            { command: "gamma.witness.validate", arguments: [{ ...caseLocation, witnessUri, portfolio: "smart" }] },
         ]]);
     });
 
@@ -71,8 +71,8 @@ describe("verifyCase", () => {
 });
 
 describe("witnessValidationLocation", () => {
-    it("names the case for a validation by case", () => {
-        expect(witnessValidationLocation(caseLocation, witnessUri, true)).toBe(caseLocation);
+    it("names the case and the witness its verification wrote for a validation by case", () => {
+        expect(witnessValidationLocation(caseLocation, witnessUri, true)).toEqual({ ...caseLocation, witnessUri });
     });
 
     it("names the start of the witness model otherwise", () => {

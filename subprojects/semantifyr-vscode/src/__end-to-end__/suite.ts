@@ -28,7 +28,7 @@ export async function run() {
 
     const result = await commands.executeCommand<VerificationCaseResult>("oxsts.case.verify", { uri: model, range: smokeCase.location.range, portfolio: "theta-cegar-expl" });
     assert.equal(result.status, "passed", result.message ?? "no message");
-    const witnessUri = result.trace?.witnessUri;
+    const witnessUri = result.witnessUri;
     assert.ok(witnessUri, "the result carries no witness");
     const witness = await workspace.openTextDocument(Uri.parse(witnessUri));
     assert.match(witness.getText(), /CounterReachesThree/);

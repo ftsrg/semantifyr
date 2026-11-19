@@ -38,7 +38,12 @@ class ThetaSemanticConformanceTest {
 
         @JvmStatic
         fun `OXSTS Semantic Test Suite Passes`(): List<Arguments> {
-            return helper.collectVerificationCasesAsArguments(context)
+            return helper.collectAcceptedCasesAsArguments(
+                context,
+                ThetaBackend(),
+                ThetaConfig.CegarExplPredCombined,
+                SemantifyrVerifierTestHelper.testArtifactRoot(ThetaSemanticConformanceTest::class.java).resolve("capability-check"),
+            )
         }
     }
 

@@ -35,6 +35,7 @@ import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.SetTimeoutAction
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.ShallowHistoryState
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.StateReferenceExpression
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.StatechartDeclaration
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.TimeElapseAct
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.TimeUnit
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.TransitionPriority
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.VariableReferenceExpression
@@ -270,6 +271,32 @@ class GammaGrammarTest {
         assertThat((asserts[6] as FiredTransitionExpression).instance).isNull()
         assertThat((asserts[7] as RaiseEventAct).instance).isNull()
         assertThat((asserts[8] as RaiseEventAct).instance.child.instance).isNotNull
+    }
+
+    @Test
+    fun `an elapse takes a fraction of milliseconds, a whole one without a denominator`() {
+        val trace = parse(
+            """
+                import test::model
+
+                trace Checked of Case
+
+                step {
+                    act {
+                        elapse 1000
+                        elapse 2000/3
+                    }
+                    assert {
+                    }
+                }
+            """,
+        ) as ExecutionTrace
+
+        assertThat(
+            trace.steps.single().acts.filterIsInstance<TimeElapseAct>().map {
+                listOf(it.time, it.denominator)
+            },
+        ).containsExactly(listOf(1000, 1), listOf(2000, 3))
     }
 
     @Test

@@ -11,6 +11,7 @@ import com.google.inject.Injector
 import com.google.inject.assistedinject.Assisted
 import com.google.inject.assistedinject.AssistedInject
 import com.google.inject.assistedinject.FactoryModuleBuilder
+import hu.bme.mit.semantifyr.backend.BackendCapabilityChecker
 import hu.bme.mit.semantifyr.backend.BackendUnsupportedException
 import hu.bme.mit.semantifyr.backend.BackendVerificationRequest
 import hu.bme.mit.semantifyr.backend.BackendVerificationResult
@@ -36,10 +37,13 @@ import hu.bme.mit.semantifyr.backends.uppaal.transformation.UppaalCapabilityChec
 import hu.bme.mit.semantifyr.backends.uppaal.transformation.UppaalModelTransformer
 import hu.bme.mit.semantifyr.backends.uppaal.transformation.UppaalOperationVisitor
 import hu.bme.mit.semantifyr.backends.uppaal.transformation.UppaalOverApproximationCapabilityChecker
+import hu.bme.mit.semantifyr.backends.uppaal.transformation.UppaalVariableKind
 import hu.bme.mit.semantifyr.backends.uppaal.transformation.UppaalVariableTransformer
 import hu.bme.mit.semantifyr.logging.info
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
+
+private const val SYMBOLIC_TRACE_FLAG = "-y"
 
 class UppaalBackend : VerificationBackend<UppaalConfig>() {
     override val id = "uppaal"
@@ -57,9 +61,17 @@ class UppaalBackend : VerificationBackend<UppaalConfig>() {
         val injector = parentInjector.createChildInjector(UppaalBackendModule())
         return withVerificationScope {
             val factory = injector.getInstance(UppaalVerificationContext.Factory::class.java)
-            val context = factory.create(config, executor, request)
+            val context = factory.create(config, executor, request, capabilityChecker(parentInjector, config))
             context.execute()
         }
+    }
+
+    override fun capabilityChecker(parentInjector: Injector, config: UppaalConfig): BackendCapabilityChecker {
+        val injector = parentInjector.createChildInjector(UppaalBackendModule())
+        if (config.soundness == SoundnessDirection.OverApproximating) {
+            return injector.getInstance(UppaalOverApproximationCapabilityChecker::class.java)
+        }
+        return injector.getInstance(UppaalCapabilityChecker::class.java)
     }
 }
 
@@ -77,8 +89,7 @@ class UppaalVerificationContext @AssistedInject constructor(
     @param:Assisted private val config: UppaalConfig,
     @param:Assisted override val executor: UppaalExecutor,
     @Assisted request: BackendVerificationRequest,
-    uppaalCapabilityChecker: UppaalCapabilityChecker,
-    overApproximationCapabilityChecker: UppaalOverApproximationCapabilityChecker,
+    @Assisted capabilityChecker: BackendCapabilityChecker,
     private val uppaalModelTransformer: UppaalModelTransformer,
     private val uppaalTraceParser: UppaalTraceParser,
     private val uppaalLogVerdictParser: UppaalLogVerdictParser,
@@ -86,15 +97,10 @@ class UppaalVerificationContext @AssistedInject constructor(
     private val uppaalVariableTransformer: UppaalVariableTransformer,
 ) : VerificationContext<UppaalArtifacts, UppaalVerdict>(
     backendId = "uppaal:${config.id}",
-    soundness = config.soundness,
+    configuredSoundness = config.soundness,
     request = request,
+    capabilityChecker = capabilityChecker,
 ) {
-
-    override val capabilityChecker = if (config.soundness == SoundnessDirection.OverApproximating) {
-        overApproximationCapabilityChecker
-    } else {
-        uppaalCapabilityChecker
-    }
 
     private val artifactManager = UppaalArtifactManager(request.artifactOutputPath)
 
@@ -113,7 +119,7 @@ class UppaalVerificationContext @AssistedInject constructor(
     override suspend fun run(artifacts: UppaalArtifacts): UppaalVerdict? {
         val workingDir = artifactManager.modelFile.parentFile
         val params = config.parameters.takeIf { it.isNotBlank() }?.split(" ") ?: emptyList()
-        val command = params + listOf(artifactManager.modelFile.name, artifactManager.queryFile.name)
+        val command = params + symbolicTraceFlag() + listOf(artifactManager.modelFile.name, artifactManager.queryFile.name)
 
         val spec = UppaalExecutionSpecification(
             workingDirectory = workingDir,
@@ -140,6 +146,17 @@ class UppaalVerificationContext @AssistedInject constructor(
         }
 
         return verdict
+    }
+
+    // Uppaal's concrete trace rounds its delays and fails on long runs of small ones
+    private fun symbolicTraceFlag(): List<String> {
+        val hasClocks = request.inlinedOxsts.variables.any {
+            uppaalVariableTransformer.kindOf(it) == UppaalVariableKind.Clock
+        }
+        if (!hasClocks) {
+            return emptyList()
+        }
+        return listOf(SYMBOLIC_TRACE_FLAG)
     }
 
     private fun checkRejection() {
@@ -180,11 +197,11 @@ class UppaalVerificationContext @AssistedInject constructor(
         }
         val trace = uppaalTraceParser.parse(artifactManager.logFile)
         if (trace == null) {
-            logger.info { "[$backendId] no diagnostic trace in ${artifactManager.logFile.name}; witness not produced" }
+            logger.info { "[$backendId] no diagnostic trace in ${artifactManager.logFile.name}" }
             return null
         }
         logger.info { "[$backendId] parsed Uppaal trace with ${trace.states.size} state(s); building witness" }
-        return uppaalInlinedOxstsWitnessTransformer.transform(request.inlinedOxsts, trace)
+        return uppaalInlinedOxstsWitnessTransformer.transform(request.inlinedOxsts, trace, artifacts.clockEdges)
     }
 
     interface Factory {
@@ -192,6 +209,7 @@ class UppaalVerificationContext @AssistedInject constructor(
             config: UppaalConfig,
             executor: UppaalExecutor,
             request: BackendVerificationRequest,
+            capabilityChecker: BackendCapabilityChecker,
         ): UppaalVerificationContext
     }
 }

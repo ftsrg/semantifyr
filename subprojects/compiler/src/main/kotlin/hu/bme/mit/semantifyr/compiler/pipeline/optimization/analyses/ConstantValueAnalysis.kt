@@ -17,6 +17,7 @@ import hu.bme.mit.semantifyr.compiler.pipeline.utils.initMustWrite
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.variableAssignments
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.variableHavocs
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.variableReadExpressions
+import hu.bme.mit.semantifyr.oxsts.lang.semantics.clock.ClockTestAnalysis
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.ConstantExpressionEvaluatorProvider
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.EvaluationFailureException
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.ExpressionEvaluation
@@ -38,6 +39,7 @@ data class ConstantValueInfo(
 class ConstantValueAnalysis @Inject constructor(
     private val metaCompileTimeExpressionEvaluatorProvider: MetaCompileTimeExpressionEvaluatorProvider,
     private val constantExpressionEvaluatorProvider: ConstantExpressionEvaluatorProvider,
+    private val clockTestAnalysis: ClockTestAnalysis,
 ) : Analysis<ConstantValueInfo> {
 
     override fun compute(input: EvaluableCompilationContext): ConstantValueInfo {
@@ -46,6 +48,7 @@ class ConstantValueAnalysis @Inject constructor(
             input.inlinedOxsts,
             evaluator,
             constantExpressionEvaluatorProvider,
+            clockTestAnalysis,
         ).compute()
     }
 
@@ -55,6 +58,7 @@ class ConstantValueComputation(
     private val inlinedOxsts: InlinedOxsts,
     private val evaluator: MetaCompileTimeExpressionEvaluator,
     private val constantExpressionEvaluatorProvider: ConstantExpressionEvaluatorProvider,
+    private val clockTestAnalysis: ClockTestAnalysis,
 ) {
 
     private val topLevelVariables by lazy {
@@ -76,7 +80,8 @@ class ConstantValueComputation(
         val constants = mutableMapOf<VariableDeclaration, Expression>()
 
         for (variable in inlinedOxsts.eAllOfType<VariableDeclaration>()) {
-            if (variable in variableHavocs) {
+            // time passes between steps, so a clock reset to 0 alone is no constant
+            if (variable in variableHavocs || clockTestAnalysis.isClock(variable)) {
                 continue
             }
 

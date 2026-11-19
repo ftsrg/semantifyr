@@ -6,9 +6,11 @@
 
 package hu.bme.mit.semantifyr.live.backend.integration
 
+import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseRequest
 import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseResult
 import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseSpecification
+import hu.bme.mit.semantifyr.lang.ide.server.wire.WitnessValidationRequest
 import hu.bme.mit.semantifyr.lang.ide.server.wire.WitnessValidationResult
 import hu.bme.mit.semantifyr.lang.ide.server.wire.WitnessValidationStatus
 import hu.bme.mit.semantifyr.live.backend.lsp.service.ReadDocumentParams
@@ -70,7 +72,7 @@ class LiveVerificationTest {
                 val verifyResponse = awaitResponseFor(id = 3, timeout = 1.minutes)
                 val verifyResult = verifyResponse.resultAs(VerificationCaseResult::class.java)
                 assertThat(verifyResult.status()).isEqualTo("passed")
-                val witnessUri = verifyResult.trace()?.witnessUri()
+                val witnessUri = verifyResult.witnessUri()
                     ?: error("verify produced no witness URI: $verifyResult")
 
                 send(Frame.Text(LspWire.didOpenNotification(uri = witnessUri, languageId = "oxsts", text = "")))
@@ -148,7 +150,7 @@ class LiveVerificationTest {
                 )
                 val verifyResult = awaitResponseFor(id = 3, timeout = 2.minutes).resultAs(VerificationCaseResult::class.java)
                 assertThat(verifyResult.status()).isEqualTo(expectedStatus("Simple.gamma", "LeaderStatechartIdleReachable"))
-                val traceUri = verifyResult.trace()?.witnessUri()
+                val traceUri = verifyResult.traceUri()
                     ?: error("verify produced no trace URI: $verifyResult")
                 assertThat(traceUri).startsWith("file:///workspace/").endsWith("/trace.get")
 
@@ -190,12 +192,16 @@ class LiveVerificationTest {
                 val verifyResult = awaitResponseFor(id = 4, timeout = 2.minutes).resultAs(VerificationCaseResult::class.java)
                 assertThat(verifyResult.status()).isEqualTo(expectedStatus("Simple.gamma", "LeaderStatechartIdleReachable"))
 
-                send(Frame.Text(LspWire.executeCommandRequest(id = 5, command = "gamma.witness.validate", arguments = listOf(request))))
+                val witnessUri = verifyResult.witnessUri()
+                    ?: error("verify produced no witness URI: $verifyResult")
+                assertThat(witnessUri).startsWith("file:///workspace/")
+                val witnessRequest = WitnessValidationRequest(documentUri, selectedCase.location().range, "smart", witnessUri)
+                send(Frame.Text(LspWire.executeCommandRequest(id = 5, command = "gamma.witness.validate", arguments = listOf(witnessRequest))))
                 val validation = awaitResponseFor(id = 5, timeout = 2.minutes).resultAs(WitnessValidationResult::class.java)
                 assertThat(validation.status())
                     .describedAs("witness validation: $validation")
                     .isEqualTo(WitnessValidationStatus.VALID)
-                assertThat(validation.verdict()).isEqualTo("passed")
+                assertThat(validation.report()?.result?.verdict).isEqualTo(VerificationVerdict.Passed)
                 assertThat(validation.portfolioId()).isEqualTo("smart")
                 val verificationDirectory = "model._Simple._LeaderStatechartIdleReachable"
                 assertThat(artifactsOnDisk(tmp, "Simple.LeaderStatechart-c8358067")).contains(

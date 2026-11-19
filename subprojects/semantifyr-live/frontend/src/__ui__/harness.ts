@@ -39,6 +39,8 @@ export interface OpenOptions {
   touch?: boolean
   // runs in the page before its own scripts
   before?: () => void
+  // the page's requests to these addresses are answered once the promise has settled
+  held?: { url: string, until: Promise<void> }
 }
 
 export interface Ui {
@@ -88,6 +90,13 @@ export const test = base.extend<{ ui: Ui, browser: Browser }>({
       })
       if (options.before) {
         await page.addInitScript(options.before)
+      }
+      const held = options.held
+      if (held) {
+        await page.route(held.url, async (route) => {
+          await held.until
+          await route.continue()
+        })
       }
       return page
     }

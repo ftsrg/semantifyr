@@ -9,9 +9,9 @@ package hu.bme.mit.semantifyr.website
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.cli.common.ExitCode
 import hu.bme.mit.semantifyr.cli.common.verdictTag
+import hu.bme.mit.semantifyr.verifier.FractionSerializer
+import hu.bme.mit.semantifyr.verifier.ReportValueSerializer
 import hu.bme.mit.semantifyr.verifier.VerificationReport
-import hu.bme.mit.semantifyr.verifier.witness.CallTrace
-import hu.bme.mit.semantifyr.verifier.witness.WitnessState
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.descriptors.PrimitiveKind
 import kotlinx.serialization.descriptors.SerialDescriptor
@@ -46,6 +46,12 @@ private fun typeOf(descriptor: SerialDescriptor): String {
     if (serialName == "kotlin.time.Instant") {
         return "instant"
     }
+    if (serialName == FractionSerializer.descriptor.serialName) {
+        return "fraction"
+    }
+    if (serialName == ReportValueSerializer.descriptor.serialName) {
+        return "value"
+    }
     return when (descriptor.kind) {
         PrimitiveKind.STRING, PrimitiveKind.CHAR -> {
             "string"
@@ -63,15 +69,23 @@ private fun typeOf(descriptor: SerialDescriptor): String {
             "enum"
         }
         StructureKind.LIST -> {
-            "list"
+            "list${heldTypeOf(descriptor)}"
         }
         StructureKind.MAP -> {
-            "map"
+            "map${heldTypeOf(descriptor)}"
         }
         else -> {
             "object"
         }
     }
+}
+
+private fun heldTypeOf(descriptor: SerialDescriptor): String {
+    val held = heldDescriptorOf(descriptor)
+    if (held.kind == StructureKind.CLASS) {
+        return ""
+    }
+    return " of ${typeOf(held)}"
 }
 
 // a list or a map shows the fields of what it holds
@@ -138,12 +152,6 @@ fun main(arguments: Array<String>) {
         }
         "report-fields" -> {
             fieldsOf(VerificationReport.serializer().descriptor)
-        }
-        "trace-fields" -> {
-            fieldsOf(CallTrace.serializer().descriptor)
-        }
-        "witness-fields" -> {
-            fieldsOf(WitnessState.serializer().descriptor)
         }
         "verdicts" -> {
             verdicts()

@@ -21,4 +21,7 @@ dependencies {
     api(project(":theta-backend"))
 
     implementation(project(":logging"))
+    implementation(libs.kotlinx.serialization.json)
+
+    testImplementation(testFixtures(project(":verifier")))
 }

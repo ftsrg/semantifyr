@@ -6,6 +6,7 @@
 
 package hu.bme.mit.semantifyr.live.backend.lsp.service
 
+import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseRequest
 import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseResult
 import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationStatus
@@ -27,6 +28,8 @@ import hu.bme.mit.semantifyr.live.backend.testing.jsonClient
 import hu.bme.mit.semantifyr.live.backend.testing.paramsAs
 import hu.bme.mit.semantifyr.live.backend.testing.resultAs
 import hu.bme.mit.semantifyr.live.backend.testing.testInjector
+import hu.bme.mit.semantifyr.verifier.ReportKind
+import hu.bme.mit.semantifyr.verifier.fakeVerificationReport
 import io.ktor.client.plugins.websocket.webSocket
 import io.ktor.server.testing.testApplication
 import io.ktor.websocket.Frame
@@ -44,7 +47,9 @@ import kotlin.time.Duration.Companion.milliseconds
 
 class WebSocketVerificationFlowTest {
 
-    private val cannedResult = VerificationCaseResult("passed", "ok", "theta", "smart", null, null)
+    private val cannedResult = VerificationCaseResult("passed", "ok", "smart", fakeVerificationReport(VerificationVerdict.Passed, "theta"), null, null)
+
+    private val validationReport = fakeVerificationReport(VerificationVerdict.Passed, "theta", ReportKind.Recheck)
 
     private val documentUri = "file:///workspace/snippet.semantifyr"
 
@@ -189,7 +194,6 @@ class WebSocketVerificationFlowTest {
             send(Frame.Text(verifyCommand(id = 2, command = "oxsts.case.validateWitness")))
             val result = awaitResponseFor(id = 2).resultAs(WitnessValidationResult::class.java)
             assertThat(result.status()).isEqualTo(WitnessValidationStatus.TIMEOUT)
-            assertThat(result.verdict()).isEqualTo(VerificationStatus.TIMEOUT)
             assertThat(result.message()).contains("timed out")
             assertThat(result.portfolioId()).isEqualTo("smart")
         }
@@ -258,7 +262,6 @@ class WebSocketVerificationFlowTest {
             } else {
                 val result = response.resultAs(WitnessValidationResult::class.java)
                 assertThat(result.status()).isEqualTo(WitnessValidationStatus.CANCELLED)
-                assertThat(result.verdict()).isEqualTo(VerificationStatus.CANCELLED)
                 assertThat(result.portfolioId()).isEqualTo("smart")
             }
         }
@@ -301,7 +304,7 @@ class WebSocketVerificationFlowTest {
     fun `finished verifications are timed by kind, backend and verdict`(@TempDir tmp: Path) = testApplication {
         val executor = FakeVerificationExecutor {
             if (it.command == "oxsts.case.validateWitness") {
-                WitnessValidationResult("valid", null, null, "theta", "smart", null)
+                WitnessValidationResult("valid", null, "smart", validationReport, null)
             } else {
                 cannedResult
             }

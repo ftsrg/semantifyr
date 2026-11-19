@@ -313,7 +313,7 @@ export class VerificationTestController {
                 case VerificationStatus.Failed: {
                     const message = new TestMessage([result.message ?? 'Failed', validationLine].filter((line) => line !== undefined).join('\n'));
                     message.location = new Location(testItem.uri, range);
-                    if (result.trace) {
+                    if (result.report?.trace) {
                         message.contextValue = validator ? validatableWitnessMessageContext : witnessMessageContext;
                     }
                     run.failed(testItem, message);
@@ -347,8 +347,8 @@ export class VerificationTestController {
 
     protected witnessValidator(caseLocation: VerificationCaseLocation, result: VerificationCaseResult): WitnessValidator | undefined {
         const command = this.config.validateWitnessCommand;
-        const witnessUri = result.trace?.witnessUri;
-        if (command === undefined || witnessUri === undefined || witnessUri === null) {
+        const witnessUri = result.witnessUri;
+        if (command === undefined || !witnessUri) {
             return undefined;
         }
         const location = witnessValidationLocation(caseLocation, witnessUri, this.config.validateWitnessByCase ?? false);

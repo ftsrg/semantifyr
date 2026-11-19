@@ -16,6 +16,7 @@ Model returns Ecore::EObject:
 
 InlinedOxsts:
     ('inlined' 'oxsts' | witness?='witness') 'of' classDeclaration=[ClassDeclaration|QualifiedIdentifier]
+    ('timescale' timeScale=INT)?
 
     variables+=InlinedVariable*
     rootFeature=RootFeature?
@@ -613,6 +614,7 @@ KEYWORD:
     'init'
     | 'havoc'
     | 'prop'
+    | 'timescale'
 ;
 
 @Override

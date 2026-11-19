@@ -51,14 +51,14 @@ describe('the first screen', () => {
 
 describe('an address that names what Live does not have', () => {
   test('says a model of the fragment that cannot be read was not, and opens the example', async ({ ui }) => {
-    const page = await ui.open('/language/intersection#model=garbled')
+    const page = await ui.open('/language/modeling-and-verification#model=garbled')
 
     await expect.poll(async () => {
       return page.locator('.orientation.is-error').innerText()
     }).toContain('The model in the link could not be read')
     await expect.poll(async () => {
       return page.title()
-    }).toBe(titleOf('oxsts', 'intersection'))
+    }).toBe(titleOf('oxsts', 'modeling-and-verification'))
   })
 
   test('opens a model of the fragment as a shared model', async ({ ui }) => {
@@ -79,13 +79,13 @@ describe('an address that names what Live does not have', () => {
 
 describe('the history of a visit', () => {
   test('pushes a switch of example, language and flavour, and Back and Forward reopen each with its text', async ({ ui }) => {
-    const page = await ui.open('/language/intersection')
+    const page = await ui.open('/language/modeling-and-verification')
     await casesListed(page)
 
-    await chooseExample(page, servedExample('oxsts', 'library').label)
+    await chooseExample(page, servedExample('oxsts', 'semantic-libraries').label)
     await expect.poll(async () => {
       return pathOf(page)
-    }).toBe('/language/library')
+    }).toBe('/language/semantic-libraries')
     await page.locator('.flavour-button').click()
     await page.getByRole('menuitem', { name: /Gamma's semantics/ }).click()
     await expect.poll(async () => {
@@ -108,9 +108,9 @@ describe('the history of a visit', () => {
 
     expect(visited).toEqual([
       `/language/level-crossing?library=gamma ${titleOf('gamma', 'level-crossing', 'oxsts')}`,
-      `/language/library ${titleOf('oxsts', 'library')}`,
-      `/language/intersection ${titleOf('oxsts', 'intersection')}`,
-      `/language/library ${titleOf('oxsts', 'library')}`,
+      `/language/semantic-libraries ${titleOf('oxsts', 'semantic-libraries')}`,
+      `/language/modeling-and-verification ${titleOf('oxsts', 'modeling-and-verification')}`,
+      `/language/semantic-libraries ${titleOf('oxsts', 'semantic-libraries')}`,
     ])
     await expect.poll(async () => {
       return editor(page).lines.innerText()

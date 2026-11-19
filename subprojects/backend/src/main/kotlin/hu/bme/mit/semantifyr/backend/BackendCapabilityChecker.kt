@@ -39,6 +39,10 @@ abstract class BackendCapabilityChecker {
         return emptyList()
     }
 
+    open fun soundness(inlinedOxsts: InlinedOxsts): SoundnessDirection {
+        return SoundnessDirection.Exact
+    }
+
     object Unlimited : BackendCapabilityChecker() {
         override fun describeUnsupported(element: EObject): String? {
             return null

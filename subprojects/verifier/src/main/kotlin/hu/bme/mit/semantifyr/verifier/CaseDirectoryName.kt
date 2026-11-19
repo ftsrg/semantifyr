@@ -31,10 +31,6 @@ fun caseDirectory(outputDirectory: Path, case: VerificationCase): Path {
     return outputDirectory.resolve(caseDirectoryName(case))
 }
 
-fun caseReportPath(outputDirectory: Path, case: VerificationCase): Path {
-    return reportPath(caseDirectory(outputDirectory, case))
-}
-
-internal fun reportPath(caseDirectory: Path): Path {
-    return caseDirectory.resolve("report.json")
+internal fun caseRecheckDirectory(outputDirectory: Path, case: VerificationCase): Path {
+    return caseDirectory(outputDirectory, case).resolve("validation")
 }

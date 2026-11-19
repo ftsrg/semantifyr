@@ -8,13 +8,14 @@ package hu.bme.mit.semantifyr.backends.spin.transformation
 
 import com.google.inject.Inject
 import hu.bme.mit.semantifyr.backend.BackendCapabilityChecker
+import hu.bme.mit.semantifyr.backend.SoundnessDirection
 import hu.bme.mit.semantifyr.backend.UnsupportedConstruct
 import hu.bme.mit.semantifyr.backend.transformation.IntegerRangeChecker
+import hu.bme.mit.semantifyr.backend.transformation.WholeDelayLowering
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinSymbolResolver
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.ExpressionTypeEvaluatorProvider
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.ImmutableTypeEvaluation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ArrayLiteral
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.EnumDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ForOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.IfThenElse
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.IndexingSuffixExpression
@@ -30,10 +31,25 @@ class SpinCapabilityChecker @Inject constructor(
     private val builtinSymbolResolver: BuiltinSymbolResolver,
     private val expressionTypeEvaluatorProvider: ExpressionTypeEvaluatorProvider,
     private val integerRangeChecker: IntegerRangeChecker,
+    private val wholeDelayLowering: WholeDelayLowering,
+    private val spinVariableTransformer: SpinVariableTransformer,
 ) : BackendCapabilityChecker() {
 
     override fun checkModel(inlinedOxsts: InlinedOxsts): List<UnsupportedConstruct> {
-        return integerRangeChecker.check(inlinedOxsts)
+        return integerRangeChecker.check(inlinedOxsts) + checkWholeDelay(inlinedOxsts)
+    }
+
+    private fun checkWholeDelay(inlinedOxsts: InlinedOxsts): List<UnsupportedConstruct> {
+        val wholeDelay = wholeDelayLowering.lower(inlinedOxsts) ?: return emptyList()
+        return wholeDelay.clocks.filter {
+            it.saturation + wholeDelay.longestDelay > Int.MAX_VALUE
+        }.map {
+            UnsupportedConstruct(it.variable, "clocks that a whole delay may carry beyond the 32-bit range")
+        }
+    }
+
+    override fun soundness(inlinedOxsts: InlinedOxsts): SoundnessDirection {
+        return wholeDelayLowering.soundness(inlinedOxsts)
     }
 
     override fun describeUnsupported(element: EObject): String? {
@@ -51,7 +67,7 @@ class SpinCapabilityChecker @Inject constructor(
 
     private fun describeUnsupportedType(variable: VariableDeclaration): String? {
         val domain = variable.typeSpecification?.domain ?: return null
-        if (domain is EnumDeclaration || domain === builtinSymbolResolver.intDatatype(variable) || domain === builtinSymbolResolver.boolDatatype(variable)) {
+        if (spinVariableTransformer.kindOf(variable) != null) {
             return null
         }
         return "variables of type ${domain.name}"

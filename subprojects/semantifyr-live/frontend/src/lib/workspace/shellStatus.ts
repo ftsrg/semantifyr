@@ -4,10 +4,12 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
+import { formatSeconds } from '@semantifyr/editor-common'
+
 import type { ConnectionState } from '../stores/connection'
 import { areCasesKnown, currentStep, isInitialized, type InitializationState, type InitializationStep } from '../stores/initialization'
 import type { RunningInterval, VerificationCaseState, VerificationState } from '../verification/engine'
-import { caseRowOf, countsOf, countsPhrase, formatSeconds, waitedPhrase } from './caseRows'
+import { caseRowOf, countsOf, countsPhrase, waitedPhrase } from './caseRows'
 import type { CatalogStatus } from './live'
 import type { QueuedVerification, RunTiming } from './verification'
 

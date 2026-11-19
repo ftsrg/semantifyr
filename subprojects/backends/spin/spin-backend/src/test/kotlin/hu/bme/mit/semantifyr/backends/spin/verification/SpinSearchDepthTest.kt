@@ -45,7 +45,8 @@ class SpinSearchDepthTest {
         }.build()
         val artifactDirectory = Path("build", "test-artifacts", "SpinSearchDepthTest")
         artifactDirectory.toFile().deleteRecursively()
-        val request = BackendVerificationRequest(models.compile("control_flow", "ChoiceBound", artifactDirectory), artifactDirectory)
+        val compilation = models.compileFlattened("control_flow", "ChoiceBound", artifactDirectory)
+        val request = BackendVerificationRequest(compilation.inlinedOxsts, artifactDirectory, transitionCallTraces = compilation.transitionCallTraces)
 
         SpinBackend().verify(injector, SpinConfig.SafeDfs.copy(maxSearchDepth = 1_000_000), request, environment)
 

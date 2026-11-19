@@ -6,6 +6,7 @@
 
 import com.google.inject.Inject
 import com.google.inject.Provider
+import hu.bme.mit.semantifyr.frontends.gamma.GammaCompiler
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.GammaModelPackage
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.LiteralInteger
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.impl.LiteralExpressionImpl
@@ -40,7 +41,7 @@ class GammaToOxstsSerializerTest {
         val gammaPackage = parseHelper.parse(source)
         EcoreUtil.resolveAll(gammaPackage)
         assertThat(gammaPackage.eResource().errors).isEmpty()
-        return GammaToOxstsSerializer(GammaNameMap()).transformToOxsts(gammaPackage).lines().map {
+        return GammaToOxstsSerializer(GammaNameMap(), GammaCompiler.timeUnitMilliseconds(gammaPackage)).transformToOxsts(gammaPackage).lines().map {
             it.trim()
         }
     }
@@ -193,7 +194,7 @@ class GammaToOxstsSerializerTest {
         )
         EcoreUtil.resolveAll(resourceSet)
 
-        val lines = GammaToOxstsSerializer(GammaNameMap()).transformToOxsts(gammaPackage).lines().map {
+        val lines = GammaToOxstsSerializer(GammaNameMap(), GammaCompiler.timeUnitMilliseconds(gammaPackage)).transformToOxsts(gammaPackage).lines().map {
             it.trim()
         }
 
@@ -353,90 +354,57 @@ class GammaToOxstsSerializerTest {
         EcoreUtil.replace(literal, unknownLiteral)
 
         assertThatThrownBy {
-            GammaToOxstsSerializer(GammaNameMap()).transformToOxsts(gammaPackage)
+            GammaToOxstsSerializer(GammaNameMap(), GammaCompiler.timeUnitMilliseconds(gammaPackage)).transformToOxsts(gammaPackage)
         }.isInstanceOf(IllegalStateException::class.java).hasMessage("test.gamma:10: the literal of type LiteralExpression is not supported")
     }
 
     @Test
-    fun `a timeout set to a literal in seconds stops its clock at the value`() {
-        val lines = statechartLines("transition from Idle to Busy / set delay := 2 s;")
-
-        assertThat(lines).containsSequence(
-            "contains _delay: Timeout subsets timeouts {",
-            "redefine refers stopsAtValue: bool = true",
-            "redefine contains value: LiteralIntegerExpression {",
-            "redefine refers value: int = 2",
-            "}",
-            "}",
-        )
-    }
-
-    @Test
-    fun `a timeout set in milliseconds counts milliseconds with a delta of one second in milliseconds`() {
-        val lines = statechartLines("transition from Idle to Busy / set delay := 500 ms;")
-
-        assertThat(lines).containsSequence(
-            "contains _delay: Timeout subsets timeouts {",
-            "redefine refers deltaTime: int = 1000",
-            "redefine refers stopsAtValue: bool = true",
-            "redefine contains value: LiteralIntegerExpression {",
-            "redefine refers value: int = 500",
-            "}",
-            "}",
-        )
-    }
-
-    @Test
-    fun `a timeout set to a variable reads the variable and its clock counts on`() {
-        val lines = statechartLines("transition from Idle to Busy / set delay := count s;")
-
-        assertThat(lines).containsSequence(
-            "contains _delay: Timeout subsets timeouts {",
-            "redefine contains value: VariableExpression {",
-            "redefine refers variable: Variable = _count",
-            "}",
-            "}",
-        )
-    }
-
-    @Test
-    fun `a timeout never set has the value zero and is always up`() {
-        val lines = statechartLines("")
-
-        assertThat(lines).containsSequence(
-            "contains _delay: Timeout subsets timeouts {",
-            "redefine refers stopsAtValue: bool = true",
-            "redefine contains value: LiteralIntegerExpression {",
-            "redefine refers value: int = 0",
-            "}",
-            "}",
-        )
-    }
-
-    @Test
-    fun `a timeout's value names a variable shadowed by a state directly, the statechart's body seeing no state`() {
+    fun `every time value is written in the greatest unit all of them are a whole number of`() {
         val lines = oxstsLines(
             """
                 package test
-                statechart Monitor {
-                    var Busy : integer := 2
-                    timeout delay
+                statechart Machine {
+                    timeout short
+                    timeout long
                     region Main {
                         initial MainInitial
-                        state Busy {
-                            entry / set delay := Busy s;
+                        state Idle {
+                            entry / set short := 1500 ms; set long := 2 s;
                         }
                     }
-                    transition from MainInitial to Busy
+                    transition from MainInitial to Idle
+                }
+                adapter Ticking of component machine : Machine {
+                    clock ticker (rate = 3 s)
+                    when ticker / run
+                    queue messages (priority = 1, capacity = 1) {
+                        ticker
+                    }
                 }
             """,
         )
 
         assertThat(lines).containsSequence(
-            "contains _delay: Timeout subsets timeouts {",
-            "redefine contains value: VariableExpression {",
-            "redefine refers variable: Variable = _Busy",
+            "contains _short: Timeout subsets timeouts {",
+            "redefine refers value: int = 3",
             "}",
+            "contains _long: Timeout subsets timeouts {",
+            "redefine refers value: int = 4",
+            "}",
+        )
+        assertThat(lines).containsSequence(
+            "contains _ticker: Clock subsets clocks {",
+            "redefine refers rate: int = 6",
+            "}",
+        )
+    }
+
+    @Test
+    fun `a timeout never set keeps the library's value, being up until it is first set`() {
+        val lines = statechartLines("")
+
+        assertThat(lines).containsSequence(
+            "contains _delay: Timeout subsets timeouts {",
             "}",
         )
     }
@@ -2020,7 +1988,7 @@ class GammaToOxstsSerializerTest {
         assertThat(gammaPackage.eResource().errors).isEmpty()
 
         assertThatThrownBy {
-            GammaToOxstsSerializer(GammaNameMap()).transformToOxsts(gammaPackage)
+            GammaToOxstsSerializer(GammaNameMap(), GammaCompiler.timeUnitMilliseconds(gammaPackage)).transformToOxsts(gammaPackage)
         }.isInstanceOf(UnmappedGammaConstructException::class.java).hasMessageContaining(construct).hasMessageContaining("is not mapped to the Semantifyr Language yet").hasMessageMatching("(?s).*:\\d+: .*")
     }
 
@@ -2032,7 +2000,7 @@ class GammaToOxstsSerializerTest {
         assertThat(gammaPackage.eResource().errors).isEmpty()
 
         assertThatThrownBy {
-            GammaToOxstsSerializer(GammaNameMap()).transformToOxsts(gammaPackage)
+            GammaToOxstsSerializer(GammaNameMap(), GammaCompiler.timeUnitMilliseconds(gammaPackage)).transformToOxsts(gammaPackage)
         }.isInstanceOf(UnmappedGammaConstructException::class.java).hasMessageContaining("$construct is refused").hasMessageMatching("(?s)test.gamma:\\d+: .*")
     }
 
@@ -2173,6 +2141,23 @@ class GammaToOxstsSerializerTest {
                         }
                         async Outer {
                             component inner : Inner
+                        }
+                    """,
+                ),
+                Arguments.of(
+                    "the value of timeout 'delay' other than a constant",
+                    """
+                        package test
+                        statechart Machine {
+                            var limit : integer := 1000
+                            timeout delay
+                            region Main {
+                                initial MainInitial
+                                state Idle {
+                                    entry / set delay := limit ms;
+                                }
+                            }
+                            transition from MainInitial to Idle
                         }
                     """,
                 ),

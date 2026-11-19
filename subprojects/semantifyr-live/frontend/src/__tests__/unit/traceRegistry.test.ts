@@ -7,7 +7,7 @@
 import { describe, expect, it, vi } from 'vitest'
 
 import { shownView, traceLanguageOf } from '../../trace/registry'
-import { sampleTrace } from '../fixtures/verification-results'
+import { failedResult } from '../fixtures/verification-results'
 
 vi.mock('vscode', () => {
   return {}
@@ -37,8 +37,8 @@ describe('the views of a trace', () => {
 
   it('show the view chosen for the language, or the first when the chosen one has nothing to show of the trace', () => {
     const gamma = traceLanguageOf('gamma')
-    const context = { trace: sampleTrace, caseName: 'Case', runtime: null }
-    const withoutWitness = { ...context, trace: { ...sampleTrace, witnessUri: null } }
+    const context = { witnessUri: failedResult.witnessUri, traceUri: 'inmemory:///workspace/snippet.trace.get', caseName: 'Case' }
+    const withoutWitness = { ...context, witnessUri: null }
 
     expect(shownView(gamma, 'calls', context).id).toBe('calls')
     expect(shownView(gamma, undefined, context).id).toBe('own')

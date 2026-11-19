@@ -7,9 +7,9 @@
 package hu.bme.mit.semantifyr.live.backend.lsp.session
 
 import com.google.inject.Inject
+import hu.bme.mit.semantifyr.backend.BackendMetrics
 import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseRequest
 import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseResult
-import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationMetrics
 import hu.bme.mit.semantifyr.lang.ide.server.wire.WitnessValidationResult
 import hu.bme.mit.semantifyr.live.backend.BackendConfig
 import hu.bme.mit.semantifyr.live.backend.data.VerificationKind
@@ -24,6 +24,7 @@ import hu.bme.mit.semantifyr.logging.error
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
 import hu.bme.mit.semantifyr.logging.warn
+import hu.bme.mit.semantifyr.verifier.VerifierMetrics
 import io.micrometer.core.instrument.Counter
 import io.micrometer.core.instrument.MeterRegistry
 import io.micrometer.core.instrument.Timer
@@ -283,7 +284,7 @@ class SessionVerificationManager @Inject constructor(
         if (entry.kind != VerificationKind.Verify || result !is VerificationCaseResult) {
             return
         }
-        val witnessUri = result.trace()?.witnessUri() ?: return
+        val witnessUri = result.witnessUri() ?: return
         caseLocationsByWitnessUri[witnessUri] = entry.location
     }
 
@@ -307,11 +308,12 @@ class SessionVerificationManager @Inject constructor(
     }
 
     private fun recordFinished(entry: Entry, result: Any?) {
-        val (backendId, verdict) = when (result) {
-            is VerificationCaseResult -> result.backendId() to result.status()
-            is WitnessValidationResult -> result.backendId() to result.status()
+        val (report, verdict) = when (result) {
+            is VerificationCaseResult -> result.report() to result.status()
+            is WitnessValidationResult -> result.report() to result.status()
             else -> null to null
         }
+        val backendId = report?.result?.metadata?.backendId
         Timer.builder("semantifyr.live.verification")
             .tag("kind", entry.kind.name.lowercase())
             .tag("backend", backendId ?: "none")
@@ -319,34 +321,27 @@ class SessionVerificationManager @Inject constructor(
             .serviceLevelObjectives(*durationBuckets)
             .register(registry)
             .record((entry.runningSince ?: entry.startedAt).elapsedNow().toJavaDuration())
-        val metrics = when (result) {
-            is VerificationCaseResult -> result.metrics()
-            is WitnessValidationResult -> result.metrics()
-            else -> null
-        }
-        if (metrics != null && backendId != null) {
-            recordPhases(entry, backendId, metrics)
+        val backend = report?.result?.metrics?.backend
+        if (backendId != null && backend != null) {
+            recordPhases(entry, backendId, report.result.metrics.verifier, backend)
         }
     }
 
     private fun recordPhases(
         entry: Entry,
         backendId: String,
-        metrics: VerificationMetrics,
+        verifier: VerifierMetrics,
+        backend: BackendMetrics,
     ) {
-        val compilation = metrics.compilation()
-        val compilationDuration = compilation.createDuration
-            .plus(compilation.instantiationDuration)
-            .plus(compilation.inliningDuration)
-            .plus(compilation.flatteningDuration)
+        val compilation = verifier.compilation
         val phases = mapOf(
             "create" to compilation.createDuration,
             "instantiation" to compilation.instantiationDuration,
             "inlining" to compilation.inliningDuration,
             "flattening" to compilation.flatteningDuration,
-            "preparation" to maxOf(metrics.preparationDuration().minus(compilationDuration), Duration.ZERO),
-            "engine" to metrics.verificationDuration(),
-            "back_annotation" to metrics.backAnnotationDuration(),
+            "preparation" to backend.preparationDuration,
+            "engine" to backend.verificationDuration,
+            "back_annotation" to verifier.backAnnotationDuration + backend.backAnnotationDuration,
         )
         for ((phase, duration) in phases) {
             Timer.builder("semantifyr.live.verification.phase")
@@ -355,7 +350,7 @@ class SessionVerificationManager @Inject constructor(
                 .tag("phase", phase)
                 .serviceLevelObjectives(*durationBuckets)
                 .register(registry)
-                .record(duration)
+                .record(duration.toJavaDuration())
         }
     }
 

@@ -137,17 +137,12 @@ class UppaalCapabilityCheckerTest : UppaalTransformationTestBase() {
             """
                 var ratio : real := 0.5
                 var anything : any := 0
-                @semantifyr::Clock
-                var elapsed : int := 0
-                @semantifyr::Clock
-                var clockColor : test::colors::Color := test::colors::Color::Red
+                var elapsed : clock := 0
                 var counter : int := 0
                 init {
                 }
                 tran {
                     elapsed := 0
-                    elapsed := 5
-                    havoc(elapsed)
                     for (index in 0..2) {
                         counter := counter + index
                     }
@@ -161,9 +156,6 @@ class UppaalCapabilityCheckerTest : UppaalTransformationTestBase() {
         assertThat(unsupported).containsExactlyInAnyOrder(
             "variables of type real",
             "variables of type any",
-            "@Clock on variables that are not data-typed",
-            "clock resets to values other than 0",
-            "havoc on clocks",
             "for-operations",
         )
     }

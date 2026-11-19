@@ -54,6 +54,49 @@ class NuxmvCapabilityCheckerTest : NuxmvTransformationTestBase() {
     }
 
     @Test
+    fun `the BDD engine refuses a clock`() {
+        val unsupported = unsupportedByBdd(
+            """
+                var elapsed : clock := 0
+                var late : bool := false
+                init {
+                }
+                tran {
+                    assume(elapsed <= 5)
+                    late := true
+                }
+                prop {
+                    AG !late
+                }
+            """,
+        )
+
+        assertThat(unsupported).containsExactly("clocks")
+    }
+
+    @Test
+    fun `the SMT engines accept a clock`() {
+        val unsupported = unsupported(
+            """
+                var elapsed : clock := 0
+                var late : bool := false
+                init {
+                }
+                tran {
+                    assume(elapsed >= 6)
+                    late := true
+                    elapsed := 0
+                }
+                prop {
+                    AG !late
+                }
+            """,
+        )
+
+        assertThat(unsupported).isEmpty()
+    }
+
+    @Test
     fun `the BDD engine accepts boolean and enumeration variables`() {
         val unsupported = unsupportedByBdd(
             """

@@ -6,8 +6,11 @@
 
 package hu.bme.mit.semantifyr.frontends.gamma.testing
 
+import hu.bme.mit.semantifyr.backend.BackendConfig
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
+import hu.bme.mit.semantifyr.backend.scopes.withVerificationScope
+import hu.bme.mit.semantifyr.compiler.SemantifyrCompiler
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.ArtifactConfig
 import hu.bme.mit.semantifyr.frontends.gamma.GammaFrontend
 import hu.bme.mit.semantifyr.frontends.gamma.GammaVariant
@@ -19,10 +22,14 @@ import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.EF
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.GammaModelPackage
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.GammaRoot
 import hu.bme.mit.semantifyr.frontends.gamma.reader.GammaReader
+import hu.bme.mit.semantifyr.logging.info
+import hu.bme.mit.semantifyr.logging.loggerFactory
 import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.portfolios.Portfolios
 import hu.bme.mit.semantifyr.verifier.assertVerdict
 import hu.bme.mit.semantifyr.verifier.assumePortfolioAvailable
+import hu.bme.mit.semantifyr.verifier.portfolio.PortfolioLeg
 import hu.bme.mit.semantifyr.verifier.portfolio.VerificationPortfolio
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Named
@@ -44,6 +51,8 @@ enum class GammaTestEngine(
 }
 
 class GammaFrontendTestHelper {
+
+    private val logger by loggerFactory()
 
     private val gammaInjector = GammaStandaloneSetup().createInjectorAndDoEMFRegistration()
     private val oxstsInjector = OxstsStandaloneSetup().createInjectorAndDoEMFRegistration()
@@ -117,8 +126,51 @@ class GammaFrontendTestHelper {
         expectedVerdict: VerificationVerdict,
     ): GammaVerificationResult {
         val result = frontend.verify(gammaVerificationCase)
-        assertVerdict(gammaVerificationCase.qualifiedName, expectedVerdict, result.verification)
+        assertVerdict(gammaVerificationCase.qualifiedName, expectedVerdict, result.outcome.report.result)
         return result
+    }
+
+    suspend fun checkTrustedVerdictOrNone(
+        portfolio: VerificationPortfolio,
+        environment: ExecutionEnvironment,
+        outputDirectory: Path,
+        gammaVerificationCase: GammaVerificationCase,
+        expectedVerdict: VerificationVerdict,
+        noTrustedVerdictTimeout: Duration,
+    ) {
+        val trustDirectory = outputDirectory.resolve("trust")
+        val compiledCase = buildFrontend(portfolio, trustDirectory.resolve("gamma"), environment = environment).compile(gammaVerificationCase)
+        val inlinedOxsts = SemantifyrCompiler(oxstsInjector, ArtifactConfig.NONE).compile(
+            compiledCase.verificationCase.classDeclaration,
+            trustDirectory.resolve("oxsts").resolve(gammaVerificationCase.qualifiedName),
+        ).inlinedOxsts
+        val givesTrustedVerdict = portfolio.legs.any {
+            it.isAvailable(environment) && isTrustedOn(it, inlinedOxsts, expectedVerdict)
+        }
+        if (givesTrustedVerdict) {
+            checkVerificationCase(buildFrontend(portfolio, outputDirectory, environment = environment), gammaVerificationCase, expectedVerdict)
+            return
+        }
+        val frontend = buildFrontend(portfolio, outputDirectory, timeout = noTrustedVerdictTimeout, environment = environment)
+        val result = frontend.verify(gammaVerificationCase).outcome.report.result
+        assertThat(result.verdict)
+            .describedAs("${gammaVerificationCase.qualifiedName} has no trusted verdict on these backends (${result.message ?: "no message"})")
+            .isIn(VerificationVerdict.Inconclusive, VerificationVerdict.Timeout)
+    }
+
+    private suspend fun <T : BackendConfig> isTrustedOn(
+        leg: PortfolioLeg<T>,
+        inlinedOxsts: InlinedOxsts,
+        verdict: VerificationVerdict,
+    ): Boolean {
+        return withVerificationScope {
+            val checker = leg.backend.capabilityChecker(oxstsInjector, leg.config)
+            if (checker.check(inlinedOxsts).isNotEmpty()) {
+                return@withVerificationScope false
+            }
+            val soundness = leg.config.soundness.throughLowering(checker.soundness(inlinedOxsts))
+            soundness.trusts(verdict, inlinedOxsts.property.expression)
+        }
     }
 
     suspend fun checkVerificationCaseOn(
@@ -136,16 +188,16 @@ class GammaFrontendTestHelper {
         }
         val frontend = buildFrontend(portfolio, outputDirectory.resolve(engine.name.lowercase()), timeout = timeout)
         val result = frontend.verify(gammaVerificationCase)
-        assertVerdict(gammaVerificationCase.qualifiedName, entry.case.expectedVerdict, result.verification)
+        assertVerdict(gammaVerificationCase.qualifiedName, entry.case.expectedVerdict, result.outcome.report.result)
 
-        val witness = result.witness
-        if (validationPortfolio != null && witness != null) {
-            val outcome = frontend.validateWitness(gammaVerificationCase, witness.witnessPath, validationPortfolio)
-            assertThat(outcome.isValid)
+        val witnessPath = result.outcome.witness?.path
+        if (validationPortfolio != null && witnessPath != null) {
+            val validation = frontend.validateWitness(gammaVerificationCase, witnessPath, validationPortfolio).outcome.report.result
+            assertThat(validation.verdict)
                 .describedAs(
-                    "Witness of ${portfolio.id} for ${gammaVerificationCase.qualifiedName} must re-verify Passed via ${validationPortfolio.id} but got ${outcome.verification.verdict} (${outcome.verification.message ?: "no message"})",
+                    "Witness of ${portfolio.id} for ${gammaVerificationCase.qualifiedName} must re-verify Passed via ${validationPortfolio.id} (${validation.message ?: "no message"})",
                 )
-                .isTrue()
+                .isEqualTo(VerificationVerdict.Passed)
         }
         return result
     }

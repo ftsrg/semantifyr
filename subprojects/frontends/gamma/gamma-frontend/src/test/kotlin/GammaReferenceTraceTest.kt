@@ -5,6 +5,7 @@
  */
 
 import com.google.inject.Inject
+import hu.bme.mit.semantifyr.frontends.gamma.CompiledGammaModel
 import hu.bme.mit.semantifyr.frontends.gamma.GammaCompiler
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.ExecutionTrace
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.GammaModelPackage
@@ -13,11 +14,10 @@ import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.RaiseEventAct
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.VerificationCaseDeclaration
 import hu.bme.mit.semantifyr.frontends.gamma.lang.tests.InjectWithGamma
 import hu.bme.mit.semantifyr.frontends.gamma.reader.GammaReader
-import hu.bme.mit.semantifyr.frontends.gamma.serialization.GammaNameMap
 import hu.bme.mit.semantifyr.frontends.gamma.trace.GammaTraceGenerator
-import hu.bme.mit.semantifyr.verifier.witness.CallTrace
-import hu.bme.mit.semantifyr.verifier.witness.TraceEntry
-import hu.bme.mit.semantifyr.verifier.witness.WitnessState
+import hu.bme.mit.semantifyr.verifier.ReportCall
+import hu.bme.mit.semantifyr.verifier.ReportTrace
+import hu.bme.mit.semantifyr.verifier.VerificationReport
 import kotlinx.serialization.json.Json
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
@@ -50,10 +50,10 @@ class GammaReferenceTraceTest {
     private lateinit var temporaryDirectory: Path
 
     @Test
-    fun `the hand-written reference trace validates against the crossroads model`() {
+    fun `the reference trace validates against the crossroads model`() {
         val (_, reference) = read(CROSSROADS_CASES, REFERENCE_TRACE)
 
-        assertThat((reference as ExecutionTrace).steps).hasSize(5)
+        assertThat((reference as ExecutionTrace).steps).hasSize(4)
     }
 
     @Test
@@ -68,10 +68,10 @@ class GammaReferenceTraceTest {
     }
 
     @Test
-    fun `the trace generated from the reference trace json serializes to the hand-written trace`() {
-        val (verificationCase, nameMap) = compileReferenceCase()
+    fun `the trace generated from the reference report serializes to the reference trace`() {
+        val (verificationCase, compiledModel) = compileReferenceCase()
 
-        val generated = gammaTraceGenerator.generate(verificationCase, referenceCallTrace(), referenceWitnessState(), nameMap)
+        val generated = generate(verificationCase, referenceTrace(), compiledModel)
         val generatedText = serializer.serialize(generated, SaveOptions.newBuilder().format().options)
         val generatedTrace = temporaryDirectory.resolve("trace.get")
         generatedTrace.writeText(generatedText)
@@ -84,10 +84,10 @@ class GammaReferenceTraceTest {
 
     @Test
     fun `the called transition decides whether a traced raise is an act or an assertion`() {
-        val (verificationCase, nameMap) = compileReferenceCase()
-        val callTrace = referenceCallTrace().withCalledTransition(RAISE_INPUT_EVENT, SET_OUTPUT_EVENT)
+        val (verificationCase, compiledModel) = compileReferenceCase()
+        val trace = referenceTrace().withCalledTransition(RAISE_INPUT_EVENT, SET_OUTPUT_EVENT)
 
-        val generated = gammaTraceGenerator.generate(verificationCase, callTrace, referenceWitnessState(), nameMap)
+        val generated = generate(verificationCase, trace, compiledModel)
 
         val lastStep = generated.steps.last()
         assertThat(lastStep.acts).noneMatch {
@@ -102,9 +102,9 @@ class GammaReferenceTraceTest {
 
     @Test
     fun `an output an inner instance raises is asserted on that instance's port`() {
-        val (verificationCase, nameMap) = compileReferenceCase()
+        val (verificationCase, compiledModel) = compileReferenceCase()
 
-        val generated = gammaTraceGenerator.generate(verificationCase, referenceCallTrace(), referenceWitnessState(), nameMap)
+        val generated = generate(verificationCase, referenceTrace(), compiledModel)
 
         val raises = generated.steps.flatMap {
             it.asserts
@@ -118,44 +118,57 @@ class GammaReferenceTraceTest {
 
     @Test
     fun `a traced port call that raises no event is rejected`() {
-        val (verificationCase, nameMap) = compileReferenceCase()
-        val callTrace = referenceCallTrace().withCalledTransition(RAISE_INPUT_EVENT, "semantifyr::gamma::ports::Port::setInputEvent")
+        val (verificationCase, compiledModel) = compileReferenceCase()
+        val trace = referenceTrace().withCalledTransition(RAISE_INPUT_EVENT, "semantifyr::gamma::ports::Port::setInputEvent")
 
         assertThatThrownBy {
-            gammaTraceGenerator.generate(verificationCase, callTrace, referenceWitnessState(), nameMap)
+            generate(verificationCase, trace, compiledModel)
         }.hasMessageContaining("is not an event raise")
     }
 
     private fun compileReferenceCase(): CompiledReferenceCase {
         val crossroadsCases = read(CROSSROADS_CASES).single() as GammaModelPackage
-        val nameMap = gammaCompiler.compileWithImports(crossroadsCases, temporaryDirectory, "semantifyr").nameMap
+        val compiledModel = gammaCompiler.compileWithImports(crossroadsCases, temporaryDirectory, "semantifyr")
         val verificationCase = crossroadsCases.verificationCases.single {
             it.name == "ACanBeGreen"
         }
-        return CompiledReferenceCase(verificationCase, nameMap)
+        return CompiledReferenceCase(verificationCase, compiledModel)
     }
 
-    private fun referenceCallTrace(): CallTrace {
-        return Json.decodeFromString<CallTrace>(REFERENCE_TRACE_JSON.readText())
+    private fun generate(
+        verificationCase: VerificationCaseDeclaration,
+        trace: ReportTrace,
+        compiledModel: CompiledGammaModel,
+    ): ExecutionTrace {
+        return gammaTraceGenerator.generate(verificationCase, trace, compiledModel.nameMap, compiledModel.timeUnitMilliseconds)
     }
 
-    private fun referenceWitnessState(): WitnessState {
-        return Json.decodeFromString<WitnessState>(REFERENCE_WITNESS_JSON.readText())
+    private fun referenceTrace(): ReportTrace {
+        return requireNotNull(Json.decodeFromString<VerificationReport>(REFERENCE_REPORT.readText()).trace) {
+            "The reference report has no trace"
+        }
     }
 
-    private fun CallTrace.withCalledTransition(from: String, to: String): CallTrace {
-        fun TraceEntry.replaced(): TraceEntry {
+    private fun ReportTrace.withCalledTransition(from: String, to: String): ReportTrace {
+        fun ReportCall.replaced(): ReportCall {
             return copy(
-                calledTransition = calledTransition.takeUnless { it == from } ?: to,
-                innerTraces = innerTraces?.map {
+                transition = transition.takeUnless {
+                    it == from
+                } ?: to,
+                calls = calls.map {
                     it.replaced()
                 },
             )
         }
         return copy(
+            initial = initial.copy(
+                calls = initial.calls.map {
+                    it.replaced()
+                },
+            ),
             steps = steps.map { step ->
                 step.copy(
-                    traces = step.traces.map {
+                    calls = step.calls.map {
                         it.replaced()
                     },
                 )
@@ -173,15 +186,14 @@ class GammaReferenceTraceTest {
 
     private data class CompiledReferenceCase(
         val verificationCase: VerificationCaseDeclaration,
-        val nameMap: GammaNameMap,
+        val compiledModel: CompiledGammaModel,
     )
 
     companion object {
         private val CROSSROADS_CASES = Path("build", "test-models", "CrossroadsFurtherCases.gamma")
         private val PAIR = Path("..", "models", "etc")
         private val REFERENCE_TRACE = PAIR.resolve("crossroads-ACanBeGreen.trace.get")
-        private val REFERENCE_TRACE_JSON = PAIR.resolve("crossroads-ACanBeGreen.trace.json")
-        private val REFERENCE_WITNESS_JSON = PAIR.resolve("crossroads-ACanBeGreen.witness.json")
+        private val REFERENCE_REPORT = PAIR.resolve("crossroads-ACanBeGreen.report.json")
         private const val RAISE_INPUT_EVENT = "semantifyr::gamma::ports::Port::raiseInputEvent"
         private const val SET_OUTPUT_EVENT = "semantifyr::gamma::ports::Port::setOutputEvent"
     }

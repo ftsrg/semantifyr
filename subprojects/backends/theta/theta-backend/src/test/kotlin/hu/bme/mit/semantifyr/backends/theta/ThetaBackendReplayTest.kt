@@ -16,6 +16,8 @@ import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.backend.enumeration
 import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
 import hu.bme.mit.semantifyr.backend.integer
+import hu.bme.mit.semantifyr.compiler.pipeline.context.TransitionCallTraceMap
+import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
 import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import kotlinx.coroutines.Dispatchers
@@ -45,19 +47,21 @@ class ThetaBackendReplayTest {
     private suspend fun verify(
         case: String,
         inlinedOxsts: InlinedOxsts,
+        transitionCallTraces: TransitionCallTraceMap,
         artifactDirectory: Path = cleanArtifactDirectory(case),
         config: ThetaConfig = ThetaConfig.CegarExpl,
     ): BackendVerificationResult {
         val environment = ExecutionEnvironment.builder().put(ThetaExecutorKey) {
             ReplayingThetaExecutor(case)
         }.build()
-        val request = BackendVerificationRequest(inlinedOxsts, artifactDirectory)
+        val request = BackendVerificationRequest(inlinedOxsts, artifactDirectory, transitionCallTraces = transitionCallTraces)
         return ThetaBackend().verify(injector, config, request, environment)
     }
 
     private suspend fun verifyFixture(file: String, className: String): BackendVerificationResult {
         val artifactDirectory = cleanArtifactDirectory(className)
-        return verify(className, models.compile(file, className, artifactDirectory), artifactDirectory)
+        val compilation = models.compileFlattened(file, className, artifactDirectory)
+        return verify(className, compilation.inlinedOxsts, compilation.transitionCallTraces, artifactDirectory)
     }
 
     @Test
@@ -78,7 +82,7 @@ class ThetaBackendReplayTest {
 
     @Test
     suspend fun `a violated invariant fails with a witness through the violating states`() {
-        val result = verify("CounterExceedsBound", models.parse(BackendTestModels.SATURATING_COUNTER_EXCEEDS_BOUND))
+        val result = verify("CounterExceedsBound", models.parse(BackendTestModels.SATURATING_COUNTER_EXCEEDS_BOUND), TransitionCallTraceMap(emptyMap()))
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
         val witness = result.inlinedWitness!!
@@ -91,17 +95,25 @@ class ThetaBackendReplayTest {
     }
 
     @Test
-    suspend fun `a counterexample that does not parse fails the witness and keeps the verdict`() {
-        val result = verify("MalformedCounterexample", models.parse(BackendTestModels.SATURATING_COUNTER_EXCEEDS_BOUND))
+    suspend fun `a counterexample that does not parse fails the run`() {
+        val result = verify("MalformedCounterexample", models.parse(BackendTestModels.SATURATING_COUNTER_EXCEEDS_BOUND), TransitionCallTraceMap(emptyMap()))
 
-        assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
+        assertThat(result.verdict).isEqualTo(VerificationVerdict.Errored)
         assertThat(result.inlinedWitness).isNull()
         assertThat(result.message).contains("(counter #b1)")
     }
 
     @Test
+    suspend fun `a name of the counterexample that does not map back fails the run`() {
+        val result = verify("CounterExceedsBoundUnmappedName", models.parse(BackendTestModels.SATURATING_COUNTER_EXCEEDS_BOUND), TransitionCallTraceMap(emptyMap()))
+
+        assertThat(result.verdict).isEqualTo(VerificationVerdict.Errored)
+        assertThat(result.message).contains("ghost, which names no variable of the model")
+    }
+
+    @Test
     suspend fun `witness values keep the declaration order`() {
-        val result = verify("OneOfSeveralChanges", models.parse(BackendTestModels.SATURATING_ONE_OF_SEVERAL_CHANGES))
+        val result = verify("OneOfSeveralChanges", models.parse(BackendTestModels.SATURATING_ONE_OF_SEVERAL_CHANGES), TransitionCallTraceMap(emptyMap()))
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
         val witness = result.inlinedWitness!!
@@ -117,7 +129,7 @@ class ThetaBackendReplayTest {
 
     @Test
     suspend fun `a model without state variables fails with an empty witness`() {
-        val result = verify("StatelessViolation", models.parse(BackendTestModels.STATELESS_VIOLATION))
+        val result = verify("StatelessViolation", models.parse(BackendTestModels.STATELESS_VIOLATION), TransitionCallTraceMap(emptyMap()))
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
         assertThat(result.inlinedWitness!!.initializedState.values).isEmpty()
@@ -125,7 +137,7 @@ class ThetaBackendReplayTest {
 
     @Test
     suspend fun `a violation found by Horn solving fails without a witness and is not trusted`() {
-        val result = verify("HornViolation", models.parse(BackendTestModels.SATURATING_COUNTER_EXCEEDS_BOUND), config = ThetaConfig.Chc)
+        val result = verify("HornViolation", models.parse(BackendTestModels.SATURATING_COUNTER_EXCEEDS_BOUND), TransitionCallTraceMap(emptyMap()), config = ThetaConfig.Chc)
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
         assertThat(result.inlinedWitness).isNull()
@@ -135,7 +147,7 @@ class ThetaBackendReplayTest {
 
     @Test
     suspend fun `an unreachable target fails without a witness`() {
-        val result = verify("UnreachableTarget", models.parse(BackendTestModels.UNREACHABLE_TARGET))
+        val result = verify("UnreachableTarget", models.parse(BackendTestModels.UNREACHABLE_TARGET), TransitionCallTraceMap(emptyMap()))
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
         assertThat(result.inlinedWitness).isNull()
@@ -174,6 +186,7 @@ class ThetaBackendReplayTest {
                     }
                 """,
             ),
+            TransitionCallTraceMap(emptyMap()),
         )
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.NotSupported)
@@ -183,7 +196,7 @@ class ThetaBackendReplayTest {
     @Test
     suspend fun `racing legs on one request do not interfere`() {
         val artifactDirectory = cleanArtifactDirectory("RacingLegs")
-        val inlinedOxsts = models.compile("control_flow", "ChoiceBranch1Reach", artifactDirectory)
+        val compilation = models.compileFlattened("control_flow", "ChoiceBranch1Reach", artifactDirectory)
         val environment = ExecutionEnvironment.builder().put(ThetaExecutorKey) {
             ReplayingThetaExecutor("ChoiceBranch1Reach")
         }.build()
@@ -191,7 +204,7 @@ class ThetaBackendReplayTest {
         val results = coroutineScope {
             (0 until 16).map { leg ->
                 async(Dispatchers.Default) {
-                    val request = BackendVerificationRequest(inlinedOxsts, artifactDirectory.resolve("leg$leg"))
+                    val request = BackendVerificationRequest(compilation.inlinedOxsts, artifactDirectory.resolve("leg$leg"), transitionCallTraces = compilation.transitionCallTraces)
                     ThetaBackend().verify(injector, ThetaConfig.CegarExpl, request, environment)
                 }
             }.awaitAll()

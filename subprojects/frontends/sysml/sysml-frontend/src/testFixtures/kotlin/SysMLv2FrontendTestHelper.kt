@@ -81,7 +81,7 @@ class SysMLv2FrontendTestHelper {
         entry: CorpusEntry,
     ) {
         val case = verificationCase(frontend, entry)
-        val result = frontend.verify(case)
+        val result = frontend.verify(case).report.result
         assertVerdict(case.qualifiedName, entry.case.expectedVerdict, result)
     }
 
@@ -91,10 +91,10 @@ class SysMLv2FrontendTestHelper {
         entry: CorpusEntry,
     ): Path? {
         val case = verificationCase(frontend, entry)
-        val result = frontend.verify(case)
-        assertVerdict(case.qualifiedName, entry.case.expectedVerdict, result)
+        val report = frontend.verify(case).report
+        assertVerdict(case.qualifiedName, entry.case.expectedVerdict, report.result)
         val tracePath = frontend.sysmlTracePath(case)
-        if (result.trace == null) {
+        if (report.trace == null) {
             assertThat(tracePath).describedAs("SysML trace of $entry, which has no witness").doesNotExist()
             return null
         }
@@ -106,7 +106,7 @@ class SysMLv2FrontendTestHelper {
         frontend: SysMLv2Frontend,
         entry: CorpusEntry,
     ) {
-        val result = frontend.verify(verificationCase(frontend, entry))
+        val result = frontend.verify(verificationCase(frontend, entry)).report.result
         logger.info { "$entry: ${result.verdict} after ${result.metrics.totalDuration} (${result.message ?: "no message"})" }
         Assertions.assertNotEquals(VerificationVerdict.Errored, result.verdict) {
             "$entry errored: ${result.message ?: "no message"}"

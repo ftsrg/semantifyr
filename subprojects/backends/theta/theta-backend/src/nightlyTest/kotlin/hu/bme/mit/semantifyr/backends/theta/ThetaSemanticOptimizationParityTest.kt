@@ -44,14 +44,19 @@ class ThetaSemanticOptimizationParityTest {
 
         @JvmStatic
         fun `Without Optimization Every Case Has Its Expected Verdict`(): List<Arguments> {
-            return helper.collectVerificationCasesAsArguments(context)
+            return helper.collectSupportedCasesAsArguments(
+                context,
+                ThetaBackend(),
+                ThetaConfig.CegarExplPredCombined,
+                outputDirectory.resolve("capability-check"),
+            )
         }
     }
 
     @ParameterizedTest
     @MethodSource
     suspend fun `Without Optimization Every Case Has Its Expected Verdict`(verificationCase: VerificationCase) {
-        val result = helper.runVerificationCase(
+        val outcome = helper.runVerificationCase(
             context = context,
             case = verificationCase,
             verificationPortfolio = portfolio,
@@ -59,6 +64,6 @@ class ThetaSemanticOptimizationParityTest {
             timeout = 1.minutes,
             optimization = OptimizationConfig.NONE,
         )
-        assertVerdict(verificationCase.qualifiedName, helper.expectedVerdictFromTags(verificationCase), result)
+        assertVerdict(verificationCase.qualifiedName, helper.expectedVerdictFromTags(verificationCase), outcome.report.result)
     }
 }

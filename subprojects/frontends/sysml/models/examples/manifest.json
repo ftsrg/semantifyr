@@ -26,6 +26,7 @@
                 { "name": "RegionSubstatesAreMutuallyExclusiveTestCase", "verdict": "Passed", "tier": "Integration" },
                 { "name": "TimeoutTransitionFiresAfterDelayTestCase", "verdict": "Passed", "tier": "Integration" },
                 { "name": "WaitingAndDoneAreMutuallyExclusiveTestCase", "verdict": "Passed", "tier": "Integration" },
+                { "name": "SimultaneousDeadlinesFireInDifferentStepsTestCase", "verdict": "Passed", "tier": "Integration" },
                 { "name": "GuardConditionGatesTransitionTestCase", "verdict": "Passed", "tier": "Integration" },
                 { "name": "GuardAccumulatesCounterTestCase", "verdict": "Passed", "tier": "Integration" },
                 { "name": "DoneNotReachableBeforeGuardSatisfiedTestCase", "verdict": "Passed", "tier": "Integration" },

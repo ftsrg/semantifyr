@@ -48,12 +48,12 @@ class AllAgreeFullPortfolio(
         PortfolioTask(spin, SpinConfig.SafeDfs, "spin-safe-dfs"),
     )
 
-    override val executorKeys: Set<ExecutorKey<*>> = tasks.map { it.executorKey }.toSet()
+    override val executorKeys: Set<ExecutorKey<*>> = tasks.map { it.leg.backend.executorKey }.toSet()
     override val legs = tasks.map { it.leg }
 
     override fun availability(environment: ExecutionEnvironment): AvailabilityReport {
         val anyAvailable = tasks.any {
-            it.isAvailable(environment)
+            it.leg.isAvailable(environment)
         }
         return if (anyAvailable) {
             AvailabilityReport.Available
@@ -76,7 +76,7 @@ class AllAgreeFullPortfolio(
     ): BackendVerificationResult {
         val startedAt = Clock.System.now()
         val available = tasks.filter {
-            it.isAvailable(environment)
+            it.leg.isAvailable(environment)
         }
         if (available.isEmpty()) {
             logger.info { "$id: no available backends on this host" }

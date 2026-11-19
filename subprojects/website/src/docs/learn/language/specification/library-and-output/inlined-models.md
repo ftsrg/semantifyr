@@ -2,10 +2,12 @@
 title: Inlined Models
 slug: /learn/language/specification/inlined-models
 sidebar_position: 13.5
-description: The inlined model, the form in which the compiler writes a compiled case and a witness, and the witness of a verdict, its form and the files beside it.
+description: The inlined model, the form in which the compiler writes a compiled case and a witness, and the witness of a verdict, its form, its time and the report it is derived from.
 ---
 
 import CodeBlock from '@theme/CodeBlock';
+import timedModel from '@oxsts-witness-reference/blinker.semantifyr';
+import timedWitness from '@oxsts-witness-reference/blinker.witness.semantifyr';
 import witnessModel from '@sysml-reference-trace/crossroads-green.witness.semantifyr';
 
 # Inlined Models
@@ -14,7 +16,7 @@ An inlined model is the form in which the compiler writes a case after each of i
 
 ## Syntax
 
-An inlined model opens with `inlined oxsts of`, or `witness of` for a [witness](#witnesses), and the qualified name of the class. Then come, in this order, its variables, optionally a feature that holds the instance of the class, the `init` transition, the main transition, each with its branches separated by `or`, and the property, an expression in `prop { }` without `return`. It has no package and no imports. The feature is named `root` in the instantiated and the inlined model and in the witness, and the members of instances are named by their paths from it, such as `root.counter.value`; the flattened model has no feature left.
+An inlined model opens with `inlined oxsts of`, or `witness of` for a [witness](#witnesses), and the qualified name of the class; a witness whose times are not all whole continues with `timescale` and an integer. Then come, in this order, its variables, optionally a feature that holds the instance of the class, the `init` transition, the main transition, each with its branches separated by `or`, and the property, an expression in `prop { }` without `return`. It has no package and no imports. The feature is named `root` in the instantiated and the inlined model and in the witness, and the members of instances are named by their paths from it, such as `root.counter.value`; the flattened model has no feature left.
 
 ```oxsts
 inlined oxsts of semantifyr::Anything
@@ -49,13 +51,19 @@ The rules of the rest of the reference hold, with these differences:
 
 ## Meaning
 
-Its variables are the state, `init` gives the initial states from the variables' initializers, the main transition relates a state to the next, and the property is checked on the reachable states. An inlined model the compiler writes for a case has the case's meaning; a witness has only the execution it records, so its property passes when the execution shows the verdict.
+Its variables are the state, `init` gives the initial states from the variables' initializers, the main transition relates a state to the next after the [wait](../classes-and-behaviour/time.md#the-wait-before-a-step) before it, and the property is checked on the reachable states. An inlined model the compiler writes for a case has the case's meaning; a witness has only the execution it records, so its property passes when the execution shows the verdict.
 
 ## Witnesses
 
 A witness is the run behind a verdict, a Failed `AG` or a Passed `EF` property, which the verifier back-annotates into a Semantifyr model, `witness.semantifyr`, in the case's directory: an inlined model, `witness of` the verified class, that has exactly that execution. It declares `var step: int := 0` and holds the class as `root`. Its `init` assumes `step == 0`, runs the class's `init`, assumes the value of every variable in the initial state and sets the next step; each further step is a branch of its main transition that assumes the step's number, runs the class's main transition, assumes the values of the state after it and sets the number of the next step. Its property is the class's own for a passed `EF` and its negation for a failed `AG`.
 
-Beside it, [`witness.json`](../../../reference/artifacts.mdx#witnessjson) holds the state of each step and [`trace.json`](../../../reference/artifacts.mdx#tracejson) the traced calls of each step, from which the editors and the frontends show the trace.
+A witness of a model with [clocks](../classes-and-behaviour/time.md) also declares `var time: clock := 0`, a clock of its own that is never reset, and each step assumes after it the time passed since the start and the value of every clock the state holds. When those amounts are not all whole, each is multiplied by their common denominator, which the header names after `timescale`, and the class's clock bounds are read in that scale. The timed reference witness is of a blinker whose case asks for a switch [strictly between 2 and 3](../classes-and-behaviour/time.md#closed-clock-tests) after the start; the run shows it with a wait of 5/2, and the verifier's tests derive the witness from the run's report:
+
+<CodeBlock language="oxsts" title="blinker.semantifyr">{timedModel}</CodeBlock>
+
+<CodeBlock language="oxsts" title="witness.semantifyr">{timedWitness}</CodeBlock>
+
+The verifier derives the witness from the [report](../../../reference/artifacts.mdx#the-report) of the run, which holds the state and the traced calls of each step and from which the editors and the frontends show the trace.
 
 The SysML v2 reference witness, of the case `TrafficLightABehaviorNormalGreenUnreachableViolated` of the crossroads model, which the SysML v2 frontend's tests check:
 

@@ -186,14 +186,15 @@ describe('Live', () => {
     await vi.waitFor(() => {
       expect(verificationOf(open!).cases[0]?.status).toBe('running')
     })
-    expect(verificationOf(open).cases[0]).toMatchObject({ resultStatus: 'failed', trace: failedResult.trace })
+    expect(verificationOf(open).cases[0]).toMatchObject({ resultStatus: 'failed', report: failedResult.report, witnessUri: failedResult.witnessUri })
 
     pending.resolve(passedResult)
     await vi.waitFor(() => {
       expect(verificationOf(open!).phase).toBe('done')
     })
     expect(verificationOf(open).cases[0]).toMatchObject({ status: 'passed', resultStatus: 'passed' })
-    expect(verificationOf(open).cases[0]?.trace).toBeUndefined()
+    expect(verificationOf(open).cases[0]?.report?.trace).toBeNull()
+    expect(verificationOf(open).cases[0]?.witnessUri).toBeUndefined()
   })
 
   it('ends a run when its session goes: a case without a verdict is not run and cancelled, one with a verdict keeps it', async () => {
@@ -534,7 +535,7 @@ describe('Live', () => {
     open.runtime().report([])
     expect(row().status).toBe('running')
     clock.mockReturnValue(7_500)
-    pending.resolve({ ...passedResult, status: 'timeout', message: 'Verification timed out', metrics: null })
+    pending.resolve({ ...passedResult, status: 'timeout', message: 'Verification timed out', report: null })
 
     await vi.waitFor(() => {
       expect(verificationOf(open!).phase).toBe('done')

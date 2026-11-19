@@ -24,7 +24,7 @@ dependencies {
     implementation(project(":logging"))
 }
 
-val sysmlCommit = "83977a1411597b10571b15488eb63d8b8b85f79f" // fix: the details of the untyped flow and of accept when say what happens, without the retired kind words
+val sysmlCommit = "1517ac8d92b775c384ba1803237b207cc80ec78c" // fix: the reserved class names drop ConstraintReferenceExpression, which the library no longer declares
 val sysmlUrl = "https://github.com/arminzavada/sysml-2ls.git"
 val sysmlDir = layout.projectDirectory.dir("sysml-2ls")
 
@@ -313,8 +313,7 @@ tasks.named("integrationTest") {
     inputs.files(appendFurtherCases).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(
         layout.projectDirectory.file("../models/etc/crossroads-green.trace.sysml"),
-        layout.projectDirectory.file("../models/etc/crossroads-green.trace.json"),
-        layout.projectDirectory.file("../models/etc/crossroads-green.witness.json"),
+        layout.projectDirectory.file("../models/etc/crossroads-green.report.json"),
         layout.projectDirectory.file("../models/etc/crossroads-green.witness.semantifyr"),
     ).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.dir(layout.projectDirectory.dir("../models/libraries/default")).withPathSensitivity(PathSensitivity.RELATIVE)

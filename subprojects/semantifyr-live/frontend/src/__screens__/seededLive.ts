@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import type { LibrariesResponse, PortfolioInfo, VerificationCaseSpecification, VerificationTrace } from '@semantifyr/editor-common'
+import { isoDurationToMs, type LibrariesResponse, type PortfolioInfo, type ReportTrace, type VerificationCaseSpecification } from '@semantifyr/editor-common'
 
 import { findExample, liveFlavors, type LiveFlavor } from '../examples'
 import { SemantifyrLiveApi } from '../lib/api/lspExtensions'
@@ -17,7 +17,6 @@ import { connectionConnected, INITIAL_CONNECTION, type ConnectionState } from '.
 import { failStep, finishStep, initializationOf, InitializationSteps, startStep, type InitializationState } from '../lib/stores/initialization'
 import { createSettingsStore, type Settings } from '../lib/stores/settings'
 import { constantStore, createStore } from '../lib/stores/store'
-import { isoDurationToMs } from '../lib/util/duration'
 import type { VerificationCaseState, VerificationState } from '../lib/verification/engine'
 import { createDocumentTabs, type ReadOnlyDocument } from '../lib/workspace/documentTabs'
 import { documentKey, documentUri, type AddressProblem, type Catalog, type DocumentRecord, type Live } from '../lib/workspace/live'
@@ -25,6 +24,7 @@ import type { SharedResults } from '../lib/workspace/sharedResults'
 import type { QueuedVerification, RunTiming } from '../lib/workspace/verification'
 import { createShellState, type ShellState } from '../shells/shellState'
 import { servedFlavors } from '../__tests__/fixtures/flavors'
+import { reportOf } from '../__tests__/fixtures/reports'
 
 export interface Seed {
   flavorId?: string
@@ -196,7 +196,7 @@ function ranFromStart(state: VerificationState, startedAt: number): Verification
   return {
     ...state,
     cases: state.cases.map((caseState) => {
-      const duration = caseState.metrics?.totalDuration
+      const duration = caseState.report?.result.metrics.totalDuration
       return duration === undefined ? caseState : { ...caseState, ranDuring: { start: startedAt, end: startedAt + isoDurationToMs(duration) } }
     }),
   }
@@ -291,10 +291,14 @@ export function caseOf(id: string, line: number, uri = 'file:///workspace/snippe
   }
 }
 
-const EMPTY_TRACE: VerificationTrace = {
-  callTrace: { initializedStep: { traces: [] }, steps: [] },
-  witnessState: { initializedStep: { values: [] }, steps: [] },
-  witnessUri: null,
+const EMPTY_TRACE: ReportTrace = {
+  root: 'root',
+  transitions: [],
+  variables: [],
+  initial: { state: 0, calls: [] },
+  states: [{ values: {} }],
+  steps: [],
+  missingCalls: null,
 }
 
 export function finished(caseInfo: VerificationCaseSpecification, status: 'passed' | 'failed', seconds: number): VerificationCaseState {
@@ -302,10 +306,8 @@ export function finished(caseInfo: VerificationCaseSpecification, status: 'passe
     caseInfo,
     status,
     resultStatus: status,
-    metrics: { totalDuration: `PT${seconds}S`, preparationDuration: 'PT0S', verificationDuration: `PT${seconds}S`, backAnnotationDuration: 'PT0S' },
-    backendId: 'theta',
     portfolioId: 'smart',
-    trace: EMPTY_TRACE,
+    report: reportOf({ verdict: status === 'passed' ? 'Passed' : 'Failed', backendId: 'theta', seconds, trace: EMPTY_TRACE }),
     witnessValidation: 'valid',
   }
 }

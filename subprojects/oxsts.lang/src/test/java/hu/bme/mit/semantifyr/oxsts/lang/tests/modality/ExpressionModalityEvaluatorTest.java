@@ -17,6 +17,7 @@ import hu.bme.mit.semantifyr.oxsts.lang.tests.utils.WrappedOxstsPackage;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssignmentOperation;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.IfThenElse;
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.IndexingSuffixExpression;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.NavigationSuffixExpression;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.SelfReference;
 import org.eclipse.xtext.EcoreUtil2;
@@ -154,6 +155,25 @@ public class ExpressionModalityEvaluatorTest {
 
         assertThat(modalityEvaluatorProvider.evaluate(assignment.getExpression()))
                 .isEqualTo(Modality.RUNTIME);
+    }
+
+    @Test
+    void indexingAVariable_isRuntime() {
+        var parsedPackage = parse("""
+            package test
+            class Holder {
+                var limits: int[2] := [3, 4]
+                var value: int := 0
+                redefine tran {
+                    value := limits[1]
+                }
+            }
+            """);
+        var indexing = EcoreUtil2.eAllOfType(
+                        parsedPackage.classByName("Holder").anonymousMain().eObject(), IndexingSuffixExpression.class)
+                .getFirst();
+
+        assertThat(modalityEvaluatorProvider.evaluate(indexing)).isEqualTo(Modality.RUNTIME);
     }
 
     @Test

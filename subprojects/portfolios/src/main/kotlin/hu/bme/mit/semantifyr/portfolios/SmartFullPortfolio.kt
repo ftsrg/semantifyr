@@ -108,7 +108,7 @@ class SmartFullPortfolio(
     }
 
     override val executorKeys: Set<ExecutorKey<*>> = stages.tasks.map {
-        it.executorKey
+        it.leg.backend.executorKey
     }.toSet()
     override val legs = stages.tasks.map {
         it.leg
@@ -116,7 +116,7 @@ class SmartFullPortfolio(
 
     override fun availability(environment: ExecutionEnvironment): AvailabilityReport {
         val anyAvailable = stages.tasks.any {
-            it.isAvailable(environment)
+            it.leg.isAvailable(environment)
         }
         return if (anyAvailable) {
             AvailabilityReport.Available

@@ -16,7 +16,7 @@ describe('a server that does not answer at page load', () => {
   for (const [address, text] of [
     ['/sysml/level-crossing', 'part def'],
     ['/gamma/level-crossing', 'statechart'],
-    ['/language/intersection', 'package'],
+    ['/language/modeling-and-verification', 'LightColor'],
   ] as const) {
     test(`shows the model of ${address} and retries until it answers`, async ({ ui }) => {
       let reachable = false
@@ -51,7 +51,7 @@ describe('a session the server refuses', () => {
       }
       return 'accept'
     }
-    const page = await ui.open('/language/intersection')
+    const page = await ui.open('/language/modeling-and-verification')
 
     await expect.poll(async () => {
       return page.locator('.connection').innerText()
@@ -66,7 +66,7 @@ describe('a session the server refuses', () => {
 
 describe('a session the server terminates', () => {
   test('says it ended the session, and Reconnect starts a new one', async ({ ui }) => {
-    const page = await ui.open('/language/intersection')
+    const page = await ui.open('/language/modeling-and-verification')
     await casesListed(page)
 
     ui.backend.session().close(TERMINATED, 'Session terminated by an administrator')
@@ -86,7 +86,7 @@ describe('a session the server terminates', () => {
 
 describe('a lost connection', () => {
   test('is retried and starts a new session', async ({ ui }) => {
-    const page = await ui.open('/language/intersection')
+    const page = await ui.open('/language/modeling-and-verification')
     await casesListed(page)
 
     ui.backend.session().close(SERVER_ERROR, 'Internal error')

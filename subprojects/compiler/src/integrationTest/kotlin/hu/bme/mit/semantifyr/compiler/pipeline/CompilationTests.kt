@@ -966,17 +966,16 @@ class CompilationTests {
         val parsed = parseHelper.parse(
             """
                 package compilation::tests::copied_location
-                class Port {
-                    var item: int := 0
-                    @Trace
-                    tran send(value: int) {
-                        item := value
+                class Timer {
+                    var elapsed: clock := 0
+                    tran expire(limit: int) {
+                        assume(elapsed >= limit)
                     }
                 }
                 class Relay {
-                    contains port: Port
-                    tran relay(value: int) {
-                        inline port.send(value)
+                    contains timer: Timer
+                    tran relay(limit: int) {
+                        inline timer.expire(limit)
                     }
                 }
                 @VerificationCase
@@ -1006,7 +1005,7 @@ class CompilationTests {
         }
 
         assertThat(thrown).isNotNull
-        assertThat(thrown.message).startsWith("$fileName:20: ")
+        assertThat(thrown.message).startsWith("$fileName:5: ")
     }
 
     private fun assertCompilationFails(

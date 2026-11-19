@@ -1,0 +1,706 @@
+{
+    "version": 2,
+    "kind": "run",
+    "verificationCase": "_CrossroadsFurtherCases::_ACanBeGreen",
+    "portfolioId": "theta-cegar-expl",
+    "optimization": {
+        "enabled": [
+            "ExpressionSimplification",
+            "OperationFlattening",
+            "RedundantOperationRemoval",
+            "AssumeFalsePropagation",
+            "ConstantVariableSubstitution",
+            "CopyPropagation",
+            "DeadStoreElimination",
+            "DeadCodeRemoval",
+            "VariableLiveness"
+        ]
+    },
+    "timeout": "PT2M",
+    "result": {
+        "metadata": {
+            "backendId": "theta:cegar-expl",
+            "startedAt": "2026-11-17T23:44:29.063302046Z"
+        },
+        "verdict": "Passed",
+        "soundness": "UnderApproximating",
+        "isTrusted": true,
+        "metrics": {
+            "totalDuration": "PT3.758630050S",
+            "backend": {
+                "preparationDuration": "PT0.385726331S",
+                "verificationDuration": "PT3.212608736S",
+                "backAnnotationDuration": "PT0.066358727S"
+            },
+            "verifier": {
+                "compilationDuration": "PT2.233578790S",
+                "compilation": {
+                    "createDuration": "PT0.099120247S",
+                    "instantiationDuration": "PT0.058534038S",
+                    "inliningDuration": "PT1.685711759S",
+                    "flatteningDuration": "PT0.390212746S",
+                    "inliningOptimization": {
+                        "duration": "PT0.108712648S",
+                        "passes": [
+                            {
+                                "name": "OperationCallInlining",
+                                "duration": "PT0.048667762S",
+                                "runs": 1367,
+                                "firings": 325
+                            },
+                            {
+                                "name": "ExpressionSimplificationPass",
+                                "duration": "PT0.032582270S",
+                                "runs": 3,
+                                "firings": 2
+                            },
+                            {
+                                "name": "OperationFlatteningPass",
+                                "duration": "PT0.013125999S",
+                                "runs": 3,
+                                "firings": 2
+                            },
+                            {
+                                "name": "RedundantOperationRemovalPass",
+                                "duration": "PT0.005790315S",
+                                "runs": 3,
+                                "firings": 1
+                            },
+                            {
+                                "name": "AssumeFalsePropagationPass",
+                                "duration": "PT0.007885941S",
+                                "runs": 3,
+                                "firings": 2
+                            },
+                            {
+                                "name": "PropertyExpressionNormalization",
+                                "duration": "PT0.000055623S",
+                                "runs": 1,
+                                "firings": 0
+                            }
+                        ],
+                        "analyses": []
+                    },
+                    "flatteningOptimization": {
+                        "duration": "PT0.193326942S",
+                        "passes": [
+                            {
+                                "name": "ExpressionSimplificationPass",
+                                "duration": "PT0.004794439S",
+                                "runs": 3,
+                                "firings": 1
+                            },
+                            {
+                                "name": "OperationFlatteningPass",
+                                "duration": "PT0.001904387S",
+                                "runs": 3,
+                                "firings": 0
+                            },
+                            {
+                                "name": "RedundantOperationRemovalPass",
+                                "duration": "PT0.001622796S",
+                                "runs": 3,
+                                "firings": 0
+                            },
+                            {
+                                "name": "AssumeFalsePropagationPass",
+                                "duration": "PT0.001784220S",
+                                "runs": 3,
+                                "firings": 0
+                            },
+                            {
+                                "name": "ConstantVariableSubstitutionPass",
+                                "duration": "PT0.035108582S",
+                                "runs": 3,
+                                "firings": 1
+                            },
+                            {
+                                "name": "CopyPropagationPass",
+                                "duration": "PT0.083473890S",
+                                "runs": 3,
+                                "firings": 0
+                            },
+                            {
+                                "name": "DeadStoreEliminationPass",
+                                "duration": "PT0.004915820S",
+                                "runs": 3,
+                                "firings": 1
+                            },
+                            {
+                                "name": "DeadCodeRemovalPass",
+                                "duration": "PT0.031287662S",
+                                "runs": 3,
+                                "firings": 0
+                            },
+                            {
+                                "name": "VariableLivenessPass",
+                                "duration": "PT0.027881828S",
+                                "runs": 3,
+                                "firings": 1
+                            }
+                        ],
+                        "analyses": [
+                            {
+                                "name": "ConstantValueAnalysis",
+                                "duration": "PT0.020356632S",
+                                "computations": 2
+                            },
+                            {
+                                "name": "ReachingDefinitionsAnalysis",
+                                "duration": "PT0.082466695S",
+                                "computations": 2
+                            },
+                            {
+                                "name": "ConeOfInfluenceAnalysis",
+                                "duration": "PT0.028669342S",
+                                "computations": 2
+                            }
+                        ]
+                    },
+                    "inputSize": {
+                        "variables": 0,
+                        "operations": 0,
+                        "expressions": 200
+                    },
+                    "inlinedSize": {
+                        "variables": 56,
+                        "operations": 550,
+                        "expressions": 5074
+                    },
+                    "flattenedSize": {
+                        "variables": 77,
+                        "operations": 517,
+                        "expressions": 1366
+                    }
+                },
+                "backAnnotationDuration": "PT0.024974577S",
+                "portfolioDuration": "PT3.730089522S"
+            }
+        },
+        "message": null
+    },
+    "trace": {
+        "root": "root",
+        "transitions": [
+            {
+                "transition": "semantifyr::gamma::ports::Port::setOutputEvent",
+                "parameters": [
+                    {
+                        "parameter": "event",
+                        "type": {
+                            "kind": "class",
+                            "name": "semantifyr::gamma::events::Event"
+                        }
+                    }
+                ]
+            },
+            {
+                "transition": "semantifyr::gamma::ports::Port::raiseInputEvent",
+                "parameters": [
+                    {
+                        "parameter": "event",
+                        "type": {
+                            "kind": "class",
+                            "name": "semantifyr::gamma::events::Event"
+                        }
+                    }
+                ]
+            },
+            {
+                "transition": "semantifyr::gamma::statecharts::Transition::fire",
+                "parameters": []
+            }
+        ],
+        "variables": [
+            {
+                "variable": "root.component._controller._longToggleTimeout.isSet",
+                "type": {
+                    "kind": "datatype",
+                    "name": "semantifyr::bool"
+                },
+                "slot": null
+            },
+            {
+                "variable": "root.component._controller._Main.activeState",
+                "type": {
+                    "kind": "feature",
+                    "name": "semantifyr::gamma::statecharts::Region::states"
+                },
+                "slot": null
+            },
+            {
+                "variable": "root.component._trafficLightA._blinkingTimeout.isSet",
+                "type": {
+                    "kind": "datatype",
+                    "name": "semantifyr::bool"
+                },
+                "slot": null
+            },
+            {
+                "variable": "root.component._trafficLightA._Main.activeState",
+                "type": {
+                    "kind": "feature",
+                    "name": "semantifyr::gamma::statecharts::Region::states"
+                },
+                "slot": null
+            },
+            {
+                "variable": "root.component._trafficLightB._blinkingTimeout.isSet",
+                "type": {
+                    "kind": "datatype",
+                    "name": "semantifyr::bool"
+                },
+                "slot": null
+            },
+            {
+                "variable": "root.component._trafficLightB._Main.activeState",
+                "type": {
+                    "kind": "feature",
+                    "name": "semantifyr::gamma::statecharts::Region::states"
+                },
+                "slot": null
+            },
+            {
+                "variable": "root.component._controller._control.interface._police.isRaised",
+                "type": {
+                    "kind": "datatype",
+                    "name": "semantifyr::bool"
+                },
+                "slot": null
+            },
+            {
+                "variable": "root.component._controller._controlA.interface._police.isRaised",
+                "type": {
+                    "kind": "datatype",
+                    "name": "semantifyr::bool"
+                },
+                "slot": null
+            },
+            {
+                "variable": "root.component._controller._controlA.interface._toggle.isRaised",
+                "type": {
+                    "kind": "datatype",
+                    "name": "semantifyr::bool"
+                },
+                "slot": null
+            },
+            {
+                "variable": "root.component._controller._controlB.interface._police.isRaised",
+                "type": {
+                    "kind": "datatype",
+                    "name": "semantifyr::bool"
+                },
+                "slot": null
+            },
+            {
+                "variable": "root.component._controller._controlB.interface._toggle.isRaised",
+                "type": {
+                    "kind": "datatype",
+                    "name": "semantifyr::bool"
+                },
+                "slot": null
+            },
+            {
+                "variable": "root.component._controller._Main._Operating._OperatingRegion.activeState",
+                "type": {
+                    "kind": "feature",
+                    "name": "semantifyr::gamma::statecharts::Region::states"
+                },
+                "slot": null
+            },
+            {
+                "variable": "root.component._trafficLightA._control.interface._police.isRaised",
+                "type": {
+                    "kind": "datatype",
+                    "name": "semantifyr::bool"
+                },
+                "slot": null
+            },
+            {
+                "variable": "root.component._trafficLightA._control.interface._toggle.isRaised",
+                "type": {
+                    "kind": "datatype",
+                    "name": "semantifyr::bool"
+                },
+                "slot": null
+            },
+            {
+                "variable": "root.component._trafficLightA._Main._Normal._NormalRegion.activeState",
+                "type": {
+                    "kind": "feature",
+                    "name": "semantifyr::gamma::statecharts::Region::states"
+                },
+                "slot": null
+            },
+            {
+                "variable": "root.component._trafficLightA._Main._Interrupted._InterruptedRegion.activeState",
+                "type": {
+                    "kind": "feature",
+                    "name": "semantifyr::gamma::statecharts::Region::states"
+                },
+                "slot": null
+            },
+            {
+                "variable": "root.component._trafficLightB._control.interface._police.isRaised",
+                "type": {
+                    "kind": "datatype",
+                    "name": "semantifyr::bool"
+                },
+                "slot": null
+            },
+            {
+                "variable": "root.component._trafficLightB._control.interface._toggle.isRaised",
+                "type": {
+                    "kind": "datatype",
+                    "name": "semantifyr::bool"
+                },
+                "slot": null
+            },
+            {
+                "variable": "root.component._trafficLightB._Main._Normal._NormalRegion.activeState",
+                "type": {
+                    "kind": "feature",
+                    "name": "semantifyr::gamma::statecharts::Region::states"
+                },
+                "slot": null
+            },
+            {
+                "variable": "root.component._trafficLightB._Main._Interrupted._InterruptedRegion.activeState",
+                "type": {
+                    "kind": "feature",
+                    "name": "semantifyr::gamma::statecharts::Region::states"
+                },
+                "slot": null
+            },
+            {
+                "variable": "root.component._controller._shortToggleTimeout.clock",
+                "type": {
+                    "kind": "datatype",
+                    "name": "semantifyr::clock"
+                },
+                "slot": null
+            },
+            {
+                "variable": "root.component._controller._longToggleTimeout.clock",
+                "type": {
+                    "kind": "datatype",
+                    "name": "semantifyr::clock"
+                },
+                "slot": null
+            },
+            {
+                "variable": "root.component._trafficLightA._blinkingTimeout.clock",
+                "type": {
+                    "kind": "datatype",
+                    "name": "semantifyr::clock"
+                },
+                "slot": null
+            },
+            {
+                "variable": "root.component._trafficLightB._blinkingTimeout.clock",
+                "type": {
+                    "kind": "datatype",
+                    "name": "semantifyr::clock"
+                },
+                "slot": null
+            }
+        ],
+        "initial": {
+            "state": 0,
+            "calls": [
+                {
+                    "self": "root.component._trafficLightA._lightControl",
+                    "transition": "semantifyr::gamma::ports::Port::setOutputEvent",
+                    "arguments": {
+                        "event": "root.component._trafficLightA._lightControl.interface._yellow"
+                    },
+                    "calls": []
+                },
+                {
+                    "self": "root.component._trafficLightB._lightControl",
+                    "transition": "semantifyr::gamma::ports::Port::setOutputEvent",
+                    "arguments": {
+                        "event": "root.component._trafficLightB._lightControl.interface._yellow"
+                    },
+                    "calls": []
+                }
+            ]
+        },
+        "states": [
+            {
+                "values": {
+                    "root.component._controller._longToggleTimeout.isSet": false,
+                    "root.component._controller._Main.activeState": "root.component._controller._Main._Operating",
+                    "root.component._trafficLightA._blinkingTimeout.isSet": false,
+                    "root.component._trafficLightA._Main.activeState": "root.component._trafficLightA._Main._Normal",
+                    "root.component._trafficLightB._blinkingTimeout.isSet": false,
+                    "root.component._trafficLightB._Main.activeState": "root.component._trafficLightB._Main._Normal",
+                    "root.component._controller._control.interface._police.isRaised": false,
+                    "root.component._controller._controlA.interface._police.isRaised": false,
+                    "root.component._controller._controlA.interface._toggle.isRaised": false,
+                    "root.component._controller._controlB.interface._police.isRaised": false,
+                    "root.component._controller._controlB.interface._toggle.isRaised": false,
+                    "root.component._controller._Main._Operating._OperatingRegion.activeState": "root.component._controller._Main._Operating._OperatingRegion._BothYellow",
+                    "root.component._trafficLightA._control.interface._police.isRaised": false,
+                    "root.component._trafficLightA._control.interface._toggle.isRaised": false,
+                    "root.component._trafficLightA._Main._Normal._NormalRegion.activeState": "root.component._trafficLightA._Main._Normal._NormalRegion._Yellow",
+                    "root.component._trafficLightA._Main._Interrupted._InterruptedRegion.activeState": null,
+                    "root.component._trafficLightB._control.interface._police.isRaised": false,
+                    "root.component._trafficLightB._control.interface._toggle.isRaised": false,
+                    "root.component._trafficLightB._Main._Normal._NormalRegion.activeState": "root.component._trafficLightB._Main._Normal._NormalRegion._Yellow",
+                    "root.component._trafficLightB._Main._Interrupted._InterruptedRegion.activeState": null,
+                    "root.component._controller._shortToggleTimeout.clock": 0,
+                    "root.component._controller._longToggleTimeout.clock": 0,
+                    "root.component._trafficLightA._blinkingTimeout.clock": 0,
+                    "root.component._trafficLightB._blinkingTimeout.clock": 0
+                }
+            },
+            {
+                "values": {
+                    "root.component._controller._longToggleTimeout.isSet": true,
+                    "root.component._controller._Main.activeState": "root.component._controller._Main._Operating",
+                    "root.component._trafficLightA._blinkingTimeout.isSet": false,
+                    "root.component._trafficLightA._Main.activeState": "root.component._trafficLightA._Main._Normal",
+                    "root.component._trafficLightB._blinkingTimeout.isSet": false,
+                    "root.component._trafficLightB._Main.activeState": "root.component._trafficLightB._Main._Normal",
+                    "root.component._controller._control.interface._police.isRaised": false,
+                    "root.component._controller._controlA.interface._police.isRaised": false,
+                    "root.component._controller._controlA.interface._toggle.isRaised": true,
+                    "root.component._controller._controlB.interface._police.isRaised": false,
+                    "root.component._controller._controlB.interface._toggle.isRaised": true,
+                    "root.component._controller._Main._Operating._OperatingRegion.activeState": "root.component._controller._Main._Operating._OperatingRegion._BothRed",
+                    "root.component._trafficLightA._control.interface._police.isRaised": false,
+                    "root.component._trafficLightA._control.interface._toggle.isRaised": true,
+                    "root.component._trafficLightA._Main._Normal._NormalRegion.activeState": "root.component._trafficLightA._Main._Normal._NormalRegion._Yellow",
+                    "root.component._trafficLightA._Main._Interrupted._InterruptedRegion.activeState": null,
+                    "root.component._trafficLightB._control.interface._police.isRaised": false,
+                    "root.component._trafficLightB._control.interface._toggle.isRaised": true,
+                    "root.component._trafficLightB._Main._Normal._NormalRegion.activeState": "root.component._trafficLightB._Main._Normal._NormalRegion._Yellow",
+                    "root.component._trafficLightB._Main._Interrupted._InterruptedRegion.activeState": null,
+                    "root.component._controller._shortToggleTimeout.clock": 1,
+                    "root.component._controller._longToggleTimeout.clock": 0,
+                    "root.component._trafficLightA._blinkingTimeout.clock": 1,
+                    "root.component._trafficLightB._blinkingTimeout.clock": 1
+                }
+            },
+            {
+                "values": {
+                    "root.component._controller._longToggleTimeout.isSet": true,
+                    "root.component._controller._Main.activeState": "root.component._controller._Main._Operating",
+                    "root.component._trafficLightA._blinkingTimeout.isSet": false,
+                    "root.component._trafficLightA._Main.activeState": "root.component._trafficLightA._Main._Normal",
+                    "root.component._trafficLightB._blinkingTimeout.isSet": false,
+                    "root.component._trafficLightB._Main.activeState": "root.component._trafficLightB._Main._Normal",
+                    "root.component._controller._control.interface._police.isRaised": false,
+                    "root.component._controller._controlA.interface._police.isRaised": false,
+                    "root.component._controller._controlA.interface._toggle.isRaised": true,
+                    "root.component._controller._controlB.interface._police.isRaised": false,
+                    "root.component._controller._controlB.interface._toggle.isRaised": false,
+                    "root.component._controller._Main._Operating._OperatingRegion.activeState": "root.component._controller._Main._Operating._OperatingRegion._TrafficOnA",
+                    "root.component._trafficLightA._control.interface._police.isRaised": false,
+                    "root.component._trafficLightA._control.interface._toggle.isRaised": true,
+                    "root.component._trafficLightA._Main._Normal._NormalRegion.activeState": "root.component._trafficLightA._Main._Normal._NormalRegion._Red",
+                    "root.component._trafficLightA._Main._Interrupted._InterruptedRegion.activeState": null,
+                    "root.component._trafficLightB._control.interface._police.isRaised": false,
+                    "root.component._trafficLightB._control.interface._toggle.isRaised": false,
+                    "root.component._trafficLightB._Main._Normal._NormalRegion.activeState": "root.component._trafficLightB._Main._Normal._NormalRegion._Red",
+                    "root.component._trafficLightB._Main._Interrupted._InterruptedRegion.activeState": null,
+                    "root.component._controller._shortToggleTimeout.clock": 3,
+                    "root.component._controller._longToggleTimeout.clock": 0,
+                    "root.component._trafficLightA._blinkingTimeout.clock": 3,
+                    "root.component._trafficLightB._blinkingTimeout.clock": 3
+                }
+            },
+            {
+                "values": {
+                    "root.component._controller._longToggleTimeout.isSet": true,
+                    "root.component._controller._Main.activeState": "root.component._controller._Main._Interrupted",
+                    "root.component._trafficLightA._blinkingTimeout.isSet": false,
+                    "root.component._trafficLightA._Main.activeState": "root.component._trafficLightA._Main._Normal",
+                    "root.component._trafficLightB._blinkingTimeout.isSet": false,
+                    "root.component._trafficLightB._Main.activeState": "root.component._trafficLightB._Main._Normal",
+                    "root.component._controller._control.interface._police.isRaised": false,
+                    "root.component._controller._controlA.interface._police.isRaised": true,
+                    "root.component._controller._controlA.interface._toggle.isRaised": false,
+                    "root.component._controller._controlB.interface._police.isRaised": true,
+                    "root.component._controller._controlB.interface._toggle.isRaised": false,
+                    "root.component._controller._Main._Operating._OperatingRegion.activeState": null,
+                    "root.component._trafficLightA._control.interface._police.isRaised": true,
+                    "root.component._trafficLightA._control.interface._toggle.isRaised": false,
+                    "root.component._trafficLightA._Main._Normal._NormalRegion.activeState": "root.component._trafficLightA._Main._Normal._NormalRegion._Green",
+                    "root.component._trafficLightA._Main._Interrupted._InterruptedRegion.activeState": null,
+                    "root.component._trafficLightB._control.interface._police.isRaised": true,
+                    "root.component._trafficLightB._control.interface._toggle.isRaised": false,
+                    "root.component._trafficLightB._Main._Normal._NormalRegion.activeState": "root.component._trafficLightB._Main._Normal._NormalRegion._Red",
+                    "root.component._trafficLightB._Main._Interrupted._InterruptedRegion.activeState": null,
+                    "root.component._controller._shortToggleTimeout.clock": 3,
+                    "root.component._controller._longToggleTimeout.clock": 0,
+                    "root.component._trafficLightA._blinkingTimeout.clock": 3,
+                    "root.component._trafficLightB._blinkingTimeout.clock": 3
+                }
+            }
+        ],
+        "steps": [
+            {
+                "source": 0,
+                "target": 1,
+                "elapsed": 1,
+                "calls": [
+                    {
+                        "self": "root.component._controller._control",
+                        "transition": "semantifyr::gamma::ports::Port::raiseInputEvent",
+                        "arguments": {
+                            "event": "root.component._controller._control.interface._toggle"
+                        },
+                        "calls": []
+                    },
+                    {
+                        "self": "root.component._controller._Main._Operating._OperatingRegion.transition_BothYellow_to_BothRed",
+                        "transition": "semantifyr::gamma::statecharts::Transition::fire",
+                        "arguments": {},
+                        "calls": [
+                            {
+                                "self": "root.component._controller._controlA",
+                                "transition": "semantifyr::gamma::ports::Port::setOutputEvent",
+                                "arguments": {
+                                    "event": "root.component._controller._controlA.interface._toggle"
+                                },
+                                "calls": []
+                            },
+                            {
+                                "self": "root.component._controller._controlB",
+                                "transition": "semantifyr::gamma::ports::Port::setOutputEvent",
+                                "arguments": {
+                                    "event": "root.component._controller._controlB.interface._toggle"
+                                },
+                                "calls": []
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "source": 1,
+                "target": 2,
+                "elapsed": 2,
+                "calls": [
+                    {
+                        "self": "root.component._controller._control",
+                        "transition": "semantifyr::gamma::ports::Port::raiseInputEvent",
+                        "arguments": {
+                            "event": "root.component._controller._control.interface._toggle"
+                        },
+                        "calls": []
+                    },
+                    {
+                        "self": "root.component._controller._Main._Operating._OperatingRegion.transition_BothRed_to_TrafficOnA",
+                        "transition": "semantifyr::gamma::statecharts::Transition::fire",
+                        "arguments": {},
+                        "calls": [
+                            {
+                                "self": "root.component._controller._controlA",
+                                "transition": "semantifyr::gamma::ports::Port::setOutputEvent",
+                                "arguments": {
+                                    "event": "root.component._controller._controlA.interface._toggle"
+                                },
+                                "calls": []
+                            }
+                        ]
+                    },
+                    {
+                        "self": "root.component._trafficLightA._Main._Normal._NormalRegion.transition_Yellow_to_Red",
+                        "transition": "semantifyr::gamma::statecharts::Transition::fire",
+                        "arguments": {},
+                        "calls": [
+                            {
+                                "self": "root.component._trafficLightA._lightControl",
+                                "transition": "semantifyr::gamma::ports::Port::setOutputEvent",
+                                "arguments": {
+                                    "event": "root.component._trafficLightA._lightControl.interface._red"
+                                },
+                                "calls": []
+                            }
+                        ]
+                    },
+                    {
+                        "self": "root.component._trafficLightB._Main._Normal._NormalRegion.transition_Yellow_to_Red",
+                        "transition": "semantifyr::gamma::statecharts::Transition::fire",
+                        "arguments": {},
+                        "calls": [
+                            {
+                                "self": "root.component._trafficLightB._lightControl",
+                                "transition": "semantifyr::gamma::ports::Port::setOutputEvent",
+                                "arguments": {
+                                    "event": "root.component._trafficLightB._lightControl.interface._red"
+                                },
+                                "calls": []
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "source": 2,
+                "target": 3,
+                "elapsed": 0,
+                "calls": [
+                    {
+                        "self": "root.component._controller._control",
+                        "transition": "semantifyr::gamma::ports::Port::raiseInputEvent",
+                        "arguments": {
+                            "event": "root.component._controller._control.interface._police"
+                        },
+                        "calls": []
+                    },
+                    {
+                        "self": "root.component._controller._control",
+                        "transition": "semantifyr::gamma::ports::Port::raiseInputEvent",
+                        "arguments": {
+                            "event": "root.component._controller._control.interface._toggle"
+                        },
+                        "calls": []
+                    },
+                    {
+                        "self": "root.component._controller._Main.transition_Operating_to_Interrupted",
+                        "transition": "semantifyr::gamma::statecharts::Transition::fire",
+                        "arguments": {},
+                        "calls": [
+                            {
+                                "self": "root.component._controller._controlA",
+                                "transition": "semantifyr::gamma::ports::Port::setOutputEvent",
+                                "arguments": {
+                                    "event": "root.component._controller._controlA.interface._police"
+                                },
+                                "calls": []
+                            },
+                            {
+                                "self": "root.component._controller._controlB",
+                                "transition": "semantifyr::gamma::ports::Port::setOutputEvent",
+                                "arguments": {
+                                    "event": "root.component._controller._controlB.interface._police"
+                                },
+                                "calls": []
+                            }
+                        ]
+                    },
+                    {
+                        "self": "root.component._trafficLightA._Main._Normal._NormalRegion.transition_Red_to_Green",
+                        "transition": "semantifyr::gamma::statecharts::Transition::fire",
+                        "arguments": {},
+                        "calls": [
+                            {
+                                "self": "root.component._trafficLightA._lightControl",
+                                "transition": "semantifyr::gamma::ports::Port::setOutputEvent",
+                                "arguments": {
+                                    "event": "root.component._trafficLightA._lightControl.interface._green"
+                                },
+                                "calls": []
+                            }
+                        ]
+                    }
+                ]
+            }
+        ],
+        "missingCalls": null
+    }
+}
