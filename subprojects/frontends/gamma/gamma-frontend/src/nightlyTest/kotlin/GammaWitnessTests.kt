@@ -7,7 +7,6 @@
 import hu.bme.mit.semantifyr.frontends.gamma.testing.GammaCorpusEntry
 import hu.bme.mit.semantifyr.frontends.gamma.testing.GammaFrontendTestHelper
 import hu.bme.mit.semantifyr.frontends.gamma.testing.GammaTestEngine
-import hu.bme.mit.semantifyr.oxsts.lang.tests.RestoreGlobalRegistries
 import hu.bme.mit.semantifyr.portfolios.Portfolios
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
@@ -15,7 +14,6 @@ import org.junit.jupiter.params.provider.MethodSource
 import java.util.stream.Stream
 import kotlin.time.Duration.Companion.minutes
 
-@RestoreGlobalRegistries
 class GammaWitnessTests {
 
     companion object {

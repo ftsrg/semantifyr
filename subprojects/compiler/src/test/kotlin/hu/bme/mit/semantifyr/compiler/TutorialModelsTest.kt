@@ -9,7 +9,6 @@ package hu.bme.mit.semantifyr.compiler
 import hu.bme.mit.semantifyr.compiler.reader.SemantifyrLoader
 import hu.bme.mit.semantifyr.compiler.reader.SemantifyrModelContext
 import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup
-import hu.bme.mit.semantifyr.oxsts.lang.tests.RestoreGlobalRegistries
 import org.assertj.core.api.Assertions.assertThat
 import org.eclipse.xtext.diagnostics.Severity
 import org.eclipse.xtext.util.CancelIndicator
@@ -26,7 +25,6 @@ import kotlin.io.path.isRegularFile
 import kotlin.io.path.name
 import kotlin.io.path.walk
 
-@RestoreGlobalRegistries
 class TutorialModelsTest {
 
     companion object {

@@ -13,7 +13,6 @@ import com.google.inject.Injector;
 import hu.bme.mit.semantifyr.compiler.reader.SemantifyrLoader;
 import hu.bme.mit.semantifyr.lang.ide.server.commands.CommandProgressContext;
 import hu.bme.mit.semantifyr.oxsts.lang.ide.OxstsIdeSetup;
-import hu.bme.mit.semantifyr.oxsts.lang.tests.RestoreGlobalRegistries;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration;
 import hu.bme.mit.semantifyr.verifier.discovery.VerificationCaseDiscoverer;
 import java.net.URI;
@@ -25,7 +24,6 @@ import org.eclipse.xtext.ide.server.ILanguageServerAccess;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-@RestoreGlobalRegistries
 class InlineClassCommandHandlerTest {
 
     private static final Path SMOKE_MODEL = Path.of("../../oxsts-test-models/smoke/smoke.semantifyr");

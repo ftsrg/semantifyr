@@ -7,13 +7,11 @@
 import hu.bme.mit.semantifyr.frontends.gamma.testing.GammaCorpus
 import hu.bme.mit.semantifyr.frontends.gamma.testing.GammaCorpusEntry
 import hu.bme.mit.semantifyr.frontends.gamma.testing.GammaFrontendTestHelper
-import hu.bme.mit.semantifyr.oxsts.lang.tests.RestoreGlobalRegistries
 import hu.bme.mit.semantifyr.portfolios.Portfolios
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
 import kotlin.time.Duration.Companion.minutes
 
-@RestoreGlobalRegistries
 class GammaConformanceTests {
 
     companion object {

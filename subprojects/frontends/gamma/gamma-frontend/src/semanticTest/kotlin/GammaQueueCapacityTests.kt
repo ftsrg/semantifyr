@@ -8,7 +8,6 @@ import hu.bme.mit.semantifyr.compiler.reader.SemantifyrLoader
 import hu.bme.mit.semantifyr.frontends.gamma.testing.GammaFrontendTestHelper
 import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup
 import hu.bme.mit.semantifyr.oxsts.lang.library.ClasspathBasedOxstsLibrary
-import hu.bme.mit.semantifyr.oxsts.lang.tests.RestoreGlobalRegistries
 import hu.bme.mit.semantifyr.portfolios.Portfolios
 import hu.bme.mit.semantifyr.verifier.SemantifyrVerifierTestHelper
 import hu.bme.mit.semantifyr.verifier.discovery.VerificationCaseDiscoverer
@@ -18,7 +17,6 @@ import org.junit.jupiter.params.provider.ValueSource
 import kotlin.io.path.Path
 import kotlin.io.path.createDirectories
 
-@RestoreGlobalRegistries
 class GammaQueueCapacityTests {
     companion object {
         private val injector = OxstsStandaloneSetup().createInjectorAndDoEMFRegistration()

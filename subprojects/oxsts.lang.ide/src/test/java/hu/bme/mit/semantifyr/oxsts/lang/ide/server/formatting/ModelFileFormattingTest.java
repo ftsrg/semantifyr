@@ -10,7 +10,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.google.inject.Injector;
 import hu.bme.mit.semantifyr.oxsts.lang.ide.OxstsIdeSetup;
-import hu.bme.mit.semantifyr.oxsts.lang.tests.RestoreGlobalRegistries;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -36,7 +35,6 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
-@RestoreGlobalRegistries
 class ModelFileFormattingTest {
 
     private static final List<Path> MODEL_DIRECTORIES = List.of(

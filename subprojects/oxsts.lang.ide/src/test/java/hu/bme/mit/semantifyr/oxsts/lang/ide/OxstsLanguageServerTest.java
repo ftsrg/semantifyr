@@ -10,7 +10,6 @@ import com.google.inject.Module;
 import hu.bme.mit.semantifyr.oxsts.lang.OxstsRuntimeModule;
 import hu.bme.mit.semantifyr.oxsts.lang.ide.client.SemantifyrLanguageClient;
 import hu.bme.mit.semantifyr.oxsts.lang.ide.server.OxstsServerModule;
-import hu.bme.mit.semantifyr.oxsts.lang.tests.RestoreGlobalRegistries;
 import java.nio.file.Path;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.lsp4j.services.LanguageClient;
@@ -21,7 +20,6 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.io.TempDir;
 
-@RestoreGlobalRegistries
 public abstract class OxstsLanguageServerTest extends AbstractLanguageServerTest {
 
     private static final String MODEL_FILE_NAME = "snippet.semantifyr";

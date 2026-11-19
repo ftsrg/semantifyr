@@ -11,11 +11,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import hu.bme.mit.semantifyr.frontends.gamma.lang.ide.GammaIdeSetup;
 import hu.bme.mit.semantifyr.lang.ide.server.formatting.SemantifyrFormattingService;
 import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup;
-import hu.bme.mit.semantifyr.oxsts.lang.tests.RestoreGlobalRegistries;
 import org.eclipse.xtext.ide.server.formatting.FormattingService;
 import org.junit.jupiter.api.Test;
 
-@RestoreGlobalRegistries
 class GammaFormattingServiceTest {
 
     @Test

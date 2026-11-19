@@ -18,7 +18,6 @@ dependencies {
     ideGenerated(project(":oxsts.lang"))
 
     testImplementation(libs.xtext.testing)
-    testImplementation(testFixtures(project(":oxsts.lang")))
     testRuntimeOnly(libs.slf4j.log4j)
 }
 

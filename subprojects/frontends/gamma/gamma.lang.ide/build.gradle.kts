@@ -15,8 +15,6 @@ dependencies {
     implementation(project(":gamma-frontend"))
 
     ideGenerated(project(":gamma.lang"))
-
-    testImplementation(testFixtures(project(":oxsts.lang")))
 }
 
 application {
