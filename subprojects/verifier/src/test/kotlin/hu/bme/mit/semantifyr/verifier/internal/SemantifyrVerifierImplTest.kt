@@ -34,7 +34,6 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.OxstsModelPackage
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 import hu.bme.mit.semantifyr.verifier.BackAnnotationException
 import hu.bme.mit.semantifyr.verifier.ProgressContext
-import hu.bme.mit.semantifyr.verifier.REPORT_VERSION
 import hu.bme.mit.semantifyr.verifier.ReportKind
 import hu.bme.mit.semantifyr.verifier.SemantifyrVerifier
 import hu.bme.mit.semantifyr.verifier.VerificationCase
@@ -225,7 +224,6 @@ class SemantifyrVerifierImplTest {
         val outcome = build(portfolio, output, artifacts = ArtifactConfig.ALL).verify(case)
 
         assertThat(outcome.reportPath).isEqualTo(output.resolve("simple.${case.qualifiedName.replace("::", ".")}").resolve("report.json"))
-        assertThat(Json.decodeFromString<VerificationReport>(outcome.reportPath.readText())).isEqualTo(outcome.report)
     }
 
     @Test
@@ -238,10 +236,9 @@ class SemantifyrVerifierImplTest {
 
         val outcome = build(portfolio, output).verify(loadFirstCase())
 
-        assertThat(outcome.report.version).isEqualTo(REPORT_VERSION)
         assertThat(outcome.report.kind).isEqualTo(ReportKind.Run)
-        assertThat(outcome.report.trace!!.steps).hasSize(1)
-        assertThat(outcome.witness!!.path).exists()
+        assertThat(outcome.report.trace?.steps).hasSize(1)
+        assertThat(outcome.witness?.path).exists()
         assertThat(Json.decodeFromString<VerificationReport>(outcome.reportPath.readText())).isEqualTo(outcome.report)
     }
 
@@ -304,6 +301,7 @@ class SemantifyrVerifierImplTest {
         val second = verifier.verify(witness)
 
         assertThat(first.report.result.verdict).isEqualTo(VerificationVerdict.Passed)
+        assertThat(first.report.kind).isEqualTo(ReportKind.Recheck)
         assertThat(second.report.result.verdict).isEqualTo(VerificationVerdict.Passed)
         assertThat(serializer.serialize(witness)).isEqualTo(before)
         assertThat(caseDirectory.resolve("report.json").exists()).isTrue

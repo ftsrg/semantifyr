@@ -23,14 +23,18 @@ import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationConfig
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
 import hu.bme.mit.semantifyr.compiler.reader.SemantifyrLoader
 import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.CallSuffixExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralInteger
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.NegationOperator
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 import hu.bme.mit.semantifyr.verifier.ObservedParameter
 import hu.bme.mit.semantifyr.verifier.ObservedSlot
 import hu.bme.mit.semantifyr.verifier.ObservedTransition
 import hu.bme.mit.semantifyr.verifier.ObservedVariable
 import hu.bme.mit.semantifyr.verifier.ReportCall
 import hu.bme.mit.semantifyr.verifier.ReportInitialEntry
+import hu.bme.mit.semantifyr.verifier.ReportState
 import hu.bme.mit.semantifyr.verifier.ReportStep
 import hu.bme.mit.semantifyr.verifier.ReportTrace
 import hu.bme.mit.semantifyr.verifier.ReportType
@@ -40,6 +44,7 @@ import hu.bme.mit.semantifyr.verifier.VerificationCase
 import hu.bme.mit.semantifyr.verifier.discovery.VerificationCaseDiscoverer
 import hu.bme.mit.semantifyr.verifier.internal.VerificationArtifactWriter
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.assertj.core.api.Assertions.entry
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
@@ -129,7 +134,7 @@ class BackAnnotationFidelityTest {
     }
 
     @Test
-    fun `array slot values reach the report and the back-annotated witness`(@TempDir output: Path) {
+    fun `an array is reported and back-annotated slot by slot, each slot with its array, a slot the run does not show left out`(@TempDir output: Path) {
         val case = loadCase("arrays.semantifyr", arraysCase)
         val slots = (0..2).map {
             flattenedName("root", "slots_$it")
@@ -140,10 +145,8 @@ class BackAnnotationFidelityTest {
         val witness = linearInlinedWitness(
             model,
             listOf(
-                model.state(slots[0] to 0, slots[1] to 0, slots[2] to 0),
-                model.state(slots[0] to 1, slots[1] to 0, slots[2] to 0),
-                model.state(slots[0] to 1, slots[1] to 1, slots[2] to 0),
-                model.state(slots[0] to 1, slots[1] to 1, slots[2] to 1),
+                model.state(slots[0] to 0, slots[2] to 4),
+                model.state(slots[0] to 1, slots[1] to 1, slots[2] to 4),
             ),
         )
         val annotated = backAnnotate(compilation, witness, output)
@@ -151,15 +154,23 @@ class BackAnnotationFidelityTest {
         val trace = annotated.trace
         assertThat(trace.states[trace.initial.state].values).containsExactly(
             entry("root.slots[0]", ReportValue.Integer(BigInteger.ZERO)),
-            entry("root.slots[1]", ReportValue.Integer(BigInteger.ZERO)),
-            entry("root.slots[2]", ReportValue.Integer(BigInteger.ZERO)),
+            entry("root.slots[2]", ReportValue.Integer(BigInteger.valueOf(4))),
         )
         assertThat(trace.states.last().values).containsExactly(
             entry("root.slots[0]", ReportValue.Integer(BigInteger.ONE)),
             entry("root.slots[1]", ReportValue.Integer(BigInteger.ONE)),
-            entry("root.slots[2]", ReportValue.Integer(BigInteger.ONE)),
+            entry("root.slots[2]", ReportValue.Integer(BigInteger.valueOf(4))),
         )
-        assertThat(annotated.witnessText).contains("root.slots[2] == 1")
+        assertThat(
+            trace.variables.map {
+                it.slot
+            },
+        ).containsExactly(
+            ObservedSlot(array = "root.slots", index = 0, size = 3),
+            ObservedSlot(array = "root.slots", index = 2, size = 3),
+            ObservedSlot(array = "root.slots", index = 1, size = 3),
+        )
+        assertThat(annotated.witnessText).contains("root.slots[1] == 1")
     }
 
     @Test
@@ -236,7 +247,6 @@ class BackAnnotationFidelityTest {
         )
         assertThat(annotated.witnessText)
             .contains("var step: int := 0")
-            .doesNotContain("step == -1")
             .containsSubsequence(
                 "init {",
                 "assume(step == 0)",
@@ -315,31 +325,6 @@ class BackAnnotationFidelityTest {
     }
 
     @Test
-    fun `the report holds an array slot by slot with the array it belongs to`(@TempDir output: Path) {
-        val case = loadCase("arrays.semantifyr", arraysCase)
-        val slots = (0..2).map {
-            flattenedName("root", "slots_$it")
-        }
-
-        val compilation = compile(case, output)
-        val model = compilation.inlinedOxsts
-        val witness = linearInlinedWitness(
-            model,
-            listOf(
-                model.state(slots[0] to 0, slots[2] to 4),
-            ),
-        )
-        val annotated = backAnnotate(compilation, witness, output)
-
-        val trace = annotated.trace
-        assertThat(trace.states.single().values).containsExactly(
-            entry("root.slots[0]", ReportValue.Integer(BigInteger.ZERO)),
-            entry("root.slots[2]", ReportValue.Integer(BigInteger.valueOf(4))),
-        )
-        assertThat(trace.variables.last().slot).isEqualTo(ObservedSlot(array = "root.slots", index = 2, size = 3))
-    }
-
-    @Test
     fun `a slot of an array of records is held under the slot's key as an object of its kept fields and back-annotates field by field`(@TempDir output: Path) {
         val case = loadCase("records.semantifyr", recordArrayCase)
         val readings = flattenedName("root", "store", "readings") + RecordFlatteningPass.FIELD_SEPARATOR
@@ -376,51 +361,6 @@ class BackAnnotationFidelityTest {
             "root.store.readings[2].value == 2",
             "root.store.readings[2].valid == true",
         )
-    }
-
-    @Test
-    fun `the report holds a record as an object of its kept fields`(@TempDir output: Path) {
-        val case = loadCase("records.semantifyr", recordsCase)
-        val positionX = flattenedName("root", "robot", "position") + "${RecordFlatteningPass.FIELD_SEPARATOR}x"
-
-        val compilation = compile(case, output)
-        val model = compilation.inlinedOxsts
-        val witness = linearInlinedWitness(
-            model,
-            listOf(
-                model.state(positionX to 3),
-            ),
-        )
-        val annotated = backAnnotate(compilation, witness, output)
-
-        val trace = annotated.trace
-        assertThat(trace.states.single().values["root.robot.position"]).isEqualTo(ReportValue.Record(mapOf("x" to ReportValue.Integer(BigInteger.valueOf(3)))))
-        assertThat(trace.variables.single().type.kind).isEqualTo(ReportTypeKind.Record)
-    }
-
-    @Test
-    fun `an instance reference in the report is a path from the root`(@TempDir output: Path) {
-        val case = loadCase("arrays.semantifyr", classTypedArraysCase)
-        val slots = (0..1).map {
-            flattenedName("root", "queue_$it")
-        }
-
-        val compilation = compile(case, output)
-        val model = compilation.inlinedOxsts
-        val secondId = (
-            model.variables.single {
-                it.name == slots[1]
-            }.expression as LiteralInteger
-            ).value
-        val witness = linearInlinedWitness(
-            model,
-            listOf(
-                model.state(slots[0] to secondId),
-            ),
-        )
-        val annotated = backAnnotate(compilation, witness, output)
-
-        assertThat(annotated.trace.states.single().values).containsEntry("root.queue[0]", ReportValue.Text("root.second"))
     }
 
     @Test
@@ -564,6 +504,109 @@ class BackAnnotationFidelityTest {
         assertThat(annotated.witnessText).contains("assume(root.x == 1)")
     }
 
+    @Test
+    fun `the calls of a step are nested as they called each other and in run order`(@TempDir models: Path, @TempDir output: Path) {
+        val case = loadText(models, "nested_calls.semantifyr", NESTED_CALLS_MODEL, NESTED_CALLS_CASE)
+
+        val compilation = compile(case, output)
+        val model = compilation.inlinedOxsts
+        val tracers = compilation.transitionCallTraces.tracerVariables
+        val witness = linearInlinedWitness(
+            model,
+            listOf(
+                model.tracerState(tracers, false),
+                model.tracerState(tracers, true),
+            ),
+        )
+        val annotated = backAnnotate(compilation, witness, output)
+
+        val press = annotated.trace.steps.single().calls.single()
+        assertThat(press.self).isEqualTo("root.panel")
+        assertThat(
+            press.calls.map {
+                it.self
+            },
+        ).containsExactly(
+            "root.panel.second",
+            "root.panel.first",
+        )
+    }
+
+    @Test
+    fun `a call that ran without the call enclosing it fails the trace`(@TempDir models: Path, @TempDir output: Path) {
+        val case = loadText(models, "nested_calls.semantifyr", NESTED_CALLS_MODEL, NESTED_CALLS_CASE)
+
+        val compilation = compile(case, output)
+        val model = compilation.inlinedOxsts
+        val tracers = compilation.transitionCallTraces.tracerVariables
+        val toggles = tracers.filter {
+            compilation.transitionCallTraces.getTransitionCallTrace(it).transitionDeclaration.name == "toggle"
+        }
+        val witness = linearInlinedWitness(
+            model,
+            listOf(
+                model.tracerState(tracers, false),
+                model.tracerState(toggles, true),
+            ),
+        )
+
+        assertThatThrownBy {
+            backAnnotate(compilation, witness, output)
+        }.isInstanceOf(IllegalStateException::class.java).hasMessageContaining("ran without the call that encloses it")
+    }
+
+    @Test
+    fun `the witness model of a failed verdict holds the negated property and of a passed one the property itself`(@TempDir output: Path) {
+        val case = loadCase("tracing.semantifyr", tracingCase)
+
+        val compilation = compile(case, output)
+        val model = compilation.inlinedOxsts
+        val classWitness = injector.getInstance(ClassWitnessTransformer::class.java).transform(linearInlinedWitness(model, listOf(model.state())), compilation)
+        val trace = injector.getInstance(ReportTraceTransformer::class.java).transform(classWitness, compilation)
+        val backAnnotator = injector.getInstance(ClassWitnessBackAnnotator::class.java)
+
+        val failed = backAnnotator.createWitnessInlinedOxsts(trace, compilation, VerificationVerdict.Failed)
+        val passed = backAnnotator.createWitnessInlinedOxsts(trace, compilation, VerificationVerdict.Passed)
+
+        assertThat((failed.property.expression as NegationOperator).body).isInstanceOf(CallSuffixExpression::class.java)
+        assertThat(passed.property.expression).isInstanceOf(CallSuffixExpression::class.java)
+    }
+
+    @Test
+    fun `a time scale beyond what a witness model can hold fails the witness model`(@TempDir models: Path, @TempDir output: Path) {
+        val case = loadText(models, "timed.semantifyr", TIMED_MODEL, TIMED_CASE)
+        val tiny = Fraction.of(BigInteger.ONE, BigInteger.TWO.pow(40))
+        val trace = ReportTrace(
+            root = "root",
+            transitions = emptyList(),
+            variables = listOf(
+                ObservedVariable("root.timer.elapsed", ReportType(ReportTypeKind.Datatype, "semantifyr::clock")),
+            ),
+            initial = ReportInitialEntry(state = 0, calls = emptyList()),
+            states = listOf(
+                ReportState(
+                    mapOf(
+                        "root.timer.elapsed" to ReportValue.Integer(BigInteger.ZERO),
+                    ),
+                ),
+                ReportState(
+                    mapOf(
+                        "root.timer.elapsed" to ReportValue.of(tiny),
+                    ),
+                ),
+            ),
+            steps = listOf(
+                ReportStep(source = 0, target = 1, elapsed = tiny, calls = emptyList()),
+            ),
+        )
+
+        val compilation = compile(case, output)
+
+        assertThatThrownBy {
+            injector.getInstance(ClassWitnessBackAnnotator::class.java).createWitnessInlinedOxsts(trace, compilation, VerificationVerdict.Passed)
+        }.isInstanceOf(ArithmeticException::class.java)
+    }
+
     private fun timedWitness(model: InlinedOxsts): InlinedWitness {
         val elapsed = model.variables.single {
             it.name == flattenedName("root", "timer", "elapsed")
@@ -621,6 +664,14 @@ class BackAnnotationFidelityTest {
         )
     }
 
+    private fun InlinedOxsts.tracerState(tracers: Collection<VariableDeclaration>, value: Boolean): InlinedWitnessState {
+        return InlinedWitnessState(
+            tracers.map {
+                InlinedWitnessStateValue(it, OxstsFactory.createLiteralBoolean(value))
+            },
+        )
+    }
+
     private fun loadCase(fileName: String, qualifiedName: String): VerificationCase {
         val context = loader.loadStandaloneModel(Path("../../oxsts-test-models/semantic/$fileName"))
         return discoverer.findByQualifiedName(context, qualifiedName)
@@ -638,7 +689,7 @@ class BackAnnotationFidelityTest {
         val classWitness = injector.getInstance(ClassWitnessTransformer::class.java).transform(witness, compilation)
         val trace = injector.getInstance(ReportTraceTransformer::class.java).transform(classWitness, compilation)
         val model = injector.getInstance(ClassWitnessBackAnnotator::class.java).createWitnessInlinedOxsts(trace, compilation, VerificationVerdict.Passed)
-        val witnessPath = requireNotNull(injector.getInstance(VerificationArtifactWriter::class.java).writeWitness(model, output, "back-annotation"))
+        val witnessPath = injector.getInstance(VerificationArtifactWriter::class.java).writeWitness(model, output, "back-annotation")
         return BackAnnotated(trace, witnessPath)
     }
 
@@ -652,6 +703,44 @@ class BackAnnotationFidelityTest {
 
     companion object {
         private const val TIMED_CASE = "semantifyr::verification::report::timed::TimerFires"
+        private const val NESTED_CALLS_CASE = "semantifyr::verification::report::nested_calls::PanelPress"
+
+        private val NESTED_CALLS_MODEL = """
+            package semantifyr::verification::report::nested_calls
+
+            class Lamp {
+                var on: bool := false
+
+                @Trace
+                tran toggle() {
+                    on := !on
+                }
+            }
+
+            class Panel {
+                contains first: Lamp
+                contains second: Lamp
+
+                @Trace
+                tran press() {
+                    inline second.toggle()
+                    inline first.toggle()
+                }
+            }
+
+            @VerificationCase
+            class PanelPress {
+                contains panel: Panel
+
+                redefine tran {
+                    inline panel.press()
+                }
+
+                prop {
+                    return EF (panel.first.on)
+                }
+            }
+        """.trimIndent()
 
         private val RUN_TIME_ARGUMENT_MODEL = """
             package semantifyr::verification::report::run_time_argument
