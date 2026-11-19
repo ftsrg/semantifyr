@@ -13,7 +13,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 import hu.bme.mit.semantifyr.utils.text.IndentingStringBuilder
 
-// no mangled name holds "_0", so the delay names no variable of the model
+// every escape opens with "_" and a letter or a second "_", so no mangled name is the delay
 const val NUXMV_DELAY_NAME = "delay_0"
 
 data class NuxmvArtifacts(
