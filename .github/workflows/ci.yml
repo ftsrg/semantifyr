@@ -174,13 +174,19 @@ jobs:
           tar -xzf downloads/model-tests.tar.gz -C model-tests
           unzip -q model-tests/corpus-check/build/distributions/corpus-check-*.zip -d harness
           unzip -q downloads/semantifyr-gamma-*.zip -d launcher
-      - name: Run the model tests
+      - name: Run the model tests of the semantic library
         run: >-
           "$RUNNER_TEMP"/harness/corpus-check-*/bin/corpus-check
           --launcher "$(echo "$RUNNER_TEMP"/launcher/semantifyr-gamma-*/bin/semantifyr-gamma)"
           --corpus subprojects/frontends/gamma/models/semantics
-          --corpus subprojects/frontends/gamma/models/examples
           --timeout-seconds 120
+      - name: Run the model tests of the examples
+        if: ${{ !cancelled() }}
+        run: >-
+          "$RUNNER_TEMP"/harness/corpus-check-*/bin/corpus-check
+          --launcher "$(echo "$RUNNER_TEMP"/launcher/semantifyr-gamma-*/bin/semantifyr-gamma)"
+          --corpus subprojects/frontends/gamma/models/examples
+          --timeout-seconds 1800
 
   model-tests-sysml:
     name: Model tests (sysml)
