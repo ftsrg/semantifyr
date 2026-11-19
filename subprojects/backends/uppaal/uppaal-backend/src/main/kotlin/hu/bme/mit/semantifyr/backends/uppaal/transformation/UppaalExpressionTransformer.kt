@@ -42,7 +42,7 @@ class UppaalExpressionTransformer @Inject constructor(
         return "($left ${operatorOf(expression.op)} $right)"
     }
 
-    fun operatorOf(op: ComparisonOp): String {
+    private fun operatorOf(op: ComparisonOp): String {
         return when (op) {
             ComparisonOp.LESS -> "<"
             ComparisonOp.LESS_EQ -> "<="

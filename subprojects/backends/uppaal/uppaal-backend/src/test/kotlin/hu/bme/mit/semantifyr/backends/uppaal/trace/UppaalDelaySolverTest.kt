@@ -10,8 +10,8 @@ import hu.bme.mit.semantifyr.backend.witness.Fraction
 import hu.bme.mit.semantifyr.backend.witness.WitnessFailedException
 import hu.bme.mit.semantifyr.backends.uppaal.transformation.UppaalClockAtom
 import hu.bme.mit.semantifyr.backends.uppaal.transformation.UppaalClockEdge
+import hu.bme.mit.semantifyr.backends.uppaal.transformation.UppaalClockOp
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.ComparisonOp
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -29,7 +29,7 @@ class UppaalDelaySolverTest {
 
     private fun test(
         clock: VariableDeclaration,
-        op: ComparisonOp,
+        op: UppaalClockOp,
         bound: Long,
     ): UppaalClockEdge {
         return UppaalClockEdge.Test(listOf(UppaalClockAtom(clock, op, bound)))
@@ -56,7 +56,7 @@ class UppaalDelaySolverTest {
     fun `a lower bound waits until it holds`() {
         val elapsed = clock("elapsed")
 
-        val states = solver.solve(listOf(elapsed), listOf(emptyList(), listOf(test(elapsed, ComparisonOp.GREATER_EQ, 6))))
+        val states = solver.solve(listOf(elapsed), listOf(emptyList(), listOf(test(elapsed, UppaalClockOp.GreaterEqual, 6))))
 
         assertThat(states[1].elapsed).isEqualTo(Fraction.of(6))
         assertThat(states[1].clockValues.single().value).isEqualTo(Fraction.of(6))
@@ -71,8 +71,8 @@ class UppaalDelaySolverTest {
             listOf(
                 emptyList(),
                 listOf(
-                    test(elapsed, ComparisonOp.GREATER, 0),
-                    test(elapsed, ComparisonOp.LESS, 1),
+                    test(elapsed, UppaalClockOp.Greater, 0),
+                    test(elapsed, UppaalClockOp.Less, 1),
                     reset(elapsed),
                 ),
             ),
@@ -92,11 +92,11 @@ class UppaalDelaySolverTest {
             listOf(
                 emptyList(),
                 listOf(
-                    test(total, ComparisonOp.GREATER_EQ, 1),
+                    test(total, UppaalClockOp.GreaterEqual, 1),
                     reset(lap),
                 ),
                 listOf(
-                    test(lap, ComparisonOp.LESS_EQ, 0),
+                    test(lap, UppaalClockOp.LessEqual, 0),
                 ),
             ),
         )
@@ -114,8 +114,8 @@ class UppaalDelaySolverTest {
         val outer = clock("outer")
         val inner = clock("inner")
         val step = listOf(
-            test(outer, ComparisonOp.LESS, 1),
-            test(inner, ComparisonOp.GREATER, 0),
+            test(outer, UppaalClockOp.Less, 1),
+            test(inner, UppaalClockOp.Greater, 0),
             reset(inner),
         )
 
@@ -138,8 +138,8 @@ class UppaalDelaySolverTest {
                 listOf(
                     emptyList(),
                     listOf(
-                        test(elapsed, ComparisonOp.LESS_EQ, 5),
-                        test(elapsed, ComparisonOp.GREATER_EQ, 6),
+                        test(elapsed, UppaalClockOp.LessEqual, 5),
+                        test(elapsed, UppaalClockOp.GreaterEqual, 6),
                     ),
                 ),
             )
@@ -151,7 +151,7 @@ class UppaalDelaySolverTest {
         val elapsed = clock("elapsed")
 
         assertThrows<WitnessFailedException> {
-            solver.solve(listOf(elapsed), listOf(listOf(test(elapsed, ComparisonOp.GREATER_EQ, 1))))
+            solver.solve(listOf(elapsed), listOf(listOf(test(elapsed, UppaalClockOp.GreaterEqual, 1))))
         }
     }
 }

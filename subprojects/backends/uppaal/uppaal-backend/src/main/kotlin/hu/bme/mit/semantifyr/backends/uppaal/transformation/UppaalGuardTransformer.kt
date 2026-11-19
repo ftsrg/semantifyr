@@ -21,19 +21,28 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.IfThenElse
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.NegationOperator
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 
+enum class UppaalClockOp(
+    val symbol: String,
+) {
+    Less("<"),
+    LessEqual("<="),
+    Greater(">"),
+    GreaterEqual(">="),
+    Equal("=="),
+}
+
 class UppaalClockAtom(
     val clock: VariableDeclaration,
-    val op: ComparisonOp,
+    val op: UppaalClockOp,
     val bound: Long,
 ) {
     fun holdsAt(value: Long): Boolean {
         return when (op) {
-            ComparisonOp.LESS -> value < bound
-            ComparisonOp.LESS_EQ -> value <= bound
-            ComparisonOp.GREATER -> value > bound
-            ComparisonOp.GREATER_EQ -> value >= bound
-            ComparisonOp.EQ -> value == bound
-            ComparisonOp.NOT_EQ -> value != bound
+            UppaalClockOp.Less -> value < bound
+            UppaalClockOp.LessEqual -> value <= bound
+            UppaalClockOp.Greater -> value > bound
+            UppaalClockOp.GreaterEqual -> value >= bound
+            UppaalClockOp.Equal -> value == bound
         }
     }
 }
@@ -64,7 +73,7 @@ class UppaalGuardTransformer @Inject constructor(
 
     fun render(guard: UppaalGuard): String? {
         val atoms = guard.clockAtoms.map {
-            "${uppaalVariableTransformer.nameOf(it.clock)} ${uppaalExpressionTransformer.operatorOf(it.op)} ${it.bound}"
+            "${uppaalVariableTransformer.nameOf(it.clock)} ${it.op.symbol} ${it.bound}"
         }
         val parts = guard.conditions + atoms
         if (parts.isEmpty()) {
@@ -130,13 +139,16 @@ class UppaalGuardTransformer @Inject constructor(
         }
         val bound = evaluateBound(clockTest.bound)
         // Uppaal refuses != on a clock
-        val ops = if (op == ComparisonOp.NOT_EQ) {
-            listOf(
-                ComparisonOp.LESS,
-                ComparisonOp.GREATER,
+        val ops = when (op) {
+            ComparisonOp.LESS -> listOf(UppaalClockOp.Less)
+            ComparisonOp.LESS_EQ -> listOf(UppaalClockOp.LessEqual)
+            ComparisonOp.GREATER -> listOf(UppaalClockOp.Greater)
+            ComparisonOp.GREATER_EQ -> listOf(UppaalClockOp.GreaterEqual)
+            ComparisonOp.EQ -> listOf(UppaalClockOp.Equal)
+            ComparisonOp.NOT_EQ -> listOf(
+                UppaalClockOp.Less,
+                UppaalClockOp.Greater,
             )
-        } else {
-            listOf(op)
         }
         return leavesOf(clockTest.clock).flatMap { leaf ->
             ops.flatMap {

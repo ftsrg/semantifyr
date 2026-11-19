@@ -10,7 +10,7 @@ import hu.bme.mit.semantifyr.backend.witness.Fraction
 import hu.bme.mit.semantifyr.backend.witness.WitnessClockValue
 import hu.bme.mit.semantifyr.backend.witness.WitnessFailedException
 import hu.bme.mit.semantifyr.backends.uppaal.transformation.UppaalClockEdge
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.ComparisonOp
+import hu.bme.mit.semantifyr.backends.uppaal.transformation.UppaalClockOp
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 
 class UppaalTimedState(
@@ -21,7 +21,7 @@ class UppaalTimedState(
 private class DifferenceConstraint(
     val later: Int,
     val earlier: Int,
-    val op: ComparisonOp,
+    val op: UppaalClockOp,
     val bound: Long,
 )
 
@@ -38,7 +38,7 @@ class UppaalDelaySolver {
                 when (edge) {
                     is UppaalClockEdge.Test -> {
                         for (atom in edge.clockAtoms) {
-                            val reset = lastReset[atom.clock] ?: 0
+                            val reset = lastReset.getValue(atom.clock)
                             if (reset == step) {
                                 if (!atom.holdsAt(0)) {
                                     throw WitnessFailedException("Uppaal's path fails a test of a clock reset in the same step")
@@ -97,15 +97,14 @@ class UppaalDelaySolver {
             val later = constraint.later
             val earlier = constraint.earlier
             when (constraint.op) {
-                ComparisonOp.LESS_EQ -> lowerBounds += LowerBound(later, earlier, -scaled)
-                ComparisonOp.LESS -> lowerBounds += LowerBound(later, earlier, 1 - scaled)
-                ComparisonOp.GREATER_EQ -> lowerBounds += LowerBound(earlier, later, scaled)
-                ComparisonOp.GREATER -> lowerBounds += LowerBound(earlier, later, scaled + 1)
-                ComparisonOp.EQ -> {
+                UppaalClockOp.LessEqual -> lowerBounds += LowerBound(later, earlier, -scaled)
+                UppaalClockOp.Less -> lowerBounds += LowerBound(later, earlier, 1 - scaled)
+                UppaalClockOp.GreaterEqual -> lowerBounds += LowerBound(earlier, later, scaled)
+                UppaalClockOp.Greater -> lowerBounds += LowerBound(earlier, later, scaled + 1)
+                UppaalClockOp.Equal -> {
                     lowerBounds += LowerBound(later, earlier, -scaled)
                     lowerBounds += LowerBound(earlier, later, scaled)
                 }
-                ComparisonOp.NOT_EQ -> error("Uppaal's guards hold no clock disequality")
             }
         }
         val values = LongArray(count)
