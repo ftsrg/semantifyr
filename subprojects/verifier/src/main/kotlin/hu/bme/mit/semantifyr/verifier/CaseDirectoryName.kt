@@ -30,7 +30,3 @@ fun caseDirectoryName(case: VerificationCase): String {
 fun caseDirectory(outputDirectory: Path, case: VerificationCase): Path {
     return outputDirectory.resolve(caseDirectoryName(case))
 }
-
-internal fun caseRecheckDirectory(outputDirectory: Path, case: VerificationCase): Path {
-    return caseDirectory(outputDirectory, case).resolve("validation")
-}

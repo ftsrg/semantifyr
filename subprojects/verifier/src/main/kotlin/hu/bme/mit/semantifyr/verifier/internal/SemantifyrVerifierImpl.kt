@@ -39,7 +39,6 @@ import hu.bme.mit.semantifyr.verifier.VerificationResult
 import hu.bme.mit.semantifyr.verifier.VerificationWitness
 import hu.bme.mit.semantifyr.verifier.VerifierMetrics
 import hu.bme.mit.semantifyr.verifier.caseDirectory
-import hu.bme.mit.semantifyr.verifier.caseRecheckDirectory
 import hu.bme.mit.semantifyr.verifier.discovery.VerificationCaseDiscoverer
 import hu.bme.mit.semantifyr.verifier.portfolio.LimitedConcurrencyGate
 import hu.bme.mit.semantifyr.verifier.portfolio.VerificationPortfolio
@@ -118,7 +117,8 @@ class SemantifyrVerifierImpl @AssistedInject constructor(
         val deadline = markNow() + semantifyrVerifierConfiguration.timeout
         progressContext.reportProgress("Compiling ${case.qualifiedName}")
         logger.info { "Compiling inlined of '${case.qualifiedName}'" }
-        val validationDirectory = prepareDirectory(caseRecheckDirectory(semantifyrVerifierConfiguration.outputDirectory, case))
+        // the model re-verified here usually lies in the case directory, a witness the verify left there, so the run keeps out of the verify's artifacts
+        val validationDirectory = prepareDirectory(caseDirectoryFor(case).resolve("validation"))
         val clone = semantifyrLoader.fromResourceSet(inlinedOxsts.eResource().resourceSet, emptyMap())
             .resourceSet
             .getEObject(EcoreUtil.getURI(inlinedOxsts), true) as InlinedOxsts
@@ -309,8 +309,6 @@ class SemantifyrVerifierImpl @AssistedInject constructor(
             return VerificationWitness(model, verificationArtifactWriter.writeWitness(model, caseDirectory, qualifiedName))
         } catch (exception: IOException) {
             logger.warn(exception) { "[$qualifiedName] failed to write the witness" }
-        } catch (exception: RuntimeException) {
-            logger.warn(exception) { "[$qualifiedName] failed to serialize the witness" }
         }
         return null
     }
