@@ -57,14 +57,17 @@ class NuxmvBackend : VerificationBackend<NuxmvConfig>() {
         val injector = parentInjector.createChildInjector(NuxmvBackendModule())
         return withVerificationScope {
             val factory = injector.getInstance(NuxmvVerificationContext.Factory::class.java)
-            val context = factory.create(config, executor, request, capabilityChecker(parentInjector, config))
+            val context = factory.create(config, executor, request, capabilityCheckerOf(injector, config))
             context.execute()
         }
     }
 
     // go builds the BDD FSM, go_msat the SMT encoding
     override fun capabilityChecker(parentInjector: Injector, config: NuxmvConfig): BackendCapabilityChecker {
-        val injector = parentInjector.createChildInjector(NuxmvBackendModule())
+        return capabilityCheckerOf(parentInjector.createChildInjector(NuxmvBackendModule()), config)
+    }
+
+    private fun capabilityCheckerOf(injector: Injector, config: NuxmvConfig): BackendCapabilityChecker {
         if (config.setupCommand == "go") {
             return injector.getInstance(NuxmvBddCapabilityChecker::class.java)
         }

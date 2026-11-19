@@ -6,10 +6,19 @@
 
 package hu.bme.mit.semantifyr.backends.theta.transformation.xsts
 
+import com.google.inject.Inject
+import com.google.inject.Injector
+import hu.bme.mit.semantifyr.backend.BackendCapabilityChecker
+import hu.bme.mit.semantifyr.backend.scopes.withVerificationScopeBlocking
+import hu.bme.mit.semantifyr.backends.theta.ThetaBackend
+import hu.bme.mit.semantifyr.backends.theta.ThetaConfig
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 class ThetaCapabilityCheckerTest : ThetaTransformationTestBase() {
+
+    @Inject
+    private lateinit var oxstsInjector: Injector
 
     private val colors = """
         package test::colors
@@ -171,5 +180,17 @@ class ThetaCapabilityCheckerTest : ThetaTransformationTestBase() {
 
         assertThat(unsupported(strictTest, ThetaHornCapabilityChecker::class.java)).containsExactly("clock tests that are not closed")
         assertThat(unsupported(strictTest)).isEmpty()
+    }
+
+    @Test
+    fun `the over-approximating configuration gets the Horn checker and the others the plain one`() {
+        assertThat(checkerOf(ThetaConfig.Chc)).isInstanceOf(ThetaHornCapabilityChecker::class.java)
+        assertThat(checkerOf(ThetaConfig.CegarExpl)).isExactlyInstanceOf(ThetaCapabilityChecker::class.java)
+    }
+
+    private fun checkerOf(config: ThetaConfig): BackendCapabilityChecker {
+        return withVerificationScopeBlocking {
+            ThetaBackend().capabilityChecker(oxstsInjector, config)
+        }
     }
 }

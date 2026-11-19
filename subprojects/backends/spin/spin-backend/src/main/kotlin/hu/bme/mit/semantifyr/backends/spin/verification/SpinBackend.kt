@@ -58,7 +58,7 @@ class SpinBackend : VerificationBackend<SpinConfig>() {
         val injector = parentInjector.createChildInjector(SpinBackendModule())
         return withVerificationScope {
             val factory = injector.getInstance(SpinVerificationContext.Factory::class.java)
-            val context = factory.create(config, executor, request, capabilityChecker(parentInjector, config))
+            val context = factory.create(config, executor, request, injector.getInstance(SpinCapabilityChecker::class.java))
             context.execute()
         }
     }

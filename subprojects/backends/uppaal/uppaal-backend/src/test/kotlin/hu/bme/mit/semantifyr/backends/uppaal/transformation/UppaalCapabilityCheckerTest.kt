@@ -6,10 +6,19 @@
 
 package hu.bme.mit.semantifyr.backends.uppaal.transformation
 
+import com.google.inject.Inject
+import com.google.inject.Injector
+import hu.bme.mit.semantifyr.backend.BackendCapabilityChecker
+import hu.bme.mit.semantifyr.backend.scopes.withVerificationScopeBlocking
+import hu.bme.mit.semantifyr.backends.uppaal.verification.UppaalBackend
+import hu.bme.mit.semantifyr.backends.uppaal.verification.UppaalConfig
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 class UppaalCapabilityCheckerTest : UppaalTransformationTestBase() {
+
+    @Inject
+    private lateinit var oxstsInjector: Injector
 
     private val colors = """
         package test::colors
@@ -348,5 +357,17 @@ class UppaalCapabilityCheckerTest : UppaalTransformationTestBase() {
         )
 
         assertThat(unsupported).containsExactly("arithmetic that may leave the 32-bit range")
+    }
+
+    @Test
+    fun `the over-approximating configuration gets the over-approximation checker and the others the plain one`() {
+        assertThat(checkerOf(UppaalConfig.OverApproximation)).isInstanceOf(UppaalOverApproximationCapabilityChecker::class.java)
+        assertThat(checkerOf(UppaalConfig.Default)).isExactlyInstanceOf(UppaalCapabilityChecker::class.java)
+    }
+
+    private fun checkerOf(config: UppaalConfig): BackendCapabilityChecker {
+        return withVerificationScopeBlocking {
+            UppaalBackend().capabilityChecker(oxstsInjector, config)
+        }
     }
 }

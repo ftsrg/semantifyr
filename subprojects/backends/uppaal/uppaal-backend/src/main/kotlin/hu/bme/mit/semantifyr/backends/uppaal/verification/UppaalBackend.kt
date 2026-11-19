@@ -61,13 +61,16 @@ class UppaalBackend : VerificationBackend<UppaalConfig>() {
         val injector = parentInjector.createChildInjector(UppaalBackendModule())
         return withVerificationScope {
             val factory = injector.getInstance(UppaalVerificationContext.Factory::class.java)
-            val context = factory.create(config, executor, request, capabilityChecker(parentInjector, config))
+            val context = factory.create(config, executor, request, capabilityCheckerOf(injector, config))
             context.execute()
         }
     }
 
     override fun capabilityChecker(parentInjector: Injector, config: UppaalConfig): BackendCapabilityChecker {
-        val injector = parentInjector.createChildInjector(UppaalBackendModule())
+        return capabilityCheckerOf(parentInjector.createChildInjector(UppaalBackendModule()), config)
+    }
+
+    private fun capabilityCheckerOf(injector: Injector, config: UppaalConfig): BackendCapabilityChecker {
         if (config.soundness == SoundnessDirection.OverApproximating) {
             return injector.getInstance(UppaalOverApproximationCapabilityChecker::class.java)
         }

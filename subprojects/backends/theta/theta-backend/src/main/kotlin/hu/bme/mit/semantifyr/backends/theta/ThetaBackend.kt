@@ -60,13 +60,16 @@ class ThetaBackend : VerificationBackend<ThetaConfig>() {
         val injector = parentInjector.createChildInjector(ThetaBackendModule())
         return withVerificationScope {
             val factory = injector.getInstance(ThetaVerificationContext.Factory::class.java)
-            val context = factory.create(config, executor, request, capabilityChecker(parentInjector, config))
+            val context = factory.create(config, executor, request, capabilityCheckerOf(injector, config))
             context.execute()
         }
     }
 
     override fun capabilityChecker(parentInjector: Injector, config: ThetaConfig): BackendCapabilityChecker {
-        val injector = parentInjector.createChildInjector(ThetaBackendModule())
+        return capabilityCheckerOf(parentInjector.createChildInjector(ThetaBackendModule()), config)
+    }
+
+    private fun capabilityCheckerOf(injector: Injector, config: ThetaConfig): BackendCapabilityChecker {
         if (config.soundness == SoundnessDirection.OverApproximating) {
             return injector.getInstance(ThetaHornCapabilityChecker::class.java)
         }
