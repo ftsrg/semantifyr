@@ -36,18 +36,22 @@ public class TimeScaleValidationTest {
 
     @Test
     void timeScaleOfZeroIsRejected() throws Exception {
-        assertThat(validate("witness of semantifyr::Anything timescale 0")).singleElement().satisfies(issue -> {
-            assertThat(issue.getCode()).isEqualTo(OxstsValidator.INCORRECT_TIME_SCALE);
-            assertThat(issue.getMessage()).contains("at least 1");
-        });
+        assertThat(validate("witness of semantifyr::Anything timescale 0"))
+                .singleElement()
+                .satisfies(issue -> {
+                    assertThat(issue.getCode()).isEqualTo(OxstsValidator.INCORRECT_TIME_SCALE);
+                    assertThat(issue.getMessage()).contains("at least 1");
+                });
     }
 
     @Test
     void timeScaleOnAnInlinedModelThatIsNoWitnessIsRejected() throws Exception {
-        assertThat(validate("inlined oxsts of semantifyr::Anything timescale 1")).singleElement().satisfies(issue -> {
-            assertThat(issue.getCode()).isEqualTo(OxstsValidator.INCORRECT_TIME_SCALE);
-            assertThat(issue.getMessage()).contains("Only a witness");
-        });
+        assertThat(validate("inlined oxsts of semantifyr::Anything timescale 1"))
+                .singleElement()
+                .satisfies(issue -> {
+                    assertThat(issue.getCode()).isEqualTo(OxstsValidator.INCORRECT_TIME_SCALE);
+                    assertThat(issue.getMessage()).contains("Only a witness");
+                });
     }
 
     private List<Issue> validate(String header) throws Exception {

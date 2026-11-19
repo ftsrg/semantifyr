@@ -177,11 +177,9 @@ public class ClockValidationTest {
             }
             """, CheckMode.ALL);
 
-        assertThat(parsedPackage.getIssues())
-                .isNotEmpty()
-                .noneSatisfy(issue -> {
-                    assertThat(issue.getCode()).isEqualTo(OxstsValidator.INCORRECT_CLOCK_USE);
-                });
+        assertThat(parsedPackage.getIssues()).isNotEmpty().noneSatisfy(issue -> {
+            assertThat(issue.getCode()).isEqualTo(OxstsValidator.INCORRECT_CLOCK_USE);
+        });
     }
 
     @Test
