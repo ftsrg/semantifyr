@@ -46,23 +46,46 @@ class SpinProctypeRenderer @Inject constructor(
     private fun renderInitChoice(builder: IndentingStringBuilder, branches: List<SequenceOperation>) {
         builder.appendLine("if")
         for (branch in branches) {
-            builder.appendLine(":: atomic {")
-            builder.indented {
-                appendLine("$SPIN_STABLE_FLAG = false;")
-                renderStep(this, branch)
-            }
-            builder.appendLine("}")
+            renderChoiceArm(builder, branch, null)
         }
         builder.appendLine("fi;")
+    }
+
+    private fun renderChoiceArm(
+        builder: IndentingStringBuilder,
+        branch: SequenceOperation,
+        wholeDelay: WholeDelay?,
+    ) {
+        builder.appendLine(":: atomic {")
+        builder.indented {
+            renderAtomicBody(this, branch, wholeDelay)
+        }
+        builder.appendLine("}")
     }
 
     private fun renderAtomicBranch(builder: IndentingStringBuilder, branch: SequenceOperation) {
         builder.appendLine("atomic {")
         builder.indented {
-            appendLine("$SPIN_STABLE_FLAG = false;")
-            renderStep(this, branch)
+            renderAtomicBody(this, branch, null)
         }
         builder.appendLine("}")
+    }
+
+    private fun renderAtomicBody(
+        builder: IndentingStringBuilder,
+        branch: SequenceOperation,
+        wholeDelay: WholeDelay?,
+    ) {
+        builder.appendLine("$SPIN_STABLE_FLAG = false;")
+        if (wholeDelay != null) {
+            renderWait(builder, wholeDelay)
+        }
+        if (branch.steps.isEmpty()) {
+            builder.appendLine("skip;")
+        } else {
+            spinOperationTransformer.transform(branch, builder)
+        }
+        builder.appendLine("$SPIN_STABLE_FLAG = true;")
     }
 
     private fun renderTranLoop(
@@ -75,26 +98,9 @@ class SpinProctypeRenderer @Inject constructor(
         }
         builder.appendLine("do")
         for (branch in branches) {
-            builder.appendLine(":: atomic {")
-            builder.indented {
-                appendLine("$SPIN_STABLE_FLAG = false;")
-                if (wholeDelay != null) {
-                    renderWait(this, wholeDelay)
-                }
-                renderStep(this, branch)
-            }
-            builder.appendLine("}")
+            renderChoiceArm(builder, branch, wholeDelay)
         }
         builder.appendLine("od;")
-    }
-
-    private fun renderStep(builder: IndentingStringBuilder, branch: SequenceOperation) {
-        if (branch.steps.isEmpty()) {
-            builder.appendLine("skip;")
-        } else {
-            spinOperationTransformer.transform(branch, builder)
-        }
-        builder.appendLine("$SPIN_STABLE_FLAG = true;")
     }
 
     private fun renderWait(builder: IndentingStringBuilder, wholeDelay: WholeDelay) {
