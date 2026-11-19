@@ -7,11 +7,11 @@
 package hu.bme.mit.semantifyr.verifier.witness
 
 import com.google.inject.Inject
-import hu.bme.mit.semantifyr.backend.witness.Fraction
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.CompileTimeExpressionEvaluationVisitor
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.ExpressionEvaluationSerializer
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.InstanceEvaluation
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.InstanceReferenceProvider
+import hu.bme.mit.semantifyr.compiler.pipeline.instantiation.Instance
 import hu.bme.mit.semantifyr.oxsts.lang.naming.OxstsQualifiedNameProvider
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.ArrayEvaluation
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.BooleanEvaluation
@@ -38,8 +38,10 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralInteger
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralNothing
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralReal
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralString
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.NavigationSuffixExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.RecordDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.RecordLiteral
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.SelfReference
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.TypeSpecification
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.UnaryOp
 import hu.bme.mit.semantifyr.verifier.ReportType
@@ -58,7 +60,17 @@ class ReportValueConverter @Inject constructor(
     }
 
     fun path(evaluation: InstanceEvaluation): String {
-        return expressionEvaluationSerializer.serialize(evaluation)
+        val paths = evaluation.instances.map {
+            path(it)
+        }
+        if (paths.size == 1) {
+            return paths.single()
+        }
+        return "[${paths.joinToString(", ")}]"
+    }
+
+    private fun path(instance: Instance): String {
+        return path(instanceReferenceProvider.getReference(instance))
     }
 
     fun value(expression: Expression): ReportValue {
@@ -79,7 +91,9 @@ class ReportValueConverter @Inject constructor(
                     it.field.name to value(it.expression)
                 },
             )
-            else -> reference(expression)
+            is ElementReference -> reference(expression)
+            is NavigationSuffixExpression, is SelfReference -> ReportValue.Text(path(expression))
+            else -> error("a witness value is a literal or an instance reference, found ${path(expression)}")
         }
     }
 
@@ -91,19 +105,12 @@ class ReportValueConverter @Inject constructor(
         return ReportValue.Integer(body.value.toBigInteger().negate())
     }
 
-    private fun reference(expression: Expression): ReportValue {
-        val literal = (expression as? ElementReference)?.element as? EnumLiteral
-        if (literal != null) {
-            return ReportValue.Text(literal.name)
+    private fun reference(expression: ElementReference): ReportValue {
+        return when (val element = expression.element) {
+            is EnumLiteral -> ReportValue.Text(element.name)
+            is FeatureDeclaration -> ReportValue.Text(path(expression))
+            else -> error("a witness value is a literal or an instance reference, found ${path(expression)}")
         }
-        return ReportValue.Text(path(expression))
-    }
-
-    fun value(amount: Fraction): ReportValue {
-        if (amount.isWhole) {
-            return ReportValue.Integer(amount.numerator)
-        }
-        return ReportValue.Text(amount.toString())
     }
 
     fun value(evaluation: ExpressionEvaluation): ReportValue {
@@ -175,7 +182,7 @@ class ReportValueConverter @Inject constructor(
 
         override fun visit(evaluation: InstanceEvaluation): ReportValue {
             val paths = evaluation.instances.map {
-                ReportValue.Text(path(instanceReferenceProvider.getReference(it)))
+                ReportValue.Text(path(it))
             }
             if (paths.size == 1) {
                 return paths.single()

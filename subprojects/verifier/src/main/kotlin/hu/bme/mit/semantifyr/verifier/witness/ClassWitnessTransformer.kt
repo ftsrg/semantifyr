@@ -82,7 +82,9 @@ class ClassWitnessTransformer @Inject constructor(
                 }
             }
 
-            require(expression is LiteralInteger)
+            require(expression is LiteralInteger) {
+                "the instance variable ${variableDeclaration.name} holds no instance id"
+            }
 
             val instance = compilation.flatteningInfo.instanceIdMapping.instanceOfId(expression.value)
 

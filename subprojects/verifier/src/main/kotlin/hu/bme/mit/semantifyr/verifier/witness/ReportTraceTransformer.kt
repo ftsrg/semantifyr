@@ -45,8 +45,7 @@ class ReportTraceTransformer @Inject constructor(
 
     fun transform(classWitness: ClassWitness, compilation: FlattenedCompilationContext): ReportTrace {
         val siteOrder = siteOrder(compilation)
-        val path = listOf(classWitness.initializedState) + classWitness.transitionStates
-        val states = path.distinct()
+        val states = listOf(classWitness.initializedState) + classWitness.transitionStates
         val entries = states.map {
             entries(it)
         }
@@ -71,10 +70,10 @@ class ReportTraceTransformer @Inject constructor(
                     },
                 )
             },
-            steps = path.zipWithNext { source, target ->
+            steps = classWitness.transitionStates.mapIndexed { index, target ->
                 ReportStep(
-                    source = states.indexOf(source),
-                    target = states.indexOf(target),
+                    source = index,
+                    target = index + 1,
                     elapsed = target.elapsed,
                     calls = calls(target, compilation, siteOrder),
                 )
@@ -104,12 +103,7 @@ class ReportTraceTransformer @Inject constructor(
     }
 
     private fun observedTransitions(compilation: FlattenedCompilationContext, siteOrder: Map<VariableDeclaration, Int>): List<ObservedTransition> {
-        val traceVariables = compilation.inlinedOxsts.variables.filter {
-            it in compilation.transitionCallTraces.tracerVariables
-        }.sortedBy {
-            siteOrder[it] ?: Int.MAX_VALUE
-        }
-        return traceVariables.map {
+        return siteOrder.keys.map {
             compilation.transitionCallTraces.getTransitionCallTrace(it).transitionDeclaration
         }.distinct().map { transition ->
             ObservedTransition(
@@ -129,15 +123,17 @@ class ReportTraceTransformer @Inject constructor(
         val sites = state.activatedTraces.map {
             it.variable
         }.sortedBy {
-            siteOrder[it] ?: Int.MAX_VALUE
+            siteOrder[it] ?: error("the tracer ${it.name} is set in the witness and at no call site")
         }.map {
             compilation.transitionCallTraces.getTransitionCallTrace(it)
         }
         val activated = sites.toSet()
         val childrenByParent = sites.groupBy {
-            it.parent?.takeIf { parent ->
-                parent in activated
+            val parent = it.parent
+            if (parent != null && parent !in activated) {
+                error("the call of ${oxstsQualifiedNameProvider.getFullyQualifiedNameString(it.transitionDeclaration)} on ${reportValueConverter.path(it.self)} ran without the call that encloses it")
             }
+            parent
         }
 
         fun build(site: TransitionCallTrace): ReportCall {
@@ -173,42 +169,29 @@ class ReportTraceTransformer @Inject constructor(
         for (stateValue in state.values) {
             val variable = stateValue.variable
             val recordField = variable.recordField
-            when {
-                recordField != null -> {
-                    val group = groups.getOrPut(reportValueConverter.path(variable.reference)) {
-                        EntryGroup.Record(
-                            reportValueConverter.type(variable.declaredVariable.typeSpecification),
-                            variable.arraySlot?.let {
-                                observedSlot(variable, it)
-                            },
-                        )
-                    } as EntryGroup.Record
-                    val fields = recordField.fields.dropLast(1).fold(group.fields) { fields, field ->
-                        fields.nested.getOrPut(field.name) {
-                            RecordFields()
-                        }
-                    }
-                    fields.values[recordField.fields.last().name] = reportValueConverter.value(stateValue.value)
-                }
-                variable.arraySlot != null -> {
-                    val key = reportValueConverter.path(variable.reference)
-                    groups[key] = EntryGroup.Single(
-                        ReportEntry(key, reportValueConverter.type(variable.declaredVariable.typeSpecification), reportValueConverter.value(stateValue.value), observedSlot(variable, variable.arraySlot)),
-                    )
-                }
-                else -> {
-                    val key = reportValueConverter.path(variable.reference)
-                    groups[key] = EntryGroup.Single(
-                        ReportEntry(key, reportValueConverter.type(variable.declaredVariable.typeSpecification), reportValueConverter.value(stateValue.value)),
-                    )
+            if (recordField == null) {
+                val entry = entry(variable, reportValueConverter.value(stateValue.value))
+                groups[entry.key] = EntryGroup.Single(entry)
+                continue
+            }
+            val group = groups.getOrPut(reportValueConverter.path(variable.reference)) {
+                EntryGroup.Record(
+                    reportValueConverter.type(variable.declaredVariable.typeSpecification),
+                    variable.arraySlot?.let {
+                        observedSlot(variable, it)
+                    },
+                )
+            } as EntryGroup.Record
+            val fields = recordField.fields.dropLast(1).fold(group.fields) { fields, field ->
+                fields.nested.getOrPut(field.name) {
+                    RecordFields()
                 }
             }
+            fields.values[recordField.fields.last().name] = reportValueConverter.value(stateValue.value)
         }
         for (clockValue in state.clockValues) {
-            val key = reportValueConverter.path(clockValue.variable.reference)
-            groups[key] = EntryGroup.Single(
-                ReportEntry(key, reportValueConverter.type(clockValue.variable.declaredVariable.typeSpecification), reportValueConverter.value(clockValue.value)),
-            )
+            val entry = entry(clockValue.variable, ReportValue.of(clockValue.value))
+            groups[entry.key] = EntryGroup.Single(entry)
         }
         return groups.map { (key, group) ->
             when (group) {
@@ -216,6 +199,17 @@ class ReportTraceTransformer @Inject constructor(
                 is EntryGroup.Record -> ReportEntry(key, group.type, group.fields.toValue(), group.slot)
             }
         }
+    }
+
+    private fun entry(variable: ClassWitnessVariable, value: ReportValue): ReportEntry {
+        return ReportEntry(
+            key = reportValueConverter.path(variable.reference),
+            type = reportValueConverter.type(variable.declaredVariable.typeSpecification),
+            value = value,
+            slot = variable.arraySlot?.let {
+                observedSlot(variable, it)
+            },
+        )
     }
 
     private fun observedSlot(variable: ClassWitnessVariable, arraySlot: ArraySlot): ObservedSlot {

@@ -26,7 +26,6 @@ import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.booleanOrNull
-import kotlinx.serialization.json.jsonPrimitive
 import java.math.BigInteger
 
 private val MAX_EXACT_JSON_INTEGER = BigInteger.TWO.pow(53) - BigInteger.ONE
@@ -43,17 +42,12 @@ object FractionSerializer : KSerializer<Fraction> {
     override val descriptor = PrimitiveSerialDescriptor("hu.bme.mit.semantifyr.Fraction", PrimitiveKind.STRING)
 
     override fun serialize(encoder: Encoder, value: Fraction) {
-        if (value.isWhole) {
-            encodeWhole(encoder, value.numerator)
-        } else {
-            encoder.encodeString(value.toString())
-        }
+        encoder.encodeSerializableValue(ReportValueSerializer, ReportValue.of(value))
     }
 
     override fun deserialize(decoder: Decoder): Fraction {
-        val jsonDecoder = decoder as? JsonDecoder ?: throw SerializationException("a fraction is read from JSON only")
         try {
-            return Fraction.parse(jsonDecoder.decodeJsonElement().jsonPrimitive.content)
+            return decoder.decodeSerializableValue(ReportValueSerializer).toFraction()
         } catch (exception: NumberFormatException) {
             throw SerializationException(exception.message, exception)
         }
@@ -75,6 +69,23 @@ sealed interface ReportValue {
     data class Array(val values: List<ReportValue>) : ReportValue
 
     data class Record(val fields: Map<String, ReportValue>) : ReportValue
+
+    fun toFraction(): Fraction {
+        return when (this) {
+            is Integer -> Fraction.of(value)
+            is Text -> Fraction.parse(value)
+            else -> throw NumberFormatException("$this is no amount of time")
+        }
+    }
+
+    companion object {
+        fun of(amount: Fraction): ReportValue {
+            if (amount.isWhole) {
+                return Integer(amount.numerator)
+            }
+            return Text(amount.toString())
+        }
+    }
 }
 
 object ReportValueSerializer : KSerializer<ReportValue> {

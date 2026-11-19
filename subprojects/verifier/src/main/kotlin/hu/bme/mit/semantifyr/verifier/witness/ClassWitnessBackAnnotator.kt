@@ -207,7 +207,7 @@ class ClassWitnessBackAnnotator @Inject constructor(
                 if (variable.recordField != null) {
                     recordAssumptions(variable.reference.rooted(), variable.declaredVariable.typeSpecification.domain, value)
                 } else if (clockTestAnalysis.isClock(variable.declaredVariable)) {
-                    listOf(createAssumption(variable.reference.rooted(), scaled(clockValue(key, value))))
+                    listOf(createAssumption(variable.reference.rooted(), scaled(value.toFraction())))
                 } else {
                     listOf(createAssumption(variable.reference.rooted(), literal(value, variable.declaredVariable.typeSpecification.domain)))
                 }
@@ -273,18 +273,10 @@ class ClassWitnessBackAnnotator @Inject constructor(
             return state.values.mapNotNull { (key, value) ->
                 val variable = paths.variables[key] ?: return@mapNotNull null
                 if (clockTestAnalysis.isClock(variable.declaredVariable)) {
-                    clockValue(key, value)
+                    value.toFraction()
                 } else {
                     null
                 }
-            }
-        }
-
-        private fun clockValue(key: String, value: ReportValue): Fraction {
-            return when (value) {
-                is ReportValue.Integer -> Fraction.of(value.value)
-                is ReportValue.Text -> Fraction.parse(value.value)
-                else -> error("the clock $key holds no amount of time")
             }
         }
 
@@ -344,7 +336,7 @@ class ClassWitnessBackAnnotator @Inject constructor(
             return when (this) {
                 is ElementReference -> this
                 is PostfixUnaryExpression -> primary.innerMostElementReference()
-                else -> error("Unsupported expression!")
+                else -> error("a witness reference starts at an element, found ${eClass().name}")
             }
         }
 
