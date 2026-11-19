@@ -52,8 +52,8 @@ class OxstsInliner @Inject constructor(
         logger.debug { "Inlining property expression" }
         inlineExpressionCalls(instanceTree.rootInstance, inlinedOxsts.property)
 
-        val clockTests = clockBoundChecker.check(inlinedOxsts)
-        witnessTimeScaler.scale(inlinedOxsts, clockTests, witnessComparisons)
+        clockBoundChecker.check(inlinedOxsts)
+        witnessTimeScaler.scale(inlinedOxsts, witnessComparisons)
 
         logger.debug { "Declaring transition call tracer state" }
         transitionCallTraceTransformer.declareTracers(inlinedOxsts)

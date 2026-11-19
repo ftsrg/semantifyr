@@ -8,6 +8,7 @@ package hu.bme.mit.semantifyr.oxsts.lang.tests.utils;
 
 import com.google.inject.Inject;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts;
+import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.eclipse.xtext.testing.util.ParseHelper;
 
@@ -24,6 +25,16 @@ public class InlinedOxstsParseHelper {
     public InlinedOxsts parse(String text) {
         try {
             var inlined = parseHelper.parse(text);
+            EcoreUtil.resolveAll(inlined);
+            return inlined;
+        } catch (Exception exception) {
+            throw new AssertionError("Unexpected exception while parsing InlinedOxsts", exception);
+        }
+    }
+
+    public InlinedOxsts parse(String text, ResourceSet resourceSet) {
+        try {
+            var inlined = parseHelper.parse(text, resourceSet);
             EcoreUtil.resolveAll(inlined);
             return inlined;
         } catch (Exception exception) {

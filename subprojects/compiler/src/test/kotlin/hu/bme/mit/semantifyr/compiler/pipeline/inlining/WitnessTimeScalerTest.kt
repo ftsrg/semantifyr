@@ -4,65 +4,36 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.compiler.pipeline.clock
+package hu.bme.mit.semantifyr.compiler.pipeline.inlining
 
-import com.google.inject.Inject
-import com.google.inject.Injector
-import hu.bme.mit.semantifyr.compiler.SemantifyrCompiler
-import hu.bme.mit.semantifyr.compiler.pipeline.artifact.ArtifactConfig
-import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationConfig
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.eAllOfType
-import hu.bme.mit.semantifyr.compiler.reader.SemantifyrLoader
-import hu.bme.mit.semantifyr.oxsts.lang.serializer.ExpressionSerializer
-import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.ArithmeticBinaryOperator
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.ArithmeticOp
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ComparisonOperator
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralInteger
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.io.TempDir
-import java.nio.file.Path
-import kotlin.io.path.writeText
 
-@InjectWithOxsts
-class WitnessTimeScalerTest {
-
-    @Inject
-    private lateinit var injector: Injector
-
-    @Inject
-    private lateinit var loader: SemantifyrLoader
-
-    @Inject
-    private lateinit var serializer: ExpressionSerializer
+class WitnessTimeScalerTest : InliningTestBase() {
 
     @Test
-    fun `a witness's time scale multiplies the model's clock bounds and leaves the witness's own assumptions as written`(@TempDir directory: Path) {
-        val modelPath = directory.resolve("timer.semantifyr")
-        modelPath.writeText(MODEL)
-        val witnessPath = directory.resolve("witness.semantifyr")
-        witnessPath.writeText(WITNESS)
-        val witness = loader.startContext()
-            .loadModel(modelPath)
-            .loadModel(witnessPath)
-            .buildAndResolve()
-            .modelResources
-            .last()
-            .contents
-            .filterIsInstance<InlinedOxsts>()
-            .single()
-
-        val compiled = SemantifyrCompiler(injector, ArtifactConfig.NONE, OptimizationConfig.NONE).compile(witness, directory.resolve("compiled"))
-
-        val comparisons = compiled.inlinedOxsts.eAllOfType<ComparisonOperator>().map {
-            serializer.serialize(it).trim()
-        }.toList()
-        assertThat(comparisons).anySatisfy {
-            assertThat(it).endsWith(">= 3 * 2")
+    fun `a witness's time scale multiplies the class's clock bounds and leaves the witness's own assumptions as written`() {
+        val bounds = prepareWitness(MODEL, WITNESS) {
+            inlineAll(it).inlinedOxsts.eAllOfType<ComparisonOperator>().map { comparison ->
+                comparison.right
+            }.toList()
         }
-        assertThat(comparisons).contains("time == 7")
-        assertThat(comparisons).noneSatisfy {
-            assertThat(it).endsWith("7 * 2")
-        }
+
+        assertThat(bounds.filterIsInstance<ArithmeticBinaryOperator>()).singleElement().satisfies({
+            assertThat(it.op).isEqualTo(ArithmeticOp.MUL)
+            assertThat((it.left as LiteralInteger).value).isEqualTo(3)
+            assertThat((it.right as LiteralInteger).value).isEqualTo(2)
+        })
+        assertThat(
+            bounds.filterIsInstance<LiteralInteger>().map {
+                it.value
+            },
+        ).containsExactlyInAnyOrder(0, 1, 7, 7)
     }
 
     companion object {
@@ -105,7 +76,6 @@ class WitnessTimeScalerTest {
             init {
                 assume(step == 0)
                 inline root.init()
-                assume(root.timer.fired == false)
                 step := 1
             }
 
@@ -114,7 +84,6 @@ class WitnessTimeScalerTest {
                 inline root.main()
                 assume(time == 7)
                 assume(root.timer.elapsed == 7)
-                assume(root.timer.fired == true)
                 step := 2
             }
 
