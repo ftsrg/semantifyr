@@ -49,7 +49,7 @@ class LiveVerificationExecutor : VerificationExecutor {
         val argument = params.arguments?.firstOrNull() as? JsonElement ?: return params
         val request = CommandGson.INSTANCE.fromJson(argument, WitnessValidationRequest::class.java) ?: return params
         val witnessUri = request.witnessUri() ?: return params
-        val serverRequest = WitnessValidationRequest(request.uri(), request.range(), request.portfolio(), sessionDocumentManager.clientToServer(witnessUri))
+        val serverRequest = WitnessValidationRequest(request.uri(), request.range(), request.portfolio(), sessionDocumentManager.workspaceUriOf(witnessUri))
         return ExecuteCommandParams(params.command, listOf(CommandGson.INSTANCE.toJsonTree(serverRequest)))
     }
 

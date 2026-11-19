@@ -11,6 +11,7 @@ import hu.bme.mit.semantifyr.lang.ide.server.commands.CommandGson
 import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseRequest
 import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseResult
 import hu.bme.mit.semantifyr.lang.ide.server.wire.WitnessValidationRequest
+import hu.bme.mit.semantifyr.live.backend.exceptions.WorkspaceUriException
 import hu.bme.mit.semantifyr.live.backend.lsp.document.SessionDocument
 import hu.bme.mit.semantifyr.live.backend.lsp.document.SessionDocumentManager
 import hu.bme.mit.semantifyr.live.backend.lsp.service.SessionRequestManager
@@ -19,6 +20,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.eclipse.lsp4j.ExecuteCommandParams
 import org.eclipse.xtext.util.CancelIndicator
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import org.mockito.kotlin.any
 import org.mockito.kotlin.argumentCaptor
 import org.mockito.kotlin.doAnswer
@@ -100,7 +102,7 @@ class LiveVerificationExecutorTest {
         val fixture = Fixture("ignored")
         val clientWitnessUri = "file:///workspace/.artifacts/Case/witness.semantifyr"
         val serverWitnessUri = "file:///abs/sessions/x/.artifacts/Case/witness.semantifyr"
-        whenever(fixture.documents.clientToServer(clientWitnessUri)).thenReturn(serverWitnessUri)
+        whenever(fixture.documents.workspaceUriOf(clientWitnessUri)).thenReturn(serverWitnessUri)
         val request = WitnessValidationRequest("file:///workspace/snippet.gamma", null, "smart", clientWitnessUri)
 
         executor.execute(fixture.requestManager, fixture.documents, ExecuteCommandParams("gamma.witness.validate", listOf<Any>(CommandGson.INSTANCE.toJsonTree(request))))
@@ -109,6 +111,19 @@ class LiveVerificationExecutorTest {
         verify(fixture.requestManager).executeCommand(forwarded.capture())
         val forwardedRequest = CommandGson.INSTANCE.fromJson(forwarded.firstValue.arguments.single() as JsonElement, WitnessValidationRequest::class.java)
         assertThat(forwardedRequest).isEqualTo(WitnessValidationRequest("file:///workspace/snippet.gamma", null, "smart", serverWitnessUri))
+    }
+
+    @Test
+    fun `a validation naming a witness outside the workspace never reaches the language server`() = runTest {
+        val fixture = Fixture("ignored")
+        val outsideUri = "file:///etc/passwd"
+        whenever(fixture.documents.workspaceUriOf(outsideUri)).thenThrow(WorkspaceUriException("uri escapes workspace"))
+        val request = WitnessValidationRequest("file:///workspace/snippet.gamma", null, "smart", outsideUri)
+
+        assertThrows<WorkspaceUriException> {
+            executor.execute(fixture.requestManager, fixture.documents, ExecuteCommandParams("gamma.witness.validate", listOf<Any>(CommandGson.INSTANCE.toJsonTree(request))))
+        }
+        verify(fixture.requestManager, never()).executeCommand(any())
     }
 
     @Test

@@ -17,6 +17,7 @@ import hu.bme.mit.semantifyr.lang.ide.server.wire.WitnessValidationStatus
 import hu.bme.mit.semantifyr.live.backend.BackendConfig
 import hu.bme.mit.semantifyr.live.backend.VerificationConfig
 import hu.bme.mit.semantifyr.live.backend.data.VerificationKind
+import hu.bme.mit.semantifyr.live.backend.exceptions.WorkspaceUriException
 import hu.bme.mit.semantifyr.live.backend.lsp.service.SessionLanguageClient
 import hu.bme.mit.semantifyr.live.backend.lsp.service.SharedExecutorProvider
 import hu.bme.mit.semantifyr.live.backend.testing.LspWire
@@ -218,6 +219,16 @@ class SessionVerificationManagerTest {
         release.complete(Unit)
         assertThat(verification.await()).isEqualTo(result(VerificationKind.Verify))
         assertThat(validation.await()).isEqualTo(result(VerificationKind.Validate))
+    }
+
+    @Test
+    suspend fun `a request naming a file outside the workspace is refused without the server's path`() {
+        val result = launch(VerificationKind.Validate, documentUri, 1) {
+            throw WorkspaceUriException("uri escapes workspace: file:///srv/sessions/session/../../etc/passwd")
+        }.await() as WitnessValidationResult
+
+        assertThat(result.status()).isEqualTo(WitnessValidationStatus.ERRORED)
+        assertThat(result.message()).isEqualTo("The request names a file outside the workspace")
     }
 
     @Test

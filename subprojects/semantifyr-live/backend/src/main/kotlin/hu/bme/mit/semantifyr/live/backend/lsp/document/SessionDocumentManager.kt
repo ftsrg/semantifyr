@@ -244,8 +244,12 @@ class SessionDocumentManager @Inject constructor(
         return path
     }
 
-    fun clientToServer(clientUri: String): String {
+    private fun clientToServer(clientUri: String): String {
         return clientUri.replace(CLIENT_PREFIX, serverPrefix)
+    }
+
+    fun workspaceUriOf(clientUri: String): String {
+        return resolveWithinWorkspace(clientToServer(clientUri)).toUri().toString()
     }
 
     private fun diskPathOrNull(clientUri: String): Path? {

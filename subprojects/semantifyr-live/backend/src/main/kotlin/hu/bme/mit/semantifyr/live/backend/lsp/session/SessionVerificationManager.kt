@@ -15,6 +15,7 @@ import hu.bme.mit.semantifyr.live.backend.BackendConfig
 import hu.bme.mit.semantifyr.live.backend.data.VerificationKind
 import hu.bme.mit.semantifyr.live.backend.data.VerificationState
 import hu.bme.mit.semantifyr.live.backend.exceptions.SyntaxErrorException
+import hu.bme.mit.semantifyr.live.backend.exceptions.WorkspaceUriException
 import hu.bme.mit.semantifyr.live.backend.lsp.service.RunningVerification
 import hu.bme.mit.semantifyr.live.backend.lsp.service.SessionLanguageClient
 import hu.bme.mit.semantifyr.live.backend.lsp.service.VerificationsChangedParams
@@ -159,6 +160,11 @@ class SessionVerificationManager @Inject constructor(
                 } catch (e: SyntaxErrorException) {
                     logger.info(e) { "Verification refused: ${e.message}" }
                     erroredResult(kind, portfolioId, e.message.orEmpty()).also {
+                        recordFinished(entry, it)
+                    }
+                } catch (e: WorkspaceUriException) {
+                    logger.warn(e) { "Verification refused: ${e.message}" }
+                    erroredResult(kind, portfolioId, "The request names a file outside the workspace").also {
                         recordFinished(entry, it)
                     }
                 } catch (e: Throwable) {

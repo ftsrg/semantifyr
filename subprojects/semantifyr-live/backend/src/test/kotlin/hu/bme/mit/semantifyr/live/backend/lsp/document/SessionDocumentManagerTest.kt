@@ -122,6 +122,27 @@ class SessionDocumentManagerTest {
     }
 
     @Test
+    fun `a client URI in the workspace names its file in the session's directory`(@TempDir tmp: Path) {
+        val manager = buildManager(tmp)
+        assertThat(manager.workspaceUriOf("file:///workspace/.artifacts/Case/witness.semantifyr"))
+            .isEqualTo(tmp.resolve(".artifacts/Case/witness.semantifyr").toUri().toString())
+    }
+
+    @Test
+    fun `a client URI outside the workspace names no file`(@TempDir tmp: Path) {
+        val manager = buildManager(tmp)
+        for (outside in listOf(
+            "file:///etc/passwd",
+            "file:///workspace/../../etc/passwd",
+            "file:///workspace/.artifacts/../../escaped.semantifyr",
+        )) {
+            assertThatThrownBy {
+                manager.workspaceUriOf(outside)
+            }.describedAs(outside).isInstanceOf(WorkspaceUriException::class.java)
+        }
+    }
+
+    @Test
     fun `serverToClient rewrites the workspace prefix`(@TempDir tmp: Path) {
         val manager = buildManager(tmp)
         val serverUri = tmp.resolve("snippet.semantifyr").toUri().toString()
