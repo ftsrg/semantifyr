@@ -88,7 +88,8 @@ public class ValidateWitnessClassCommandHandler
                 VerificationOutcome outcome =
                         runBlocking(continuation -> verifier.verify(inlinedOxsts, progressContext, continuation));
                 LOGGER.info(
-                        "LSP validateWitness {}", outcome.getReport().getResult().getVerdict());
+                        "LSP validateWitness {}",
+                        outcome.getReport().getResult().getVerdict());
                 return WitnessValidationResult.fromOutcome(outcome, portfolio.getId());
             } catch (Exception e) {
                 LOGGER.warn("Witness validation threw {}", e.getClass().getSimpleName(), e);

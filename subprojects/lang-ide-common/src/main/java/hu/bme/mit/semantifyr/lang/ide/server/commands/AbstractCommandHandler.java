@@ -70,8 +70,7 @@ public abstract class AbstractCommandHandler<TRequest, TArgument> implements Com
     }
 
     protected static <T> T runBlocking(SuspendingCall<T> call) throws InterruptedException {
-        return BuildersKt.runBlocking(
-                EmptyCoroutineContext.INSTANCE, (scope, continuation) -> call.call(continuation));
+        return BuildersKt.runBlocking(EmptyCoroutineContext.INSTANCE, (scope, continuation) -> call.call(continuation));
     }
 
     public abstract List<Object> serializeArguments(TArgument arguments);
