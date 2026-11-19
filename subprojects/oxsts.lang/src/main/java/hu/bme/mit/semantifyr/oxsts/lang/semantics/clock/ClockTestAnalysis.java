@@ -24,6 +24,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlineCall;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlineForOperation;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlineIfOperation;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.LocalVarDeclarationOperation;
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.NamedElement;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.NavigationSuffixExpression;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.NegationOperator;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Operation;
@@ -39,7 +40,14 @@ import org.eclipse.emf.ecore.EObject;
 
 public class ClockTestAnalysis {
 
-    private static final Object SELF = new Object();
+    private record ClockPath(boolean fromSelf, List<NamedElement> members) {
+
+        ClockPath extended(NamedElement member) {
+            var extendedMembers = new ArrayList<>(members);
+            extendedMembers.add(member);
+            return new ClockPath(fromSelf, extendedMembers);
+        }
+    }
 
     @Inject
     private TypeCompatibility typeCompatibility;
@@ -97,7 +105,7 @@ public class ClockTestAnalysis {
         return unclosed;
     }
 
-    private Set<List<Object>> visit(Operation operation, Set<List<Object>> reset, List<ComparisonOperator> unclosed) {
+    private Set<ClockPath> visit(Operation operation, Set<ClockPath> reset, List<ComparisonOperator> unclosed) {
         switch (operation) {
             case SequenceOperation sequence -> {
                 var current = reset;
@@ -107,7 +115,7 @@ public class ClockTestAnalysis {
                 return current;
             }
             case ChoiceOperation choice -> {
-                Set<List<Object>> common = null;
+                Set<ClockPath> common = null;
                 for (var branch : choice.getBranches()) {
                     common = intersect(common, visit(branch, new HashSet<>(reset), unclosed));
                 }
@@ -136,12 +144,12 @@ public class ClockTestAnalysis {
             case AssignmentOperation assignment -> {
                 collect(assignment.getExpression(), null, false, reset, unclosed);
                 var clock = referencedClock(assignment.getReference());
-                var key = clock == null ? null : keyOf(assignment.getReference());
-                if (key == null) {
+                var path = clock == null ? null : pathOf(assignment.getReference());
+                if (path == null) {
                     return reset;
                 }
                 var updated = new HashSet<>(reset);
-                updated.add(key);
+                updated.add(path);
                 return updated;
             }
             case LocalVarDeclarationOperation localVariable -> {
@@ -158,17 +166,17 @@ public class ClockTestAnalysis {
         }
     }
 
-    private Set<List<Object>> visitBranches(
+    private Set<ClockPath> visitBranches(
             SequenceOperation body,
             SequenceOperation elseBody,
-            Set<List<Object>> reset,
+            Set<ClockPath> reset,
             List<ComparisonOperator> unclosed) {
         var thenReset = visit(body, new HashSet<>(reset), unclosed);
         var elseReset = elseBody == null ? reset : visit(elseBody, new HashSet<>(reset), unclosed);
         return intersect(thenReset, elseReset);
     }
 
-    private static Set<List<Object>> intersect(Set<List<Object>> left, Set<List<Object>> right) {
+    private static Set<ClockPath> intersect(Set<ClockPath> left, Set<ClockPath> right) {
         if (left == null) {
             return right;
         }
@@ -181,16 +189,17 @@ public class ClockTestAnalysis {
             Expression expression,
             Boolean polarity,
             boolean inAssumption,
-            Set<List<Object>> reset,
+            Set<ClockPath> reset,
             List<ComparisonOperator> unclosed) {
         if (expression == null) {
             return;
         }
         switch (expression) {
-            case ComparisonOperator comparison
-            when clockTest(comparison) != null -> {
+            case ComparisonOperator comparison -> {
                 var test = clockTest(comparison);
-                if (!isClosed(test, polarity, inAssumption) && !isReset(test, reset)) {
+                if (test == null) {
+                    collectChildren(comparison, inAssumption, reset, unclosed);
+                } else if (!isClosed(test, polarity, inAssumption) && !isReset(test, reset)) {
                     unclosed.add(comparison);
                 }
             }
@@ -206,18 +215,17 @@ public class ClockTestAnalysis {
                 collect(ifThenElse.getThen(), polarity, inAssumption, reset, unclosed);
                 collect(ifThenElse.getElse(), polarity, inAssumption, reset, unclosed);
             }
-            default -> {
-                for (var child : expression.eContents()) {
-                    if (child instanceof Expression childExpression) {
-                        collect(childExpression, null, inAssumption, reset, unclosed);
-                    } else {
-                        for (var nested : child.eContents()) {
-                            if (nested instanceof Expression nestedExpression) {
-                                collect(nestedExpression, null, inAssumption, reset, unclosed);
-                            }
-                        }
-                    }
-                }
+            default -> collectChildren(expression, inAssumption, reset, unclosed);
+        }
+    }
+
+    private void collectChildren(
+            EObject container, boolean inAssumption, Set<ClockPath> reset, List<ComparisonOperator> unclosed) {
+        for (var child : container.eContents()) {
+            if (child instanceof Expression childExpression) {
+                collect(childExpression, null, inAssumption, reset, unclosed);
+            } else {
+                collectChildren(child, inAssumption, reset, unclosed);
             }
         }
     }
@@ -230,7 +238,7 @@ public class ClockTestAnalysis {
         return op == ComparisonOp.LESS_EQ || op == ComparisonOp.GREATER_EQ || op == ComparisonOp.EQ;
     }
 
-    public static ComparisonOp mirrored(ComparisonOp op) {
+    private static ComparisonOp mirrored(ComparisonOp op) {
         return switch (op) {
             case LESS -> ComparisonOp.GREATER;
             case LESS_EQ -> ComparisonOp.GREATER_EQ;
@@ -252,13 +260,13 @@ public class ClockTestAnalysis {
         };
     }
 
-    private static boolean isReset(ClockTest test, Set<List<Object>> reset) {
+    private static boolean isReset(ClockTest test, Set<ClockPath> reset) {
         if (test.clockLeaves() == null) {
             return false;
         }
         for (var leaf : test.clockLeaves()) {
-            var key = keyOf(leaf);
-            if (key == null || !reset.contains(key)) {
+            var path = pathOf(leaf);
+            if (path == null || !reset.contains(path)) {
                 return false;
             }
         }
@@ -282,17 +290,13 @@ public class ClockTestAnalysis {
         return null;
     }
 
-    private static List<Object> keyOf(Expression expression) {
+    private static ClockPath pathOf(Expression expression) {
         return switch (expression) {
-            case ElementReference reference -> new ArrayList<>(List.of(reference.getElement()));
-            case SelfReference ignored -> new ArrayList<>(List.of(SELF));
+            case ElementReference reference -> new ClockPath(false, List.of(reference.getElement()));
+            case SelfReference ignored -> new ClockPath(true, List.of());
             case NavigationSuffixExpression navigation -> {
-                var primary = keyOf(navigation.getPrimary());
-                if (primary == null) {
-                    yield null;
-                }
-                primary.add(navigation.getMember());
-                yield primary;
+                var primary = pathOf(navigation.getPrimary());
+                yield primary == null ? null : primary.extended(navigation.getMember());
             }
             default -> null;
         };
