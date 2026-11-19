@@ -35,7 +35,7 @@ extern datatype bool
 extern datatype string
 
 /*
- * Clocks measure time. A clock starts at 0, advances by the wait before every main step, is reset to 0 by assignment and is read only in comparisons with integers.
+ * Clocks measure time. A clock starts at 0, advances by the wait before every main step, is reset to 0 by assignment and is read only in comparisons with integers known at compile time.
  */
 extern datatype clock
 
