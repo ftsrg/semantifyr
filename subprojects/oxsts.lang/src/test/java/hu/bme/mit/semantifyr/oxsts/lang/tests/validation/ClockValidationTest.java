@@ -13,6 +13,7 @@ import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts;
 import hu.bme.mit.semantifyr.oxsts.lang.tests.utils.OxstsPackageParseHelper;
 import hu.bme.mit.semantifyr.oxsts.lang.tests.utils.WrappedOxstsPackage;
 import hu.bme.mit.semantifyr.oxsts.lang.validation.OxstsValidator;
+import java.util.List;
 import org.eclipse.xtext.diagnostics.Severity;
 import org.eclipse.xtext.validation.CheckMode;
 import org.junit.jupiter.api.Test;
@@ -238,7 +239,7 @@ public class ClockValidationTest {
 
     @Test
     void clockTestsThatAreNotClosedAreWarned() {
-        var parsedPackage = parseHelper.parse(TIMER + """
+        var source = TIMER + """
                 redefine tran {
                     if (elapsed <= 5) {
                         flag := true
@@ -250,21 +251,26 @@ public class ClockValidationTest {
                     flag := elapsed >= 5
                 }
             }
-            """, CheckMode.ALL);
+            """;
+        var parsedPackage = parseHelper.parse(source, CheckMode.ALL);
 
         parsedPackage.assertNoResourceErrors();
         assertThat(parsedPackage.getIssues())
                 .filteredOn(issue -> issue.getSeverity() == Severity.ERROR)
                 .isEmpty();
-        assertThat(parsedPackage.getIssues())
-                .filteredOn(issue -> OxstsValidator.CLOCK_TEST_NOT_CLOSED.equals(issue.getCode()))
-                .extracting(issue -> issue.getLineNumber())
-                .containsExactly(7, 10, 11, 12, 13, 14);
+        assertThat(warnedLines(source, parsedPackage))
+                .containsExactly(
+                        "if (elapsed <= 5) {",
+                        "assume(elapsed < 5)",
+                        "assume(elapsed != 5)",
+                        "assume(!(elapsed <= 5))",
+                        "assume((elapsed <= 5) ^^ flag)",
+                        "flag := elapsed >= 5");
     }
 
     @Test
-    void clockTestsInInitAndAfterAResetOnEveryPathAreExempt() {
-        var parsedPackage = parseHelper.parse(TIMER + """
+    void onlyTheClockTestOutsideInitWithoutAResetOnEveryPathBeforeItIsWarned() {
+        var source = TIMER + """
                 redefine init {
                     if (elapsed < 1) {
                         flag := true
@@ -285,13 +291,23 @@ public class ClockValidationTest {
                     }
                 }
             }
-            """, CheckMode.ALL);
+            """;
+        var parsedPackage = parseHelper.parse(source, CheckMode.ALL);
 
         parsedPackage.assertNoResourceErrors();
-        assertThat(parsedPackage.getIssues())
-                .filteredOn(issue -> OxstsValidator.CLOCK_TEST_NOT_CLOSED.equals(issue.getCode()))
-                .extracting(issue -> issue.getLineNumber())
-                .containsExactly(21);
+        assertThat(warnedLines(source, parsedPackage)).containsExactly("if (other < 1) {");
+    }
+
+    private static List<String> warnedLines(String source, WrappedOxstsPackage parsedPackage) {
+        var lines = source.lines().toList();
+        return parsedPackage.getIssues().stream()
+                .filter(issue -> {
+                    return OxstsValidator.CLOCK_TEST_NOT_CLOSED.equals(issue.getCode());
+                })
+                .map(issue -> {
+                    return lines.get(issue.getLineNumber() - 1).trim();
+                })
+                .toList();
     }
 
     private static final String TIMER = """
