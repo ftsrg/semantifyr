@@ -25,13 +25,27 @@ A test lives in the suite of what it proves, each suite a Gradle task of the mod
 - `test`: unit tests, one unit alone, with fakes in place of the backends. `build` runs it.
 - `adapterTest`: an adapter and its real backend understand each other, each backend skipped when it is missing. `build` runs it.
 - `semanticTest`: a construct of the language or a class of a semantic library means what it should, through the compiler and a backend.
-- `integrationTest`: our parts working together, the frontends' corpora and the served examples through to a verdict, and live.
+- `integrationTest`: our parts working together, the served examples through to a verdict, and live.
 - `uiTest`: the built frontend in a browser against a mock backend, live's screens and its built application, and the website's walk by keyboard, in the browser `-PtestBrowser` names, `chromium` (the default), `firefox` or `webkit`; the walk runs in Chromium alone.
 - `endToEndTest`: a package through its real entry point, the launchers' distributions, the VS Code extension and the server image.
 
 `build` compiles, runs the static checks and the `test` and `adapterTest` suites, and of the packages makes the application modules' distribution archives alone; every other package has its own task, such as `installDist`. `./gradlew pack` builds every package, and a module's `pack` its own, such as `:website:pack`. `./gradlew continuousIntegration` runs the semantic, integration, end-to-end and UI suites, and `./gradlew nightlyTest` the nightly suite, the cases a manifest marks as nightly, on a machine with all four backends. The TypeScript packages run their unit tests in their `npmCheck` task, beside the type check and the linter.
 
-Run the suite that holds what you changed, as a task of the module you changed: `./gradlew :website:test` runs the website's unit tests, which validate every code example of these pages in the Semantifyr Language, and `./gradlew :website:npmCheck` its type check, linter and Vitest suites. A change of these pages also needs `./gradlew :website:pack`, which fails on a broken link, and a change of their controls `./gradlew :website:uiTest`. On a pull request CI runs `build` and the semantic, integration and end-to-end suites on Linux, Windows and macOS, with Spin and nuXmv on Linux alone, and the UI suite once per browser; on Linux it also publishes to SonarCloud and packs with `pack`. A failed job or a failed SonarCloud quality gate stops the merge.
+The model tests are not a Gradle suite: they check that the models of the Gamma and SysML v2 corpora and their semantic libraries reach the verdicts their `manifest.json` expects, through an installed launcher. The `corpus-check` harness runs the launcher once per model file with `--json` and fails on a case that misses its verdict, times out or has no answer; it leaves out the cases a manifest marks as nightly. To run them locally, install the harness, the launchers and the SysML v2 corpus with its further cases, then run the harness with one launcher at a time:
+
+```sh
+./gradlew :corpus-check:installDist :gamma-cli:installDist :sysml-cli:installDist :sysml-wrapper:appendFurtherCases
+subprojects/corpus-check/build/install/corpus-check/bin/corpus-check \
+  --launcher subprojects/frontends/gamma/gamma-cli/build/install/semantifyr-gamma/bin/semantifyr-gamma \
+  --corpus subprojects/frontends/gamma/models/semantics --corpus subprojects/frontends/gamma/models/examples \
+  --timeout-seconds 120
+subprojects/corpus-check/build/install/corpus-check/bin/corpus-check \
+  --launcher subprojects/frontends/sysml/sysml-cli/build/install/semantifyr-sysml/bin/semantifyr-sysml \
+  --corpus subprojects/frontends/sysml/sysml-wrapper/build/corpus --case-namespace semantifyr::sysml::model:: \
+  --timeout-seconds 120
+```
+
+Run the suite that holds what you changed, as a task of the module you changed: `./gradlew :website:test` runs the website's unit tests, which validate every code example of these pages in the Semantifyr Language, and `./gradlew :website:npmCheck` its type check, linter and Vitest suites. A change of these pages also needs `./gradlew :website:pack`, which fails on a broken link, and a change of their controls `./gradlew :website:uiTest`. On a pull request CI runs `build` and the semantic, integration and end-to-end suites on Linux, Windows and macOS, with Spin and nuXmv on Linux alone, the UI suite once per browser, and the model tests on Linux, one job per frontend, which start once a short job has built the harness and the launchers; on Linux it also publishes to SonarCloud and packs with `pack`. A failed job or a failed SonarCloud quality gate stops the merge.
 
 ## What a Review Checks
 
