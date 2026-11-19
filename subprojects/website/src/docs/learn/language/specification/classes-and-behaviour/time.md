@@ -67,7 +67,7 @@ The blinker switches in every step, each after a wait of at least 2 and at most 
 
 ## Closed Clock Tests
 
-A clock test is closed when it stands in an `assume`, is not negated once the condition is in negation normal form, and compares with `<=`, `>=` or `==`. A test of a clock that is reset on every path before it in the same step, and every test in `init`, is closed too. The validator warns of a clock test that is not closed; whether every test is closed is decided on the inlined model, and a test that is not closed is no error: the model means what it says. Whether a backend trusts its proof of such a model is on [the pages of the backends](../../../backends/index.mdx).
+A clock test is closed when it stands in an `assume`, is not negated once the condition is in negation normal form, and compares with `<=`, `>=` or `==`. A test of a clock that is reset on every path before it in the same step, and every test in `init`, is closed too. The validator warns of a clock test that may not be closed, judging each transition alone; whether every test is closed is decided on the inlined model, and a test that is not closed is no error: the model means what it says. Whether a backend trusts its proof of such a model is on [the pages of the backends](../../../backends/index.mdx).
 
 ```oxsts issue=OXSTS.CLOCK_TEST_NOT_CLOSED
 class Lamp {

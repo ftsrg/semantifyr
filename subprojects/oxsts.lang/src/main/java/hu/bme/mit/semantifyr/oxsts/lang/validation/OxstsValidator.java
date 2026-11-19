@@ -2327,7 +2327,7 @@ public class OxstsValidator extends AbstractOxstsValidator {
         }
         for (var test : clockTestAnalysis.unclosedTests(transitionDeclaration)) {
             acceptWarning(
-                    "This clock test is not closed, so a backend that explores whole delays does not trust a proof of this model; a closed test stands in an assume, not negated, as <=, >= or ==.",
+                    "This clock test may not be closed; a closed test stands in an assume, not negated, as <=, >= or ==.",
                     test,
                     null,
                     -1,
