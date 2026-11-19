@@ -71,11 +71,8 @@ class ThetaModelTransformer @Inject constructor(
             thetaDomainTransformer.transform(it)
         }.distinct()
 
-        val addedNames = setOfNotNull(
+        val addedNames = setOf(
             INITIALIZED_FLAG_NAME,
-            WHOLE_DELAY_VARIABLE_NAME.takeIf {
-                wholeDelay != null
-            },
         )
         return ThetaArtifacts(xsts, wholeDelay, addedNames)
     }

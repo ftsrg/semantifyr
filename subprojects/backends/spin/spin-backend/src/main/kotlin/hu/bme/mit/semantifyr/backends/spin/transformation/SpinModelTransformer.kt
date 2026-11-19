@@ -7,7 +7,6 @@
 package hu.bme.mit.semantifyr.backends.spin.transformation
 
 import com.google.inject.Inject
-import hu.bme.mit.semantifyr.backend.transformation.WHOLE_DELAY_VARIABLE_NAME
 import hu.bme.mit.semantifyr.backend.transformation.WholeDelay
 import hu.bme.mit.semantifyr.backend.transformation.WholeDelayLowering
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.EnumDeclaration
@@ -51,11 +50,8 @@ class SpinModelTransformer @Inject constructor(
         builder.appendLine()
         builder.appendLine("ltl p { ${property.ltl} }")
 
-        val addedNames = setOfNotNull(
+        val addedNames = setOf(
             SPIN_STABLE_FLAG,
-            WHOLE_DELAY_VARIABLE_NAME.takeIf {
-                wholeDelay != null
-            },
         )
         return SpinArtifacts(builder.toString(), property, vectorSizeOf(inlinedOxsts), wholeDelay, addedNames)
     }
