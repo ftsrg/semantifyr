@@ -212,6 +212,12 @@ class InlineOperationExpander @Inject constructor(
         return body
     }
 
+    private class RuntimeArgument(
+        val position: Int,
+        val parameter: ParameterDeclaration,
+        val temporary: LocalVarDeclarationOperation,
+    )
+
     private class ArgumentBinding(
         val runtimeArguments: Map<ParameterDeclaration, LocalVarDeclarationOperation>,
         val bindings: Map<ParameterDeclaration, Expression>,
@@ -222,8 +228,7 @@ class InlineOperationExpander @Inject constructor(
         transitionDeclaration: TransitionDeclaration,
         callExpression: CallSuffixExpression,
     ): ArgumentBinding {
-        val runtimeParameters = sortedMapOf<Int, ParameterDeclaration>()
-        val temporaries = mutableMapOf<ParameterDeclaration, LocalVarDeclarationOperation>()
+        val runtimeArguments = mutableListOf<RuntimeArgument>()
         val bindings = mutableMapOf<ParameterDeclaration, Expression>()
 
         for ((index, parameter) in transitionDeclaration.parameters.withIndex()) {
@@ -242,16 +247,17 @@ class InlineOperationExpander @Inject constructor(
                 it.expression = argument.expression.copy()
             }
             SourceLocation.recordOrigin(argument.expression, temporary)
-            runtimeParameters[callExpression.arguments.indexOf(argument)] = parameter
-            temporaries[parameter] = temporary
+            runtimeArguments += RuntimeArgument(callExpression.arguments.indexOf(argument), parameter, temporary)
             bindings[parameter] = OxstsFactory.createElementReference(temporary).also {
                 SourceLocation.recordOrigin(argument.expression, it)
             }
         }
 
         return ArgumentBinding(
-            runtimeParameters.values.associateWith {
-                temporaries.getValue(it)
+            runtimeArguments.sortedBy {
+                it.position
+            }.associate {
+                it.parameter to it.temporary
             },
             bindings,
         )

@@ -94,13 +94,19 @@ class TransitionCallTraceTransformer @Inject constructor(
         val parent = findEnclosingTracer(callExpression)
 
         val evaluator = compileTimeExpressionEvaluatorProvider.getEvaluator(instance)
+        val argumentRecords = mutableListOf<AssignmentOperation>()
         val transitionCallTrace = TransitionCallTrace(
             self = InstanceEvaluation(containerInstance),
             transitionDeclaration = transitionDeclaration,
             arguments = transitionDeclaration.parameters.withIndex().mapNotNull { (index, parameter) ->
                 val temporary = runtimeArguments[parameter]
                 if (temporary != null) {
-                    return@mapNotNull ArgumentTrace.Recorded(parameter, createArgumentVariable(tracerIndex, parameter, temporary))
+                    val variable = createArgumentVariable(tracerIndex, parameter, temporary)
+                    argumentRecords += OxstsFactory.createAssignmentOperation().also {
+                        it.reference = OxstsFactory.createElementReference(variable)
+                        it.expression = OxstsFactory.createElementReference(temporary)
+                    }
+                    return@mapNotNull ArgumentTrace.Recorded(parameter, variable)
                 }
                 OxstsUtils.getArgumentFor(callExpression.arguments, parameter, index)?.let {
                     val evaluation = try {
@@ -117,15 +123,7 @@ class TransitionCallTraceTransformer @Inject constructor(
 
         val tracerAssignment = createTracerAssignment(tracerVariable, value = true)
         tracerAssignments[tracerAssignment] = transitionCallTrace
-        return TracedCall(
-            tracerAssignment,
-            transitionCallTrace.recordedArguments.map {
-                OxstsFactory.createAssignmentOperation().also { record ->
-                    record.reference = OxstsFactory.createElementReference(it.variable)
-                    record.expression = OxstsFactory.createElementReference(runtimeArguments.getValue(it.parameterDeclaration))
-                }
-            },
-        )
+        return TracedCall(tracerAssignment, argumentRecords)
     }
 
     fun inheritEnclosingTrace(operation: InlineOperation, expansion: Operation) {
