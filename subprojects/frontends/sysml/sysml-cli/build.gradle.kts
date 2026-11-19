@@ -17,7 +17,6 @@ dependencies {
     implementation(project(":logging"))
 
     testFixturesApi(project(":cli-common"))
-    testFixturesImplementation(project(":sysml-wrapper"))
     testFixturesApi(testFixtures(project(":cli-common")))
 }
 
