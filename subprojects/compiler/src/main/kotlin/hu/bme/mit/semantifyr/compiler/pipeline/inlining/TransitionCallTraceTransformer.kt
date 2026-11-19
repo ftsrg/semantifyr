@@ -133,16 +133,16 @@ class TransitionCallTraceTransformer @Inject constructor(
         enclose(expansion, enclosingTrace)
     }
 
-    fun observedVariables(): Set<VariableDeclaration> {
-        return variablesOf(tracerAssignments.entries).toSet()
+    fun traceMap(): TransitionCallTraceMap {
+        return traceMapOf(tracerAssignments.entries)
     }
 
     fun declareTracers(inlinedOxsts: InlinedOxsts) {
-        val tracerVariables = variablesOf(tracerAssignments.entries)
-        if (tracerVariables.isNotEmpty()) {
-            inlinedOxsts.variables += tracerVariables
+        val observedVariables = traceMap().observedVariables
+        if (observedVariables.isNotEmpty()) {
+            inlinedOxsts.variables += observedVariables
             for (branch in inlinedOxsts.mainTransition.branches) {
-                for (variable in tracerVariables.reversed()) {
+                for (variable in observedVariables.reversed()) {
                     branch.steps.addFirst(createReset(variable))
                 }
             }
@@ -154,7 +154,7 @@ class TransitionCallTraceTransformer @Inject constructor(
         val (calledTraces, uncalledTraces) = tracerAssignments.entries.partition {
             EcoreUtil.isAncestor(inlinedOxsts, it.key)
         }
-        val uncalledVariables = variablesOf(uncalledTraces).toSet()
+        val uncalledVariables = traceMapOf(uncalledTraces).observedVariables
         for ((assignment, _) in uncalledTraces) {
             tracerAssignments.remove(assignment)
         }
@@ -167,19 +167,15 @@ class TransitionCallTraceTransformer @Inject constructor(
             }
             inlinedOxsts.variables -= uncalledVariables
         }
+        return traceMapOf(calledTraces)
+    }
+
+    private fun traceMapOf(traces: Collection<Map.Entry<AssignmentOperation, TransitionCallTrace>>): TransitionCallTraceMap {
         return TransitionCallTraceMap(
-            calledTraces.associate {
+            traces.associate {
                 it.key.assignedVariable to it.value
             },
         )
-    }
-
-    private fun variablesOf(traces: Collection<Map.Entry<AssignmentOperation, TransitionCallTrace>>): List<VariableDeclaration> {
-        return traces.flatMap { (assignment, trace) ->
-            listOf(assignment.assignedVariable) + trace.recordedArguments.map {
-                it.variable
-            }
-        }
     }
 
     private fun createTracerVariable(tracerIndex: Int, context: EObject): VariableDeclaration {

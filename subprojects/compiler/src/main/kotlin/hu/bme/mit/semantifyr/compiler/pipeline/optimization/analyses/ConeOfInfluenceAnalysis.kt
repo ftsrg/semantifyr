@@ -49,7 +49,7 @@ class ConeOfInfluenceAnalysis @Inject constructor(
 
     override fun compute(input: EvaluableCompilationContext): ConeOfInfluenceInfo {
         val evaluator = metaCompileTimeExpressionEvaluatorProvider.getEvaluator(input.rootInstance)
-        return ConeOfInfluenceComputation(input.inlinedOxsts, evaluator, transitionCallTraceTransformer.observedVariables()).compute()
+        return ConeOfInfluenceComputation(input.inlinedOxsts, evaluator, transitionCallTraceTransformer.traceMap().observedVariables).compute()
     }
 
 }
