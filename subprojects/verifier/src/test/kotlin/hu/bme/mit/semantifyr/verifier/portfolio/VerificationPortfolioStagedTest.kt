@@ -146,16 +146,16 @@ class VerificationPortfolioStagedTest {
     @Test
     fun `when the tasks fit the case's slots the stages collapse into one race of every task, each in its own directory`() = runTest {
         val backend = recording(
-            "c" to Answer(50.seconds, VerificationVerdict.Passed),
+            "gamma" to Answer(50.seconds, VerificationVerdict.Passed),
         )
-        val (a, b, c) = tasks(backend, "a", "b", "c")
+        val (alpha, beta, gamma) = tasks(backend, "alpha", "beta", "gamma")
         val messages = mutableListOf<String>()
         val portfolio = portfolio {
             stage("first", within(10.seconds)) {
-                legs(a, b)
+                legs(alpha, beta)
             }
             stage("last") {
-                legs(c)
+                legs(gamma)
             }
         }
 
@@ -163,8 +163,8 @@ class VerificationPortfolioStagedTest {
 
         assertThat(outcome).isInstanceOf(PortfolioOutcome.Decided::class.java)
         assertThat(currentTime).isEqualTo(50_000)
-        assertThat(backend.starts).containsExactlyInAnyOrder("a@0s", "b@0s", "c@0s")
-        assertThat(backend.directories).containsExactlyInAnyOrder("a", "b", "c")
+        assertThat(backend.starts).containsExactlyInAnyOrder("alpha@0s", "beta@0s", "gamma@0s")
+        assertThat(backend.directories).containsExactlyInAnyOrder("alpha", "beta", "gamma")
         assertThat(messages).startsWith("racing 3 backend configurations")
         assertThat(
             outcome.runs.map {
@@ -176,29 +176,29 @@ class VerificationPortfolioStagedTest {
     @Test
     fun `a task listed in stages in a row starts once, in the directory of the first, and its trusted answer cuts the stage running beside it`() = runTest {
         val backend = recording(
-            "a" to Answer(25.seconds, VerificationVerdict.Passed),
+            "alpha" to Answer(25.seconds, VerificationVerdict.Passed),
         )
-        val (a, b, c, d) = tasks(backend, "a", "b", "c", "d")
+        val (alpha, beta, gamma, delta) = tasks(backend, "alpha", "beta", "gamma", "delta")
         val messages = mutableListOf<String>()
         val portfolio = portfolio {
             stage("first", within(10.seconds)) {
-                legs(a, b)
+                legs(alpha, beta)
             }
             stage("second", within(10.seconds)) {
-                legs(a, c)
+                legs(alpha, gamma)
             }
             stage("last") {
-                legs(a, d)
+                legs(alpha, delta)
             }
         }
 
         val outcome = portfolio.run(LimitedConcurrencyGate(3), 120.seconds, recordingProgress(messages))
 
-        assertThat(outcome.orFail().metadata.backendId).isEqualTo("a")
+        assertThat(outcome.orFail().metadata.backendId).isEqualTo("alpha")
         assertThat(currentTime).isEqualTo(25_000)
-        assertThat(backend.starts).containsExactlyInAnyOrder("a@0s", "b@0s", "c@10s", "d@20s")
-        assertThat(backend.directories).containsExactlyInAnyOrder("first/a", "first/b", "second/c", "last/d")
-        assertThat(backend.cancellations).containsExactlyInAnyOrder("b@10s", "c@20s", "d@25s")
+        assertThat(backend.starts).containsExactlyInAnyOrder("alpha@0s", "beta@0s", "gamma@10s", "delta@20s")
+        assertThat(backend.directories).containsExactlyInAnyOrder("first/alpha", "first/beta", "second/gamma", "last/delta")
+        assertThat(backend.cancellations).containsExactlyInAnyOrder("beta@10s", "gamma@20s", "delta@25s")
         assertThat(messages).contains(
             "running from the first stage: racing 1 backend configurations until the case's time runs out",
             "first stage: racing 1 backend configurations within 10s",
@@ -210,107 +210,107 @@ class VerificationPortfolioStagedTest {
     @Test
     fun `a trusted answer in a stage cuts the tasks running beside the stages`() = runTest {
         val backend = recording(
-            "c" to Answer(5.seconds, VerificationVerdict.Passed),
+            "gamma" to Answer(5.seconds, VerificationVerdict.Passed),
         )
-        val (a, b, c) = tasks(backend, "a", "b", "c")
+        val (alpha, beta, gamma) = tasks(backend, "alpha", "beta", "gamma")
         val portfolio = portfolio {
             stage("first", within(10.seconds)) {
-                legs(a, b)
+                legs(alpha, beta)
             }
             stage("last") {
-                legs(a, c)
+                legs(alpha, gamma)
             }
         }
 
         val outcome = portfolio.run(LimitedConcurrencyGate(2), 120.seconds)
 
-        assertThat(outcome.orFail().metadata.backendId).isEqualTo("c")
+        assertThat(outcome.orFail().metadata.backendId).isEqualTo("gamma")
         assertThat(currentTime).isEqualTo(15_000)
-        assertThat(backend.cancellations).containsExactlyInAnyOrder("b@10s", "a@15s")
+        assertThat(backend.cancellations).containsExactlyInAnyOrder("beta@10s", "alpha@15s")
     }
 
     @Test
     fun `a task that ended on its own is not run again and one that was cut runs again in the later stage's directory`() = runTest {
         val backend = recording(
-            "a" to Answer(1.seconds, VerificationVerdict.Inconclusive),
+            "alpha" to Answer(1.seconds, VerificationVerdict.Inconclusive),
         )
-        val (a, b, c) = tasks(backend, "a", "b", "c")
+        val (alpha, beta, gamma) = tasks(backend, "alpha", "beta", "gamma")
         val portfolio = portfolio {
             stage("first", within(10.seconds)) {
-                legs(a, b)
+                legs(alpha, beta)
             }
             stage("second", within(10.seconds)) {
-                legs(c)
+                legs(gamma)
             }
             stage("last") {
-                legs(a, b)
+                legs(alpha, beta)
             }
         }
 
         portfolio.run(LimitedConcurrencyGate(2), 60.seconds)
 
-        assertThat(backend.starts).containsExactlyInAnyOrder("a@0s", "b@0s", "c@10s", "b@20s")
-        assertThat(backend.directories).containsExactlyInAnyOrder("first/a", "first/b", "second/c", "last/b")
+        assertThat(backend.starts).containsExactlyInAnyOrder("alpha@0s", "beta@0s", "gamma@10s", "beta@20s")
+        assertThat(backend.directories).containsExactlyInAnyOrder("first/alpha", "first/beta", "second/gamma", "last/beta")
     }
 
     @Test
     fun `a stage whose window is shorter than its skippedUnder is skipped`() = runTest {
         val backend = recording()
-        val (a, b, c, d) = tasks(backend, "a", "b", "c", "d")
+        val (alpha, beta, gamma, delta) = tasks(backend, "alpha", "beta", "gamma", "delta")
         val portfolio = portfolio {
             stage("first", within(10.seconds)) {
-                legs(a, b)
+                legs(alpha, beta)
             }
             stage("second", within(5.seconds), skippedUnder = 10.seconds) {
-                legs(c)
+                legs(gamma)
             }
             stage("last") {
-                legs(d)
+                legs(delta)
             }
         }
 
         portfolio.run(LimitedConcurrencyGate(2), 60.seconds)
 
-        assertThat(backend.starts).containsExactlyInAnyOrder("a@0s", "b@0s", "d@10s")
+        assertThat(backend.starts).containsExactlyInAnyOrder("alpha@0s", "beta@0s", "delta@10s")
     }
 
     @Test
     fun `the tasks under unlessEndedOnItsOwn stay out when that task ended on its own`() = runTest {
         val backend = recording(
-            "a" to Answer(1.seconds, VerificationVerdict.Inconclusive),
+            "alpha" to Answer(1.seconds, VerificationVerdict.Inconclusive),
         )
-        val (a, b, c, d, e) = tasks(backend, "a", "b", "c", "d", "e")
-        val portfolio = conditionalPortfolio(a, b, c, d, e)
+        val (alpha, beta, gamma, delta, epsilon) = tasks(backend, "alpha", "beta", "gamma", "delta", "epsilon")
+        val portfolio = conditionalPortfolio(alpha, beta, gamma, delta, epsilon)
 
         portfolio.run(LimitedConcurrencyGate(3), 60.seconds)
 
-        assertThat(backend.starts).containsExactlyInAnyOrder("a@0s", "b@0s", "c@10s")
+        assertThat(backend.starts).containsExactlyInAnyOrder("alpha@0s", "beta@0s", "gamma@10s")
     }
 
     @Test
     fun `the tasks under unlessEndedOnItsOwn start when that task was cut`() = runTest {
         val backend = recording()
-        val (a, b, c, d, e) = tasks(backend, "a", "b", "c", "d", "e")
-        val portfolio = conditionalPortfolio(a, b, c, d, e)
+        val (alpha, beta, gamma, delta, epsilon) = tasks(backend, "alpha", "beta", "gamma", "delta", "epsilon")
+        val portfolio = conditionalPortfolio(alpha, beta, gamma, delta, epsilon)
 
         portfolio.run(LimitedConcurrencyGate(3), 60.seconds)
 
-        assertThat(backend.starts).containsExactlyInAnyOrder("a@0s", "b@0s", "c@10s", "d@10s", "e@10s")
+        assertThat(backend.starts).containsExactlyInAnyOrder("alpha@0s", "beta@0s", "gamma@10s", "delta@10s", "epsilon@10s")
     }
 
     @Test
     fun `the undecided outcome carries every run under the gate it ran in`() = runTest {
         val backend = recording()
-        val (a, b, c, d) = tasks(backend, "a", "b", "c", "d")
+        val (alpha, beta, gamma, delta) = tasks(backend, "alpha", "beta", "gamma", "delta")
         val portfolio = portfolio {
             stage("first", within(10.seconds)) {
-                legs(a, b)
+                legs(alpha, beta)
             }
             stage("second", within(10.seconds)) {
-                legs(a, c)
+                legs(alpha, gamma)
             }
             stage("last") {
-                legs(d)
+                legs(delta)
             }
         }
 
@@ -323,24 +323,24 @@ class VerificationPortfolioStagedTest {
                 "${it.stage}: ${it.legId} ${it.end}"
             },
         ).containsExactlyInAnyOrder(
-            "first stage: fake:b Cut",
-            "running from the first stage: fake:a Cut",
-            "second stage: fake:c Cut",
-            "last stage: fake:d Cut",
+            "first stage: fake:beta Cut",
+            "running from the first stage: fake:alpha Cut",
+            "second stage: fake:gamma Cut",
+            "last stage: fake:delta Cut",
         )
     }
 
     @Test
     fun `a staged case cancelled from outside cancels its tasks and frees their permits`() = runTest {
         val backend = recording()
-        val (a, b, c) = tasks(backend, "a", "b", "c")
+        val (alpha, beta, gamma) = tasks(backend, "alpha", "beta", "gamma")
         val gate = LimitedConcurrencyGate(2)
         val portfolio = portfolio {
             stage("first", within(10.seconds)) {
-                legs(a, b)
+                legs(alpha, beta)
             }
             stage("last") {
-                legs(c)
+                legs(gamma)
             }
         }
 
@@ -351,8 +351,8 @@ class VerificationPortfolioStagedTest {
         verification.cancelAndJoin()
 
         assertThat(verification.isCancelled).isTrue
-        assertThat(backend.starts).containsExactlyInAnyOrder("a@0s", "b@0s")
-        assertThat(backend.cancellations).containsExactlyInAnyOrder("a@5s", "b@5s")
+        assertThat(backend.starts).containsExactlyInAnyOrder("alpha@0s", "beta@0s")
+        assertThat(backend.cancellations).containsExactlyInAnyOrder("alpha@5s", "beta@5s")
         withTimeout(1_000) {
             coroutineScope {
                 repeat(2) {
@@ -369,13 +369,13 @@ class VerificationPortfolioStagedTest {
     @Test
     fun `with no task available the outcome names why and nothing runs`() = runTest {
         val backend = recording(executorKey = UnavailableExecutorKey)
-        val (a, b) = tasks(backend, "a", "b")
+        val (alpha, beta) = tasks(backend, "alpha", "beta")
         val portfolio = portfolio {
             stage("first", within(10.seconds)) {
-                legs(a)
+                legs(alpha)
             }
             stage("last") {
-                legs(b)
+                legs(beta)
             }
         }
 
@@ -386,20 +386,20 @@ class VerificationPortfolioStagedTest {
     }
 
     private fun TestScope.conditionalPortfolio(
-        a: PortfolioTask<*>,
-        b: PortfolioTask<*>,
-        c: PortfolioTask<*>,
-        d: PortfolioTask<*>,
-        e: PortfolioTask<*>,
+        alpha: PortfolioTask<*>,
+        beta: PortfolioTask<*>,
+        gamma: PortfolioTask<*>,
+        delta: PortfolioTask<*>,
+        epsilon: PortfolioTask<*>,
     ): StagedPortfolio {
         return portfolio {
             stage("first", within(10.seconds)) {
-                legs(a, b)
+                legs(alpha, beta)
             }
             stage("last") {
-                legs(c)
-                unlessEndedOnItsOwn(a) {
-                    legs(d, e)
+                legs(gamma)
+                unlessEndedOnItsOwn(alpha) {
+                    legs(delta, epsilon)
                 }
             }
         }
