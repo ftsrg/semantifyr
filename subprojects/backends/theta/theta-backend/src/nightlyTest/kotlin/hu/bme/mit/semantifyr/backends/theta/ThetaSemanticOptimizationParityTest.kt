@@ -44,7 +44,7 @@ class ThetaSemanticOptimizationParityTest {
 
         @JvmStatic
         fun `Without Optimization Every Case Has Its Expected Verdict`(): List<Arguments> {
-            return helper.collectSupportedCasesAsArguments(
+            return helper.collectAcceptedCasesAsArguments(
                 context,
                 ThetaBackend(),
                 ThetaConfig.CegarExplPredCombined,
