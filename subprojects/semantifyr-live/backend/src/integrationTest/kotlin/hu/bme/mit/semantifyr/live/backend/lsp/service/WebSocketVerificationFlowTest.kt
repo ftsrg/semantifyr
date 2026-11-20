@@ -53,10 +53,10 @@ class WebSocketVerificationFlowTest {
 
     private val documentUri = "file:///workspace/snippet.semantifyr"
 
-    private fun config(tmp: Path): BackendConfig {
+    private fun config(temporaryDirectory: Path): BackendConfig {
         return BackendConfig(
             server = ServerConfig(wsHandshakesPerPeriod = 10_000),
-            sessionManager = SessionManagerConfig(rootWorkDirectory = tmp.toString(), maxSessionsGlobal = 8),
+            sessionManager = SessionManagerConfig(rootWorkDirectory = temporaryDirectory.toString(), maxSessionsGlobal = 8),
         )
     }
 
@@ -79,12 +79,23 @@ class WebSocketVerificationFlowTest {
         return LspWire.executeCommandRequest(id = id, command = command, arguments = listOf(VerificationCaseRequest(documentUri, LspWire.range(), "smart")))
     }
 
-    @Test
-    fun `verify command routes through the executor and returns its result`(@TempDir tmp: Path) = testApplication {
-        val executor = FakeVerificationExecutor { cannedResult }
+    @ParameterizedTest
+    @ValueSource(
+        strings = [
+            "oxsts.case.verify",
+            "oxsts.case.validateWitness",
+        ],
+    )
+    fun `a verification command routes through the executor and returns its result`(
+        command: String,
+        @TempDir temporaryDirectory: Path,
+    ) = testApplication {
+        val executor = FakeVerificationExecutor {
+            cannedResult
+        }
         installSemantifyrApp(webSockets = true) {
             installSemantifyrLiveBackend(
-                testInjector(config(tmp)) {
+                testInjector(config(temporaryDirectory)) {
                     bind(VerificationExecutor::class.java).toInstance(executor)
                 },
             )
@@ -93,45 +104,22 @@ class WebSocketVerificationFlowTest {
         jsonClient(webSockets = true).webSocket("/ws/lsp/oxsts") {
             send(Frame.Text(LspWire.initializeRequest()))
             awaitResponseFor(id = 1)
-            send(Frame.Text(verifyCommand(id = 2)))
+            send(Frame.Text(verifyCommand(id = 2, command = command)))
             val result = awaitResponseFor(id = 2).resultAs(VerificationCaseResult::class.java)
             assertThat(result.outcomeStatus()).isEqualTo("passed")
             assertThat(result.report().portfolioId).isEqualTo(cannedResult.report().portfolioId)
         }
 
         assertThat(executor.calls).hasSize(1)
-        assertThat(executor.calls[0].command).isEqualTo("oxsts.case.verify")
+        assertThat(executor.calls[0].command).isEqualTo(command)
     }
 
     @Test
-    fun `validateWitness command also routes through the executor`(@TempDir tmp: Path) = testApplication {
-        val executor = FakeVerificationExecutor { cannedResult }
-        installSemantifyrApp(webSockets = true) {
-            installSemantifyrLiveBackend(
-                testInjector(config(tmp)) {
-                    bind(VerificationExecutor::class.java).toInstance(executor)
-                },
-            )
-        }
-
-        jsonClient(webSockets = true).webSocket("/ws/lsp/oxsts") {
-            send(Frame.Text(LspWire.initializeRequest()))
-            awaitResponseFor(id = 1)
-            send(Frame.Text(verifyCommand(id = 2, command = "oxsts.case.validateWitness")))
-            val result = awaitResponseFor(id = 2).resultAs(VerificationCaseResult::class.java)
-            assertThat(result.outcomeStatus()).isEqualTo("passed")
-        }
-
-        assertThat(executor.calls).hasSize(1)
-        assertThat(executor.calls[0].command).isEqualTo("oxsts.case.validateWitness")
-    }
-
-    @Test
-    fun `a verification that throws comes back as an errored result over the socket`(@TempDir tmp: Path) = testApplication {
+    fun `a verification that throws comes back as an errored result over the socket`(@TempDir temporaryDirectory: Path) = testApplication {
         val executor = FakeVerificationExecutor {
             throw RuntimeException("verifier exploded")
         }
-        val injector = testInjector(config(tmp)) {
+        val injector = testInjector(config(temporaryDirectory)) {
             bind(VerificationExecutor::class.java).toInstance(executor)
         }
         installSemantifyrApp(webSockets = true) {
@@ -152,11 +140,11 @@ class WebSocketVerificationFlowTest {
     }
 
     @Test
-    fun `a verification that outlasts the session timeout comes back as a timeout result over the socket`(@TempDir tmp: Path) = testApplication {
+    fun `a verification that outlasts the session timeout comes back as a timeout result over the socket`(@TempDir temporaryDirectory: Path) = testApplication {
         val executor = FakeVerificationExecutor {
             awaitCancellation()
         }
-        val injector = testInjector(config(tmp).copy(verification = VerificationConfig(timeout = 200.milliseconds))) {
+        val injector = testInjector(config(temporaryDirectory).copy(verification = VerificationConfig(timeout = 200.milliseconds))) {
             bind(VerificationExecutor::class.java).toInstance(executor)
         }
         installSemantifyrApp(webSockets = true) {
@@ -177,11 +165,11 @@ class WebSocketVerificationFlowTest {
     }
 
     @Test
-    fun `a witness validation that outlasts the session timeout comes back as a timeout validation result`(@TempDir tmp: Path) = testApplication {
+    fun `a witness validation that outlasts the session timeout comes back as a timeout validation result`(@TempDir temporaryDirectory: Path) = testApplication {
         val executor = FakeVerificationExecutor {
             awaitCancellation()
         }
-        val injector = testInjector(config(tmp).copy(verification = VerificationConfig(timeout = 200.milliseconds))) {
+        val injector = testInjector(config(temporaryDirectory).copy(verification = VerificationConfig(timeout = 200.milliseconds))) {
             bind(VerificationExecutor::class.java).toInstance(executor)
         }
         installSemantifyrApp(webSockets = true) {
@@ -202,16 +190,15 @@ class WebSocketVerificationFlowTest {
     }
 
     @Test
-    fun `a witness validation that throws comes back as an errored validation result`(@TempDir tmp: Path) = testApplication {
+    fun `a witness validation that throws comes back as an errored validation result`(@TempDir temporaryDirectory: Path) = testApplication {
         val executor = FakeVerificationExecutor {
             throw RuntimeException("verifier exploded")
         }
+        val injector = testInjector(config(temporaryDirectory)) {
+            bind(VerificationExecutor::class.java).toInstance(executor)
+        }
         installSemantifyrApp(webSockets = true) {
-            installSemantifyrLiveBackend(
-                testInjector(config(tmp)) {
-                    bind(VerificationExecutor::class.java).toInstance(executor)
-                },
-            )
+            installSemantifyrLiveBackend(injector)
         }
 
         jsonClient(webSockets = true).webSocket("/ws/lsp/oxsts") {
@@ -222,6 +209,8 @@ class WebSocketVerificationFlowTest {
             assertThat(result.status()).isEqualTo(WitnessValidationStatus.ERRORED)
             assertThat(result.message()).contains("verifier exploded")
         }
+
+        assertThat(verificationCount(injector.getInstance(MeterRegistry::class.java), "validate", "none", "errored")).isEqualTo(1)
     }
 
     @ParameterizedTest
@@ -233,7 +222,7 @@ class WebSocketVerificationFlowTest {
     )
     fun `a verification cancelled on the server comes back as a cancelled result of its kind`(
         command: String,
-        @TempDir tmp: Path,
+        @TempDir temporaryDirectory: Path,
     ) = testApplication {
         val running = CompletableDeferred<Unit>()
         val executor = FakeVerificationExecutor {
@@ -242,7 +231,7 @@ class WebSocketVerificationFlowTest {
         }
         installSemantifyrApp(webSockets = true) {
             installSemantifyrLiveBackend(
-                testInjector(config(tmp)) {
+                testInjector(config(temporaryDirectory)) {
                     bind(VerificationExecutor::class.java).toInstance(executor)
                 },
             )
@@ -268,11 +257,13 @@ class WebSocketVerificationFlowTest {
     }
 
     @Test
-    fun `verify brackets the run with verificationsChanged notifications carrying the case`(@TempDir tmp: Path) = testApplication {
-        val executor = FakeVerificationExecutor { cannedResult }
+    fun `verify brackets the run with verificationsChanged notifications carrying the case`(@TempDir temporaryDirectory: Path) = testApplication {
+        val executor = FakeVerificationExecutor {
+            cannedResult
+        }
         installSemantifyrApp(webSockets = true) {
             installSemantifyrLiveBackend(
-                testInjector(config(tmp)) {
+                testInjector(config(temporaryDirectory)) {
                     bind(VerificationExecutor::class.java).toInstance(executor)
                 },
             )
@@ -301,7 +292,7 @@ class WebSocketVerificationFlowTest {
     }
 
     @Test
-    fun `finished verifications are timed by kind, backend and verdict`(@TempDir tmp: Path) = testApplication {
+    fun `finished verifications are timed by kind, backend and verdict`(@TempDir temporaryDirectory: Path) = testApplication {
         val executor = FakeVerificationExecutor {
             if (it.command == "oxsts.case.validateWitness") {
                 WitnessValidationResult("valid", null, "smart", validationReport)
@@ -309,7 +300,7 @@ class WebSocketVerificationFlowTest {
                 cannedResult
             }
         }
-        val injector = testInjector(config(tmp)) {
+        val injector = testInjector(config(temporaryDirectory)) {
             bind(VerificationExecutor::class.java).toInstance(executor)
         }
         installSemantifyrApp(webSockets = true) {
@@ -334,13 +325,13 @@ class WebSocketVerificationFlowTest {
     }
 
     @Test
-    fun `a cancelled verification is counted with the state it was cancelled in`(@TempDir tmp: Path) = testApplication {
+    fun `a cancelled verification is counted with the state it was cancelled in`(@TempDir temporaryDirectory: Path) = testApplication {
         val running = CompletableDeferred<Unit>()
         val executor = FakeVerificationExecutor {
             running.complete(Unit)
             awaitCancellation()
         }
-        val injector = testInjector(config(tmp)) {
+        val injector = testInjector(config(temporaryDirectory)) {
             bind(VerificationExecutor::class.java).toInstance(executor)
         }
         installSemantifyrApp(webSockets = true) {
