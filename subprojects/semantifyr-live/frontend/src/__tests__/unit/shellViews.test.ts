@@ -43,8 +43,11 @@ function result(id: string, status: VerificationCaseState['status'], extra: Part
   const verdict = Object.entries(STATUS_OF_VERDICT).find(([, statusOfVerdict]) => {
     return statusOfVerdict === status
   })?.[0] as ReportVerdict | undefined
-  const report = verdict === undefined ? undefined : reportOf({ verdict, backendId: 'theta', seconds: 2.9 })
-  return { caseInfo: caseAt(id, 1), status, resultStatus: status, report, ...extra }
+  const state: VerificationCaseState = { caseInfo: caseAt(id, 1), status, resultStatus: status, ...extra }
+  if (verdict === undefined || extra.report !== undefined) {
+    return state
+  }
+  return { ...state, report: reportOf({ verdict, backendId: 'theta', seconds: 2.9 }) }
 }
 
 function statusInput(): ShellStatusInput {
