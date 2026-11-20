@@ -24,7 +24,7 @@ dependencies {
     implementation(project(":logging"))
 }
 
-val sysmlCommit = "fde763a0e37da7d7dd2c68aa18b0fcadf6a57aab" // feat: the SysML trace reads a report without a version and without missing calls
+val sysmlCommit = "7fb52bf2146d9dbbd69102cb9be1d1faa7ce75a5" // feat: the SysML trace names the root instance root by convention instead of reading it from the report
 val sysmlUrl = "https://github.com/arminzavada/sysml-2ls.git"
 val sysmlDir = layout.projectDirectory.dir("sysml-2ls")
 
