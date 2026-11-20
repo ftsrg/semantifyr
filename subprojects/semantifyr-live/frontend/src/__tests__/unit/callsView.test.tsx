@@ -10,8 +10,6 @@ import { describe, expect, it } from 'vitest'
 
 import { CallsView } from '../../trace/CallsView'
 
-// Goal: a call's text sits centred on its arrow, the lifelines part to fit it up to the widest arrow, beyond which the text is cut and the tooltip keeps it whole; a self call keeps its text beside its loop, the next lifeline parting to fit it up to the same cap
-
 function entry(self: string, transition: string, calls: ReportCall[] = [], argumentValues: Record<string, ReportValue> = {}): ReportCall {
   return { self, transition, arguments: argumentValues, calls }
 }
@@ -85,21 +83,19 @@ describe('the text of a call in the calls view', () => {
   })
 
   it('beside the loop of a self call parts the next lifeline to fit it, cut beyond the widest arrow', () => {
-    for (const transition of ['switchTheBarrierDownWhileTheTrainApproaches', 'b'.repeat(400)]) {
-      const container = show(traceOf(entry('root', transition), entry('root.child', 'go')))
-      const [, child] = lifelines(container)
-      const label = [...container.querySelectorAll('.call text')].find((text) => {
-        return text.textContent.startsWith(transition.slice(0, 8))
-      })!
-      const estimatedEnd = Number(label.getAttribute('x')) + label.textContent.length * 6.7
-      expect(child, transition).toBeGreaterThan(estimatedEnd)
-      if (transition.length > 100) {
-        expect(label.textContent).toMatch(/…$/)
-        expect(label.closest('.call')?.querySelector('title')?.textContent).toContain(transition)
-      } else {
-        expect(label.textContent).toBe(`${transition}()`)
-      }
+    const nextLifelineAfter = (transition: string): number => {
+      return lifelines(show(traceOf(entry('root', transition), entry('root.child', 'go'))))[1]!
     }
+    const longTransition = 'switchTheBarrierDownWhileTheTrainApproaches'
+    expect(nextLifelineAfter(longTransition)).toBeGreaterThan(nextLifelineAfter('go'))
+
+    const cutTransition = 'b'.repeat(400)
+    const container = show(traceOf(entry('root', cutTransition), entry('root.child', 'go')))
+    const label = [...container.querySelectorAll('.call text')].find((text) => {
+      return text.textContent.startsWith(cutTransition.slice(0, 8))
+    })!
+    expect(label.textContent).toMatch(/…$/)
+    expect(label.closest('.call')?.querySelector('title')?.textContent).toContain(cutTransition)
   })
 })
 

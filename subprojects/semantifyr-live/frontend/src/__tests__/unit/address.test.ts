@@ -20,8 +20,6 @@ vi.mock('../../lib/session/monaco', () => {
   return {}
 })
 
-// Goal: the path names the model, the query its flavour, the fragment what the visitor made; an unknown name says what opened instead
-
 const silent: LspClient = {
   sendRequest: async () => {
     return null
