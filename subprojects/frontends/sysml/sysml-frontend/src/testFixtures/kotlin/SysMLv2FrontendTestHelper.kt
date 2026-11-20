@@ -6,7 +6,6 @@
 
 package hu.bme.mit.semantifyr.frontends.sysml.testing
 
-import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.ArtifactConfig
 import hu.bme.mit.semantifyr.compiler.reader.SemantifyrLoader
@@ -22,7 +21,6 @@ import hu.bme.mit.semantifyr.verifier.VerificationCase
 import hu.bme.mit.semantifyr.verifier.assertVerdict
 import hu.bme.mit.semantifyr.verifier.portfolio.VerificationPortfolio
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.Assertions
 import java.nio.file.Path
 import kotlin.io.path.Path
 import kotlin.io.path.copyTo
@@ -100,17 +98,6 @@ class SysMLv2FrontendTestHelper {
         val tracePath = result.tracePath
         assertThat(tracePath).describedAs("SysML trace of $entry").isNotNull().isRegularFile()
         return tracePath
-    }
-
-    suspend fun checkVerifiesWithoutError(
-        frontend: SysMLv2Frontend,
-        entry: CorpusEntry,
-    ) {
-        val result = frontend.verify(verificationCase(frontend, entry)).outcome.report.result
-        logger.info { "$entry: ${result.verdict} after ${result.metrics.totalDuration} (${result.message ?: "no message"})" }
-        Assertions.assertNotEquals(VerificationVerdict.Errored, result.verdict) {
-            "$entry errored: ${result.message ?: "no message"}"
-        }
     }
 
     fun expectsWitness(
