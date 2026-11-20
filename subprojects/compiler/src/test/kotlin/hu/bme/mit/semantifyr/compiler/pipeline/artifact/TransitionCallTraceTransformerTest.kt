@@ -20,9 +20,9 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssignmentOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ElementReference
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralBoolean
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.TransitionDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.any
 import org.mockito.kotlin.mock
@@ -46,10 +46,6 @@ class TransitionCallTraceTransformerTest {
     private val emptyCallExpression = OxstsFactory.createCallSuffixExpression()
     private val emptyBody = OxstsFactory.createSequenceOperation()
 
-    private fun mockTransitionDeclaration(): TransitionDeclaration {
-        return OxstsFactory.createTransitionDeclaration()
-    }
-
     private fun newTransformer(): TransitionCallTraceTransformer {
         whenever(evaluatorProvider.getEvaluator(any())).thenReturn(evaluator)
         whenever(builtinSymbolResolver.boolDatatype(any())).thenReturn(boolDatatype)
@@ -58,43 +54,23 @@ class TransitionCallTraceTransformerTest {
     }
 
     @Test
-    fun `traceTransitionCall returns an assignment of true to a fresh tracer variable`() {
+    fun `a traced call sets a fresh tracer, a NonOptimizable bool starting false`() {
         val transformer = newTransformer()
 
         val operation = transformer.traceTransitionCall(
             instance,
             container,
-            mockTransitionDeclaration(),
+            OxstsFactory.createTransitionDeclaration(),
             emptyCallExpression,
             emptyBody,
             emptyMap(),
         ).tracerAssignment
 
-        assertThat(operation).isInstanceOf(AssignmentOperation::class.java)
-        val reference = operation.reference as ElementReference
-        val variable = reference.element as VariableDeclaration
-        assertThat(TransitionTracerNames.isTracerName(variable.name)).isTrue
-        val literal = operation.expression as LiteralBoolean
-        assertThat(literal.isValue).isTrue
-    }
-
-    @Test
-    fun `tracer variable is annotated NonOptimizable only with bool default false`() {
-        val transformer = newTransformer()
-
-        val operation = transformer.traceTransitionCall(
-            instance,
-            container,
-            mockTransitionDeclaration(),
-            emptyCallExpression,
-            emptyBody,
-            emptyMap(),
-        ).tracerAssignment
-
+        assertThat((operation.expression as LiteralBoolean).isValue).isTrue
         val variable = (operation.reference as ElementReference).element as VariableDeclaration
+        assertThat(TransitionTracerNames.isTracerName(variable.name)).isTrue
         assertThat(variable.typeSpecification.domain).isSameAs(boolDatatype)
-        val initialLiteral = variable.expression as LiteralBoolean
-        assertThat(initialLiteral.isValue).isFalse
+        assertThat((variable.expression as LiteralBoolean).isValue).isFalse
         val annotationDeclarations = variable.annotation.annotations.map {
             it.declaration
         }
@@ -102,12 +78,39 @@ class TransitionCallTraceTransformerTest {
     }
 
     @Test
+    fun `a run-time argument of a type no variable can record is an invariant violation`() {
+        val transformer = newTransformer()
+        val parameter = OxstsFactory.createParameterDeclaration().also {
+            it.name = "elapsed"
+            it.typeSpecification = OxstsFactory.createTypeSpecification().also { typeSpecification ->
+                typeSpecification.domain = OxstsFactory.createDataTypeDeclaration().also { datatype ->
+                    datatype.name = "clock"
+                }
+            }
+        }
+        val transition = OxstsFactory.createTransitionDeclaration().also {
+            it.parameters += parameter
+        }
+        val callExpression = OxstsFactory.createCallSuffixExpression().also {
+            it.arguments += OxstsFactory.createArgument().also { argument ->
+                argument.expression = OxstsFactory.createLiteralInteger(0)
+            }
+        }
+        val temporary = OxstsFactory.createLocalVarDeclarationOperation()
+
+        assertThatThrownBy {
+            transformer.traceTransitionCall(instance, container, transition, callExpression, emptyBody, mapOf(parameter to temporary))
+        }.isInstanceOf(IllegalStateException::class.java)
+            .hasMessage("No recording variable for a run-time argument of type 'clock'")
+    }
+
+    @Test
     fun `consecutive trace calls allocate distinct tracer variables`() {
         val transformer = newTransformer()
 
-        val firstName = tracerVariableNameOf(transformer.traceTransitionCall(instance, container, mockTransitionDeclaration(), emptyCallExpression, emptyBody, emptyMap()).tracerAssignment)
-        val secondName = tracerVariableNameOf(transformer.traceTransitionCall(instance, container, mockTransitionDeclaration(), emptyCallExpression, emptyBody, emptyMap()).tracerAssignment)
-        val thirdName = tracerVariableNameOf(transformer.traceTransitionCall(instance, container, mockTransitionDeclaration(), emptyCallExpression, emptyBody, emptyMap()).tracerAssignment)
+        val firstName = tracerVariableNameOf(transformer.traceTransitionCall(instance, container, OxstsFactory.createTransitionDeclaration(), emptyCallExpression, emptyBody, emptyMap()).tracerAssignment)
+        val secondName = tracerVariableNameOf(transformer.traceTransitionCall(instance, container, OxstsFactory.createTransitionDeclaration(), emptyCallExpression, emptyBody, emptyMap()).tracerAssignment)
+        val thirdName = tracerVariableNameOf(transformer.traceTransitionCall(instance, container, OxstsFactory.createTransitionDeclaration(), emptyCallExpression, emptyBody, emptyMap()).tracerAssignment)
 
         assertThat(listOf(firstName, secondName, thirdName)).doesNotHaveDuplicates()
         listOf(firstName, secondName, thirdName).forEach {
@@ -126,11 +129,9 @@ class TransitionCallTraceTransformerTest {
         assertThat(inlinedOxsts.variables).isEmpty()
         assertThat(inlinedOxsts.mainTransition.branches).isEmpty()
         val anyVariable: VariableDeclaration = mock()
-        assertThat(
-            runCatching {
-                map.getTransitionCallTrace(anyVariable)
-            }.isFailure,
-        ).isTrue
+        assertThatThrownBy {
+            map.getTransitionCallTrace(anyVariable)
+        }.isInstanceOf(IllegalStateException::class.java)
     }
 
     @Test
@@ -142,8 +143,8 @@ class TransitionCallTraceTransformerTest {
                 transition.branches += OxstsFactory.createSequenceOperation()
             }
         }
-        val firstAssignment = transformer.traceTransitionCall(instance, container, mockTransitionDeclaration(), emptyCallExpression, emptyBody, emptyMap()).tracerAssignment
-        val secondAssignment = transformer.traceTransitionCall(instance, container, mockTransitionDeclaration(), emptyCallExpression, emptyBody, emptyMap()).tracerAssignment
+        val firstAssignment = transformer.traceTransitionCall(instance, container, OxstsFactory.createTransitionDeclaration(), emptyCallExpression, emptyBody, emptyMap()).tracerAssignment
+        val secondAssignment = transformer.traceTransitionCall(instance, container, OxstsFactory.createTransitionDeclaration(), emptyCallExpression, emptyBody, emptyMap()).tracerAssignment
         val firstVariable = (firstAssignment.reference as ElementReference).element as VariableDeclaration
         val secondVariable = (secondAssignment.reference as ElementReference).element as VariableDeclaration
 
@@ -165,7 +166,7 @@ class TransitionCallTraceTransformerTest {
     @Test
     fun `finalize returns a map that resolves recorded traces by tracer variable`() {
         val transformer = newTransformer()
-        val transition = mockTransitionDeclaration()
+        val transition = OxstsFactory.createTransitionDeclaration()
 
         val operation = transformer.traceTransitionCall(instance, container, transition, emptyCallExpression, emptyBody, emptyMap()).tracerAssignment
         val variable = (operation.reference as ElementReference).element as VariableDeclaration
@@ -180,8 +181,8 @@ class TransitionCallTraceTransformerTest {
     @Test
     fun `finalize drops the tracers whose assignment left the model`() {
         val transformer = newTransformer()
-        val calledAssignment = transformer.traceTransitionCall(instance, container, mockTransitionDeclaration(), emptyCallExpression, emptyBody, emptyMap()).tracerAssignment
-        val uncalledAssignment = transformer.traceTransitionCall(instance, container, mockTransitionDeclaration(), emptyCallExpression, emptyBody, emptyMap()).tracerAssignment
+        val calledAssignment = transformer.traceTransitionCall(instance, container, OxstsFactory.createTransitionDeclaration(), emptyCallExpression, emptyBody, emptyMap()).tracerAssignment
+        val uncalledAssignment = transformer.traceTransitionCall(instance, container, OxstsFactory.createTransitionDeclaration(), emptyCallExpression, emptyBody, emptyMap()).tracerAssignment
         val calledVariable = (calledAssignment.reference as ElementReference).element as VariableDeclaration
         val uncalledVariable = (uncalledAssignment.reference as ElementReference).element as VariableDeclaration
         val inlinedOxsts = inlinedOxstsCalling(calledAssignment)
@@ -195,11 +196,9 @@ class TransitionCallTraceTransformerTest {
         }
         assertThat(assignedVariables).containsExactly(calledVariable, calledVariable)
         assertThat(map.getTransitionCallTrace(calledVariable).self.instances).containsExactly(container)
-        assertThat(
-            runCatching {
-                map.getTransitionCallTrace(uncalledVariable)
-            }.isFailure,
-        ).isTrue
+        assertThatThrownBy {
+            map.getTransitionCallTrace(uncalledVariable)
+        }.isInstanceOf(IllegalStateException::class.java)
     }
 
     @Test

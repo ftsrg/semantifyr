@@ -120,12 +120,54 @@ public class TraceArgumentValidationTest {
 
         parsedPackage.assertNoResourceErrors();
         assertThat(parsedPackage.getIssues())
-                .filteredOn(issue -> issue.getSeverity() == Severity.ERROR)
+                .filteredOn(issue -> {
+                    return issue.getSeverity() == Severity.ERROR;
+                })
                 .hasSize(3)
                 .allSatisfy(issue -> {
                     assertThat(issue.getCode()).isEqualTo(OxstsValidator.UNSUPPORTED_FEATURE);
                     assertThat(issue.getMessage()).contains("Record arguments of the traced transition 'send'");
                 });
+    }
+
+    @Test
+    void anArrayCannotReachATracedParameter() {
+        var parsedPackage = parseHelper.parse("""
+            package test
+            class Display {
+                var seen: bool := false
+                @Trace
+                tran note(value: any) {
+                    seen := true
+                }
+                @Trace
+                tran show(values: int[2]) {
+                    seen := true
+                }
+            }
+            class Host {
+                var readings: int[2] := [0, 0]
+                contains display: Display
+                tran relay(value: any) {
+                    inline display.note(value)
+                }
+                redefine tran {
+                    inline display.note(readings)
+                    inline relay(readings)
+                }
+            }
+            """, CheckMode.ALL);
+
+        parsedPackage.assertNoResourceErrors();
+        assertThat(parsedPackage.getIssues())
+                .filteredOn(issue -> {
+                    return issue.getSeverity() == Severity.ERROR;
+                })
+                .extracting(issue -> {
+                    return issue.getCode();
+                })
+                .containsExactlyInAnyOrder(
+                        OxstsValidator.UNSUPPORTED_FEATURE, OxstsValidator.TYPE_MISMATCH, OxstsValidator.TYPE_MISMATCH);
     }
 
     @Test
