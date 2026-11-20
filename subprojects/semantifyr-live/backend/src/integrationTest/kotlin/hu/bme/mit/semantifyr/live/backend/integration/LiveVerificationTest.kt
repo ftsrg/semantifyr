@@ -44,11 +44,11 @@ import kotlin.time.Duration.Companion.minutes
 class LiveVerificationTest {
 
     @Test
-    suspend fun `oxsts witness validation reports valid after a passing verification`(@TempDir tmp: Path) {
+    suspend fun `an oxsts witness validates twice as valid, leaves the witness as it was and keeps its report beside the case's artifacts`(@TempDir temporaryDirectory: Path) {
         StagedTestSupport.assumeStaged()
         val documentUri = "file:///workspace/snippet.semantifyr"
         val modelSource = stagedModel(StagedTestSupport.oxstsTestModelsDirectory, "semantifyr.live.oxstsTestModels", "smoke.semantifyr")
-        withRealServer(config(tmp)) { client, port ->
+        withRealServer(config(temporaryDirectory)) { client, port ->
             client.webSocket("ws://localhost:$port/ws/lsp/oxsts") {
                 send(Frame.Text(LspWire.initializeRequest()))
                 awaitResponseFor(id = 1)
@@ -113,7 +113,7 @@ class LiveVerificationTest {
                     .isEqualTo(WitnessValidationStatus.VALID)
                 send(Frame.Text(LspWire.request(id = 7, method = SemantifyrLiveMethods.READ_DOCUMENT, params = ReadDocumentParams(witnessUri))))
                 assertThat(awaitResponseFor(id = 7).resultAs(ReadDocumentResult::class.java).text).isEqualTo(witnessText)
-                assertThat(artifactsOnDisk(tmp, caseDirectoryName("snippet", selectedCase))).contains(
+                assertThat(artifactsOnDisk(temporaryDirectory, caseDirectoryName("snippet", selectedCase))).contains(
                     "report.json",
                     "witness.semantifyr",
                     "validation/report.json",
@@ -123,56 +123,11 @@ class LiveVerificationTest {
     }
 
     @Test
-    suspend fun `gamma verification returns the generated gamma trace, which opens without errors`(@TempDir tmp: Path) {
+    suspend fun `a gamma verification returns its gamma trace, which opens without errors, and a witness that re-verifies`(@TempDir temporaryDirectory: Path) {
         StagedTestSupport.assumeStaged()
         val documentUri = "file:///workspace/snippet.gamma"
         val modelSource = stagedModel(StagedTestSupport.gammaTestModelsDirectory, "semantifyr.live.gammaTestModels", "Simple.gamma")
-        withRealServer(config(tmp)) { client, port ->
-            client.webSocket("ws://localhost:$port/ws/lsp/gamma") {
-                send(Frame.Text(LspWire.initializeRequest()))
-                awaitResponseFor(id = 1)
-                send(Frame.Text(LspWire.initializedNotification()))
-                send(Frame.Text(LspWire.didOpenNotification(uri = documentUri, languageId = "gamma", text = modelSource)))
-
-                val cases = discoverCases(id = 2, command = "gamma.case.discover", documentUri = documentUri, flavor = "gamma")
-                val selectedCase = cases.pickByLabel("LeaderStatechartIdleReachable")
-
-                send(
-                    Frame.Text(
-                        LspWire.executeCommandRequest(
-                            id = 3,
-                            command = "gamma.case.verify",
-                            arguments = listOf(
-                                VerificationCaseRequest(documentUri, selectedCase.location().range, "smart"),
-                            ),
-                        ),
-                    ),
-                )
-                val verifyResult = awaitResponseFor(id = 3, timeout = 2.minutes).resultAs(VerificationCaseResult::class.java)
-                assertThat(verifyResult.outcomeStatus()).isEqualTo(expectedStatus("Simple.gamma", "LeaderStatechartIdleReachable"))
-                val traceUri = verifyResult.traceUri()
-                    ?: error("verify produced no trace URI: $verifyResult")
-                assertThat(traceUri).startsWith("file:///workspace/").endsWith("/trace.get")
-
-                send(Frame.Text(LspWire.request(id = 4, method = SemantifyrLiveMethods.READ_DOCUMENT, params = ReadDocumentParams(traceUri))))
-                val traceText = awaitResponseFor(id = 4).resultAs(ReadDocumentResult::class.java).text
-                assertThat(traceText).contains("trace LeaderStatechartIdleReachableTrace of LeaderStatechartIdleReachable")
-
-                send(Frame.Text(LspWire.didOpenNotification(uri = traceUri, languageId = "gamma", text = checkNotNull(traceText))))
-                val diagnostics = awaitPublishDiagnostics(traceUri).paramsAs(PublishDiagnosticsParams::class.java).diagnostics
-                assertThat(diagnostics).noneMatch {
-                    it.severity == DiagnosticSeverity.Error
-                }
-            }
-        }
-    }
-
-    @Test
-    suspend fun `gamma witness validation re-verifies the witness of the verified case`(@TempDir tmp: Path) {
-        StagedTestSupport.assumeStaged()
-        val documentUri = "file:///workspace/snippet.gamma"
-        val modelSource = stagedModel(StagedTestSupport.gammaTestModelsDirectory, "semantifyr.live.gammaTestModels", "Simple.gamma")
-        withRealServer(config(tmp)) { client, port ->
+        withRealServer(config(temporaryDirectory)) { client, port ->
             client.webSocket("ws://localhost:$port/ws/lsp/gamma") {
                 send(Frame.Text(LspWire.initializeRequest()))
                 awaitResponseFor(id = 1)
@@ -183,9 +138,21 @@ class LiveVerificationTest {
                 val selectedCase = cases.pickByLabel("LeaderStatechartIdleReachable")
                 val request = VerificationCaseRequest(documentUri, selectedCase.location().range, "smart")
 
-                send(Frame.Text(LspWire.executeCommandRequest(id = 4, command = "gamma.case.verify", arguments = listOf(request))))
-                val verifyResult = awaitResponseFor(id = 4, timeout = 2.minutes).resultAs(VerificationCaseResult::class.java)
+                send(Frame.Text(LspWire.executeCommandRequest(id = 3, command = "gamma.case.verify", arguments = listOf(request))))
+                val verifyResult = awaitResponseFor(id = 3, timeout = 2.minutes).resultAs(VerificationCaseResult::class.java)
                 assertThat(verifyResult.outcomeStatus()).isEqualTo(expectedStatus("Simple.gamma", "LeaderStatechartIdleReachable"))
+                val traceUri = verifyResult.traceUri()
+                    ?: error("verify produced no trace URI: $verifyResult")
+                assertThat(traceUri).startsWith("file:///workspace/").endsWith("/trace.get")
+
+                send(Frame.Text(LspWire.request(id = 4, method = SemantifyrLiveMethods.READ_DOCUMENT, params = ReadDocumentParams(traceUri))))
+                val traceText = awaitResponseFor(id = 4).resultAs(ReadDocumentResult::class.java).text
+                assertThat(traceText).contains("trace LeaderStatechartIdleReachableTrace of LeaderStatechartIdleReachable")
+                send(Frame.Text(LspWire.didOpenNotification(uri = traceUri, languageId = "gamma", text = checkNotNull(traceText))))
+                val diagnostics = awaitPublishDiagnostics(traceUri).paramsAs(PublishDiagnosticsParams::class.java).diagnostics
+                assertThat(diagnostics).noneMatch {
+                    it.severity == DiagnosticSeverity.Error
+                }
 
                 val witnessUri = verifyResult.witnessUri()
                     ?: error("verify produced no witness URI: $verifyResult")
@@ -198,21 +165,20 @@ class LiveVerificationTest {
                     .isEqualTo(WitnessValidationStatus.VALID)
                 assertThat(validation.report()?.result?.verdict).isEqualTo(VerificationVerdict.Passed)
                 assertThat(validation.portfolioId()).isEqualTo("smart")
-                val verificationDirectory = "model._Simple._LeaderStatechartIdleReachable"
-                assertThat(artifactsOnDisk(tmp, "Simple.LeaderStatechart-c8358067")).contains(
-                    "verification/$verificationDirectory/report.json",
-                    "verification/$verificationDirectory/witness.semantifyr",
-                    "verification/$verificationDirectory/trace.get",
-                    "verification/$verificationDirectory/validation/report.json",
+                assertThat(artifactsOnDisk(temporaryDirectory, "model._Simple._LeaderStatechartIdleReachable")).contains(
+                    "report.json",
+                    "witness.semantifyr",
+                    "trace.get",
+                    "validation/report.json",
                 )
             }
         }
     }
 
     @Test
-    suspend fun `oxsts-with-gamma-library verifies a compiled gamma example`(@TempDir tmp: Path) {
+    suspend fun `oxsts-with-gamma-library verifies a compiled gamma example`(@TempDir temporaryDirectory: Path) {
         verifyCompiledCase(
-            tmp = tmp,
+            temporaryDirectory = temporaryDirectory,
             flavor = "oxsts-with-gamma-library",
             modelSource = stagedModel(StagedTestSupport.gammaLibraryModelsDirectory, "semantifyr.live.gammaLibraryModels", "Simple.semantifyr"),
             caseName = "LeaderStatechartIdleReachable",
@@ -221,9 +187,9 @@ class LiveVerificationTest {
     }
 
     @Test
-    suspend fun `oxsts-with-sysmlv2-library verifies a compiled sysml example`(@TempDir tmp: Path) {
+    suspend fun `oxsts-with-sysmlv2-library verifies a compiled sysml example`(@TempDir temporaryDirectory: Path) {
         verifyCompiledCase(
-            tmp = tmp,
+            temporaryDirectory = temporaryDirectory,
             flavor = "oxsts-with-sysmlv2-library",
             modelSource = stagedModel(StagedTestSupport.sysmlLibraryModelsDirectory, "semantifyr.live.sysmlLibraryModels", "door_access.semantifyr"),
             caseName = "LockedReachable",
@@ -256,14 +222,14 @@ class LiveVerificationTest {
     }
 
     private suspend fun verifyCompiledCase(
-        tmp: Path,
+        temporaryDirectory: Path,
         flavor: String,
         modelSource: String,
         caseName: String,
         expectedStatus: String,
     ) {
         verifyEndToEnd(
-            tmp = tmp,
+            temporaryDirectory = temporaryDirectory,
             flavor = flavor,
             modelSource = modelSource,
             pickCase = {
