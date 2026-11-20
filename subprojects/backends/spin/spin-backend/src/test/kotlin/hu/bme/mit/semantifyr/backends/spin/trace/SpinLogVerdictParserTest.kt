@@ -239,6 +239,19 @@ class SpinLogVerdictParserTest {
     }
 
     @Test
+    fun `a pan that stops on its state vector names pan's message`() {
+        val rejection = parser.rejection(
+            sequenceOf(
+                "pan: error, VECTORSZ too small, recompile pan.c with -DVECTORSZ=N with N>1612",
+                "pan:1: aborting (at depth 0)",
+                "State-vector 1612 byte, depth reached 0, errors: 1",
+            ),
+        )
+
+        assertThat(rejection).contains("VECTORSZ too small")
+    }
+
+    @Test
     fun `the merge limit is no rejection`() {
         assertThat(parser.rejection(sequenceOf("spin: model.pml:303, Error: merge requires more than 256 bups"))).isNull()
     }

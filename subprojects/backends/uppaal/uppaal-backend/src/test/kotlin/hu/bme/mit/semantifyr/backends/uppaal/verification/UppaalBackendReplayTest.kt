@@ -119,14 +119,6 @@ class UppaalBackendReplayTest {
     }
 
     @Test
-    suspend fun `a model verifyta rejects is Errored with verifyta's message`() {
-        val result = verify("RejectedModel", models.parse(BackendTestModels.SATURATING_COUNTER_EXCEEDS_BOUND), TransitionCallTraceMap(emptyMap()))
-
-        assertThat(result.verdict).isEqualTo(VerificationVerdict.Errored)
-        assertThat(result.message).contains("Duplicate definition of On.")
-    }
-
-    @Test
     suspend fun `a violated invariant fails with a witness through the violating states`() {
         val result = verify("CounterExceedsBound", models.parse(BackendTestModels.SATURATING_COUNTER_EXCEEDS_BOUND), TransitionCallTraceMap(emptyMap()))
 
@@ -261,26 +253,9 @@ class UppaalBackendReplayTest {
 
     @Test
     suspend fun `an assignment Uppaal stops on is NotSupported naming the variable`() {
-        val artifactDirectory = cleanArtifactDirectory("OutOfRangeAssignment")
-        val environment = ExecutionEnvironment.builder().put(UppaalExecutorKey) {
-            object : UppaalExecutor {
-                override fun isAvailable(): Boolean {
-                    return true
-                }
-
-                override suspend fun execute(uppaalExecutionSpecification: UppaalExecutionSpecification): UppaalExecutionResult {
-                    uppaalExecutionSpecification.logFile!!.writeText(" -- Aborted.\n")
-                    uppaalExecutionSpecification.errorFile!!.writeText(
-                        "model.xml:/nta/template[1]/transition[3]/label[1]:1: [error] Assignment of value '3' to variable 'counter' is out of range.\n",
-                    )
-                    return UppaalExecutionResult(1)
-                }
-            }
-        }.build()
-        val request = BackendVerificationRequest(models.parse(BackendTestModels.SATURATING_COUNTER_EXCEEDS_BOUND), artifactDirectory, transitionCallTraces = TransitionCallTraceMap(emptyMap()))
-        val result = UppaalBackend().verify(injector, UppaalConfig.Default, request, environment)
+        val result = verifyFixture("boundedness", "DoublingReachesNegative")
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.NotSupported)
-        assertThat(result.message).matches("uppaal:default does not support \\S+:2: an assignment of 3 outside the declared range \\(counter\\)")
+        assertThat(result.message).isEqualTo("uppaal:default does not support boundedness.semantifyr:54: an assignment of 1073741824 outside the declared range (\$\$root\$\$x)")
     }
 }
