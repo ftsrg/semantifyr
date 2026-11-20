@@ -4,10 +4,10 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.backends.uppaal
+package hu.bme.mit.semantifyr.backends.nuxmv
 
-import hu.bme.mit.semantifyr.backends.uppaal.verification.UppaalBackend
-import hu.bme.mit.semantifyr.backends.uppaal.verification.UppaalConfig
+import hu.bme.mit.semantifyr.backends.nuxmv.verification.NuxmvBackend
+import hu.bme.mit.semantifyr.backends.nuxmv.verification.NuxmvConfig
 import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup
 import hu.bme.mit.semantifyr.verifier.SemantifyrVerifierTestHelper
 import hu.bme.mit.semantifyr.verifier.assumeBackendAvailable
@@ -16,7 +16,7 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import kotlin.io.path.Path
 
-class UppaalWitnessReparseTest {
+class NuxmvWitnessReparseTest {
 
     companion object {
 
@@ -25,16 +25,16 @@ class UppaalWitnessReparseTest {
 
         @JvmStatic
         @BeforeAll
-        fun assumeUppaalAvailable() {
-            assumeBackendAvailable(UppaalExecutorKey)
+        fun assumeNuxmvAvailable() {
+            assumeBackendAvailable(NuxmvExecutorKey)
         }
     }
 
-    private val portfolio = SingleBackendPortfolio(UppaalBackend(), UppaalConfig.Default)
-    private val outputDirectory = SemantifyrVerifierTestHelper.testArtifactRoot(UppaalWitnessReparseTest::class.java)
+    private val portfolio = SingleBackendPortfolio(NuxmvBackend(), NuxmvConfig.Ic3Invar)
+    private val outputDirectory = SemantifyrVerifierTestHelper.testArtifactRoot(NuxmvWitnessReparseTest::class.java)
 
     @Test
-    suspend fun `a witness with a half delay reparses and re-verifies on Uppaal`() {
+    suspend fun `a witness with a half delay reparses and re-verifies on nuXmv`() {
         helper.checkWitnessReparses(
             modelPath = Path("build/test-models/semantic/clocks.semantifyr"),
             qualifiedName = "semantifyr::verification::lang::clocks::ClockStrictTestDenseReach",
