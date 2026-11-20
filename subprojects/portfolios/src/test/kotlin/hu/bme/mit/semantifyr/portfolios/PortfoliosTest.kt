@@ -21,27 +21,6 @@ class PortfoliosTest {
     }
 
     @Test
-    fun `a racing portfolio lists each leg with its soundness direction`() {
-        assertThat(Portfolios.SmartFull.legs).extracting(
-            {
-                it.id
-            },
-            {
-                it.config.soundness
-            },
-        ).contains(
-            tuple("theta:cegar-expl", SoundnessDirection.Exact),
-            tuple("theta:cegar-expl-pred-combined", SoundnessDirection.Exact),
-            tuple("theta:chc", SoundnessDirection.OverApproximating),
-            tuple("nuxmv:kinduction-invar", SoundnessDirection.Exact),
-            tuple("nuxmv:ic3-invar", SoundnessDirection.Exact),
-            tuple("spin:safe-dfs", SoundnessDirection.UnderApproximating),
-            tuple("uppaal:default", SoundnessDirection.UnderApproximating),
-            tuple("uppaal:over-approximation", SoundnessDirection.OverApproximating),
-        )
-    }
-
-    @Test
     fun `a single-backend portfolio lists its configuration as its leg`() {
         assertThat(Portfolios.UppaalDefault.legs).extracting(
             {

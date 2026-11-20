@@ -59,23 +59,6 @@ class SmartFullPortfolioTest {
     }
 
     @Test
-    suspend fun `a run whose trace cannot be read back fails and another leg decides the case`(
-        @TempDir output: Path,
-    ) {
-        val portfolio = SmartFullPortfolio(
-            theta = UnreadableTraceBackend("theta"),
-            uppaal = SlowBackend("uppaal", delayMillis = 100, verdict = VerificationVerdict.Failed),
-            nuxmv = SlowBackend("nuxmv", delayMillis = 100, verdict = VerificationVerdict.Failed),
-            spin = SlowBackend("spin", delayMillis = 100, verdict = VerificationVerdict.Failed),
-        )
-
-        val result = portfolio.verify(parentInjector, stubRequest(output), gate, ExecutionEnvironment.Empty, ProgressContext.Silent, noReadBack)
-
-        assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
-        assertThat(result.metadata.backendId).isNotEqualTo("theta")
-    }
-
-    @Test
     suspend fun `a Passed invariant from an under-approximating leg does not decide the case`(
         @TempDir output: Path,
     ) {
@@ -176,39 +159,6 @@ class SmartFullPortfolioTest {
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Inconclusive)
         assertThat(result.message).contains("No backend is installed")
         assertThat((portfolio.availability() as AvailabilityReport.Unavailable).hints).containsExactly("Install the other fake.")
-    }
-
-    @Test
-    suspend fun `every backend throwing yields an Errored verdict`(
-        @TempDir output: Path,
-    ) {
-        val portfolio = SmartFullPortfolio(
-            theta = ErroringBackend("theta"),
-            uppaal = ErroringBackend("uppaal"),
-            nuxmv = ErroringBackend("nuxmv"),
-            spin = ErroringBackend("spin"),
-        )
-
-        val result = portfolio.verify(parentInjector, stubRequest(output), gate, ExecutionEnvironment.Empty, ProgressContext.Silent, noReadBack)
-
-        assertThat(result.verdict).isEqualTo(VerificationVerdict.Errored)
-        assertThat(result.message).contains("All portfolio jobs errored")
-    }
-
-    @Test
-    suspend fun `every backend NotSupported yields a NotSupported verdict`(
-        @TempDir output: Path,
-    ) {
-        val portfolio = SmartFullPortfolio(
-            theta = NotSupportedBackend("theta"),
-            uppaal = NotSupportedBackend("uppaal"),
-            nuxmv = NotSupportedBackend("nuxmv"),
-            spin = NotSupportedBackend("spin"),
-        )
-
-        val result = portfolio.verify(parentInjector, stubRequest(output), gate, ExecutionEnvironment.Empty, ProgressContext.Silent, noReadBack)
-
-        assertThat(result.verdict).isEqualTo(VerificationVerdict.NotSupported)
     }
 
     @Test

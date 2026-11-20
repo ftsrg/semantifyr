@@ -35,33 +35,6 @@ class SmartFullPortfolioStagesTest {
     private val parentInjector = mock(Injector::class.java)
 
     @Test
-    fun `with more configurations than slots the stages run one after another beside the configurations listed in a row`(
-        @TempDir output: Path,
-    ) = runTest {
-        val theta = scripted<ThetaConfig>("theta")
-        val spin = scripted<SpinConfig>("spin")
-        val portfolio = smart(theta = theta, spin = spin)
-
-        val result = portfolio.verify(parentInjector, stubRequest(output, timeout = 120.seconds), LimitedConcurrencyGate(9), ExecutionEnvironment.Empty, ProgressContext.Silent, noReadBack)
-
-        assertThat(result.verdict).isEqualTo(VerificationVerdict.Timeout)
-        assertThat(currentTime).isEqualTo(120_000)
-        assertThat(startsOf(theta) + startsOf(spin)).containsExactlyInAnyOrder(
-            "bounded-bmc@0s",
-            "safe-dfs@0s",
-            "bounded-kinduction@0s",
-            "cegar-expl@0s",
-            "cegar-pred-cart@10s",
-            "chc@10s",
-            "bounded-imc@10s",
-            "cegar-expl-pred-combined@10s",
-            "ic3@40s",
-            "collapse@40s",
-            "bitstate@40s",
-        )
-    }
-
-    @Test
     fun `Spin's collapse and bitstate stay out of the last stage after its plain search ended on its own`(
         @TempDir output: Path,
     ) = runTest {
@@ -202,7 +175,7 @@ class SmartFullPortfolioStagesTest {
     }
 
     @Test
-    fun `with all four backends each stage holds its configurations`(
+    fun `with more configurations than slots the stages run one after another beside the configurations listed in a row`(
         @TempDir output: Path,
     ) = runTest {
         val theta = scripted<ThetaConfig>("theta")
@@ -211,8 +184,10 @@ class SmartFullPortfolioStagesTest {
         val spin = scripted<SpinConfig>("spin")
         val portfolio = smart(theta = theta, uppaal = uppaal, nuxmv = nuxmv, spin = spin)
 
-        portfolio.verify(parentInjector, stubRequest(output, timeout = 120.seconds), LimitedConcurrencyGate(9), ExecutionEnvironment.Empty, ProgressContext.Silent, noReadBack)
+        val result = portfolio.verify(parentInjector, stubRequest(output, timeout = 120.seconds), LimitedConcurrencyGate(9), ExecutionEnvironment.Empty, ProgressContext.Silent, noReadBack)
 
+        assertThat(result.verdict).isEqualTo(VerificationVerdict.Timeout)
+        assertThat(currentTime).isEqualTo(120_000)
         val starts = listOf(theta, uppaal, nuxmv, spin).flatMap { backend ->
             backend.starts.map {
                 "${backend.id}:${it.configuration}@${it.at}"

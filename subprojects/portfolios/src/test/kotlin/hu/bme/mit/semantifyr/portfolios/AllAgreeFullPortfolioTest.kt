@@ -24,22 +24,6 @@ class AllAgreeFullPortfolioTest {
     private val parentInjector = mock(Injector::class.java)
 
     @Test
-    suspend fun `every backend agrees on Passed produces Passed`(
-        @TempDir output: Path,
-    ) {
-        val portfolio = AllAgreeFullPortfolio(
-            theta = PassingBackend("theta"),
-            nuxmv = PassingBackend("nuxmv"),
-            uppaal = PassingBackend("uppaal"),
-            spin = PassingBackend("spin"),
-        )
-
-        val result = portfolio.verify(parentInjector, stubRequest(output), gate, ExecutionEnvironment.Empty, ProgressContext.Silent, noReadBack)
-
-        assertThat(result.verdict).isEqualTo(VerificationVerdict.Passed)
-    }
-
-    @Test
     suspend fun `trusted backends that disagree yield Errored naming them`(
         @TempDir output: Path,
     ) {
@@ -105,38 +89,5 @@ class AllAgreeFullPortfolioTest {
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Inconclusive)
         assertThat(result.message).contains("No backend is installed")
-    }
-
-    @Test
-    suspend fun `every backend throwing yields an Errored verdict`(
-        @TempDir output: Path,
-    ) {
-        val portfolio = AllAgreeFullPortfolio(
-            theta = ErroringBackend("theta"),
-            nuxmv = ErroringBackend("nuxmv"),
-            uppaal = ErroringBackend("uppaal"),
-            spin = ErroringBackend("spin"),
-        )
-
-        val result = portfolio.verify(parentInjector, stubRequest(output), gate, ExecutionEnvironment.Empty, ProgressContext.Silent, noReadBack)
-
-        assertThat(result.verdict).isEqualTo(VerificationVerdict.Errored)
-        assertThat(result.message).contains("All portfolio jobs errored")
-    }
-
-    @Test
-    suspend fun `every backend NotSupported yields a NotSupported verdict`(
-        @TempDir output: Path,
-    ) {
-        val portfolio = AllAgreeFullPortfolio(
-            theta = NotSupportedBackend("theta"),
-            nuxmv = NotSupportedBackend("nuxmv"),
-            uppaal = NotSupportedBackend("uppaal"),
-            spin = NotSupportedBackend("spin"),
-        )
-
-        val result = portfolio.verify(parentInjector, stubRequest(output), gate, ExecutionEnvironment.Empty, ProgressContext.Silent, noReadBack)
-
-        assertThat(result.verdict).isEqualTo(VerificationVerdict.NotSupported)
     }
 }

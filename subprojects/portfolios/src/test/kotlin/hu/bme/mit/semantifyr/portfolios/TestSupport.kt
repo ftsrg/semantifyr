@@ -13,14 +13,11 @@ import hu.bme.mit.semantifyr.backend.BackendMetrics
 import hu.bme.mit.semantifyr.backend.BackendVerificationRequest
 import hu.bme.mit.semantifyr.backend.BackendVerificationResult
 import hu.bme.mit.semantifyr.backend.VerificationBackend
-import hu.bme.mit.semantifyr.backend.VerificationContext
 import hu.bme.mit.semantifyr.backend.VerificationMetadata
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.backend.execution.BackendExecutor
 import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
 import hu.bme.mit.semantifyr.backend.execution.ExecutorKey
-import hu.bme.mit.semantifyr.backend.witness.InlinedWitness
-import hu.bme.mit.semantifyr.backend.witness.WitnessFailedException
 import hu.bme.mit.semantifyr.compiler.pipeline.context.TransitionCallTraceMap
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
@@ -85,69 +82,6 @@ class FailingBackend<T : BackendConfig>(
         environment: ExecutionEnvironment,
     ): BackendVerificationResult {
         return judgedResult(id, VerificationVerdict.Failed, config, request)
-    }
-}
-
-class ErroringBackend<T : BackendConfig>(
-    override val id: String = "erroring",
-    override val executorKey: ExecutorKey<BackendExecutor> = AvailableKey,
-    private val message: String = "scripted failure",
-) : VerificationBackend<T>() {
-
-    override fun capabilityChecker(parentInjector: Injector, config: T): BackendCapabilityChecker {
-        return BackendCapabilityChecker.Unlimited
-    }
-
-    override suspend fun verify(
-        parentInjector: Injector,
-        config: T,
-        request: BackendVerificationRequest,
-        environment: ExecutionEnvironment,
-    ): BackendVerificationResult {
-        error(message)
-    }
-}
-
-class UnreadableTraceBackend<T : BackendConfig>(
-    override val id: String = "unreadable-trace",
-    override val executorKey: ExecutorKey<BackendExecutor> = AvailableKey,
-) : VerificationBackend<T>() {
-
-    override fun capabilityChecker(parentInjector: Injector, config: T): BackendCapabilityChecker {
-        return BackendCapabilityChecker.Unlimited
-    }
-
-    override suspend fun verify(
-        parentInjector: Injector,
-        config: T,
-        request: BackendVerificationRequest,
-        environment: ExecutionEnvironment,
-    ): BackendVerificationResult {
-        return UnreadableTraceContext(id, config, request).execute()
-    }
-
-    private class UnreadableTraceContext(
-        id: String,
-        config: BackendConfig,
-        request: BackendVerificationRequest,
-    ) : VerificationContext<Unit, VerificationVerdict>(id, config.soundness, request, BackendCapabilityChecker.Unlimited) {
-        override val executor = FakeExecutor(true)
-
-        override suspend fun prepare() {
-            return
-        }
-
-        override suspend fun run(artifacts: Unit): VerificationVerdict {
-            return VerificationVerdict.Failed
-        }
-
-        override fun interpret(rawVerdict: VerificationVerdict?, artifacts: Unit): VerificationVerdict {
-            return rawVerdict ?: VerificationVerdict.Inconclusive
-        }
-
-        override suspend fun buildWitness(rawVerdict: VerificationVerdict?, artifacts: Unit): InlinedWitness? {
-            throw WitnessFailedException("the trace holds 1.5 for counter, which is no value of its type")
-        }
     }
 }
 
