@@ -16,6 +16,7 @@ import hu.bme.mit.semantifyr.backend.witness.WitnessStateValue
 import hu.bme.mit.semantifyr.backend.witness.linearInlinedWitness
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
 import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -159,6 +160,32 @@ class WholeDelayTest {
     }
 
     @Test
+    fun `a strict clock test in init keeps the model exact, since init passes no time`() {
+        val inlinedOxsts = parse(
+            """
+                var elapsed : clock := 0
+                var started : bool := false
+                init {
+                    choice {
+                        assume(elapsed > 0)
+                        started := true
+                    } or {
+                    }
+                }
+                tran {
+                    assume(elapsed >= 1)
+                    elapsed := 0
+                }
+                prop {
+                    AG !started
+                }
+            """,
+        )
+
+        assertThat(wholeDelayLowering.soundness(inlinedOxsts)).isEqualTo(SoundnessDirection.Exact)
+    }
+
+    @Test
     fun `a saturated clock reads back as its value before the step plus the elapsed time, and the clock leaves the state values`() {
         val inlinedOxsts = parse(deadline)
         val wholeDelay = wholeDelayLowering.lower(inlinedOxsts)!!
@@ -222,8 +249,7 @@ class WholeDelayTest {
         ).containsExactly(late)
     }
 
-    @Test
-    fun `a clock beyond its saturation fails the read-back`() {
+    private fun initialClockReadBackFailure(clockValue: Expression): WitnessFailedException {
         val inlinedOxsts = parse(deadline)
         val wholeDelay = wholeDelayLowering.lower(inlinedOxsts)!!
         val elapsed = inlinedOxsts.variables.first {
@@ -234,17 +260,44 @@ class WholeDelayTest {
             listOf(
                 WitnessState(
                     listOf(
-                        WitnessStateValue(elapsed, OxstsFactory.createLiteralInteger(4)),
+                        WitnessStateValue(elapsed, clockValue),
                     ),
                     emptyList(),
                     Fraction.ZERO,
                 ),
             ),
         )
-
-        assertThrows<WitnessFailedException> {
+        return assertThrows<WitnessFailedException> {
             wholeDelay.restore(witness)
         }
+    }
+
+    @Test
+    fun `a clock beyond its saturation fails the read-back`() {
+        val failure = initialClockReadBackFailure(OxstsFactory.createLiteralInteger(4))
+
+        assertThat(failure.message).isEqualTo("the clock elapsed holds 4 in the trace, beyond its saturation 3")
+    }
+
+    @Test
+    fun `a clock saturated in the initial state fails the read-back, since no value comes before it`() {
+        val failure = initialClockReadBackFailure(OxstsFactory.createLiteralInteger(3))
+
+        assertThat(failure.message).isEqualTo("the clock elapsed is saturated in the trace with no value before it")
+    }
+
+    @Test
+    fun `a negative clock value fails the read-back`() {
+        val failure = initialClockReadBackFailure(OxstsFactory.createLiteralInteger(-1))
+
+        assertThat(failure.message).isEqualTo("the clock elapsed has no whole value in the trace")
+    }
+
+    @Test
+    fun `a clock value that is no integer fails the read-back`() {
+        val failure = initialClockReadBackFailure(OxstsFactory.createLiteralBoolean(true))
+
+        assertThat(failure.message).isEqualTo("the clock elapsed has no whole value in the trace")
     }
 
     @Test
