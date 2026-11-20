@@ -124,7 +124,7 @@ class ConcurrentVerificationTest {
 
                 for ((name, requestId) in requestIds) {
                     val result = checkNotNull(responses[requestId]).resultAs(VerificationCaseResult::class.java)
-                    assertThat(result.status())
+                    assertThat(result.outcomeStatus())
                         .describedAs("verdict of $name: $result")
                         .isEqualTo(expectedVerdicts.getValue(name))
                 }

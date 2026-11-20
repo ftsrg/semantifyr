@@ -104,7 +104,7 @@ public class VerifyGammaCaseCommandHandler
                         gammaCase.getQualifiedName(),
                         gammaResult.getOutcome().getReport().getResult().getVerdict());
 
-                return toCaseResult(gammaResult, portfolio.getId());
+                return toCaseResult(gammaResult);
             } catch (Exception e) {
                 LOGGER.error(
                         "LSP verify '{}' threw {}",
@@ -116,9 +116,9 @@ public class VerifyGammaCaseCommandHandler
         });
     }
 
-    private static VerificationCaseResult toCaseResult(GammaVerificationResult gammaResult, String portfolioId) {
+    private static VerificationCaseResult toCaseResult(GammaVerificationResult gammaResult) {
         var witness = gammaResult.getWitness();
         var tracePath = witness == null ? null : witness.getGammaTracePath();
-        return VerificationCaseResult.fromOutcome(gammaResult.getOutcome(), portfolioId, tracePath);
+        return VerificationCaseResult.fromOutcome(gammaResult.getOutcome(), tracePath);
     }
 }

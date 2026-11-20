@@ -71,7 +71,7 @@ class LiveVerificationTest {
                 )
                 val verifyResponse = awaitResponseFor(id = 3, timeout = 1.minutes)
                 val verifyResult = verifyResponse.resultAs(VerificationCaseResult::class.java)
-                assertThat(verifyResult.status()).isEqualTo("passed")
+                assertThat(verifyResult.outcomeStatus()).isEqualTo("passed")
                 val witnessUri = verifyResult.witnessUri()
                     ?: error("verify produced no witness URI: $verifyResult")
 
@@ -149,7 +149,7 @@ class LiveVerificationTest {
                     ),
                 )
                 val verifyResult = awaitResponseFor(id = 3, timeout = 2.minutes).resultAs(VerificationCaseResult::class.java)
-                assertThat(verifyResult.status()).isEqualTo(expectedStatus("Simple.gamma", "LeaderStatechartIdleReachable"))
+                assertThat(verifyResult.outcomeStatus()).isEqualTo(expectedStatus("Simple.gamma", "LeaderStatechartIdleReachable"))
                 val traceUri = verifyResult.traceUri()
                     ?: error("verify produced no trace URI: $verifyResult")
                 assertThat(traceUri).startsWith("file:///workspace/").endsWith("/trace.get")
@@ -185,7 +185,7 @@ class LiveVerificationTest {
 
                 send(Frame.Text(LspWire.executeCommandRequest(id = 4, command = "gamma.case.verify", arguments = listOf(request))))
                 val verifyResult = awaitResponseFor(id = 4, timeout = 2.minutes).resultAs(VerificationCaseResult::class.java)
-                assertThat(verifyResult.status()).isEqualTo(expectedStatus("Simple.gamma", "LeaderStatechartIdleReachable"))
+                assertThat(verifyResult.outcomeStatus()).isEqualTo(expectedStatus("Simple.gamma", "LeaderStatechartIdleReachable"))
 
                 val witnessUri = verifyResult.witnessUri()
                     ?: error("verify produced no witness URI: $verifyResult")
@@ -270,7 +270,7 @@ class LiveVerificationTest {
                 it.pickByLabelSuffix(caseName)
             },
             assertVerdict = {
-                assertThat(it.status()).describedAs("$flavor $caseName: $it").isEqualTo(expectedStatus)
+                assertThat(it.outcomeStatus()).describedAs("$flavor $caseName: $it").isEqualTo(expectedStatus)
             },
             verifyTimeout = 2.minutes,
         )

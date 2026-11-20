@@ -18,16 +18,21 @@ public record VerificationCaseResult(
         String witnessUri,
         String traceUri) {
 
-    public static VerificationCaseResult fromOutcome(VerificationOutcome outcome, String portfolioId, Path tracePath) {
-        var report = outcome.getReport();
-        var result = report.getResult();
+    public static VerificationCaseResult fromOutcome(VerificationOutcome outcome, Path tracePath) {
         return new VerificationCaseResult(
-                VerificationStatus.of(result.getVerdict()),
-                result.getMessage(),
-                portfolioId,
-                report,
+                null,
+                null,
+                null,
+                outcome.getReport(),
                 outcome.getWitness() == null ? null : uriOf(outcome.getWitness().getPath()),
                 tracePath == null ? null : uriOf(tracePath));
+    }
+
+    public String outcomeStatus() {
+        if (report == null) {
+            return status;
+        }
+        return VerificationStatus.of(report.getResult().getVerdict());
     }
 
     private static String uriOf(Path path) {

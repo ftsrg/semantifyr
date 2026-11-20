@@ -315,7 +315,7 @@ class SessionVerificationManager @Inject constructor(
 
     private fun recordFinished(entry: Entry, result: Any?) {
         val (report, verdict) = when (result) {
-            is VerificationCaseResult -> result.report() to result.status()
+            is VerificationCaseResult -> result.report() to result.outcomeStatus()
             is WitnessValidationResult -> result.report() to result.status()
             else -> null to null
         }

@@ -47,7 +47,7 @@ import kotlin.time.Duration.Companion.milliseconds
 
 class WebSocketVerificationFlowTest {
 
-    private val cannedResult = VerificationCaseResult("passed", "ok", "smart", fakeVerificationReport(VerificationVerdict.Passed, "theta"), null, null)
+    private val cannedResult = VerificationCaseResult(null, null, null, fakeVerificationReport(VerificationVerdict.Passed, "theta"), null, null)
 
     private val validationReport = fakeVerificationReport(VerificationVerdict.Passed, "theta", ReportKind.Recheck)
 
@@ -95,8 +95,8 @@ class WebSocketVerificationFlowTest {
             awaitResponseFor(id = 1)
             send(Frame.Text(verifyCommand(id = 2)))
             val result = awaitResponseFor(id = 2).resultAs(VerificationCaseResult::class.java)
-            assertThat(result.status()).isEqualTo("passed")
-            assertThat(result.portfolioId()).isEqualTo("smart")
+            assertThat(result.outcomeStatus()).isEqualTo("passed")
+            assertThat(result.report().portfolioId).isEqualTo(cannedResult.report().portfolioId)
         }
 
         assertThat(executor.calls).hasSize(1)
@@ -119,7 +119,7 @@ class WebSocketVerificationFlowTest {
             awaitResponseFor(id = 1)
             send(Frame.Text(verifyCommand(id = 2, command = "oxsts.case.validateWitness")))
             val result = awaitResponseFor(id = 2).resultAs(VerificationCaseResult::class.java)
-            assertThat(result.status()).isEqualTo("passed")
+            assertThat(result.outcomeStatus()).isEqualTo("passed")
         }
 
         assertThat(executor.calls).hasSize(1)
@@ -286,7 +286,7 @@ class WebSocketVerificationFlowTest {
                 id = 2,
                 method = SemantifyrLiveMethods.VERIFICATIONS_CHANGED,
             )
-            assertThat(response.resultAs(VerificationCaseResult::class.java).status()).isEqualTo("passed")
+            assertThat(response.resultAs(VerificationCaseResult::class.java).outcomeStatus()).isEqualTo("passed")
             assertThat(notifications).hasSizeGreaterThanOrEqualTo(2)
             val firstActive = notifications.first().paramsAs(VerificationsChangedParams::class.java).active
             val lastActive = notifications.last().paramsAs(VerificationsChangedParams::class.java).active
