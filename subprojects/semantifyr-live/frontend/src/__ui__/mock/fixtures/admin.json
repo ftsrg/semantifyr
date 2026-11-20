@@ -69,78 +69,78 @@
  "status": {
   "sessions": [
    {
-    "sessionId": "8edfd446-7dd0-4062-821a-7a35f06dc619",
-    "remoteIp": "127.0.0.1",
-    "flavorId": "oxsts",
-    "kind": "full",
-    "languageId": "oxsts",
-    "uptime": "PT4.340473011S",
-    "runningCount": 4,
-    "queuedCount": 3,
-    "workingDirectory": "/tmp/semantifyr/sessions/8edfd446-7dd0-4062-821a-7a35f06dc619",
-    "activeVerifications": [
-     {
-      "verificationId": "bcb3423b-9e6f-4150-8198-2bde24b93e6f",
-      "portfolioId": "smart",
-      "kind": "Verify",
-      "state": "Running",
-      "elapsed": "PT0.051783726S"
-     },
-     {
-      "verificationId": "e94de0bf-36f2-4948-a8b5-edbe5ce6887a",
-      "portfolioId": "smart",
-      "kind": "Verify",
-      "state": "Running",
-      "elapsed": "PT0.050356228S"
-     },
-     {
-      "verificationId": "768d3282-62bb-42d6-b6f3-2d14ba0668c6",
-      "portfolioId": "smart",
-      "kind": "Verify",
-      "state": "Running",
-      "elapsed": "PT0.049676950S"
-     },
-     {
-      "verificationId": "a6587624-99ea-46d7-8f09-bf9e4f4416d8",
-      "portfolioId": "smart",
-      "kind": "Verify",
-      "state": "Running",
-      "elapsed": "PT0.048351747S"
-     },
-     {
-      "verificationId": "c9de4112-b265-4fed-a5b0-29f704be27a2",
-      "portfolioId": "smart",
-      "kind": "Verify",
-      "state": "Queued",
-      "elapsed": "PT0.047109515S"
-     },
-     {
-      "verificationId": "e9dbc0ca-9439-4257-929c-53012aa401f6",
-      "portfolioId": "smart",
-      "kind": "Verify",
-      "state": "Queued",
-      "elapsed": "PT0.046578152S"
-     },
-     {
-      "verificationId": "989ec9b0-9e03-44c4-9889-d2ca81309c9d",
-      "portfolioId": "smart",
-      "kind": "Verify",
-      "state": "Queued",
-      "elapsed": "PT0.046132613S"
-     }
-    ]
-   },
-   {
-    "sessionId": "38b83653-cc77-4f67-9103-eaa1813fc14c",
+    "sessionId": "0d574c9e-2a9e-4666-9e9d-41db11362577",
     "remoteIp": "127.0.0.1",
     "flavorId": "gamma",
     "kind": "embed",
     "languageId": "gamma",
-    "uptime": "PT4.517763348S",
+    "uptime": "PT4.000448956S",
     "runningCount": 0,
     "queuedCount": 0,
-    "workingDirectory": "/tmp/semantifyr/sessions/38b83653-cc77-4f67-9103-eaa1813fc14c",
+    "workingDirectory": "/tmp/semantifyr/sessions/0d574c9e-2a9e-4666-9e9d-41db11362577",
     "activeVerifications": []
+   },
+   {
+    "sessionId": "7f2fe3c6-5180-4b86-a551-aedaf3b585ba",
+    "remoteIp": "127.0.0.1",
+    "flavorId": "oxsts",
+    "kind": "full",
+    "languageId": "oxsts",
+    "uptime": "PT3.854360923S",
+    "runningCount": 4,
+    "queuedCount": 3,
+    "workingDirectory": "/tmp/semantifyr/sessions/7f2fe3c6-5180-4b86-a551-aedaf3b585ba",
+    "activeVerifications": [
+     {
+      "verificationId": "f612af6e-0785-413b-8d3e-86423cb054af",
+      "portfolioId": "smart",
+      "kind": "Verify",
+      "state": "Running",
+      "elapsed": "PT0.033405295S"
+     },
+     {
+      "verificationId": "83fc81b3-5596-497f-ba2f-a6c97d2243d6",
+      "portfolioId": "smart",
+      "kind": "Verify",
+      "state": "Running",
+      "elapsed": "PT0.032754200S"
+     },
+     {
+      "verificationId": "19615428-60b6-4335-a766-9db708d57b91",
+      "portfolioId": "smart",
+      "kind": "Verify",
+      "state": "Running",
+      "elapsed": "PT0.032321904S"
+     },
+     {
+      "verificationId": "eb244463-b8fe-41c1-b658-1410f166893e",
+      "portfolioId": "smart",
+      "kind": "Verify",
+      "state": "Running",
+      "elapsed": "PT0.032012395S"
+     },
+     {
+      "verificationId": "8a8c5b8f-7e0d-4250-9a60-336c9e206c37",
+      "portfolioId": "smart",
+      "kind": "Verify",
+      "state": "Queued",
+      "elapsed": "PT0.031716907S"
+     },
+     {
+      "verificationId": "db9df421-f2bf-44a3-8de5-727110d3520a",
+      "portfolioId": "smart",
+      "kind": "Verify",
+      "state": "Queued",
+      "elapsed": "PT0.031411997S"
+     },
+     {
+      "verificationId": "81156c5d-d4c5-4f6b-8a76-1ce104ab66b7",
+      "portfolioId": "smart",
+      "kind": "Verify",
+      "state": "Queued",
+      "elapsed": "PT0.030912693S"
+     }
+    ]
    }
   ],
   "load": {
@@ -149,7 +149,7 @@
    "runningVerifications": 4,
    "queuedVerifications": 3,
    "verificationPermits": 4,
-   "uptime": "PT3M6.219089179S"
+   "uptime": "PT2M54.769234767S"
   }
  }
 }
