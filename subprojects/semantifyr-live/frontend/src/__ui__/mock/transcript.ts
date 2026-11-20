@@ -4,12 +4,15 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import type {
-  CompiledOxstsResult,
-  Range,
-  VerificationCaseResult,
-  VerificationCaseSpecification,
-  WitnessValidationResult,
+import {
+  caseOutcomeOf,
+  type CompiledOxstsResult,
+  type Range,
+  type VerificationCaseResult,
+  type VerificationCaseSpecification,
+  VerificationStatus,
+  type WitnessValidationResult,
+  WitnessValidationStatus,
 } from '@semantifyr/editor-common'
 
 import { textKey, type Diagnostic, type FlavorFixture, type ProgressValue } from './fixtures.ts'
@@ -59,6 +62,16 @@ function runKindOf(title: string | undefined): 'verify' | 'validate' | null {
     return 'validate'
   }
   return null
+}
+
+// a row keeps the verdict of its last run while it runs again, so a verdict alone does not end the run
+export function isRunFinished(rowClassNames: readonly string[], validationMarkClassNames: readonly string[]): boolean {
+  const rowsFinished = rowClassNames.length > 0 && rowClassNames.every((className) => {
+    return /\bstatus-(passed|failed|inconclusive|error)\b/.test(className) && !/\bis-waiting\b/.test(className)
+  })
+  return rowsFinished && validationMarkClassNames.every((className) => {
+    return !/\bis-(validating|validation-queued)\b/.test(className)
+  })
 }
 
 export function fixturesOf(transcript: Transcript): Map<string, FlavorFixture> {
@@ -154,12 +167,12 @@ export function fixturesOf(transcript: Transcript): Map<string, FlavorFixture> {
           const caseId = caseAt(location.uri, location.range)
           if (command.endsWith('.case.verify')) {
             const result = message.result as VerificationCaseResult
-            if (caseId !== null && result.status !== 'errored') {
+            if (caseId !== null && caseOutcomeOf(result).status !== VerificationStatus.Errored) {
               fixture.results[caseId] = result
             }
           } else {
             const result = message.result as WitnessValidationResult
-            if (result.status !== 'errored') {
+            if (result.status !== WitnessValidationStatus.Errored) {
               fixture.validations[caseId ?? location.uri] = result
             }
           }
