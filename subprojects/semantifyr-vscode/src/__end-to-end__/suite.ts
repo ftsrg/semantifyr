@@ -6,7 +6,7 @@
 
 import assert from "node:assert/strict";
 import { commands, extensions, Uri, workspace } from "vscode";
-import type { VerificationCaseResult, VerificationCaseSpecification } from "@semantifyr/editor-common";
+import { caseOutcomeOf, type VerificationCaseResult, type VerificationCaseSpecification } from "@semantifyr/editor-common";
 
 export async function run() {
     const extension = extensions.getExtension("ftsrg.semantifyr");
@@ -27,7 +27,8 @@ export async function run() {
     assert.deepEqual(cases.map((verificationCase) => verificationCase.label), ["semantifyr::verification::smoke::CounterReachesThree"]);
 
     const result = await commands.executeCommand<VerificationCaseResult>("oxsts.case.verify", { uri: model, range: smokeCase.location.range, portfolio: "theta-cegar-expl" });
-    assert.equal(result.status, "passed", result.message ?? "no message");
+    const outcome = caseOutcomeOf(result);
+    assert.equal(outcome.status, "passed", outcome.message ?? "no message");
     const witnessUri = result.witnessUri;
     assert.ok(witnessUri, "the result carries no witness");
     const witness = await workspace.openTextDocument(Uri.parse(witnessUri));

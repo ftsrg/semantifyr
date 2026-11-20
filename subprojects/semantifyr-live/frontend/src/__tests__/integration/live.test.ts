@@ -5,7 +5,7 @@
  */
 
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import type { VerificationCaseResult, VerificationCaseSpecification } from '@semantifyr/editor-common'
+import { caseOutcomeOf, type VerificationCaseResult, type VerificationCaseSpecification } from '@semantifyr/editor-common'
 import type { ActiveVerificationInfo } from '../../lib/api/types'
 import { areCasesKnown } from '../../lib/stores/initialization'
 import type { LspClient, VerificationState } from '../../lib/verification/engine'
@@ -226,7 +226,7 @@ describe('Live', () => {
     expect(verificationOf(open).phase).toBe('cancelled')
     expect(verificationOf(open).cases.map((caseState) => {
       return [caseState.status, caseState.message]
-    })).toEqual([['failed', failedResult.message], ['stale', 'Verification cancelled'], ['passed', undefined]])
+    })).toEqual([['failed', caseOutcomeOf(failedResult).message], ['stale', 'Verification cancelled'], ['passed', undefined]])
   })
 
   it('starts a Verify all pressed during initialization once the cases are known', async () => {
@@ -489,7 +489,7 @@ describe('Live', () => {
     await vi.waitFor(() => {
       expect(verificationOf(open!).phase).toBe('done')
     })
-    expect(cases()).toEqual([['passed', undefined], ['stale', 'Verification cancelled'], ['failed', failedResult.message]])
+    expect(cases()).toEqual([['passed', undefined], ['stale', 'Verification cancelled'], ['failed', caseOutcomeOf(failedResult).message]])
 
     const never = deferred<VerificationCaseResult>()
     for (const line of [1, 2, 3]) {
@@ -506,7 +506,7 @@ describe('Live', () => {
       expect(open!.live.runTiming.get()?.finishedAt).not.toBeNull()
     })
     expect(verificationOf(open).phase).toBe('cancelled')
-    expect(cases()).toEqual([['passed', undefined], ['stale', 'Verification cancelled'], ['failed', failedResult.message]])
+    expect(cases()).toEqual([['passed', undefined], ['stale', 'Verification cancelled'], ['failed', caseOutcomeOf(failedResult).message]])
   })
 
   it('shows a sent case queued while the server queues it and running once the server runs it, and counts its time from then', async () => {
