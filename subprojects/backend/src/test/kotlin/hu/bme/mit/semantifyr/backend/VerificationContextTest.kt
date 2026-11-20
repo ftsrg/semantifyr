@@ -13,6 +13,9 @@ import hu.bme.mit.semantifyr.backend.witness.WitnessFailedException
 import hu.bme.mit.semantifyr.backend.witness.WitnessState
 import hu.bme.mit.semantifyr.backend.witness.WitnessStateValue
 import hu.bme.mit.semantifyr.backend.witness.linearInlinedWitness
+import hu.bme.mit.semantifyr.compiler.pipeline.context.FlatteningInfo
+import hu.bme.mit.semantifyr.compiler.pipeline.context.InstanceIdMapping
+import hu.bme.mit.semantifyr.compiler.pipeline.context.RecordField
 import hu.bme.mit.semantifyr.compiler.pipeline.context.TransitionCallTraceMap
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.InstanceEvaluation
 import hu.bme.mit.semantifyr.compiler.pipeline.inlining.ArgumentTrace
@@ -85,10 +88,11 @@ class VerificationContextTest {
         transitionCallTraces: TransitionCallTraceMap = TransitionCallTraceMap(emptyMap()),
         soundness: SoundnessDirection = SoundnessDirection.Exact,
         capabilityChecker: BackendCapabilityChecker = RejectingVariables(),
+        flatteningInfo: FlatteningInfo? = null,
     ) : VerificationContext<String, String>(
         backendId = "scripted",
         configuredSoundness = soundness,
-        request = BackendVerificationRequest(inlinedOxsts, Path("build"), transitionCallTraces = transitionCallTraces),
+        request = BackendVerificationRequest(inlinedOxsts, Path("build"), flatteningInfo, transitionCallTraces),
         capabilityChecker = capabilityChecker,
     ) {
         val phases = mutableListOf<String>()
@@ -281,6 +285,39 @@ class VerificationContextTest {
     }
 
     @Test
+    suspend fun `a trace variable holding no boolean fails the run`() {
+        val tracer = OxstsFactory.createVariableDeclaration().also {
+            it.name = "tracer"
+        }
+        val inlinedOxsts = modelChecking(OxstsFactory.createAG()).also {
+            it.variables += tracer
+        }
+        val witness = linearInlinedWitness(
+            inlinedOxsts,
+            listOf(
+                WitnessState(listOf(WitnessStateValue(tracer, OxstsFactory.createLiteralInteger(1))), emptyList(), Fraction.ZERO),
+            ),
+        )
+
+        val result = ScriptedContext(
+            runStep = {
+                "fail"
+            },
+            witness = witness,
+            inlinedOxsts = inlinedOxsts,
+            transitionCallTraces = TransitionCallTraceMap(
+                mapOf(
+                    tracer to transitionCallTrace(emptyList()),
+                ),
+            ),
+            capabilityChecker = BackendCapabilityChecker.Unlimited,
+        ).execute()
+
+        assertThat(result.verdict).isEqualTo(VerificationVerdict.Errored)
+        assertThat(result.message).endsWith("the trace variable ${tracer.name} has no value in state 0")
+    }
+
+    @Test
     suspend fun `a recorded argument without a value in a state fails the run`() {
         val argument = OxstsFactory.createVariableDeclaration().also {
             it.name = "argument"
@@ -391,6 +428,33 @@ class VerificationContextTest {
         assertThat(result.message).isEqualTo("scripted does not support variables of type real (first); variables of type real (second)")
         assertThat(executor.preparations).isZero()
         assertThat(context.phases).isEmpty()
+    }
+
+    @Test
+    suspend fun `an unsupported record field is named by its record`() {
+        val record = OxstsFactory.createVariableDeclaration().also {
+            it.name = "position"
+        }
+        val field = OxstsFactory.createVariableDeclaration().also {
+            it.name = "position__x"
+        }
+        val inlinedOxsts = modelChecking(OxstsFactory.createAG()).also {
+            it.variables += field
+        }
+        val flatteningInfo = FlatteningInfo(
+            variableHolders = emptyMap(),
+            variableInstanceDomains = emptyMap(),
+            variableMappings = emptyMap(),
+            instanceIdMapping = InstanceIdMapping(emptyMap(), emptyMap()),
+            recordFields = mapOf(
+                field to RecordField(record, listOf(field)),
+            ),
+        )
+
+        val result = ScriptedContext(inlinedOxsts = inlinedOxsts, flatteningInfo = flatteningInfo).execute()
+
+        assertThat(result.verdict).isEqualTo(VerificationVerdict.NotSupported)
+        assertThat(result.message).isEqualTo("scripted does not support variables of type real (position)")
     }
 
     @Test
