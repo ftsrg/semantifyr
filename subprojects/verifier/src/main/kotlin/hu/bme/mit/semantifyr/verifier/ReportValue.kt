@@ -28,15 +28,7 @@ import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.booleanOrNull
 import java.math.BigInteger
 
-private val MAX_EXACT_JSON_INTEGER = BigInteger.TWO.pow(53) - BigInteger.ONE
-
-private fun encodeWhole(encoder: Encoder, value: BigInteger) {
-    if (value.abs() <= MAX_EXACT_JSON_INTEGER) {
-        encoder.encodeLong(value.toLong())
-    } else {
-        encoder.encodeString(value.toString())
-    }
-}
+private val INT_RANGE = BigInteger.valueOf(Int.MIN_VALUE.toLong())..BigInteger.valueOf(Int.MAX_VALUE.toLong())
 
 object FractionSerializer : KSerializer<Fraction> {
     override val descriptor = PrimitiveSerialDescriptor("hu.bme.mit.semantifyr.Fraction", PrimitiveKind.STRING)
@@ -58,7 +50,7 @@ object FractionSerializer : KSerializer<Fraction> {
 sealed interface ReportValue {
     data class Bool(val value: Boolean) : ReportValue
 
-    data class Integer(val value: BigInteger) : ReportValue
+    data class Integer(val value: Int) : ReportValue
 
     data class Real(val value: Double) : ReportValue
 
@@ -72,7 +64,7 @@ sealed interface ReportValue {
 
     fun toFraction(): Fraction {
         return when (this) {
-            is Integer -> Fraction.of(value)
+            is Integer -> Fraction.of(value.toLong())
             is Text -> Fraction.parse(value)
             else -> throw NumberFormatException("$this is no amount of time")
         }
@@ -80,8 +72,8 @@ sealed interface ReportValue {
 
     companion object {
         fun of(amount: Fraction): ReportValue {
-            if (amount.isWhole) {
-                return Integer(amount.numerator)
+            if (amount.isWhole && amount.numerator in INT_RANGE) {
+                return Integer(amount.numerator.intValueExact())
             }
             return Text(amount.toString())
         }
@@ -100,7 +92,7 @@ object ReportValueSerializer : KSerializer<ReportValue> {
     override fun serialize(encoder: Encoder, value: ReportValue) {
         when (value) {
             is ReportValue.Bool -> encoder.encodeBoolean(value.value)
-            is ReportValue.Integer -> encodeWhole(encoder, value.value)
+            is ReportValue.Integer -> encoder.encodeInt(value.value)
             is ReportValue.Real -> encoder.encodeDouble(value.value)
             is ReportValue.Text -> encoder.encodeString(value.value)
             is ReportValue.Null -> encoder.encodeNull()
@@ -140,9 +132,12 @@ object ReportValueSerializer : KSerializer<ReportValue> {
             return ReportValue.Bool(boolean)
         }
         val integer = primitive.content.toBigIntegerOrNull()
-        if (integer != null) {
-            return ReportValue.Integer(integer)
+        if (integer == null) {
+            return ReportValue.Real(primitive.content.toDouble())
         }
-        return ReportValue.Real(primitive.content.toDouble())
+        if (integer !in INT_RANGE) {
+            throw SerializationException("the integer $integer is outside 32 bits")
+        }
+        return ReportValue.Integer(integer.intValueExact())
     }
 }

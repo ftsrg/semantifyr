@@ -10,6 +10,7 @@ import hu.bme.mit.semantifyr.backend.VerificationMetadata
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.backend.witness.Fraction
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationConfig
+import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
@@ -50,13 +51,13 @@ class VerificationReportTest {
                 ReportState(
                     mapOf(
                         "root.lamp.on" to ReportValue.Bool(false),
-                        "root.counts[1]" to ReportValue.Integer(BigInteger.TWO),
+                        "root.counts[1]" to ReportValue.Integer(2),
                         "root.lamp.level" to ReportValue.Real(0.5),
                         "root.lamp.color" to ReportValue.Text("Red"),
                         "root.lamp.partner" to ReportValue.Null,
                         "root.lamp.item" to ReportValue.Record(
                             mapOf(
-                                "speed" to ReportValue.Integer(BigInteger.TWO),
+                                "speed" to ReportValue.Integer(2),
                             ),
                         ),
                     ),
@@ -80,8 +81,8 @@ class VerificationReportTest {
                                 "partner" to ReportValue.Text("root.hall"),
                                 "counts" to ReportValue.Array(
                                     listOf(
-                                        ReportValue.Integer(BigInteger.ONE),
-                                        ReportValue.Integer(BigInteger.TWO),
+                                        ReportValue.Integer(1),
+                                        ReportValue.Integer(2),
                                     ),
                                 ),
                             ),
@@ -96,10 +97,8 @@ class VerificationReportTest {
                     calls = emptyList(),
                 ),
             ),
-            missingCalls = "the calls were not recorded",
         )
         val report = VerificationReport(
-            version = REPORT_VERSION,
             kind = ReportKind.Run,
             verificationCase = "example::Case",
             portfolioId = "fake",
@@ -117,44 +116,30 @@ class VerificationReportTest {
     }
 
     @Test
-    fun `an integer too large for a JSON number reads back as text with its digits`() {
-        val largest = BigInteger.TWO.pow(53) - BigInteger.ONE
-        val state = ReportState(
-            mapOf(
-                "root.largest" to ReportValue.Integer(largest),
-                "root.beyond" to ReportValue.Integer(largest + BigInteger.ONE),
-                "root.below" to ReportValue.Integer(-largest - BigInteger.ONE),
-            ),
+    fun `an amount beyond 32 bits reads back as the same fraction`() {
+        val step = ReportStep(
+            source = 0,
+            target = 0,
+            elapsed = Fraction.of(BigInteger.TWO.pow(70) + BigInteger.ONE),
+            calls = emptyList(),
         )
 
-        val read = json.decodeFromString<ReportState>(json.encodeToString(state))
-
-        assertThat(read.values).containsExactlyInAnyOrderEntriesOf(
-            mapOf(
-                "root.largest" to ReportValue.Integer(largest),
-                "root.beyond" to ReportValue.Text("9007199254740992"),
-                "root.below" to ReportValue.Text("-9007199254740992"),
-            ),
-        )
+        assertThat(json.decodeFromString<ReportStep>(json.encodeToString(step))).isEqualTo(step)
     }
 
     @Test
-    fun `a report of another version is refused`() {
+    fun `an integer value beyond 32 bits is refused`() {
         assertThatThrownBy {
-            VerificationReport(
-                version = REPORT_VERSION + 1,
-                kind = ReportKind.Run,
-                verificationCase = "example::Case",
-                portfolioId = "fake",
-                optimization = OptimizationConfig.NONE,
-                timeout = 10.seconds,
-                result = VerificationResult(
-                    metadata = VerificationMetadata(backendId = "fake:default", startedAt = Instant.fromEpochSeconds(0)),
-                    verdict = VerificationVerdict.Passed,
-                    metrics = VerificationMetrics(),
-                ),
+            json.decodeFromString<ReportState>(
+                """
+                {
+                    "values": {
+                        "root.beyond": 2147483648
+                    }
+                }
+                """.trimIndent(),
             )
-        }.isInstanceOf(IllegalArgumentException::class.java)
+        }.isInstanceOf(SerializationException::class.java)
     }
 
     @Test
@@ -168,6 +153,20 @@ class VerificationReportTest {
     }
 
     @Test
+    fun `a trace whose state holds a variable it does not list is refused`() {
+        assertThatThrownBy {
+            trace(
+                initial = 0,
+                steps = emptyList(),
+                values = mapOf(
+                    "root.unlisted" to ReportValue.Integer(1),
+                ),
+                listed = false,
+            )
+        }.isInstanceOf(IllegalArgumentException::class.java)
+    }
+
+    @Test
     fun `a trace whose state holds an array whole is refused`() {
         assertThatThrownBy {
             trace(
@@ -176,7 +175,7 @@ class VerificationReportTest {
                 values = mapOf(
                     "root.counts" to ReportValue.Array(
                         listOf(
-                            ReportValue.Integer(BigInteger.ONE),
+                            ReportValue.Integer(1),
                         ),
                     ),
                 ),
@@ -188,11 +187,16 @@ class VerificationReportTest {
         initial: Int,
         steps: List<ReportStep>,
         values: Map<String, ReportValue> = emptyMap(),
+        listed: Boolean = true,
     ): ReportTrace {
         return ReportTrace(
             root = "root",
             transitions = emptyList(),
-            variables = emptyList(),
+            variables = values.keys.filter {
+                listed
+            }.map {
+                ObservedVariable(it, ReportType(ReportTypeKind.Datatype, "semantifyr::int"))
+            },
             initial = ReportInitialEntry(state = initial, calls = emptyList()),
             states = listOf(ReportState(values)),
             steps = steps,

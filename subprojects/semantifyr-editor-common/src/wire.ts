@@ -179,7 +179,6 @@ export interface ReportTrace {
     initial: ReportInitialEntry;
     states: ReportState[];
     steps: ReportStep[];
-    missingCalls: string | null;
 }
 
 export interface ReportBackendMetrics {
@@ -214,7 +213,6 @@ export interface ReportResult {
 }
 
 export interface VerificationReport {
-    version: number;
     kind: ReportKind;
     verificationCase: string;
     portfolioId: string;

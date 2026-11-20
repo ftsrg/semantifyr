@@ -96,7 +96,6 @@ data class ReportTrace(
     val initial: ReportInitialEntry,
     val states: List<ReportState>,
     val steps: List<ReportStep>,
-    val missingCalls: String? = null,
 ) {
     init {
         require(initial.state in states.indices) {
@@ -107,8 +106,14 @@ data class ReportTrace(
                 "a step goes from the state ${step.source} to ${step.target}, which the trace does not hold"
             }
         }
+        val declared = variables.map {
+            it.variable
+        }.toSet()
         for (state in states) {
             for ((key, value) in state.values) {
+                require(key in declared) {
+                    "a state holds $key, which the trace does not list among its variables"
+                }
                 require(value !is ReportValue.Array) {
                     "a state holds the array $key whole instead of slot by slot"
                 }

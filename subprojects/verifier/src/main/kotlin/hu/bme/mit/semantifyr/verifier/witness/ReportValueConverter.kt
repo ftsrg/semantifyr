@@ -60,13 +60,8 @@ class ReportValueConverter @Inject constructor(
     }
 
     fun path(evaluation: InstanceEvaluation): String {
-        val paths = evaluation.instances.map {
-            path(it)
-        }
-        if (paths.size == 1) {
-            return paths.single()
-        }
-        return "[${paths.joinToString(", ")}]"
+        val instance = evaluation.instances.singleOrNull() ?: error("a traced call is made on ${evaluation.instances.size} instances instead of one")
+        return path(instance)
     }
 
     private fun path(instance: Instance): String {
@@ -75,7 +70,7 @@ class ReportValueConverter @Inject constructor(
 
     fun value(expression: Expression): ReportValue {
         return when (expression) {
-            is LiteralInteger -> ReportValue.Integer(expression.value.toBigInteger())
+            is LiteralInteger -> ReportValue.Integer(expression.value)
             is ArithmeticUnaryOperator -> negativeInteger(expression)
             is LiteralBoolean -> ReportValue.Bool(expression.isValue)
             is LiteralReal -> ReportValue.Real(expression.value)
@@ -102,7 +97,7 @@ class ReportValueConverter @Inject constructor(
         if (expression.op != UnaryOp.MINUS || body !is LiteralInteger) {
             error("a witness value is a literal, found ${path(expression)}")
         }
-        return ReportValue.Integer(body.value.toBigInteger().negate())
+        return ReportValue.Integer(-body.value)
     }
 
     private fun reference(expression: ElementReference): ReportValue {
@@ -161,7 +156,7 @@ class ReportValueConverter @Inject constructor(
         }
 
         override fun visit(evaluation: IntegerEvaluation): ReportValue {
-            return ReportValue.Integer(evaluation.value.toBigInteger())
+            return ReportValue.Integer(evaluation.value)
         }
 
         override fun visit(evaluation: NothingEvaluation): ReportValue {
@@ -184,10 +179,11 @@ class ReportValueConverter @Inject constructor(
             val paths = evaluation.instances.map {
                 ReportValue.Text(path(it))
             }
-            if (paths.size == 1) {
-                return paths.single()
+            return when (paths.size) {
+                0 -> ReportValue.Null
+                1 -> paths.single()
+                else -> ReportValue.Array(paths)
             }
-            return ReportValue.Array(paths)
         }
     }
 }

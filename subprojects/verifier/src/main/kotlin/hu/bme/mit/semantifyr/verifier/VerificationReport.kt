@@ -11,8 +11,6 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlin.time.Duration
 
-const val REPORT_VERSION = 2
-
 @Serializable
 enum class ReportKind {
     @SerialName("run")
@@ -24,7 +22,6 @@ enum class ReportKind {
 
 @Serializable
 data class VerificationReport(
-    val version: Int,
     val kind: ReportKind,
     val verificationCase: String,
     val portfolioId: String,
@@ -32,10 +29,4 @@ data class VerificationReport(
     val timeout: Duration,
     val result: VerificationResult,
     val trace: ReportTrace? = null,
-) {
-    init {
-        require(version == REPORT_VERSION) {
-            "the report is of version $version, which this reader cannot read"
-        }
-    }
-}
+)

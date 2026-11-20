@@ -93,7 +93,6 @@ fun fakeVerificationReport(
     trace: ReportTrace? = null,
 ): VerificationReport {
     return VerificationReport(
-        version = REPORT_VERSION,
         kind = kind,
         verificationCase = "pkg::Foo",
         portfolioId = "test",

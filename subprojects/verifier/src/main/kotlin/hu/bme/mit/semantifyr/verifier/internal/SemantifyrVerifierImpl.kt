@@ -26,7 +26,6 @@ import hu.bme.mit.semantifyr.logging.loggerFactory
 import hu.bme.mit.semantifyr.logging.warn
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.verifier.ProgressContext
-import hu.bme.mit.semantifyr.verifier.REPORT_VERSION
 import hu.bme.mit.semantifyr.verifier.ReportKind
 import hu.bme.mit.semantifyr.verifier.ReportTrace
 import hu.bme.mit.semantifyr.verifier.SemantifyrVerifier
@@ -270,7 +269,6 @@ class SemantifyrVerifierImpl @AssistedInject constructor(
         backAnnotation: BackAnnotation?,
     ): VerificationOutcome {
         val report = VerificationReport(
-            version = REPORT_VERSION,
             kind = kind,
             verificationCase = case.qualifiedName,
             portfolioId = semantifyrVerifierConfiguration.portfolio.id,

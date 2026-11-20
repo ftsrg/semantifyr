@@ -63,14 +63,16 @@ class ClassWitnessBackAnnotator @Inject constructor(
 
         private val paths = reportPaths(compilation)
 
-        private val clockStates = reportTrace.states.map {
-            clockValues(it)
+        private val clocks = compilation.inlinedOxsts.variables.filter {
+            it in compilation.flatteningInfo.variableHolders && clockTestAnalysis.isClock(it)
+        }.map {
+            reportValueConverter.path(classWitnessTransformer.locate(it, compilation).reference)
         }
 
-        private val hasClocks = reportTrace.variables.any {
-            paths.variables[it.variable]?.let { variable ->
-                clockTestAnalysis.isClock(variable.declaredVariable)
-            } == true
+        private val hasClocks = clocks.isNotEmpty()
+
+        private val clockStates = reportTrace.states.withIndex().map { (index, state) ->
+            clockValues(index, state)
         }
 
         private val scale = timeScale()
@@ -240,16 +242,14 @@ class ClassWitnessBackAnnotator @Inject constructor(
         private fun literal(value: ReportValue, domain: DomainDeclaration): Expression {
             return when (value) {
                 is ReportValue.Bool -> OxstsFactory.createLiteralBoolean(value.value)
-                is ReportValue.Integer -> OxstsFactory.createLiteralInteger(value.value.intValueExact())
+                is ReportValue.Integer -> OxstsFactory.createLiteralInteger(value.value)
                 is ReportValue.Real -> OxstsFactory.createLiteralReal().also {
                     it.value = value.value
                 }
                 is ReportValue.Null -> OxstsFactory.createLiteralNothing()
                 is ReportValue.Text -> when (domain) {
                     is EnumDeclaration -> enumLiteral(domain, value.value)
-                    is DataTypeDeclaration -> OxstsFactory.createLiteralString().also {
-                        it.value = value.value
-                    }
+                    is DataTypeDeclaration -> error("the text ${value.value} is reported for the data type ${domain.name}")
                     else -> instance(value.value)
                 }
                 is ReportValue.Array -> error("a state holds an array slot by slot")
@@ -269,14 +269,15 @@ class ClassWitnessBackAnnotator @Inject constructor(
             return reference.rooted()
         }
 
-        private fun clockValues(state: ReportState): List<Fraction> {
-            return state.values.mapNotNull { (key, value) ->
-                val variable = paths.variables[key] ?: return@mapNotNull null
-                if (clockTestAnalysis.isClock(variable.declaredVariable)) {
-                    value.toFraction()
-                } else {
-                    null
+        private fun clockValues(index: Int, state: ReportState): List<Fraction> {
+            for (key in state.values.keys) {
+                if (key !in paths.variables) {
+                    error("the report names the variable $key, which the verified model does not hold")
                 }
+            }
+            return clocks.map {
+                val value = state.values[it] ?: error("the state $index holds no value for the clock $it")
+                value.toFraction()
             }
         }
 
