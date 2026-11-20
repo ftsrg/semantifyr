@@ -25,7 +25,6 @@ Arrays of records in a class-level variable	pass	semantic/records.semantifyr	Rec
 Array fields in records	reject	constructs/record_array_field.semantifyr	OXSTS.UNSUPPORTED_FEATURE
 Record-typed features	reject	constructs/record_feature.semantifyr	OXSTS.UNSUPPORTED_FEATURE
 Record argument of a traced call	reject	constructs/record_trace_argument.semantifyr	OXSTS.UNSUPPORTED_FEATURE
-Run-time real or string argument of a traced call	reject	constructs/real_trace_argument.semantifyr	OXSTS.UNSUPPORTED_FEATURE
 Clock variables `var c: clock`	pass	semantic/clocks.semantifyr	ClockDeadlineOnOtherPathReach
 Ordering on non-numeric values `Red < Green`	reject	constructs/enum_ordering.semantifyr	OXSTS.TYPE_MISMATCH
 `derived refers` without `opposite`	reject	constructs/derived_without_opposite.semantifyr	OXSTS.UNSUPPORTED_FEATURE
