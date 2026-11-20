@@ -94,12 +94,6 @@ class GammaFrontendTestHelper {
         }.asStream()
     }
 
-    fun discoverAsArguments(sourcePath: Path): Stream<Arguments> {
-        return discover(sourcePath).asSequence().map {
-            Arguments.of(Named.of(it.qualifiedName, it))
-        }.asStream()
-    }
-
     fun buildFrontend(
         portfolio: VerificationPortfolio,
         outputDirectory: Path,

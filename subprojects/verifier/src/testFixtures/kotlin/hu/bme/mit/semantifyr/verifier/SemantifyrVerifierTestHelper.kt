@@ -79,15 +79,6 @@ class SemantifyrVerifierTestHelper @Inject constructor(
         return verificationCaseDiscoverer.discover(context, filter)
     }
 
-    fun collectVerificationCasesAsArguments(
-        context: SemantifyrModelContext,
-        filter: CaseFilter = CaseFilter.All,
-    ): List<Arguments> {
-        return collectVerificationCases(context, filter).map {
-            Arguments.of(Named.of(it.qualifiedName, it))
-        }
-    }
-
     fun <T : BackendConfig> collectAcceptedCasesAsArguments(
         context: SemantifyrModelContext,
         backend: VerificationBackend<T>,
@@ -245,21 +236,6 @@ class SemantifyrVerifierTestHelper @Inject constructor(
         assertThat(reportFile.fileSize())
             .describedAs("report.json for ${case.qualifiedName} must be non-empty")
             .isGreaterThan(0)
-    }
-
-    fun <T> productAsArguments(
-        cases: List<VerificationCase>,
-        configurations: List<T>,
-        configurationName: (T) -> String,
-    ): List<Arguments> {
-        return cases.flatMap { case ->
-            configurations.map { configuration ->
-                Arguments.of(
-                    Named.of(case.qualifiedName, case),
-                    Named.of(configurationName(configuration), configuration),
-                )
-            }
-        }
     }
 
     suspend fun runVerificationCase(

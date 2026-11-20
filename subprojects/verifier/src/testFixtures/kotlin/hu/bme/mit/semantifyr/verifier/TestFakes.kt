@@ -21,23 +21,13 @@ import hu.bme.mit.semantifyr.backend.execution.ExecutorKey
 import hu.bme.mit.semantifyr.compiler.pipeline.context.TransitionCallTraceMap
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationConfig
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration
 import hu.bme.mit.semantifyr.verifier.portfolio.ConcurrencyGate
 import kotlinx.coroutines.delay
-import org.mockito.kotlin.mock
 import java.nio.file.Paths
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.minutes
-
-fun fakeCase(qualifiedName: String = "pkg.Foo", vararg tags: String): VerificationCase {
-    return VerificationCase(
-        classDeclaration = mock<ClassDeclaration>(),
-        qualifiedName = qualifiedName,
-        tags = tags.toSet(),
-    )
-}
 
 val noopGate: ConcurrencyGate = object : ConcurrencyGate {
     override val slots = Int.MAX_VALUE
@@ -94,17 +84,13 @@ fun fakeVerificationReport(
 ): VerificationReport {
     return VerificationReport(
         kind = kind,
-        verificationCase = "pkg::Foo",
+        verificationCase = "example::Case",
         portfolioId = "test",
         optimization = OptimizationConfig.ALL,
         timeout = 1.minutes,
         result = fakeVerificationResult(verdict, backendId, metrics),
         trace = trace,
     )
-}
-
-fun fakeVerificationOutcome(verdict: VerificationVerdict = VerificationVerdict.Passed): VerificationOutcome {
-    return VerificationOutcome(fakeVerificationReport(verdict), Paths.get("report.json"), null)
 }
 
 class AlwaysAvailableExecutor : BackendExecutor {

@@ -21,7 +21,6 @@ enum class ManifestVerdict {
 
 @Serializable
 enum class ManifestTier {
-    Smoke,
     Integration,
     Nightly,
 }
