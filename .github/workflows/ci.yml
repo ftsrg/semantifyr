@@ -405,10 +405,10 @@ jobs:
             org.opencontainers.image.version=${{ steps.tag.outputs.tag }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-      - name: Start and check the container
+      - name: Start the container
         env:
           TAG: ${{ steps.tag.outputs.tag }}
-        run: .github/scripts/smoke-test-live-image.sh live "$IMAGE:$TAG"
+        run: docker run -d --name live -p 8080:8080 --cap-drop ALL --security-opt no-new-privileges:true "$IMAGE:$TAG"
       - name: Smoke test
         timeout-minutes: 5
         env:

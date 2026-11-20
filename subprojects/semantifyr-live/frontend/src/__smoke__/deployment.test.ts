@@ -5,7 +5,7 @@
  */
 
 import { readFileSync } from 'node:fs';
-import { describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
 import { createMessageConnection } from 'vscode-jsonrpc/node';
 import { ConsoleLogger, toSocket, WebSocketMessageReader, WebSocketMessageWriter } from 'vscode-ws-jsonrpc';
 import { caseOutcomeOf, discoverVerificationCases, verifyCase } from '@semantifyr/editor-common';
@@ -17,6 +17,7 @@ if (!url) {
   throw new Error('SEMANTIFYR_LIVE_URL is not set');
 }
 const api = createApi(url);
+const STARTUP = 3 * 60 * 1000;
 const model = readFileSync(new URL('../../../../../oxsts-test-models/smoke/smoke.semantifyr', import.meta.url), 'utf-8');
 
 async function connect(flavorId: string) {
@@ -37,9 +38,35 @@ async function connect(flavorId: string) {
 }
 
 describe(`live deployment at ${url}`, () => {
-  it('serves the health endpoint and the web root', async () => {
-    expect((await fetch(`${api.httpBase}/api/health`)).ok).toBe(true);
+  // a container started a moment ago refuses connections until its backend is up
+  beforeAll(async () => {
+    await expect
+      .poll(
+        async () => {
+          try {
+            return (await fetch(`${api.httpBase}/api/health`)).ok;
+          } catch {
+            return false;
+          }
+        },
+        { timeout: STARTUP, interval: 3000 },
+      )
+      .toBe(true);
+  }, STARTUP + 10_000);
+
+  it('serves the web root', async () => {
     expect((await fetch(`${api.httpBase}/`)).ok).toBe(true);
+  });
+
+  it('serves the SysML worker and its library', async () => {
+    expect((await fetch(`${api.httpBase}/sysml-worker/syside-worker.cjs`)).ok).toBe(true);
+    expect((await fetch(`${api.httpBase}/sysml-worker/library/Verification.sysml`)).ok).toBe(true);
+  });
+
+  // the backend answers 403 without a signed-in user, the proxy in front of a deployment 401
+  it('refuses the admin API to a caller who is not signed in', async () => {
+    const response = await fetch(`${api.httpBase}/api/admin/status`);
+    expect([401, 403]).toContain(response.status);
   });
 
   async function verifySmokeModel(portfolio: string) {
