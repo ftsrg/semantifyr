@@ -23,6 +23,7 @@ import hu.bme.mit.semantifyr.cli.runCli
 import hu.bme.mit.semantifyr.cli.smokeModel
 import hu.bme.mit.semantifyr.cli.testModels
 import hu.bme.mit.semantifyr.cli.writeSameStemModels
+import hu.bme.mit.semantifyr.portfolios.Portfolios
 import hu.bme.mit.semantifyr.verifier.FakeBackend
 import hu.bme.mit.semantifyr.verifier.FakeConfig
 import hu.bme.mit.semantifyr.verifier.ProgressContext
@@ -47,6 +48,7 @@ import kotlin.io.path.isWritable
 import kotlin.io.path.readText
 import kotlin.io.path.writeText
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
 class VerifyCommandTest {
 
@@ -123,13 +125,14 @@ class VerifyCommandTest {
     }
 
     @Test
-    suspend fun `the verifier timeout exits with the timeout code`(@TempDir artifacts: Path) {
-        val portfolio = SingleBackendPortfolio(FakeBackend.delayed("slow", 60_000, VerificationVerdict.Passed), FakeConfig("slow"))
+    suspend fun `the timeout option reaches the verifier`(@TempDir artifacts: Path) {
+        val portfolio = fakePortfolio("fixed", VerificationVerdict.Passed)
 
-        val result = runCli("verify", "-q", "-t", "1", "--portfolio", portfolio.id, "-d", artifacts.toString(), smokeModel.toString(), portfolios = listOf(portfolio))
+        val result = runCli("verify", "--json", "-t", "37", "--portfolio", portfolio.id, "-d", artifacts.toString(), smokeModel.toString(), portfolios = listOf(portfolio))
 
-        assertThat(result.statusCode).isEqualTo(7)
-        assertThat(result.stdout).isEqualTo("TIMEOUT\n")
+        assertThat(result.statusCode).describedAs(result.output).isZero()
+        val line = jsonLines<VerifyOutcomeLine>(result.stdout).single()
+        assertThat(Json.decodeFromString<VerificationReport>(Path(line.report).readText()).timeout).isEqualTo(37.seconds)
     }
 
     @Test
@@ -259,7 +262,11 @@ class VerifyCommandTest {
         val result = runCli("verify", "--portfolio", "no-such-portfolio", smokeModel.toString())
 
         assertThat(result.statusCode).isEqualTo(2)
-        assertThat(result.stderr).contains("no-such-portfolio").contains("smart, all-agree, theta, theta-cegar-expl")
+        assertThat(result.stderr).contains("no-such-portfolio").contains(
+            Portfolios.all.joinToString(", ") {
+                it.id
+            },
+        )
     }
 
     @Test
