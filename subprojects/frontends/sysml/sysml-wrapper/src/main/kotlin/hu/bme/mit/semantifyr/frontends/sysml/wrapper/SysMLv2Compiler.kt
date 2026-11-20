@@ -142,8 +142,7 @@ class SysMLv2Compiler(
         logger.info { "Compiling SysMLv2 source '$sourcePath' via bundled CLI '$cliPath'" }
 
         Files.createDirectories(entry.parent)
-        // the command line of sysml-2ls writes the name map beside an output ending in .oxsts alone
-        val temporary = entry.resolveSibling(".tmp-${UUID.randomUUID()}.oxsts")
+        val temporary = entry.resolveSibling(".tmp-${UUID.randomUUID()}.${entry.extension}")
         try {
             runCli(
                 "SysML v2 compilation of '$sourcePath'",
