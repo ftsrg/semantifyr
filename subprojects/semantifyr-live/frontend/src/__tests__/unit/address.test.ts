@@ -5,11 +5,14 @@
  */
 
 import { describe, expect, it, vi } from 'vitest'
-import { encodeCompressedBase64Url, liveEditorUrl } from '@semantifyr/editor-common'
+import { encodeCompressedBase64Url, liveEditorUrl, liveExampleUrl } from '@semantifyr/editor-common'
+import { servedExamples } from '@semantifyr/editor-common/examples'
 
 import { findExample } from '../../examples'
+import { presentationOf } from '../../lib/language/presentation'
 import type { LspClient } from '../../lib/verification/engine'
 import { fixedFrame, frameColorMode, historyChangeOf, readAddress, resolveAddress } from '../../lib/workspace/address'
+import { exampleTitle } from '../../texts'
 import { fakeRegistry, fakeRuntime, testFlavors } from '../helpers/live'
 
 vi.mock('vscode', () => {
@@ -35,6 +38,15 @@ async function resolved(address: string) {
 }
 
 describe('an address', () => {
+  it.each(servedExamples.map((example) => {
+    return [new URL(liveExampleUrl('https://live.invalid/', example.language, example.id)).pathname, example] as const
+  }))('of the served example %s opens that example, titled by its label, with no problem', async (address, example) => {
+    const opened = await resolved(address)
+
+    expect(opened).toMatchObject({ flavor: { languageId: example.language }, example: { id: example.id }, problem: null })
+    expect(exampleTitle(opened.example.label, presentationOf(opened.flavor.languageId).name)).toBe(exampleTitle(example.label, presentationOf(example.language).name))
+  })
+
   it('opens SysML v2 with the level crossing when it names nothing', async () => {
     const opened = await resolved('/')
 
