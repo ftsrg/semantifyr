@@ -7,6 +7,7 @@
 import { CancellationTokenSource, createMessageConnection, type MessageConnection } from 'vscode-jsonrpc/node'
 import { ConsoleLogger, toSocket, WebSocketMessageReader, WebSocketMessageWriter } from 'vscode-ws-jsonrpc'
 import {
+  caseOutcomeOf,
   discoverVerificationCases,
   isoDurationToMs,
   verifyCase,
@@ -332,7 +333,8 @@ export async function runStudent(student: number, round: number, options: Studen
           },
         )
         const runningAt = running.runningAt(key)
-        const status = result.value?.status ?? null
+        const outcome = result.value ? caseOutcomeOf(result.value) : null
+        const status = outcome?.status ?? null
         if (options.validationPortfolio !== null) {
           validate({ flavor, verificationCase, result: result.value, edited, portfolio: options.validationPortfolio, timeoutMs })
         }
@@ -341,7 +343,7 @@ export async function runStudent(student: number, round: number, options: Studen
           edited,
           expected,
           status,
-          message: result.value?.message ?? null,
+          message: outcome?.message ?? null,
           ok: expected ? status === expected : status === VerificationStatus.Passed || status === VerificationStatus.Failed,
           sentAtMs: sentAt,
           wallMs: result.elapsedMs,

@@ -298,7 +298,6 @@ const EMPTY_TRACE: ReportTrace = {
   initial: { state: 0, calls: [] },
   states: [{ values: {} }],
   steps: [],
-  missingCalls: null,
 }
 
 export function finished(caseInfo: VerificationCaseSpecification, status: 'passed' | 'failed', seconds: number): VerificationCaseState {

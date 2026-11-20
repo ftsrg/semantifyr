@@ -20,7 +20,6 @@ function trace(overrides: Partial<ReportTrace>): ReportTrace {
         initial: { state: 0, calls: [] },
         states: [{ values: {} }],
         steps: [],
-        missingCalls: null,
         ...overrides,
     };
 }

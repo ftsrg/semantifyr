@@ -7,7 +7,6 @@
 import { describe, expect, it } from "vitest";
 import {
     formatTraceCall,
-    missingCallsMessage,
     noWitnessMessage,
     traceStepLabel,
     witnessOpenFailureMessage,
@@ -38,10 +37,6 @@ describe("traceStepLabel", () => {
 describe("witness messages", () => {
     it("names the case without a witness", () => {
         expect(noWitnessMessage("Safe")).toBe("No witness for Safe.");
-    });
-
-    it("says why the calls are missing", () => {
-        expect(missingCallsMessage("the backend gave no trace variables")).toBe("The calls of this trace could not be obtained: the backend gave no trace variables");
     });
 
     it("names the witness that does not open and why", () => {

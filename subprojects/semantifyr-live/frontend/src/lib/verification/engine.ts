@@ -5,6 +5,7 @@
  */
 
 import {
+  caseOutcomeOf,
   discoverVerificationCases,
   validateWitness as requestWitnessValidation,
   VerificationStatus,
@@ -259,18 +260,15 @@ export function markEdited(state: VerificationState): VerificationState {
   }
 }
 
-function parseResultStatus(response: VerificationCaseResult | null): VerificationCaseStatus {
-  if (!response?.status) {
-    return 'errored'
-  }
-  switch (response.status) {
+function parseResultStatus(status: VerificationStatus): VerificationCaseStatus {
+  switch (status) {
     case VerificationStatus.Passed:
     case VerificationStatus.Failed:
     case VerificationStatus.Inconclusive:
     case VerificationStatus.Timeout:
     case VerificationStatus.NotSupported:
     case VerificationStatus.Cancelled:
-      return response.status
+      return status
     default:
       return 'errored'
   }
@@ -337,25 +335,30 @@ export interface RunVerificationOptions {
 interface VerifyOutcome {
   status: VerificationCaseStatus
   message?: string
+  portfolioId?: string
   report?: VerificationReport
   witnessUri?: string
   traceUri?: string
 }
 
 function toVerifyOutcome(response: VerificationCaseResult | null): VerifyOutcome {
+  if (response === null) {
+    return { status: 'errored' }
+  }
+  const { status, message, portfolioId } = caseOutcomeOf(response)
   return {
-    status: parseResultStatus(response),
-    ...(response?.message != null ? { message: response.message } : {}),
-    ...(response?.report ? { report: response.report } : {}),
-    ...(response?.witnessUri ? { witnessUri: response.witnessUri } : {}),
-    ...(response?.traceUri ? { traceUri: response.traceUri } : {}),
+    status: parseResultStatus(status),
+    ...(message != null ? { message } : {}),
+    ...(portfolioId != null ? { portfolioId } : {}),
+    ...(response.report ? { report: response.report } : {}),
+    ...(response.witnessUri ? { witnessUri: response.witnessUri } : {}),
+    ...(response.traceUri ? { traceUri: response.traceUri } : {}),
   }
 }
 
 function applyVerifyOutcome(
   caseState: VerificationCaseState,
   outcome: VerifyOutcome,
-  portfolioId: string | undefined,
 ): VerificationCaseState {
   const { askedAt, runningSince } = caseState
   return {
@@ -369,7 +372,7 @@ function applyVerifyOutcome(
     ...(outcome.report ? { report: outcome.report } : {}),
     ...(outcome.witnessUri ? { witnessUri: outcome.witnessUri } : {}),
     ...(outcome.traceUri ? { traceUri: outcome.traceUri } : {}),
-    ...(portfolioId !== undefined ? { portfolioId } : {}),
+    ...(outcome.portfolioId !== undefined ? { portfolioId: outcome.portfolioId } : {}),
   }
 }
 
@@ -592,7 +595,7 @@ export function runAllVerifications(
       return {
         ...previous,
         cases: previous.cases.map((caseState) => {
-          return caseState.caseInfo.id === currentCase.id ? applyVerifyOutcome(caseState, outcome, options.portfolioId) : caseState
+          return caseState.caseInfo.id === currentCase.id ? applyVerifyOutcome(caseState, outcome) : caseState
         }),
       }
     })
@@ -681,7 +684,7 @@ export function verifySingleCase(
       }
       setState((previous) => {
         const cases = previous.cases.map((caseState) =>
-          caseState.caseInfo.id === caseId ? applyVerifyOutcome(caseState, outcome, options.portfolioId) : caseState,
+          caseState.caseInfo.id === caseId ? applyVerifyOutcome(caseState, outcome) : caseState,
         )
         const message = deriveCaseMessage(cases.find((caseState) => {
           return caseState.caseInfo.id === caseId

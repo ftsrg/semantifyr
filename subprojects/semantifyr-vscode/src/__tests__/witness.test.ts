@@ -53,6 +53,12 @@ describe('renderTrace', () => {
         expect(renderTrace('Safe', { ...result('failed', counterexample), traceUri }).split('\n').slice(4, 7)).toEqual([`Gamma trace: ${traceUri}`, '', `Witness: ${witnessUri}`]);
     });
 
+    it('names a trace by its language', () => {
+        const traceUri = 'file:/tmp/semantifyr/crossroads.Green/trace.sysml';
+
+        expect(renderTrace('Safe', { ...result('failed', counterexample), traceUri }).split('\n')[4]).toBe(`SysML trace: ${traceUri}`);
+    });
+
     it('appends the message of a passed verdict to the verdict line', () => {
         const document = renderTrace('Safe', result('passed', counterexample, resolutionNote));
 
@@ -92,7 +98,7 @@ describe('renderTrace', () => {
         expect(document.split('\n')[4]).toBe('Validation: Witness valid (backend spin-safe-dfs, portfolio smart, 1.5 s, under-approximating)');
     });
 
-    it('leaves out a missing witness and origin', () => {
+    it('leaves out a missing witness and backend', () => {
         const trace: ReportTrace = {
             ...counterexample,
             initial: { state: 0, calls: [] },
@@ -102,12 +108,12 @@ describe('renderTrace', () => {
         const passed = result('passed', trace);
         const report = { ...passed.report!, result: { ...passed.report!.result, metadata: { ...passed.report!.result.metadata, backendId: null } } };
 
-        const document = renderTrace('Reachable', { ...passed, portfolioId: null, report, witnessUri: null });
+        const document = renderTrace('Reachable', { ...passed, report, witnessUri: null });
 
         expect(document).toBe([
             '# Reachable',
             '',
-            'Verdict: passed (exact)',
+            'Verdict: passed (portfolio theta, exact)',
             '',
             '## Init',
             '',
@@ -138,15 +144,6 @@ describe('renderTrace of what the report adds', () => {
         const trace: ReportTrace = { ...counterexample, steps: [{ source: 0, target: 1, elapsed: '3/2', calls: [] }] };
 
         expect(renderTrace('Safe', result('failed', trace))).toContain('## Step 1\n\nElapsed: 3/2\n');
-    });
-
-    it('says why the calls are missing', () => {
-        const trace: ReportTrace = { ...counterexample, missingCalls: 'no trace variables came back', steps: [{ source: 0, target: 1, elapsed: 0, calls: [] }] };
-
-        const document = renderTrace('Safe', result('failed', trace));
-
-        expect(document).toContain('The calls of this trace could not be obtained: no trace variables came back');
-        expect(document).toContain('## Step 1\n\nCalls missing.\n');
     });
 });
 

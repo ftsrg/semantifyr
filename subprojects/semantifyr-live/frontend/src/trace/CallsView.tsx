@@ -6,7 +6,7 @@
 
 import type React from 'react'
 import { useMemo } from 'react'
-import { lastNameSegment, missingCallsMessage, shortenPath, traceCalls, type TraceCall, type TraceCallStep } from '@semantifyr/editor-common'
+import { lastNameSegment, shortenPath, traceCalls, type TraceCall, type TraceCallStep } from '@semantifyr/editor-common'
 
 import { Icon } from '../ui/icons'
 import type { TraceViewProps } from './registry'
@@ -257,14 +257,6 @@ export function CallsView({ trace }: TraceViewProps): React.JSX.Element {
     })
     return calls.lifelines.length > 0 ? layout(steps, calls.lifelines) : null
   }, [trace])
-  if (!diagram && trace.missingCalls !== null) {
-    return (
-      <div className="calls-empty trace-hint" data-testid="trace-missing-calls">
-        <Icon name="alert" size="small" />
-        <span>{missingCallsMessage(trace.missingCalls)}</span>
-      </div>
-    )
-  }
   if (!diagram) {
     return (
       <div className="calls-empty trace-hint" data-testid="trace-no-calls">

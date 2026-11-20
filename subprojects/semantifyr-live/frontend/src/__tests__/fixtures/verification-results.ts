@@ -13,6 +13,7 @@ export const sampleReport = reportOf({
   backendId: 'theta-cegar',
   seconds: 1,
   soundness: 'UnderApproximating',
+  message: 'property fails',
   trace: {
     root: 'root',
     transitions: [],
@@ -20,25 +21,24 @@ export const sampleReport = reportOf({
     initial: { state: 0, calls: [] },
     states: [{ values: {} }],
     steps: [],
-    missingCalls: null,
   },
 })
 
 export const sampleValidationReport: VerificationReport = { ...sampleReport, kind: 're-check', trace: null };
 
 export const passedResult: VerificationCaseResult = {
-  status: 'passed',
+  status: null,
   message: null,
-  portfolioId: 'smart',
-  report: { ...sampleReport, trace: null },
+  portfolioId: null,
+  report: reportOf({ verdict: 'Passed', backendId: 'theta-cegar', seconds: 1 }),
   witnessUri: null,
   traceUri: null,
 };
 
 export const failedResult: VerificationCaseResult = {
-  status: 'failed',
-  message: 'property fails',
-  portfolioId: 'smart',
+  status: null,
+  message: null,
+  portfolioId: null,
   report: sampleReport,
   witnessUri: 'inmemory:///workspace/snippet.witness.semantifyr',
   traceUri: null,

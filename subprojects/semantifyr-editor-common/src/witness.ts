@@ -5,7 +5,45 @@
  */
 
 import { formatReportValue, lastNameSegment } from "./trace.ts";
-import { type ReportCall, type SoundnessDirection, type WitnessValidationResult, WitnessValidationStatus } from "./wire.ts";
+import {
+    type ReportCall,
+    type ReportVerdict,
+    type SoundnessDirection,
+    type VerificationCaseResult,
+    VerificationStatus,
+    type WitnessValidationResult,
+    WitnessValidationStatus,
+} from "./wire.ts";
+
+const STATUS_OF_VERDICT: Record<ReportVerdict, VerificationStatus> = {
+    Passed: VerificationStatus.Passed,
+    Failed: VerificationStatus.Failed,
+    Inconclusive: VerificationStatus.Inconclusive,
+    Timeout: VerificationStatus.Timeout,
+    Errored: VerificationStatus.Errored,
+    NotSupported: VerificationStatus.NotSupported,
+};
+
+export interface CaseOutcome {
+    status: VerificationStatus;
+    message: string | null;
+    portfolioId: string | null;
+}
+
+export function caseOutcomeOf(result: VerificationCaseResult): CaseOutcome {
+    if (result.report !== null) {
+        return {
+            status: STATUS_OF_VERDICT[result.report.result.verdict],
+            message: result.message ?? result.report.result.message,
+            portfolioId: result.report.portfolioId,
+        };
+    }
+    return {
+        status: result.status ?? VerificationStatus.Errored,
+        message: result.message,
+        portfolioId: result.portfolioId,
+    };
+}
 
 export function traceStepLabel(index: number): string {
     if (index === 0) {
@@ -19,10 +57,6 @@ export function formatTraceCall(call: ReportCall): string {
         return `${parameter}=${formatReportValue(value)}`;
     }).join(", ");
     return `${call.self}.${lastNameSegment(call.transition)}(${argumentList})`;
-}
-
-export function missingCallsMessage(reason: string): string {
-    return `The calls of this trace could not be obtained: ${reason}`;
 }
 
 export function soundnessLabel(soundness: SoundnessDirection): string {

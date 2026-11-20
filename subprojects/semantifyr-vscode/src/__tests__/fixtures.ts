@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import type { ReportTrace, VerificationCaseResult, VerificationCaseSpecification, VerificationReport } from '@semantifyr/editor-common';
+import type { ReportTrace, ReportVerdict, VerificationCaseResult, VerificationCaseSpecification, VerificationReport, VerificationStatus } from '@semantifyr/editor-common';
 
 export const modelUri = 'file:///workspace/lamp.semantifyr';
 
@@ -49,12 +49,10 @@ export const counterexample: ReportTrace = {
             calls: [{ self: 'root.lamp', transition: 'lamp::Lamp::toggle', arguments: { brightness: 2 }, calls: [] }],
         },
     ],
-    missingCalls: null,
 };
 
-function reportOf(status: VerificationCaseResult['status'], trace: ReportTrace | null): VerificationReport {
+function reportOf(verdict: ReportVerdict, trace: ReportTrace | null, message: string | null): VerificationReport {
     return {
-        version: 2,
         kind: 'run',
         verificationCase: 'lamp::Safe',
         portfolioId: 'theta',
@@ -62,7 +60,7 @@ function reportOf(status: VerificationCaseResult['status'], trace: ReportTrace |
         timeout: 'PT5M',
         result: {
             metadata: { backendId: 'theta-cegar-expl', startedAt: '2026-11-15T10:00:00Z' },
-            verdict: status === 'failed' ? 'Failed' : 'Passed',
+            verdict,
             soundness: 'Exact',
             isTrusted: true,
             metrics: {
@@ -85,18 +83,32 @@ function reportOf(status: VerificationCaseResult['status'], trace: ReportTrace |
                     portfolioDuration: 'PT0S',
                 },
             },
-            message: null,
+            message,
         },
         trace,
     };
 }
 
-export function result(status: VerificationCaseResult['status'], trace: ReportTrace | null = null, message: string | null = null): VerificationCaseResult {
-    return { status, message, portfolioId: 'theta', report: reportOf(status, trace), witnessUri: trace === null ? null : witnessUri, traceUri: null };
+const VERDICTS: Readonly<Partial<Record<VerificationStatus, ReportVerdict>>> = {
+    passed: 'Passed',
+    failed: 'Failed',
+    inconclusive: 'Inconclusive',
+    timeout: 'Timeout',
+    not_supported: 'NotSupported',
+    errored: 'Errored',
+};
+
+// a cancelled case has no report, every other result holds its outcome in its report
+export function result(status: VerificationStatus, trace: ReportTrace | null = null, message: string | null = null): VerificationCaseResult {
+    const verdict = VERDICTS[status];
+    if (verdict === undefined) {
+        return { status, message, portfolioId: 'theta', report: null, witnessUri: null, traceUri: null };
+    }
+    return { status: null, message: null, portfolioId: null, report: reportOf(verdict, trace, message), witnessUri: trace === null ? null : witnessUri, traceUri: null };
 }
 
 export function validationReport(): VerificationReport {
-    const report = reportOf('passed', null);
+    const report = reportOf('Passed', null, null);
     return {
         ...report,
         kind: 're-check',

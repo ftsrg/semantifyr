@@ -5,6 +5,7 @@
  */
 
 import {
+  caseOutcomeOf,
   discoverVerificationCases,
   VerificationStatus,
   type FlavorInfo,
@@ -196,7 +197,7 @@ export function createSysmlBridge(options: SysmlBridgeOptions): SysmlBridge {
     }
     const traceUri = `file:///workspace/traces/${caseName}.trace.sysml`
     traceModels.set(traceUri, null)
-    let message = result.message
+    let message = caseOutcomeOf(result).message
     try {
       traceModels.set(
         traceUri,

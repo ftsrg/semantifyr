@@ -230,7 +230,7 @@ describe('verification statuses', () => {
     ['inconclusive', 'inconclusive'],
     ['mystery', 'errored'],
   ] as const)('maps a %s result to the %s case status', async (wireStatus, caseStatus) => {
-    const response = { ...passedResult, status: wireStatus, message: 'note' };
+    const response = { ...passedResult, status: wireStatus, message: 'note', report: null };
     const sendRequest = vi.fn<LspClient['sendRequest']>(async () => response);
     const client: LspClient = { sendRequest, sendNotification: () => {} };
 

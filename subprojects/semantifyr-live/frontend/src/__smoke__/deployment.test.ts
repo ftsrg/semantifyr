@@ -8,7 +8,7 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { createMessageConnection } from 'vscode-jsonrpc/node';
 import { ConsoleLogger, toSocket, WebSocketMessageReader, WebSocketMessageWriter } from 'vscode-ws-jsonrpc';
-import { discoverVerificationCases, verifyCase } from '@semantifyr/editor-common';
+import { caseOutcomeOf, discoverVerificationCases, verifyCase } from '@semantifyr/editor-common';
 import { normalizeBaseUrl } from '@semantifyr/editor-common';
 import { createApi } from '../lib/api';
 
@@ -72,7 +72,8 @@ describe(`live deployment at ${url}`, () => {
           { uri, range: verificationCase.location.range },
           { portfolio },
         );
-        expect(result?.status, `${verificationCase.label}: ${result?.message ?? ''}`).toBe('passed');
+        const outcome = result ? caseOutcomeOf(result) : null;
+        expect(outcome?.status, `${verificationCase.label}: ${outcome?.message ?? ''}`).toBe('passed');
         results.push(result);
       }
       return results;

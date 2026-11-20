@@ -132,7 +132,6 @@ function traceOf(recorded: boolean, timed: boolean): ReportTrace {
     steps: CALLS.map((calls, index) => {
       return { source: index, target: index + 1, elapsed: timed ? ELAPSED[index] ?? 0 : 0, calls: recorded ? calls : [] }
     }),
-    missingCalls: null,
   }
 }
 

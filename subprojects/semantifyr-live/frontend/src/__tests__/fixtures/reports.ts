@@ -17,11 +17,11 @@ export interface ReportSeed {
   soundness?: SoundnessDirection
   kind?: ReportKind
   trace?: ReportTrace | null
+  message?: string
 }
 
 export function reportOf(seed: ReportSeed): VerificationReport {
   return {
-    version: 2,
     kind: seed.kind ?? 'run',
     verificationCase: 'example::Case',
     portfolioId: 'smart',
@@ -52,7 +52,7 @@ export function reportOf(seed: ReportSeed): VerificationReport {
           portfolioDuration: `PT${seed.seconds}S`,
         },
       },
-      message: null,
+      message: seed.message ?? null,
     },
     trace: seed.trace ?? null,
   }

@@ -224,8 +224,9 @@ export interface VerificationReport {
     trace: ReportTrace | null;
 }
 
+// the server sets status, message and portfolioId only on a result without a report; a client may add a message of its own beside a report
 export interface VerificationCaseResult {
-    status: VerificationStatus;
+    status: VerificationStatus | null;
     message: string | null;
     portfolioId: string | null;
     report: VerificationReport | null;

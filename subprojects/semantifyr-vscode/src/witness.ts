@@ -6,13 +6,12 @@
 
 import { type CancellationToken, commands, EventEmitter, type ExtensionContext, ProgressLocation, type TestItem, type TextDocumentContentProvider, Uri, ViewColumn, window, workspace } from "vscode";
 import {
+    caseOutcomeOf,
     formatSeconds,
     formatTraceCall,
     isoDurationToMs,
-    missingCallsMessage,
     noWitnessMessage,
     type ReportCall,
-    type ReportTrace,
     soundnessLabel,
     traceStates,
     traceStepLabel,
@@ -208,17 +207,28 @@ function renderValidationOrigin(validation: WitnessValidationResult): string {
     );
 }
 
+const TRACE_LABELS: Readonly<Record<string, string>> = {
+    ".get": "Gamma trace",
+    ".sysml": "SysML trace",
+};
+
+function traceLabelOf(traceUri: string): string {
+    const extension = traceUri.slice(traceUri.lastIndexOf("."));
+    return TRACE_LABELS[extension] ?? "Trace";
+}
+
 export function renderTrace(label: string, result: VerificationCaseResult, validation?: WitnessValidationResult | null): string {
-    const message = result.message ? ` - ${result.message}` : "";
+    const outcome = caseOutcomeOf(result);
+    const message = outcome.message ? ` - ${outcome.message}` : "";
     const report = result.report;
     const soundness = report === null ? [] : [soundnessLabel(report.result.soundness)];
-    const origin = renderOrigin({ backendId: report?.result.metadata.backendId ?? null, portfolioId: result.portfolioId }, soundness);
-    const lines = [`# ${label}`, "", `Verdict: ${result.status}${origin}${message}`];
+    const origin = renderOrigin({ backendId: report?.result.metadata.backendId ?? null, portfolioId: outcome.portfolioId }, soundness);
+    const lines = [`# ${label}`, "", `Verdict: ${outcome.status}${origin}${message}`];
     if (validation !== undefined) {
         lines.push("", `Validation: ${renderValidation(validation)}`);
     }
     if (result.traceUri !== null) {
-        lines.push("", `Gamma trace: ${result.traceUri}`);
+        lines.push("", `${traceLabelOf(result.traceUri)}: ${result.traceUri}`);
     }
     if (result.witnessUri !== null) {
         lines.push("", `Witness: ${result.witnessUri}`);
@@ -227,12 +237,9 @@ export function renderTrace(label: string, result: VerificationCaseResult, valid
     if (!trace) {
         return `${lines.join("\n")}\n`;
     }
-    if (trace.missingCalls !== null) {
-        lines.push("", missingCallsMessage(trace.missingCalls));
-    }
 
     const states = traceStates(trace);
-    lines.push("", `## ${traceStepLabel(0)}`, "", ...renderCalls(trace, trace.initial.calls), "", ...renderStart(states.start));
+    lines.push("", `## ${traceStepLabel(0)}`, "", ...renderCalls(trace.initial.calls), "", ...renderStart(states.start));
     trace.steps.forEach((step, index) => {
         const state = states.steps[index];
         const elapsed = state?.elapsed ?? null;
@@ -240,7 +247,7 @@ export function renderTrace(label: string, result: VerificationCaseResult, valid
         const changes = (state?.variables ?? []).filter((variable) => {
             return variable.changed;
         });
-        lines.push("", `## ${traceStepLabel(index + 1)}`, ...time, "", ...renderCalls(trace, step.calls), "", ...renderChanges(changes));
+        lines.push("", `## ${traceStepLabel(index + 1)}`, ...time, "", ...renderCalls(step.calls), "", ...renderChanges(changes));
     });
     return `${lines.join("\n")}\n`;
 }
@@ -254,9 +261,9 @@ function renderOrigin(result: { backendId: string | null; portfolioId: string | 
     return origin.length === 0 ? "" : ` (${origin.join(", ")})`;
 }
 
-function renderCalls(trace: ReportTrace, calls: readonly ReportCall[]): string[] {
+function renderCalls(calls: readonly ReportCall[]): string[] {
     if (calls.length === 0) {
-        return [trace.missingCalls === null ? "No calls." : "Calls missing."];
+        return ["No calls."];
     }
     return ["Calls:", "", ...calls.flatMap((call) => renderCall(call, ""))];
 }

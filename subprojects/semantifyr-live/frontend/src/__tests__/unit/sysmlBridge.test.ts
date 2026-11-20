@@ -5,14 +5,14 @@
  */
 
 import { describe, expect, it } from 'vitest'
-import { VerificationStatus, type VerificationCaseResult, type VerificationReport } from '@semantifyr/editor-common'
+import { caseOutcomeOf, VerificationStatus, type VerificationCaseResult, type VerificationReport } from '@semantifyr/editor-common'
 import { createSysmlBridge, mapperProblems, SYSML_OXSTS_URI } from '../../lib/session/sysmlBridge'
 import type { LspClient } from '../../lib/verification/engine'
 
 const fileUri = 'file:///workspace/snippet.sysml'
 const sysmlRange = { start: { line: 4, character: 0 }, end: { line: 9, character: 1 } }
 const oxstsRange = { start: { line: 40, character: 0 }, end: { line: 60, character: 1 } }
-const report = { version: 2, kind: 'run', verificationCase: 'semantifyr::sysml::model::LampNeverLit', trace: { root: 'root', steps: [] } } as unknown as VerificationReport
+const report = { kind: 'run', verificationCase: 'semantifyr::sysml::model::LampNeverLit', portfolioId: 'smart', result: { verdict: 'Failed', message: null }, trace: { root: 'root', steps: [] } } as unknown as VerificationReport
 const nameMap = { modelHash: 'abc' }
 const witnessUri = 'file:///workspace/.artifacts/case/witness.semantifyr'
 
@@ -23,9 +23,9 @@ interface Command {
 
 function failedResult(): VerificationCaseResult {
   return {
-    status: VerificationStatus.Failed,
+    status: null,
     message: null,
-    portfolioId: 'smart',
+    portfolioId: null,
     report,
     witnessUri,
     traceUri: null,
@@ -222,8 +222,8 @@ describe('sysml bridge', () => {
 
     const result = await run()
 
-    expect(result.status).toBe(VerificationStatus.Failed)
-    expect(result.message).toContain('no such element')
+    expect(caseOutcomeOf(result).status).toBe(VerificationStatus.Failed)
+    expect(caseOutcomeOf(result).message).toContain('no such element')
     await expect(bridge.client.sendRequest('semantifyr/live/session/document/read', { uri: result.traceUri })).resolves.toEqual({ text: null })
   })
 

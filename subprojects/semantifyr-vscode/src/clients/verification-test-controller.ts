@@ -7,6 +7,7 @@
 import vscode, { type CancellationToken, type ExtensionContext, Location, Position, Range, RelativePattern, type TestController, type TestItem, TestMessage, TestRunProfileKind, type TestRun, type TestRunRequest, type TextDocument, type TextDocumentChangeEvent, type Uri, type WorkspaceFolder, type WorkspaceFoldersChangeEvent } from "vscode";
 import type { LanguageClient } from "vscode-languageclient/node";
 import {
+    caseOutcomeOf,
     discoverVerificationCases,
     validateWitness,
     type VerificationCaseLocation,
@@ -301,9 +302,10 @@ export class VerificationTestController {
             const validation = validator && readVerificationSettings().autoValidate ? await this.witnesses.autoValidate(testItem, token) : undefined;
             const validationLine = validation === undefined ? undefined : `Validation: ${renderValidation(validation)}`;
 
-            switch (result.status) {
+            const outcome = caseOutcomeOf(result);
+            switch (outcome.status) {
                 case VerificationStatus.Passed:
-                    for (const line of [result.message, validationLine]) {
+                    for (const line of [outcome.message, validationLine]) {
                         if (line) {
                             run.appendOutput(`${line}\r\n`, new Location(testItem.uri, range), testItem);
                         }
@@ -311,7 +313,7 @@ export class VerificationTestController {
                     run.passed(testItem);
                     break;
                 case VerificationStatus.Failed: {
-                    const message = new TestMessage([result.message ?? 'Failed', validationLine].filter((line) => line !== undefined).join('\n'));
+                    const message = new TestMessage([outcome.message ?? 'Failed', validationLine].filter((line) => line !== undefined).join('\n'));
                     message.location = new Location(testItem.uri, range);
                     if (result.report?.trace) {
                         message.contextValue = validator ? validatableWitnessMessageContext : witnessMessageContext;
@@ -320,20 +322,20 @@ export class VerificationTestController {
                     break;
                 }
                 case VerificationStatus.Inconclusive:
-                    run.errored(testItem, new TestMessage(`Inconclusive: ${result.message ?? 'no message'}`));
+                    run.errored(testItem, new TestMessage(`Inconclusive: ${outcome.message ?? 'no message'}`));
                     break;
                 case VerificationStatus.Timeout:
-                    run.errored(testItem, new TestMessage(`Timed out: ${result.message ?? 'no message'}`));
+                    run.errored(testItem, new TestMessage(`Timed out: ${outcome.message ?? 'no message'}`));
                     break;
                 case VerificationStatus.Cancelled:
                     run.skipped(testItem);
                     break;
                 case VerificationStatus.NotSupported:
-                    run.errored(testItem, new TestMessage(`Not supported by the chosen portfolio: ${result.message ?? 'no message'}`));
+                    run.errored(testItem, new TestMessage(`Not supported by the chosen portfolio: ${outcome.message ?? 'no message'}`));
                     break;
                 case VerificationStatus.Errored:
                 default:
-                    run.errored(testItem, new TestMessage(result.message ?? 'Test run failed'));
+                    run.errored(testItem, new TestMessage(outcome.message ?? 'Test run failed'));
                     break;
             }
         } catch (e: unknown) {

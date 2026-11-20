@@ -24,7 +24,6 @@ function traceOf(...calls: ReportCall[]): ReportTrace {
     initial: { state: 0, calls: [] },
     states: [{ values: {} }, { values: {} }],
     steps: [{ source: 0, target: 1, elapsed: 0, calls }],
-    missingCalls: null,
   }
 }
 
@@ -109,10 +108,5 @@ describe('what the report adds to the calls view', () => {
   it('gives a call its argument values', () => {
     const container = show(traceOf(entry('root.child', 'pass', [], { speed: 3, item: { weight: 2 } })))
     expect(arrowLabel(container, 'pass').textContent).toBe('pass(speed = 3, item = {weight: 2})')
-  })
-
-  it('says why the calls are missing where they are', () => {
-    const container = show({ ...traceOf(), missingCalls: 'the backend gave no trace variables' })
-    expect(container.querySelector('[data-testid=trace-missing-calls]')?.textContent).toBe('The calls of this trace could not be obtained: the backend gave no trace variables')
   })
 })
