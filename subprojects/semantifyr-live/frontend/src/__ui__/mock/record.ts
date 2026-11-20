@@ -125,7 +125,7 @@ async function cancelValidation(context: BrowserContext, liveUrl: string, addres
   await page.locator('.results').getByRole('button', { name: 'Verify all', exact: true }).click()
   await page.locator('.results .validation-mark.is-validating').first().waitFor({ timeout: RUN_TIMEOUT_MS })
   await page.locator('.results .button-cancel').click()
-  await page.waitForTimeout(3000)
+  await page.locator('.results .validation-mark.is-validating').first().waitFor({ state: 'detached', timeout: RUN_TIMEOUT_MS })
   await page.close()
 }
 
