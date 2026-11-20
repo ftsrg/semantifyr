@@ -8,7 +8,8 @@ package hu.bme.mit.semantifyr.backend.witness
 
 import java.math.BigInteger
 
-class Fraction private constructor(
+@ConsistentCopyVisibility
+data class Fraction private constructor(
     val numerator: BigInteger,
     val denominator: BigInteger,
 ) {
@@ -17,14 +18,6 @@ class Fraction private constructor(
 
     operator fun plus(other: Fraction): Fraction {
         return of(numerator * other.denominator + other.numerator * denominator, denominator * other.denominator)
-    }
-
-    override fun equals(other: Any?): Boolean {
-        return other is Fraction && numerator == other.numerator && denominator == other.denominator
-    }
-
-    override fun hashCode(): Int {
-        return 31 * numerator.hashCode() + denominator.hashCode()
     }
 
     override fun toString(): String {
