@@ -43,8 +43,7 @@ class SourceErrorTest {
 
         assertThatThrownBy {
             sourceError(secondVariable, "boom")
-        }.hasMessageContaining("boom")
-            .hasMessageMatching(".*:\\d+:.*boom")
+        }.hasMessageMatching(".+:3: boom")
     }
 
     @Test
