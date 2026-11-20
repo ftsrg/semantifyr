@@ -115,7 +115,7 @@ class WitnessTimeScalerTest : InliningTestBase() {
                 prop {
                     root.prop()
                 }
-                """.trimIndent()
+            """.trimIndent()
         }
     }
 }

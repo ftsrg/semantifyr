@@ -52,7 +52,11 @@ class ClockTestClosednessTest : FlatteningTestBase() {
         }
     }
 
-    private fun unclosedTestTexts(className: String, source: String, optimization: OptimizationConfig): Set<String> {
+    private fun unclosedTestTexts(
+        className: String,
+        source: String,
+        optimization: OptimizationConfig,
+    ): Set<String> {
         val mainTransition = flatten(className, source, optimization).inlinedOxsts.mainTransition
         return clockTestAnalysis.unclosedTests(mainTransition).map {
             serialize(it).trim()
