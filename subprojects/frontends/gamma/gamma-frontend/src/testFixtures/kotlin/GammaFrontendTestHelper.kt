@@ -12,6 +12,7 @@ import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
 import hu.bme.mit.semantifyr.backend.scopes.withVerificationScope
 import hu.bme.mit.semantifyr.compiler.SemantifyrCompiler
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.ArtifactConfig
+import hu.bme.mit.semantifyr.compiler.pipeline.context.FlattenedCompilationContext
 import hu.bme.mit.semantifyr.frontends.gamma.GammaFrontend
 import hu.bme.mit.semantifyr.frontends.gamma.GammaVariant
 import hu.bme.mit.semantifyr.frontends.gamma.GammaVerificationCase
@@ -25,7 +26,6 @@ import hu.bme.mit.semantifyr.frontends.gamma.reader.GammaReader
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
 import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.portfolios.Portfolios
 import hu.bme.mit.semantifyr.verifier.assertVerdict
 import hu.bme.mit.semantifyr.verifier.assumePortfolioAvailable
@@ -140,12 +140,12 @@ class GammaFrontendTestHelper {
     ) {
         val trustDirectory = outputDirectory.resolve("trust")
         val compiledCase = buildFrontend(portfolio, trustDirectory.resolve("gamma"), environment = environment).compile(gammaVerificationCase)
-        val inlinedOxsts = SemantifyrCompiler(oxstsInjector, ArtifactConfig.NONE).compile(
+        val compiledOxsts = SemantifyrCompiler(oxstsInjector, ArtifactConfig.NONE).compile(
             compiledCase.verificationCase.classDeclaration,
             trustDirectory.resolve("oxsts").resolve(gammaVerificationCase.qualifiedName),
-        ).inlinedOxsts
+        )
         val givesTrustedVerdict = portfolio.legs.any {
-            it.isAvailable(environment) && isTrustedOn(it, inlinedOxsts, expectedVerdict)
+            it.isAvailable(environment) && isTrustedOn(it, compiledOxsts, expectedVerdict)
         }
         if (givesTrustedVerdict) {
             checkVerificationCase(buildFrontend(portfolio, outputDirectory, environment = environment), gammaVerificationCase, expectedVerdict)
@@ -160,12 +160,13 @@ class GammaFrontendTestHelper {
 
     private suspend fun <T : BackendConfig> isTrustedOn(
         leg: PortfolioLeg<T>,
-        inlinedOxsts: InlinedOxsts,
+        compiledOxsts: FlattenedCompilationContext,
         verdict: VerificationVerdict,
     ): Boolean {
+        val inlinedOxsts = compiledOxsts.inlinedOxsts
         return withVerificationScope {
             val checker = leg.backend.capabilityChecker(oxstsInjector, leg.config)
-            if (checker.check(inlinedOxsts).isNotEmpty()) {
+            if (checker.check(inlinedOxsts, compiledOxsts.transitionCallTraces).isNotEmpty()) {
                 return@withVerificationScope false
             }
             val soundness = checker.soundness(leg.config.soundness, inlinedOxsts)

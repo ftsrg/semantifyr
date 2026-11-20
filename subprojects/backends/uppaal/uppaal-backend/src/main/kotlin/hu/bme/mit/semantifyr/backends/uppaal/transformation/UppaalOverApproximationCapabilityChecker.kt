@@ -10,6 +10,7 @@ import com.google.inject.Inject
 import hu.bme.mit.semantifyr.backend.UnsupportedConstruct
 import hu.bme.mit.semantifyr.backend.transformation.HavocValueCollector
 import hu.bme.mit.semantifyr.backend.transformation.IntegerRangeChecker
+import hu.bme.mit.semantifyr.compiler.pipeline.context.TransitionCallTraceMap
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.eAllOfType
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.clock.ClockTestAnalysis
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.ConstantExpressionEvaluatorProvider
@@ -27,7 +28,7 @@ class UppaalOverApproximationCapabilityChecker @Inject constructor(
     private val havocValueCollector: HavocValueCollector,
 ) : UppaalCapabilityChecker(integerRangeChecker, uppaalDeclarationsBuilder, uppaalVariableTransformer, clockTestAnalysis, constantExpressionEvaluatorProvider) {
 
-    override fun checkModel(inlinedOxsts: InlinedOxsts): List<UnsupportedConstruct> {
+    override fun checkModel(inlinedOxsts: InlinedOxsts, transitionCallTraces: TransitionCallTraceMap): List<UnsupportedConstruct> {
         val havoced = inlinedOxsts.eAllOfType<HavocOperation>().map {
             OxstsUtils.requireVariableReference(it.reference)
         }
@@ -36,6 +37,6 @@ class UppaalOverApproximationCapabilityChecker @Inject constructor(
         }.map {
             UnsupportedConstruct(it, "havoced integers read other than in comparisons with literals")
         }
-        return super.checkModel(inlinedOxsts) + underApproximated
+        return super.checkModel(inlinedOxsts, transitionCallTraces) + underApproximated
     }
 }

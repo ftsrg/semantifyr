@@ -12,6 +12,7 @@ import hu.bme.mit.semantifyr.backend.BackendCapabilityChecker
 import hu.bme.mit.semantifyr.backend.scopes.withVerificationScopeBlocking
 import hu.bme.mit.semantifyr.backends.theta.ThetaBackend
 import hu.bme.mit.semantifyr.backends.theta.ThetaConfig
+import hu.bme.mit.semantifyr.compiler.pipeline.context.TransitionCallTraceMap
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
@@ -35,7 +36,7 @@ class ThetaCapabilityCheckerTest : ThetaTransformationTestBase() {
 
     private fun unsupported(body: String, type: Class<out ThetaCapabilityChecker> = ThetaCapabilityChecker::class.java): List<String> {
         val inlinedOxsts = parse("inlined oxsts of semantifyr::Anything\n${body.trimIndent()}", colors, notes)
-        return capabilityChecker(type).check(inlinedOxsts).map {
+        return capabilityChecker(type).check(inlinedOxsts, TransitionCallTraceMap(emptyMap())).map {
             it.description
         }
     }

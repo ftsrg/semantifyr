@@ -12,6 +12,7 @@ import hu.bme.mit.semantifyr.backend.BackendCapabilityChecker
 import hu.bme.mit.semantifyr.backend.scopes.withVerificationScopeBlocking
 import hu.bme.mit.semantifyr.backends.uppaal.verification.UppaalBackend
 import hu.bme.mit.semantifyr.backends.uppaal.verification.UppaalConfig
+import hu.bme.mit.semantifyr.compiler.pipeline.context.TransitionCallTraceMap
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
@@ -34,7 +35,7 @@ class UppaalCapabilityCheckerTest : UppaalTransformationTestBase() {
     ): List<String> {
         val inlinedOxsts = parse("inlined oxsts of semantifyr::Anything\n${body.trimIndent()}", colors)
         return withCapabilityChecker(checkerClass) {
-            it.check(inlinedOxsts)
+            it.check(inlinedOxsts, TransitionCallTraceMap(emptyMap()))
         }.map {
             it.description
         }

@@ -132,10 +132,11 @@ class SemantifyrVerifierTestHelper @Inject constructor(
     ): List<SupportedCase> {
         val compiler = SemantifyrCompiler(injector, ArtifactConfig.NONE)
         return collectVerificationCases(context, filter).mapNotNull { case ->
-            val inlinedOxsts = compiler.compile(case.classDeclaration, outputDirectory.resolve(caseDirectoryName(case))).inlinedOxsts
+            val compiled = compiler.compile(case.classDeclaration, outputDirectory.resolve(caseDirectoryName(case)))
+            val inlinedOxsts = compiled.inlinedOxsts
             withVerificationScopeBlocking {
                 val checker = backend.capabilityChecker(injector, config)
-                val unsupported = checker.check(inlinedOxsts)
+                val unsupported = checker.check(inlinedOxsts, compiled.transitionCallTraces)
                 if (unsupported.isEmpty()) {
                     SupportedCase(case, checker.soundness(SoundnessDirection.Exact, inlinedOxsts) == SoundnessDirection.Exact)
                 } else {

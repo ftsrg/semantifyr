@@ -12,6 +12,7 @@ import hu.bme.mit.semantifyr.backend.SoundnessDirection
 import hu.bme.mit.semantifyr.backend.UnsupportedConstruct
 import hu.bme.mit.semantifyr.backend.transformation.IntegerRangeChecker
 import hu.bme.mit.semantifyr.backend.transformation.WholeDelayLowering
+import hu.bme.mit.semantifyr.compiler.pipeline.context.TransitionCallTraceMap
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinSymbolResolver
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.ExpressionTypeEvaluatorProvider
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.ImmutableTypeEvaluation
@@ -35,8 +36,8 @@ class SpinCapabilityChecker @Inject constructor(
     private val spinVariableTransformer: SpinVariableTransformer,
 ) : BackendCapabilityChecker() {
 
-    override fun checkModel(inlinedOxsts: InlinedOxsts): List<UnsupportedConstruct> {
-        return integerRangeChecker.check(inlinedOxsts) + checkWholeDelay(inlinedOxsts)
+    override fun checkModel(inlinedOxsts: InlinedOxsts, transitionCallTraces: TransitionCallTraceMap): List<UnsupportedConstruct> {
+        return integerRangeChecker.check(inlinedOxsts, transitionCallTraces) + checkWholeDelay(inlinedOxsts)
     }
 
     private fun checkWholeDelay(inlinedOxsts: InlinedOxsts): List<UnsupportedConstruct> {

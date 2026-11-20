@@ -9,6 +9,7 @@ package hu.bme.mit.semantifyr.backends.theta.transformation.xsts
 import com.google.inject.Inject
 import hu.bme.mit.semantifyr.backend.UnsupportedConstruct
 import hu.bme.mit.semantifyr.backend.transformation.WholeDelayLowering
+import hu.bme.mit.semantifyr.compiler.pipeline.context.TransitionCallTraceMap
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.clock.ClockTestAnalysis
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 
@@ -19,10 +20,10 @@ class ThetaHornCapabilityChecker @Inject constructor(
     private val clockTestAnalysis: ClockTestAnalysis,
 ) : ThetaCapabilityChecker(thetaDomainTransformer, wholeDelayLowering) {
 
-    override fun checkModel(inlinedOxsts: InlinedOxsts): List<UnsupportedConstruct> {
+    override fun checkModel(inlinedOxsts: InlinedOxsts, transitionCallTraces: TransitionCallTraceMap): List<UnsupportedConstruct> {
         val unclosedTests = clockTestAnalysis.unclosedTests(inlinedOxsts.mainTransition).map {
             UnsupportedConstruct(it, "clock tests that are not closed")
         }
-        return super.checkModel(inlinedOxsts) + unclosedTests
+        return super.checkModel(inlinedOxsts, transitionCallTraces) + unclosedTests
     }
 }

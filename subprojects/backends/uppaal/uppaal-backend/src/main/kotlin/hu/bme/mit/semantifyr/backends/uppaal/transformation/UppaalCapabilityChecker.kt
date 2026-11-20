@@ -10,6 +10,7 @@ import com.google.inject.Inject
 import hu.bme.mit.semantifyr.backend.BackendCapabilityChecker
 import hu.bme.mit.semantifyr.backend.UnsupportedConstruct
 import hu.bme.mit.semantifyr.backend.transformation.IntegerRangeChecker
+import hu.bme.mit.semantifyr.compiler.pipeline.context.TransitionCallTraceMap
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.clock.ClockTestAnalysis
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.ConstantExpressionEvaluatorProvider
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.EvaluationFailureException
@@ -41,8 +42,8 @@ open class UppaalCapabilityChecker @Inject constructor(
     private val constantExpressionEvaluatorProvider: ConstantExpressionEvaluatorProvider,
 ) : BackendCapabilityChecker() {
 
-    override fun checkModel(inlinedOxsts: InlinedOxsts): List<UnsupportedConstruct> {
-        return integerRangeChecker.checkArithmetic(inlinedOxsts) {
+    override fun checkModel(inlinedOxsts: InlinedOxsts, transitionCallTraces: TransitionCallTraceMap): List<UnsupportedConstruct> {
+        return integerRangeChecker.checkArithmetic(inlinedOxsts, transitionCallTraces) {
             uppaalDeclarationsBuilder.declaredRangeOf(it, inlinedOxsts)
         }
     }

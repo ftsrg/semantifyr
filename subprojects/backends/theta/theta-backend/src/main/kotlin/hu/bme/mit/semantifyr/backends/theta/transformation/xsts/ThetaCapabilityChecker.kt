@@ -11,6 +11,7 @@ import hu.bme.mit.semantifyr.backend.BackendCapabilityChecker
 import hu.bme.mit.semantifyr.backend.SoundnessDirection
 import hu.bme.mit.semantifyr.backend.UnsupportedConstruct
 import hu.bme.mit.semantifyr.backend.transformation.WholeDelayLowering
+import hu.bme.mit.semantifyr.compiler.pipeline.context.TransitionCallTraceMap
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ArrayLiteral
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.DataTypeDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ForOperation
@@ -26,7 +27,7 @@ open class ThetaCapabilityChecker @Inject constructor(
     private val wholeDelayLowering: WholeDelayLowering,
 ) : BackendCapabilityChecker() {
 
-    override fun checkModel(inlinedOxsts: InlinedOxsts): List<UnsupportedConstruct> {
+    override fun checkModel(inlinedOxsts: InlinedOxsts, transitionCallTraces: TransitionCallTraceMap): List<UnsupportedConstruct> {
         val wholeDelay = wholeDelayLowering.lower(inlinedOxsts) ?: return emptyList()
         return wholeDelay.clocks.filter {
             it.saturation > Int.MAX_VALUE

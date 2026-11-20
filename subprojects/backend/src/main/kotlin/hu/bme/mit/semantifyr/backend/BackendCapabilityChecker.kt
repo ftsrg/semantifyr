@@ -6,6 +6,7 @@
 
 package hu.bme.mit.semantifyr.backend
 
+import hu.bme.mit.semantifyr.compiler.pipeline.context.TransitionCallTraceMap
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Annotation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import org.eclipse.emf.ecore.EObject
@@ -17,7 +18,7 @@ class UnsupportedConstruct(
 
 abstract class BackendCapabilityChecker {
 
-    fun check(inlinedOxsts: InlinedOxsts): List<UnsupportedConstruct> {
+    fun check(inlinedOxsts: InlinedOxsts, transitionCallTraces: TransitionCallTraceMap): List<UnsupportedConstruct> {
         val constructs = mutableListOf<UnsupportedConstruct>()
         val contents = inlinedOxsts.eAllContents()
         for (element in contents) {
@@ -30,12 +31,12 @@ abstract class BackendCapabilityChecker {
                 constructs += UnsupportedConstruct(element, it)
             }
         }
-        return constructs + checkModel(inlinedOxsts)
+        return constructs + checkModel(inlinedOxsts, transitionCallTraces)
     }
 
     protected abstract fun describeUnsupported(element: EObject): String?
 
-    protected open fun checkModel(inlinedOxsts: InlinedOxsts): List<UnsupportedConstruct> {
+    protected open fun checkModel(inlinedOxsts: InlinedOxsts, transitionCallTraces: TransitionCallTraceMap): List<UnsupportedConstruct> {
         return emptyList()
     }
 

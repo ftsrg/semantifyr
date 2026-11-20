@@ -41,7 +41,7 @@ abstract class VerificationContext<TArtifacts, TRawVerdict>(
         logger.info { "[$backendId] starting verification (output=${request.artifactOutputPath})" }
 
         return try {
-            val unsupported = capabilityChecker.check(request.inlinedOxsts)
+            val unsupported = capabilityChecker.check(request.inlinedOxsts, request.transitionCallTraces)
             if (unsupported.isNotEmpty()) {
                 return notSupported(metadata, unsupported)
             }

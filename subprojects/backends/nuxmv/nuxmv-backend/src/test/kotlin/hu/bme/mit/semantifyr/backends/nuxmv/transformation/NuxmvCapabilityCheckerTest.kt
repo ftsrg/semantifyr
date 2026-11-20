@@ -12,6 +12,7 @@ import hu.bme.mit.semantifyr.backend.BackendCapabilityChecker
 import hu.bme.mit.semantifyr.backend.scopes.withVerificationScopeBlocking
 import hu.bme.mit.semantifyr.backends.nuxmv.verification.NuxmvBackend
 import hu.bme.mit.semantifyr.backends.nuxmv.verification.NuxmvConfig
+import hu.bme.mit.semantifyr.compiler.pipeline.context.TransitionCallTraceMap
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
@@ -30,14 +31,14 @@ class NuxmvCapabilityCheckerTest : NuxmvTransformationTestBase() {
 
     private fun unsupported(body: String): List<String> {
         val inlinedOxsts = parse("inlined oxsts of semantifyr::Anything\n${body.trimIndent()}", colors)
-        return capabilityChecker().check(inlinedOxsts).map {
+        return capabilityChecker().check(inlinedOxsts, TransitionCallTraceMap(emptyMap())).map {
             it.description
         }
     }
 
     private fun unsupportedByBdd(body: String): List<String> {
         val inlinedOxsts = parse("inlined oxsts of semantifyr::Anything\n${body.trimIndent()}", colors)
-        return bddCapabilityChecker().check(inlinedOxsts).map {
+        return bddCapabilityChecker().check(inlinedOxsts, TransitionCallTraceMap(emptyMap())).map {
             it.description
         }
     }
