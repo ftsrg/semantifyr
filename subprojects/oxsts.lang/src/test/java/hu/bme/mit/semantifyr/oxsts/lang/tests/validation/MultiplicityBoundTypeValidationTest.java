@@ -44,41 +44,30 @@ public class MultiplicityBoundTypeValidationTest {
                 "refers limit: int[\"two\"] = 2",
                 "var weights: int[1.5] := [0]",
             })
-    void aMultiplicityBoundThatIsNoIntegerIsRejectedAndNoCheckFails(String declaration) {
+    void aMultiplicityBoundThatIsNoIntegerIsItsOneErrorAndNoCheckFails(String declaration) {
         var loggedErrors = new ArrayList<LogEvent>();
-        var parsedPackage = recordingValidatorErrors(
-                loggedErrors, () -> parseHelper.parse("""
-                package test
-                class Part {
-                }
-                class Host {
-                    %s
-                }
-                """.formatted(declaration), CheckMode.ALL));
+        var parsedPackage = recordingValidatorErrors(loggedErrors, () -> {
+            return parseHelper.parse("""
+                    package test
+                    class Part {
+                    }
+                    class Host {
+                        %s
+                    }
+                    """.formatted(declaration), CheckMode.ALL);
+        });
 
         assertThat(loggedErrors).isEmpty();
         parsedPackage.assertNoResourceErrors();
         assertThat(parsedPackage.getIssues())
-                .filteredOn(issue -> issue.getSeverity() == Severity.ERROR)
-                .filteredOn(issue -> issue.getMessage().startsWith("A multiplicity bound must be an integer"))
+                .filteredOn(issue -> {
+                    return issue.getSeverity() == Severity.ERROR;
+                })
                 .singleElement()
-                .satisfies(issue -> assertThat(issue.getCode()).isEqualTo(OxstsValidator.TYPE_MISMATCH));
-    }
-
-    @Test
-    void anIntegerArrayWithABooleanBoundGivesItsOneError() {
-        var parsedPackage = parseHelper.parse("""
-                package test
-                class Host {
-                    var values: int[true] := [0]
-                }
-                """, CheckMode.ALL);
-
-        assertThat(parsedPackage.getIssues())
-                .filteredOn(issue -> issue.getSeverity() == Severity.ERROR)
-                .singleElement()
-                .satisfies(
-                        issue -> assertThat(issue.getMessage()).startsWith("A multiplicity bound must be an integer"));
+                .satisfies(issue -> {
+                    assertThat(issue.getMessage()).startsWith("A multiplicity bound must be an integer");
+                    assertThat(issue.getCode()).isEqualTo(OxstsValidator.TYPE_MISMATCH);
+                });
     }
 
     @Test

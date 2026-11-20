@@ -161,7 +161,9 @@ public class ClockValidationTest {
             """, CheckMode.ALL);
 
         assertThat(parsedPackage.getIssues())
-                .filteredOn(issue -> issue.getSeverity() == Severity.ERROR)
+                .filteredOn(issue -> {
+                    return issue.getSeverity() == Severity.ERROR;
+                })
                 .anySatisfy(issue -> {
                     assertThat(issue.getCode()).isEqualTo(OxstsValidator.INCORRECT_CLOCK_USE);
                     assertThat(issue.getMessage()).contains("cannot be an array element");
@@ -179,8 +181,12 @@ public class ClockValidationTest {
 
         parsedPackage.assertNoResourceErrors();
         assertThat(parsedPackage.getIssues())
-                .filteredOn(issue -> issue.getSeverity() == Severity.ERROR)
-                .extracting(issue -> issue.getCode())
+                .filteredOn(issue -> {
+                    return issue.getSeverity() == Severity.ERROR;
+                })
+                .extracting(issue -> {
+                    return issue.getCode();
+                })
                 .containsExactlyInAnyOrder(OxstsValidator.TYPE_MISMATCH, OxstsValidator.INCORRECT_CLOCK_USE);
     }
 
@@ -286,7 +292,9 @@ public class ClockValidationTest {
 
         parsedPackage.assertNoResourceErrors();
         assertThat(parsedPackage.getIssues())
-                .filteredOn(issue -> issue.getSeverity() == Severity.ERROR)
+                .filteredOn(issue -> {
+                    return issue.getSeverity() == Severity.ERROR;
+                })
                 .isEmpty();
         assertThat(warnedLines(source, parsedPackage))
                 .containsExactly(
@@ -364,7 +372,9 @@ public class ClockValidationTest {
     private void assertOnlyClockError(WrappedOxstsPackage parsedPackage, String messageFragment) {
         parsedPackage.assertNoResourceErrors();
         assertThat(parsedPackage.getIssues())
-                .filteredOn(issue -> issue.getSeverity() == Severity.ERROR)
+                .filteredOn(issue -> {
+                    return issue.getSeverity() == Severity.ERROR;
+                })
                 .singleElement()
                 .satisfies(issue -> {
                     assertThat(issue.getCode()).isEqualTo(OxstsValidator.INCORRECT_CLOCK_USE);

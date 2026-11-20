@@ -7,29 +7,23 @@
 package hu.bme.mit.semantifyr.oxsts.lang.tests.utils;
 
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts;
 import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.emf.ecore.util.EcoreUtil;
+import org.eclipse.xtext.resource.XtextResourceSet;
 import org.eclipse.xtext.testing.util.ParseHelper;
 
-/**
- * Parses a text fixture as an {@link InlinedOxsts} model. The Oxsts grammar's top-level {@code
- * Model} rule accepts both {@code OxstsModelPackage} and {@code InlinedOxsts}; this helper
- * disambiguates to the inlined form for optimization-pass tests.
- */
 public class InlinedOxstsParseHelper {
 
     @Inject
     private ParseHelper<InlinedOxsts> parseHelper;
 
+    @Inject
+    private Provider<XtextResourceSet> resourceSetProvider;
+
     public InlinedOxsts parse(String text) {
-        try {
-            var inlined = parseHelper.parse(text);
-            EcoreUtil.resolveAll(inlined);
-            return inlined;
-        } catch (Exception exception) {
-            throw new AssertionError("Unexpected exception while parsing InlinedOxsts", exception);
-        }
+        return parse(text, resourceSetProvider.get());
     }
 
     public InlinedOxsts parse(String text, ResourceSet resourceSet) {

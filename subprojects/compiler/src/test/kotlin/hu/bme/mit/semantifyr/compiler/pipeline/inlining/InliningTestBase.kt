@@ -155,7 +155,9 @@ abstract class InliningTestBase {
         }
         return EcoreUtil2
             .eAllOfType(parsed.oxstsPackage, ClassDeclaration::class.java)
-            .singleOrNull { it.name == className }
+            .singleOrNull {
+                it.name == className
+            }
             ?: error("Class '$className' not found in the test model")
     }
 

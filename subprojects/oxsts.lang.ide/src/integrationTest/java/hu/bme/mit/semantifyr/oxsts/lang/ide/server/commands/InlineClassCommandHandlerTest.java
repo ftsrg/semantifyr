@@ -82,12 +82,12 @@ class InlineClassCommandHandlerTest {
     }
 
     @Test
-    void inliningTwiceWritesTheModelAgain() {
+    void inliningTwiceWritesTheModelAgain() throws Exception {
         var first = inline(false);
+        Files.delete(first);
 
         var second = inline(false);
 
-        assertThat(second).isRegularFile();
-        assertThat(first.getFileName()).isEqualTo(second.getFileName());
+        assertThat(second).isEqualTo(first).isRegularFile();
     }
 }

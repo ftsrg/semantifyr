@@ -80,7 +80,9 @@ class UnsavedEditsCommandHandlerTest {
         var modelUri =
                 URI.createURI(workspace.resolve("decided.semantifyr").toUri().toString());
         workspaceManager.didOpen(modelUri, 1, EDITED_MODEL).build(CancelIndicator.NullImpl);
-        XtextResource resource = workspaceManager.doRead(modelUri, (document, xtextResource) -> xtextResource);
+        XtextResource resource = workspaceManager.doRead(modelUri, (document, xtextResource) -> {
+            return xtextResource;
+        });
         onlyInBuffer =
                 EcoreUtil2.getAllContentsOfType(resource.getContents().getFirst(), ClassDeclaration.class).stream()
                         .filter(classDeclaration -> {
