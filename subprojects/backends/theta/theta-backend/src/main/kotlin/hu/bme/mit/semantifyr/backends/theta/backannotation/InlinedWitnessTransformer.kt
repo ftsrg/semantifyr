@@ -25,7 +25,7 @@ class InlinedWitnessTransformer @Inject constructor(
         inlinedOxsts: InlinedOxsts,
         addedNames: Set<String>,
     ) {
-        val resolver = TraceVariableResolver(inlinedOxsts, thetaVariableTransformer, addedNames, "Theta's trace")
+        val resolver = TraceVariableResolver(inlinedOxsts, thetaVariableTransformer::nameOf, addedNames, "Theta's trace")
 
         fun transform(xstsAssumptionWitnessState: XstsWitnessState): WitnessState {
             val (delays, stateVariableValues) = xstsAssumptionWitnessState.variableValues.partition {

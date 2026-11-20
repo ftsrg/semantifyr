@@ -35,7 +35,7 @@ class NuxmvInlinedOxstsWitnessTransformer @Inject constructor(
         trace: NuxmvTrace,
         auxiliaryNames: Set<String>,
     ): InlinedWitness {
-        val resolver = TraceVariableResolver(inlinedOxsts, nuxmvVariableTransformer, auxiliaryNames, "nuXmv's trace")
+        val resolver = TraceVariableResolver(inlinedOxsts, nuxmvVariableTransformer::nameOf, auxiliaryNames, "nuXmv's trace")
         val clocks = inlinedOxsts.variables.filter {
             nuxmvVariableTransformer.kindOf(it) == NuxmvVariableKind.Clock
         }

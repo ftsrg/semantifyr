@@ -10,7 +10,6 @@ import com.google.inject.Inject
 import hu.bme.mit.semantifyr.backend.BackendTestModels
 import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -20,12 +19,6 @@ class TraceVariableResolverTest {
 
     @Inject
     private lateinit var models: BackendTestModels
-
-    private object DeclaredNames : BackendVariableNames {
-        override fun nameOf(variableDeclaration: VariableDeclaration): String {
-            return variableDeclaration.name
-        }
-    }
 
     private val inlinedOxsts: InlinedOxsts by lazy {
         models.parse(
@@ -46,7 +39,14 @@ class TraceVariableResolverTest {
     }
 
     private fun resolver(): TraceVariableResolver {
-        return TraceVariableResolver(inlinedOxsts, DeclaredNames, setOf("flag"), "the trace")
+        return TraceVariableResolver(
+            inlinedOxsts,
+            {
+                it.name
+            },
+            setOf("flag"),
+            "the trace",
+        )
     }
 
     @Test

@@ -35,7 +35,7 @@ class UppaalInlinedOxstsWitnessTransformer @Inject constructor(
         trace: UppaalTrace,
         clockEdges: Map<String, UppaalClockEdge>,
     ): InlinedWitness {
-        val resolver = TraceVariableResolver(inlinedOxsts, uppaalVariableTransformer, emptySet(), "Uppaal's trace")
+        val resolver = TraceVariableResolver(inlinedOxsts, uppaalVariableTransformer::nameOf, emptySet(), "Uppaal's trace")
         val clocks = inlinedOxsts.variables.filter {
             uppaalVariableTransformer.kindOf(it) == UppaalVariableKind.Clock
         }

@@ -35,7 +35,7 @@ class SpinInlinedOxstsWitnessTransformer @Inject constructor(
         trace: SpinTrace,
         addedNames: Set<String>,
     ): InlinedWitness {
-        val resolver = TraceVariableResolver(inlinedOxsts, spinVariableTransformer, addedNames, "Spin's replay")
+        val resolver = TraceVariableResolver(inlinedOxsts, spinVariableTransformer::nameOf, addedNames, "Spin's replay")
 
         // the replay prints a global only when it changes, so every value starts from its declaration
         val running = mutableMapOf<VariableDeclaration, Expression>()

@@ -10,22 +10,18 @@ import hu.bme.mit.semantifyr.compiler.pipeline.utils.eAllOfType
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 
-interface BackendVariableNames {
-    fun nameOf(variableDeclaration: VariableDeclaration): String
-}
-
 class TraceVariableResolver(
     inlinedOxsts: InlinedOxsts,
-    names: BackendVariableNames,
+    backendNameOf: (VariableDeclaration) -> String,
     private val addedNames: Set<String>,
     private val traceDescription: String,
 ) {
 
     // a trace names state variables, so a state variable wins a name it shares with a local
     private val variablesByName = inlinedOxsts.eAllOfType<VariableDeclaration>().associateBy {
-        names.nameOf(it)
+        backendNameOf(it)
     } + inlinedOxsts.variables.associateBy {
-        names.nameOf(it)
+        backendNameOf(it)
     }
 
     private val stateVariables = inlinedOxsts.variables.toSet()

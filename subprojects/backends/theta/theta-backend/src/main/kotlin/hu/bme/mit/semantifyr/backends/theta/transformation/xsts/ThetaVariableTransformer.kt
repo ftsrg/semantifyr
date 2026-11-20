@@ -9,7 +9,6 @@ package hu.bme.mit.semantifyr.backends.theta.transformation.xsts
 import com.google.inject.Inject
 import com.google.inject.Provider
 import hu.bme.mit.semantifyr.backend.scopes.VerificationScoped
-import hu.bme.mit.semantifyr.backend.witness.BackendVariableNames
 import hu.bme.mit.semantifyr.compiler.pipeline.inlining.LocalVarNames
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinAnnotationHandler
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
@@ -28,7 +27,7 @@ class ThetaVariableTransformer @Inject constructor(
     private val thetaTypeReferenceTransformer: ThetaTypeReferenceTransformer,
     private val builtinAnnotationHandler: BuiltinAnnotationHandler,
     private val thetaExpressionTransformerProvider: Provider<ThetaExpressionTransformer>,
-) : BackendVariableNames {
+) {
 
     // resolve dependency cycle
     private val thetaExpressionTransformer by lazy {
@@ -39,7 +38,7 @@ class ThetaVariableTransformer @Inject constructor(
     private val localVariableMap = mutableMapOf<LocalVarDeclarationOperation, XstsLocalVarDeclarationOperation>()
     private val loopVariableMap = mutableMapOf<VariableDeclaration, XstsVariableDeclaration>()
 
-    override fun nameOf(variableDeclaration: VariableDeclaration): String {
+    fun nameOf(variableDeclaration: VariableDeclaration): String {
         return variableDeclaration.name
     }
 
