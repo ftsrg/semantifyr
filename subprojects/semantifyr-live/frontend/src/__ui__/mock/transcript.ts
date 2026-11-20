@@ -87,11 +87,6 @@ function commandKindOf(command: string): 'discover' | 'compiled' | 'verify' | 'v
   return 'validate'
 }
 
-function isValidation(message: RequestMessage): boolean {
-  const command = (message.params as { command?: string } | undefined)?.command
-  return message.method === 'workspace/executeCommand' && command !== undefined && commandKindOf(command) === 'validate'
-}
-
 export function fixturesOf(transcript: Transcript): Map<string, FlavorFixture> {
   const fixtures = new Map<string, FlavorFixture>()
   for (const session of transcript.sessions) {
@@ -105,7 +100,6 @@ export function fixturesOf(transcript: Transcript): Map<string, FlavorFixture> {
     const discovered = new Map<string, VerificationCaseSpecification[]>()
     const pending = new Map<MessageId, Pending>()
     const progress = new Map<string, ProgressValue[]>()
-    const cancelledValidations = new Set<MessageId>()
     const documentOf = (uri: string) => {
       const text = texts.get(uri)
       if (text === undefined) {
@@ -127,16 +121,6 @@ export function fixturesOf(transcript: Transcript): Map<string, FlavorFixture> {
           if (message.method === 'textDocument/didOpen') {
             const { textDocument } = message.params as { textDocument: { uri: string, text: string } }
             texts.set(textDocument.uri, textDocument.text)
-          }
-          if (message.method === 'window/workDoneProgress/cancel') {
-            const { token } = message.params as { token: string }
-            if (runKindOf(progress.get(token)?.[0]?.title) === 'validate') {
-              for (const [id, waiting] of pending) {
-                if (isValidation(waiting.message)) {
-                  cancelledValidations.add(id)
-                }
-              }
-            }
           }
           if (message.method === 'textDocument/didChange') {
             const { textDocument, contentChanges } = message.params as { textDocument: { uri: string }, contentChanges: { text: string }[] }
@@ -202,7 +186,7 @@ export function fixturesOf(transcript: Transcript): Map<string, FlavorFixture> {
             }
           } else {
             const result = message.result as WitnessValidationResult
-            if (cancelledValidations.has(message.id ?? -1) && result.status === WitnessValidationStatus.Errored) {
+            if (result.status === WitnessValidationStatus.Cancelled) {
               fixture.cancelledValidation = result
             } else if (result.status !== WitnessValidationStatus.Errored) {
               fixture.validations[caseId ?? location.uri] = result

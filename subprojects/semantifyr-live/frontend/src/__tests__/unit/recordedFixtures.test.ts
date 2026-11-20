@@ -214,10 +214,10 @@ describe('the fixtures derived from a recorded transcript', () => {
     ])
   })
 
-  it('keep the answer to a validation whose progress the client cancelled apart from the validations', () => {
+  it('keep the answer to a cancelled validation apart from the validations', () => {
     const cancelled: WitnessValidationResult = {
-      status: 'errored',
-      message: 'java.util.concurrent.CancellationException',
+      status: 'cancelled',
+      message: 'Verification cancelled',
       portfolioId: 'smart',
       report: null,
     }
