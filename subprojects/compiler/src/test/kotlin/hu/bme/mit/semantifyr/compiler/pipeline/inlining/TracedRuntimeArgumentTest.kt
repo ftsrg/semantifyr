@@ -90,6 +90,22 @@ class TracedRuntimeArgumentTest : FlatteningTestBase() {
     }
 
     @Test
+    fun `an any variable passed to an any parameter is recorded as any starting at zero`() {
+        val recorded = flatten("AnyVariableArgument", MODEL).recordedVariable()
+
+        assertThat(recorded.typeSpecification.domain.name).isEqualTo("any")
+        assertThat((recorded.expression as LiteralInteger).value).isEqualTo(0)
+    }
+
+    @Test
+    fun `an any local passed to an any parameter is recorded as any, its writes not followed`() {
+        val recorded = flatten("AnyLocalArgument", MODEL).recordedVariable()
+
+        assertThat(recorded.typeSpecification.domain.name).isEqualTo("any")
+        assertThat((recorded.expression as LiteralInteger).value).isEqualTo(0)
+    }
+
+    @Test
     fun `every step resets the tracer and the recorded argument before it runs`() {
         val compilation = flatten("IntegerArgument", MODEL)
         val recorded = compilation.transitionCallTraces.getTransitionCallTrace(compilation.tracer()).recordedArguments.single().variable
@@ -307,6 +323,38 @@ class TracedRuntimeArgumentTest : FlatteningTestBase() {
                 redefine tran {
                     havoc(requested)
                     inline relay(requested)
+                }
+
+                prop {
+                    return AG true
+                }
+            }
+
+            @VerificationCase
+            class AnyVariableArgument {
+                contains display: Display
+                var stored: any := 0
+
+                redefine tran {
+                    havoc(stored)
+                    inline display.note(stored)
+                }
+
+                prop {
+                    return AG true
+                }
+            }
+
+            @VerificationCase
+            class AnyLocalArgument {
+                contains display: Display
+                var requested: bool := false
+
+                redefine tran {
+                    var held: any := 0
+                    havoc(requested)
+                    held := requested
+                    inline display.note(held)
                 }
 
                 prop {

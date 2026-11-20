@@ -108,7 +108,7 @@ class TransitionCallTraceTransformer @Inject constructor(
                 val argument = OxstsUtils.getArgumentFor(callExpression.arguments, parameter, index)
                 val temporary = runtimeArguments[parameter]
                 if (argument != null && temporary != null) {
-                    val variable = createArgumentVariable(tracerIndex, parameter, argument.expression, temporary)
+                    val variable = createArgumentVariable(tracerIndex, parameter, argument.expression)
                     argumentRecords += OxstsFactory.createAssignmentOperation().also {
                         it.reference = OxstsFactory.createElementReference(variable)
                         it.expression = OxstsFactory.createElementReference(temporary)
@@ -202,7 +202,6 @@ class TransitionCallTraceTransformer @Inject constructor(
         tracerIndex: Int,
         parameter: ParameterDeclaration,
         argument: Expression,
-        temporary: LocalVarDeclarationOperation,
     ): VariableDeclaration {
         val domain = recordedDomainOf(parameter, argument)
         val typeSpecification = OxstsFactory.createTypeSpecification().also {
@@ -227,7 +226,8 @@ class TransitionCallTraceTransformer @Inject constructor(
                 }
                 OxstsFactory.createLiteralNothing()
             }
-            else -> sourceError(temporary, "A run-time argument of type '${domain?.name}' cannot be recorded for the traced call.")
+            domain === builtinSymbolResolver.anyDatatype(parameter) -> OxstsFactory.createLiteralInteger(0)
+            else -> error("No recording variable for a run-time argument of type '${domain?.name}'")
         }
         return createObservationVariable(
             name = TransitionTracerNames.argumentName(tracerIndex, parameter.name),
