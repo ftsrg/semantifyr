@@ -18,8 +18,10 @@ class VerificationVerdictTest {
     }
 
     @Test
-    fun `Errored and Inconclusive are not decisive`() {
-        assertThat(VerificationVerdict.Errored.isDecisive).isFalse
-        assertThat(VerificationVerdict.Inconclusive.isDecisive).isFalse
+    fun `every other verdict is not decisive`() {
+        val undecided = VerificationVerdict.entries - VerificationVerdict.Passed - VerificationVerdict.Failed
+        for (verdict in undecided) {
+            assertThat(verdict.isDecisive).describedAs(verdict.name).isFalse
+        }
     }
 }

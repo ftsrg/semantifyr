@@ -117,7 +117,9 @@ class ShellBasedBackendExecutorTest {
         val exitCode = stub().run(listOf("-search", "two words", "model.pml"), workingDirectory, logFile)
 
         assertThat(exitCode).isEqualTo(3)
-        val lines = logFile.readLines().map { it.trim() }
+        val lines = logFile.readLines().map {
+            it.trim()
+        }
         assertPrintedWorkingDirectory(lines.first(), workingDirectory)
         assertThat(lines.drop(1)).containsExactly(
             "argument=-search",
@@ -147,7 +149,11 @@ class ShellBasedBackendExecutorTest {
         stub().run(emptyList(), workingDirectory, errorFile = errorFile)
         stub().run(emptyList(), workingDirectory, errorFile = errorFile)
 
-        assertThat(errorFile.readLines().map { it.trim() }).containsExactly("stub error", "stub error")
+        assertThat(
+            errorFile.readLines().map {
+                it.trim()
+            },
+        ).containsExactly("stub error", "stub error")
     }
 
     @Test

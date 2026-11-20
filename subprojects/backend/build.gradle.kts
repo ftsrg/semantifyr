@@ -21,4 +21,6 @@ dependencies {
     implementation(libs.docker.java.transport)
 
     testFixturesApi(testFixtures(project(":compiler")))
+
+    testImplementation(libs.kotlinx.coroutines.test)
 }

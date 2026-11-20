@@ -23,6 +23,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.withTimeout
 import org.assertj.core.api.Assertions.assertThat
 import org.eclipse.emf.ecore.EObject
@@ -75,7 +76,9 @@ class VerificationContextTest {
     private class ScriptedContext(
         override val executor: CountingExecutor = CountingExecutor(),
         private val preparationFailure: Exception? = null,
-        private val runStep: suspend () -> String? = { "pass" },
+        private val runStep: suspend () -> String? = {
+            "pass"
+        },
         private val witness: InlinedWitness? = null,
         private val witnessFailure: WitnessFailedException? = null,
         inlinedOxsts: InlinedOxsts = modelChecking(OxstsFactory.createAG()),
@@ -173,9 +176,16 @@ class VerificationContextTest {
 
     @Test
     suspend fun `a run without a raw verdict is interpreted by the backend`() {
-        val result = ScriptedContext(runStep = { null }).execute()
+        val context = ScriptedContext(
+            runStep = {
+                null
+            },
+        )
+
+        val result = context.execute()
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Inconclusive)
+        assertThat(context.phases).contains("interpret null")
     }
 
     @Test
@@ -329,7 +339,11 @@ class VerificationContextTest {
 
     @Test
     suspend fun `an unsupported construct found by the run is NotSupported`() {
-        val result = ScriptedContext(runStep = { throw BackendUnsupportedException("value out of range") }).execute()
+        val result = ScriptedContext(
+            runStep = {
+                throw BackendUnsupportedException("value out of range")
+            },
+        ).execute()
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.NotSupported)
         assertThat(result.message).isEqualTo("value out of range")
@@ -337,7 +351,11 @@ class VerificationContextTest {
 
     @Test
     suspend fun `any other failure is Errored with its message`() {
-        val result = ScriptedContext(runStep = { error("spin execution failed with exit code 2") }).execute()
+        val result = ScriptedContext(
+            runStep = {
+                error("spin execution failed with exit code 2")
+            },
+        ).execute()
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Errored)
         assertThat(result.message).isEqualTo("spin execution failed with exit code 2")
@@ -377,7 +395,11 @@ class VerificationContextTest {
 
     @Test
     suspend fun `cancellation propagates`() {
-        val context = ScriptedContext(runStep = { throw CancellationException("cancelled") })
+        val context = ScriptedContext(
+            runStep = {
+                throw CancellationException("cancelled")
+            },
+        )
 
         assertThrows<CancellationException> {
             context.execute()
@@ -385,8 +407,8 @@ class VerificationContextTest {
     }
 
     @Test
-    suspend fun `a timeout around the run propagates instead of becoming Errored`() {
-        val thrown = runCatching {
+    fun `a timeout around the run propagates instead of becoming Errored`() = runTest {
+        assertThrows<TimeoutCancellationException> {
             withTimeout(50.milliseconds) {
                 ScriptedContext(
                     runStep = {
@@ -395,14 +417,7 @@ class VerificationContextTest {
                     },
                 ).execute()
             }
-        }.exceptionOrNull()
-
-        assertThat(thrown).isInstanceOf(TimeoutCancellationException::class.java)
-    }
-
-    @Test
-    fun `Timeout is not decisive`() {
-        assertThat(VerificationVerdict.Timeout.isDecisive).isFalse
+        }
     }
 }
 

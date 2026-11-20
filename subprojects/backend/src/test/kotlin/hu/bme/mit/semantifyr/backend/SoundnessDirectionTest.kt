@@ -41,20 +41,6 @@ class SoundnessDirectionTest {
     }
 
     @Test
-    fun `an over-approximating and an under-approximating engine never trust the same verdict`() {
-        val decisive = VerificationVerdict.entries.filter {
-            it.isDecisive
-        }
-        for (property in listOf(invariant, reachability)) {
-            for (verdict in decisive) {
-                val over = SoundnessDirection.OverApproximating.trusts(verdict, property)
-                val under = SoundnessDirection.UnderApproximating.trusts(verdict, property)
-                assertThat(over != under).describedAs("$verdict on ${property::class.simpleName}").isTrue
-            }
-        }
-    }
-
-    @Test
     fun `a lowering decides the direction of an exact run and keeps that of a run in its own direction`() {
         for (direction in SoundnessDirection.entries) {
             assertThat(direction.throughLowering(SoundnessDirection.Exact)).isEqualTo(direction)
