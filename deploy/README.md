@@ -53,5 +53,5 @@ Once per server, as an administrator with sudo.
 - Edge and observability: a push to `main` that changes their files deploys them. To roll back at once, as the deploy user: `cd /srv/edge && cp previous/* . && docker compose up -d --remove-orphans --force-recreate`, and the same in `/srv/observability`.
 - Another operator: add the GitHub account to `GITHUB_USERS` in `/srv/edge/.env`, then run Deploy Edge.
 - When Caddy breaks the routes: point the tunnel's live hostnames at `http://semantifyr-live:8080` and `http://semantifyr-live-staging:8080`.
-- Metrics: Grafana at https://grafana.semantifyr.org behind the sign-in; the dashboards are provisioned from `deploy/observability/*.json`.
+- Metrics: Grafana at https://grafana.semantifyr.org behind the sign-in; each `deploy/observability/live-*.json` is the source of one dashboard, which Deploy Observability writes once for production and once for staging.
 - Release: run Release on `main` for a commit with a successful Continuous Delivery run, then raise `version` in `gradle.properties`.

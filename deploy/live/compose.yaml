@@ -6,6 +6,7 @@ services:
   live:
     image: docker.io/ftsrgbot/semantifyr-live:${IMAGE_TAG:?IMAGE_TAG is not set}
     restart: unless-stopped
+    init: true
     environment:
       SEMANTIFYR_LIVE_VERIFY_CONCURRENCY: ${VERIFY_CONCURRENCY:?VERIFY_CONCURRENCY is not set}
       SEMANTIFYR_LIVE_VERIFY_TIMEOUT_SECONDS: ${VERIFY_TIMEOUT_SECONDS:?VERIFY_TIMEOUT_SECONDS is not set}
