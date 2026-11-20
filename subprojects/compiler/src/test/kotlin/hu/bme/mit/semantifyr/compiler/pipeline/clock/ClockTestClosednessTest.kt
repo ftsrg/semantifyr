@@ -8,18 +8,48 @@ package hu.bme.mit.semantifyr.compiler.pipeline.clock
 
 import com.google.inject.Inject
 import hu.bme.mit.semantifyr.compiler.pipeline.flattening.FlatteningTestBase
+import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationConfig
+import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinAnnotationHandler
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.clock.ClockTestAnalysis
+import hu.bme.mit.semantifyr.oxsts.lang.tests.utils.OxstsPackageParseHelper
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ComparisonOperator
 import org.assertj.core.api.Assertions.assertThat
+import org.eclipse.xtext.EcoreUtil2
+import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestFactory
+import kotlin.io.path.Path
+import kotlin.io.path.readText
 
 class ClockTestClosednessTest : FlatteningTestBase() {
 
     @Inject
     private lateinit var clockTestAnalysis: ClockTestAnalysis
 
+    @Inject
+    private lateinit var parseHelper: OxstsPackageParseHelper
+
+    @Inject
+    private lateinit var builtinAnnotationHandler: BuiltinAnnotationHandler
+
     private fun unclosedTests(className: String): List<ComparisonOperator> {
         return clockTestAnalysis.unclosedTests(flatten(className, MODEL).inlinedOxsts.mainTransition)
+    }
+
+    @TestFactory
+    fun `optimization keeps whether a clock case is closed`(): List<DynamicTest> {
+        val source = CLOCK_CORPUS.readText()
+        val cases = EcoreUtil2.eAllOfType(parseHelper.parse(source).oxstsPackage, ClassDeclaration::class.java).filter {
+            builtinAnnotationHandler.isVerificationCase(it)
+        }
+        return cases.map {
+            DynamicTest.dynamicTest(it.name) {
+                val unoptimized = clockTestAnalysis.unclosedTests(flatten(it.name, source).inlinedOxsts.mainTransition)
+                val optimized = clockTestAnalysis.unclosedTests(flatten(it.name, source, OptimizationConfig.ALL).inlinedOxsts.mainTransition)
+                assertThat(optimized.isEmpty()).isEqualTo(unoptimized.isEmpty())
+            }
+        }
     }
 
     @Test
@@ -43,6 +73,8 @@ class ClockTestClosednessTest : FlatteningTestBase() {
     }
 
     companion object {
+        private val CLOCK_CORPUS = Path("../../oxsts-test-models/semantic/clocks.semantifyr")
+
         private val MODEL = """
             package clock::tests::closedness
 
