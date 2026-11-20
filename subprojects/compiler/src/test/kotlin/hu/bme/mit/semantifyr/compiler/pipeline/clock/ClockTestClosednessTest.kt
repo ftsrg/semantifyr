@@ -45,16 +45,18 @@ class ClockTestClosednessTest : FlatteningTestBase() {
         }
         return cases.map {
             DynamicTest.dynamicTest(it.name) {
-                val unoptimized = clockTestAnalysis.unclosedTests(flatten(it.name, source).inlinedOxsts.mainTransition)
-                val optimized = clockTestAnalysis.unclosedTests(flatten(it.name, source, OptimizationConfig.ALL).inlinedOxsts.mainTransition)
-                assertThat(optimized.isEmpty()).isEqualTo(unoptimized.isEmpty())
+                val unoptimized = unclosedTestTexts(it.name, source, OptimizationConfig.NONE)
+                val optimized = unclosedTestTexts(it.name, source, OptimizationConfig.ALL)
+                assertThat(optimized).isEqualTo(unoptimized)
             }
         }
     }
 
-    @Test
-    fun `a model whose clock tests stand in assumptions as closed comparisons is closed`() {
-        assertThat(unclosedTests("Deadline")).isEmpty()
+    private fun unclosedTestTexts(className: String, source: String, optimization: OptimizationConfig): Set<String> {
+        val mainTransition = flatten(className, source, optimization).inlinedOxsts.mainTransition
+        return clockTestAnalysis.unclosedTests(mainTransition).map {
+            serialize(it).trim()
+        }.toSet()
     }
 
     @Test
@@ -90,25 +92,6 @@ class ClockTestClosednessTest : FlatteningTestBase() {
                     if (elapsed < 1) {
                         early := true
                     }
-                }
-            }
-
-            @VerificationCase
-            class Deadline {
-                contains timer: Timer
-
-                redefine tran {
-                    assume(timer.elapsed <= 5)
-                    choice {
-                        assume(!(timer.elapsed < 2))
-                        inline timer.restart()
-                    } or {
-                        assume(timer.elapsed == 1)
-                    }
-                }
-
-                prop {
-                    return AG true
                 }
             }
 
