@@ -1621,6 +1621,31 @@ public class OxstsValidator extends AbstractOxstsValidator {
     }
 
     @Check
+    public void checkMultiplicityBoundType(DefiniteMultiplicity definiteMultiplicity) {
+        Expression expression = definiteMultiplicity.getExpression();
+        if (expression instanceof RangeExpression range) {
+            checkMultiplicityBoundIsInteger(range.getLeft());
+            checkMultiplicityBoundIsInteger(range.getRight());
+        } else {
+            checkMultiplicityBoundIsInteger(expression);
+        }
+    }
+
+    private void checkMultiplicityBoundIsInteger(Expression bound) {
+        if (bound == null || bound instanceof LiteralInfinity) {
+            return;
+        }
+        var type = evaluateTypeSafely(bound);
+        if (type == null || type instanceof InvalidTypeEvaluation) {
+            return;
+        }
+        if (typeCompatibility.unwrappedDomain(type) != builtinSymbolResolver.intDatatype(bound)) {
+            acceptError(
+                    "A multiplicity bound must be an integer (got " + formatType(type) + ").", bound, TYPE_MISMATCH);
+        }
+    }
+
+    @Check
     public void checkVariableInitializerModality(VariableDeclaration variableDeclaration) {
         if (OxstsUtils.isLocalVariable(variableDeclaration) || OxstsUtils.isLoopVariable(variableDeclaration)) {
             return;
