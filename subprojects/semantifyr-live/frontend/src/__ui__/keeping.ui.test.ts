@@ -229,7 +229,9 @@ describe('leaving the page', () => {
       return unsavedMark(page).count()
     }).toBe(1)
     const warning = page.waitForEvent('dialog')
-    await page.close({ runBeforeUnload: true })
+    await page.evaluate(() => {
+      location.reload()
+    })
     await warning
 
     expect(dialogs).toEqual(['beforeunload'])
