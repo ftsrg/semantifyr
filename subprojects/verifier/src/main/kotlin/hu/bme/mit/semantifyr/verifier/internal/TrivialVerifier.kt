@@ -11,6 +11,7 @@ import hu.bme.mit.semantifyr.backend.BackendMetrics
 import hu.bme.mit.semantifyr.backend.BackendVerificationResult
 import hu.bme.mit.semantifyr.backend.VerificationMetadata
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
+import hu.bme.mit.semantifyr.backend.hasTrace
 import hu.bme.mit.semantifyr.backend.witness.Fraction
 import hu.bme.mit.semantifyr.backend.witness.InlinedWitness
 import hu.bme.mit.semantifyr.backend.witness.WitnessState
@@ -39,9 +40,10 @@ class TrivialVerifier @Inject constructor(
     }
 
     fun verifyTrivially(inlinedOxsts: InlinedOxsts, startedAt: Instant): BackendVerificationResult {
-        val body = when (val expression = inlinedOxsts.property.expression) {
-            is AG -> expression.body
-            is EF -> expression.body
+        val property = inlinedOxsts.property.expression
+        val body = when (property) {
+            is AG -> property.body
+            is EF -> property.body
             else -> error("Specified property is not in the expected form")
         }
 
@@ -65,7 +67,9 @@ class TrivialVerifier @Inject constructor(
             ),
             verdict = verdict,
             metrics = BackendMetrics(),
-            inlinedWitness = trivialWitness(inlinedOxsts),
+            inlinedWitness = trivialWitness(inlinedOxsts).takeIf {
+                hasTrace(verdict, property)
+            },
             message = "Property decided at compile time.",
         )
     }
