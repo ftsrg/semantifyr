@@ -10,14 +10,15 @@ import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.backends.spin.verification.SpinBackend
 import hu.bme.mit.semantifyr.backends.spin.verification.SpinConfig
 import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup
-import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts
 import hu.bme.mit.semantifyr.verifier.EngineVerdictPortfolio
 import hu.bme.mit.semantifyr.verifier.SemantifyrVerifierTestHelper
 import hu.bme.mit.semantifyr.verifier.VerificationCase
 import hu.bme.mit.semantifyr.verifier.assumeBackendAvailable
 import hu.bme.mit.semantifyr.verifier.assumePortfolioAvailable
+import hu.bme.mit.semantifyr.verifier.discovery.CaseFilter
 import hu.bme.mit.semantifyr.verifier.portfolio.SingleBackendPortfolio
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
@@ -25,7 +26,6 @@ import org.junit.jupiter.params.provider.MethodSource
 import kotlin.io.path.Path
 import kotlin.time.Duration.Companion.minutes
 
-@InjectWithOxsts
 class SpinSemanticConformanceTest {
 
     companion object {
@@ -57,13 +57,40 @@ class SpinSemanticConformanceTest {
         }
 
         @JvmStatic
+        fun `a whole-delay proof of a model whose clock tests are not all closed is Inconclusive`(): List<Arguments> {
+            val proofs = CaseFilter.Matching {
+                !helper.casesExpectingWitness.matches(it)
+            }
+            return approximatedCases(proofs)
+        }
+
+        private val approximatedTraceCases by lazy {
+            approximatedCases(helper.casesExpectingWitness)
+        }
+
+        private val tracesFound = mutableListOf<Boolean>()
+
+        @JvmStatic
         fun `a whole-delay trace of a model whose clock tests are not all closed is the tagged verdict or Inconclusive`(): List<Arguments> {
+            return approximatedTraceCases
+        }
+
+        @JvmStatic
+        @AfterAll
+        fun `the whole-delay lowering finds a trace of some model whose clock tests are not all closed`() {
+            if (tracesFound.isEmpty() || tracesFound.size < approximatedTraceCases.size) {
+                return
+            }
+            assertThat(tracesFound).contains(true)
+        }
+
+        private fun approximatedCases(filter: CaseFilter): List<Arguments> {
             return helper.collectApproximatedCasesAsArguments(
                 context,
                 SpinBackend(),
                 SpinConfig.SafeDfs,
                 SemantifyrVerifierTestHelper.testArtifactRoot(SpinSemanticConformanceTest::class.java).resolve("lowering-check"),
-                helper.casesExpectingWitness,
+                filter,
             )
         }
     }
@@ -76,6 +103,18 @@ class SpinSemanticConformanceTest {
             verificationCase,
             verificationPortfolio = EngineVerdictPortfolio(SpinBackend(), SpinConfig.SafeDfs),
             outputDirectory = SemantifyrVerifierTestHelper.testArtifactRoot(SpinSemanticConformanceTest::class.java),
+        )
+    }
+
+    @ParameterizedTest
+    @MethodSource
+    suspend fun `a whole-delay proof of a model whose clock tests are not all closed is Inconclusive`(verificationCase: VerificationCase) {
+        helper.checkTestModel(
+            context,
+            verificationCase,
+            verificationPortfolio = SingleBackendPortfolio(SpinBackend(), SpinConfig.SafeDfs),
+            outputDirectory = SemantifyrVerifierTestHelper.testArtifactRoot(SpinSemanticConformanceTest::class.java),
+            expectedVerdict = VerificationVerdict.Inconclusive,
         )
     }
 
@@ -95,5 +134,6 @@ class SpinSemanticConformanceTest {
         assertThat(result.verdict)
             .describedAs("${verificationCase.qualifiedName} (${result.message ?: "no message"})")
             .isIn(helper.expectedVerdictFromTags(verificationCase), VerificationVerdict.Inconclusive)
+        tracesFound += result.verdict == helper.expectedVerdictFromTags(verificationCase)
     }
 }

@@ -15,6 +15,7 @@ import hu.bme.mit.semantifyr.verifier.assumePortfolioAvailable
 import hu.bme.mit.semantifyr.verifier.discovery.CaseFilter
 import hu.bme.mit.semantifyr.verifier.portfolio.SingleBackendPortfolio
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
@@ -59,9 +60,24 @@ class ThetaSemanticConformanceTest {
             return approximatedCases(proofs)
         }
 
+        private val approximatedTraceCases by lazy {
+            approximatedCases(helper.casesExpectingWitness)
+        }
+
+        private val tracesFound = mutableListOf<Boolean>()
+
         @JvmStatic
         fun `a whole-delay trace of a model whose clock tests are not all closed is the tagged verdict or Inconclusive`(): List<Arguments> {
-            return approximatedCases(helper.casesExpectingWitness)
+            return approximatedTraceCases
+        }
+
+        @JvmStatic
+        @AfterAll
+        fun `the whole-delay lowering finds a trace of some model whose clock tests are not all closed`() {
+            if (tracesFound.isEmpty() || tracesFound.size < approximatedTraceCases.size) {
+                return
+            }
+            assertThat(tracesFound).contains(true)
         }
 
         private fun approximatedCases(filter: CaseFilter): List<Arguments> {
@@ -114,5 +130,6 @@ class ThetaSemanticConformanceTest {
         assertThat(result.verdict)
             .describedAs("${verificationCase.qualifiedName} (${result.message ?: "no message"})")
             .isIn(helper.expectedVerdictFromTags(verificationCase), VerificationVerdict.Inconclusive)
+        tracesFound += result.verdict == helper.expectedVerdictFromTags(verificationCase)
     }
 }
