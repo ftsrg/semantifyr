@@ -12,6 +12,15 @@ import { createExtensionContext, resetVscode, state, TestItem, TestMessage, Uri,
 import type { ReportTrace, WitnessValidationResult } from '@semantifyr/editor-common';
 
 describe('renderTrace', () => {
+    it('gives a result without a report its status, portfolio and message alone', () => {
+        expect(renderTrace('Safe', result('cancelled', null, 'Verification cancelled'))).toBe([
+            '# Safe',
+            '',
+            'Verdict: cancelled (portfolio theta) - Verification cancelled',
+            '',
+        ].join('\n'));
+    });
+
     it('lists the calls and the state changes of each step', () => {
         expect(renderTrace('Safe', result('failed', counterexample))).toBe([
             '# Safe',
