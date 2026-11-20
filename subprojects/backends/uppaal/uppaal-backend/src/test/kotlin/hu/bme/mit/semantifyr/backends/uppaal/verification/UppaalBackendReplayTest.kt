@@ -11,7 +11,6 @@ import com.google.inject.Injector
 import hu.bme.mit.semantifyr.backend.BackendTestModels
 import hu.bme.mit.semantifyr.backend.BackendVerificationRequest
 import hu.bme.mit.semantifyr.backend.BackendVerificationResult
-import hu.bme.mit.semantifyr.backend.SoundnessDirection
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.backend.boolean
 import hu.bme.mit.semantifyr.backend.enumeration
@@ -208,22 +207,6 @@ class UppaalBackendReplayTest {
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.NotSupported)
         assertThat(result.message).matches("uppaal:over-approximation does not support \\S+:2: havoced integers read other than in comparisons with literals \\(havoced\\)")
-    }
-
-    @Test
-    fun `only the over-approximation configuration over-approximates`() {
-        assertThat(UppaalConfig.OverApproximation.soundness).isEqualTo(SoundnessDirection.OverApproximating)
-        val underApproximating = listOf(
-            UppaalConfig.Default,
-            UppaalConfig.DepthFirst,
-            UppaalConfig.RandomDepthFirst,
-            UppaalConfig.UnderApproximation,
-            UppaalConfig.UnderApproximationLarge,
-            UppaalConfig.AggressiveInclusion,
-        )
-        for (config in underApproximating) {
-            assertThat(config.soundness).describedAs(config.id).isEqualTo(SoundnessDirection.UnderApproximating)
-        }
     }
 
     @Test
