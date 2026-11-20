@@ -190,4 +190,60 @@ class CorpusCheckerTest {
             it.status == CaseStatus.LeftOut && it.passing
         }
     }
+
+    @Test
+    fun `a case outside the nightly tier without a verdict fails naming the case and the other cases run`() {
+        writeManifest(
+            ManifestModel(
+                "model.sysml",
+                cases = listOf(
+                    ManifestCase("Known", ManifestVerdict.Passed, ManifestTier.Integration),
+                    ManifestCase("Unjudged", ManifestVerdict.Unknown, ManifestTier.Integration),
+                ),
+            ),
+        )
+        val checker = CorpusChecker(answering(outcome("semantifyr::sysml::model::Known", ExitCode.Success)), caseNamespace = "semantifyr::sysml::model::")
+
+        val checks = checker.check(checker.select(corpus).single())
+
+        assertThat(runs).containsExactly(listOf("semantifyr::sysml::model::Known"))
+        assertThat(statuses(checks)).containsExactlyInAnyOrderEntriesOf(
+            mapOf(
+                "Known" to CaseStatus.Reached,
+                "Unjudged" to CaseStatus.NoVerdict,
+            ),
+        )
+        assertThat(
+            checks.single {
+                it.status == CaseStatus.NoVerdict
+            }.passing,
+        ).isFalse
+    }
+
+    @Test
+    fun `an output line that is neither an outcome nor a failure fails naming the line`() {
+        writeManifest(
+            ManifestModel(
+                "Model.gamma",
+                cases = listOf(
+                    ManifestCase("Holds", ManifestVerdict.Passed),
+                ),
+            ),
+        )
+        val checker = CorpusChecker(answering(outcome("Model.Holds", ExitCode.Success), "Compiling Model.Holds"), caseNamespace = null)
+
+        val checks = checker.check(checker.select(corpus).single())
+
+        assertThat(statuses(checks)).containsExactlyInAnyOrderEntriesOf(
+            mapOf(
+                "Holds" to CaseStatus.Reached,
+                "Compiling Model.Holds" to CaseStatus.Unreadable,
+            ),
+        )
+        val unreadable = checks.single {
+            it.status == CaseStatus.Unreadable
+        }
+        assertThat(unreadable.passing).isFalse
+        assertThat(unreadable.toString()).contains("Compiling Model.Holds")
+    }
 }

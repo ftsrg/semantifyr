@@ -14,6 +14,7 @@ import hu.bme.mit.semantifyr.verifier.CaseManifest
 import hu.bme.mit.semantifyr.verifier.ManifestCase
 import hu.bme.mit.semantifyr.verifier.ManifestModel
 import hu.bme.mit.semantifyr.verifier.ManifestTier
+import hu.bme.mit.semantifyr.verifier.ManifestVerdict
 import kotlinx.serialization.SerializationException
 import java.nio.file.Path
 import kotlin.time.DurationUnit
@@ -39,6 +40,8 @@ enum class CaseStatus {
     Missed,
     Unanswered,
     Unlisted,
+    NoVerdict,
+    Unreadable,
     LeftOut,
 }
 
@@ -69,11 +72,17 @@ data class CaseCheck(
     }
 }
 
-private class Answer(
-    val case: String,
-    val exitCode: Int,
-    val detail: String,
-)
+private sealed interface OutputLine {
+    class Answer(
+        val case: String,
+        val exitCode: Int,
+        val detail: String,
+    ) : OutputLine
+
+    class Unreadable(
+        val line: String,
+    ) : OutputLine
+}
 
 class CorpusChecker(
     private val launcher: Launcher,
@@ -105,20 +114,35 @@ class CorpusChecker(
                 CaseCheck(selection.model.file, it.name, CaseStatus.Unanswered, "the manifest leaves cases of the model out, and naming the others needs --case-namespace")
             }
         }
+        val judged = selection.cases.filter {
+            it.verdict != ManifestVerdict.Unknown
+        }
+        val unjudged = selection.cases.filter {
+            it.verdict == ManifestVerdict.Unknown
+        }.map {
+            CaseCheck(selection.model.file, it.name, CaseStatus.NoVerdict, "the manifest gives no verdict, which only a nightly case may lack")
+        }
+        if (judged.isEmpty()) {
+            return unjudged
+        }
         val caseNames = if (caseNamespace == null) {
             emptyList()
         } else {
-            selection.cases.map {
+            judged.map {
                 "$caseNamespace${it.name}"
             }
         }
         val run = launcher.verify(selection.path, caseNames)
-        val answers = run.stdout.lines().filter {
+        val lines = run.stdout.lines().filter {
             it.isNotBlank()
         }.map {
-            answerOf(it)
+            outputLineOf(it)
         }
-        val checks = selection.cases.map { case ->
+        val answers = lines.filterIsInstance<OutputLine.Answer>()
+        val unreadable = lines.filterIsInstance<OutputLine.Unreadable>().map {
+            CaseCheck(selection.model.file, it.line, CaseStatus.Unreadable, "the launcher printed a line that is neither an outcome nor a failure")
+        }
+        val checks = judged.map { case ->
             val answer = answers.firstOrNull {
                 simpleName(it.case) == case.name
             }
@@ -142,16 +166,26 @@ class CorpusChecker(
         }.map {
             CaseCheck(selection.model.file, it.case, CaseStatus.Unlisted, "answered ${answerWord(it.exitCode)}, but the manifest does not list the case")
         }
-        return checks + unlisted
+        return unjudged + checks + unlisted + unreadable
     }
 
-    private fun answerOf(line: String): Answer {
+    private fun outputLineOf(line: String): OutputLine {
+        val outcome = decodedOrNull<VerifyOutcomeLine>(line)
+        if (outcome != null) {
+            return OutputLine.Answer(outcome.case, outcome.exitCode, " in ${(outcome.compilationDuration + outcome.verificationDuration).toString(DurationUnit.SECONDS, 1)}")
+        }
+        val failure = decodedOrNull<CaseFailureLine>(line)
+        if (failure != null) {
+            return OutputLine.Answer(failure.case, failure.exitCode, ": ${failure.error}")
+        }
+        return OutputLine.Unreadable(line)
+    }
+
+    private inline fun <reified T> decodedOrNull(line: String): T? {
         try {
-            val outcome = jsonLineFormat.decodeFromString<VerifyOutcomeLine>(line)
-            return Answer(outcome.case, outcome.exitCode, " in ${(outcome.compilationDuration + outcome.verificationDuration).toString(DurationUnit.SECONDS, 1)}")
+            return jsonLineFormat.decodeFromString<T>(line)
         } catch (_: SerializationException) {
-            val failure = jsonLineFormat.decodeFromString<CaseFailureLine>(line)
-            return Answer(failure.case, failure.exitCode, ": ${failure.error}")
+            return null
         }
     }
 

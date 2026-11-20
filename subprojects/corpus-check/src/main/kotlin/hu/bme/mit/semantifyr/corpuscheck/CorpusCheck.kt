@@ -18,9 +18,12 @@ import com.github.ajalt.clikt.parameters.types.long
 import com.github.ajalt.clikt.parameters.types.path
 import com.github.ajalt.clikt.parameters.types.restrictTo
 import java.nio.file.Files
+import java.nio.file.Path
 import kotlin.io.path.createDirectories
 
-class CorpusCheckCommand : CliktCommand("corpus-check") {
+class CorpusCheckCommand(
+    private val launcherOf: (executable: Path, artifactRoot: Path, timeoutSeconds: Long?) -> Launcher = ::ProcessLauncher,
+) : CliktCommand("corpus-check") {
     private val launcher by option("--launcher")
         .path(mustExist = true, canBeDir = false)
         .required()
@@ -50,7 +53,7 @@ class CorpusCheckCommand : CliktCommand("corpus-check") {
     override fun run() {
         val artifactRoot = artifactDirectory?.createDirectories() ?: Files.createTempDirectory("corpus-check-")
         echo("artifacts: $artifactRoot")
-        val checker = CorpusChecker(ProcessLauncher(launcher, artifactRoot, timeoutSeconds), caseNamespace)
+        val checker = CorpusChecker(launcherOf(launcher, artifactRoot, timeoutSeconds), caseNamespace)
         var failed = 0
         var total = 0
         for (corpus in corpora) {

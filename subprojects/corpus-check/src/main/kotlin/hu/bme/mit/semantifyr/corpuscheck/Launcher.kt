@@ -26,6 +26,20 @@ class ProcessLauncher(
 ) : Launcher {
     override fun verify(model: Path, caseNames: List<String>): LauncherRun {
         val artifactDirectory = Files.createTempDirectory(artifactRoot, "${model.nameWithoutExtension}-")
+        val process = ProcessBuilder(command(model, caseNames, artifactDirectory))
+            .redirectError(ProcessBuilder.Redirect.INHERIT)
+            .start()
+        val stdout = process.inputStream.bufferedReader().use {
+            it.readText()
+        }
+        return LauncherRun(process.waitFor(), stdout)
+    }
+
+    internal fun command(
+        model: Path,
+        caseNames: List<String>,
+        artifactDirectory: Path,
+    ): List<String> {
         val command = mutableListOf(executable.toString(), "verify", "--json", "-d", artifactDirectory.toString())
         if (timeoutSeconds != null) {
             command += listOf("--timeout-seconds", timeoutSeconds.toString())
@@ -34,12 +48,6 @@ class ProcessLauncher(
             command += listOf("--case-name", caseName)
         }
         command += model.toString()
-        val process = ProcessBuilder(command)
-            .redirectError(ProcessBuilder.Redirect.INHERIT)
-            .start()
-        val stdout = process.inputStream.bufferedReader().use {
-            it.readText()
-        }
-        return LauncherRun(process.waitFor(), stdout)
+        return command
     }
 }
