@@ -46,6 +46,7 @@ import hu.bme.mit.semantifyr.verifier.portfolio.PortfolioTask
 import hu.bme.mit.semantifyr.verifier.portfolio.SingleBackendPortfolio
 import hu.bme.mit.semantifyr.verifier.portfolio.VerificationPortfolio
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
@@ -194,6 +195,38 @@ class SemantifyrVerifierImplTest {
         }
 
         assertThat(exception).hasMessage("caller cancelled")
+    }
+
+    @Test
+    fun `a cancel through the progress cancels the running portfolio and ends the verification`(@TempDir output: Path) = runTest {
+        val started = CompletableDeferred<Unit>()
+        val portfolioCancelled = CompletableDeferred<Unit>()
+        val portfolio = ScriptedPortfolio { _, _ ->
+            started.complete(Unit)
+            try {
+                awaitCancellation()
+            } catch (cancellation: CancellationException) {
+                portfolioCancelled.complete(Unit)
+                throw cancellation
+            }
+        }
+        val progress = object : ProgressContext {
+            override fun checkIsCancelled() {
+                if (started.isCompleted) {
+                    throw CancellationException("cancelled by the user")
+                }
+            }
+
+            override fun reportProgress(message: String) {
+            }
+        }
+
+        val exception = assertThrows<CancellationException> {
+            build(portfolio, output).verify(loadFirstCase(), progress)
+        }
+
+        assertThat(exception).hasMessage("cancelled by the user")
+        assertThat(portfolioCancelled.isCompleted).isTrue
     }
 
     @Test
