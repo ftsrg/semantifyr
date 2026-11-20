@@ -228,7 +228,9 @@ describe('leaving the page', () => {
     await expect.poll(async () => {
       return unsavedMark(page).count()
     }).toBe(1)
-    await page.reload({ timeout: 2000 }).catch(() => {})
+    const warning = page.waitForEvent('dialog')
+    await page.close({ runBeforeUnload: true })
+    await warning
 
     expect(dialogs).toEqual(['beforeunload'])
   })
