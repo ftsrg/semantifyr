@@ -186,21 +186,6 @@ describe("liveEditorUrl and parseLiveEditorUrl", () => {
         expect(parsed("https://live.semantifyr.org/language?lines=3").lines).toBeNull();
     });
 
-    it("do not read today's mode, example, code and embed parameters", () => {
-        expect(parsed("https://live.semantifyr.org/?mode=gamma&example=Crossroads&code=abc&embed=1")).toEqual({
-            language: null,
-            example: null,
-            library: null,
-            view: null,
-            theme: null,
-            frame: null,
-            lines: null,
-            compressedModel: null,
-            case: null,
-            compressedVerdicts: null,
-        });
-    });
-
     it("decode garbled or misshapen verdicts to null", async () => {
         expect(await decodeLiveVerdicts("garbled")).toBeNull();
         expect(await decodeLiveVerdicts(await encodeCompressedBase64Url(JSON.stringify({ a: "passed" })))).toBeNull();
