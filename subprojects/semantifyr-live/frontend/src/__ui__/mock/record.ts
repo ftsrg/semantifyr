@@ -10,7 +10,7 @@ import { parseArgs } from 'node:util'
 import { chromium, type BrowserContext, type Page } from 'playwright'
 
 import { FIXTURES_DIRECTORY, type AdminFixture, type RestFixture } from './fixtures.ts'
-import { fixturesOf, type RecordedSession, type Transcript } from './transcript.ts'
+import { fixturesOf, isRunFinished, type RecordedSession, type Transcript } from './transcript.ts'
 
 const usage = `Usage: npm run ui:record -- [options]
 
@@ -29,6 +29,23 @@ async function settled(page: Page): Promise<void> {
     return document.querySelector('.results') !== null && document.querySelector('.results .initialization') === null
   }, null, { timeout: SETTLED_TIMEOUT_MS })
   await page.waitForTimeout(2500)
+}
+
+async function finished(page: Page): Promise<void> {
+  const started = Date.now()
+  const classNamesOf = async (selector: string): Promise<string[]> => {
+    return await page.locator(selector).evaluateAll((elements) => {
+      return elements.map((element) => {
+        return element.getAttribute('class') ?? ''
+      })
+    })
+  }
+  while (!isRunFinished(await classNamesOf('.results .case-row'), await classNamesOf('.results .validation-mark'))) {
+    if (Date.now() - started > RUN_TIMEOUT_MS) {
+      throw new Error(`the run on ${page.url()} did not finish in ${RUN_TIMEOUT_MS / 1000} s`)
+    }
+    await page.waitForTimeout(1000)
+  }
 }
 
 async function walkExamples(context: BrowserContext, liveUrl: string, address: string): Promise<void> {
@@ -58,12 +75,7 @@ async function verifyAndRead(context: BrowserContext, liveUrl: string, address: 
   await page.goto(`${liveUrl}${address}`)
   await settled(page)
   await page.locator('.results').getByRole('button', { name: 'Verify all', exact: true }).click()
-  await page.waitForFunction(() => {
-    const rows = [...document.querySelectorAll('.results .case-row')]
-    return rows.length > 0 && rows.every((row) => {
-      return /status-(passed|failed|inconclusive|errored|timeout|not_supported)\b/.test(row.className)
-    }) && document.querySelector('.validation-mark.is-validating') === null
-  }, null, { timeout: RUN_TIMEOUT_MS, polling: 1000 })
+  await finished(page)
   await page.waitForTimeout(2000)
   const rows = page.locator('.results .case-row')
   for (let row = 0; row < await rows.count(); row++) {

@@ -13,7 +13,7 @@ import { initializationStepsOf, presentationOf } from '../../lib/language/presen
 import { areCasesKnown, initializationOf } from '../../lib/stores/initialization'
 import { changeSettings } from '../../lib/stores/settings'
 import { useStore } from '../../lib/stores/useStore'
-import { countsOf, type CaseCounts, type CaseRow } from '../../lib/workspace/caseRows'
+import { caseRowClassName, countsOf, type CaseCounts, type CaseRow } from '../../lib/workspace/caseRows'
 import { openModelOxsts } from '../../lib/workspace/libraryTabs'
 import { useCurrentVerification, useLive } from '../../lib/workspace/liveContext'
 import type { Live } from '../../lib/workspace/live'
@@ -245,7 +245,7 @@ function CaseRowView({ row, selected, canValidate }: { row: CaseRow, selected: b
   }
   return (
     <div
-      className={`case-row status-${row.status}${selected ? ' is-selected' : ''}${row.outdated ? ' is-outdated' : ''}${row.shared ? ' is-shared' : ''}${waiting ? ' is-waiting' : ''}`}
+      className={caseRowClassName(row, selected)}
       role="row"
       tabIndex={0}
       aria-selected={selected}

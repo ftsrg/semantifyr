@@ -153,6 +153,10 @@ export function caseRowOf(caseState: VerificationCaseState): CaseRow {
   }
 }
 
+export function caseRowClassName(row: CaseRow, selected: boolean): string {
+  return `case-row status-${row.status}${selected ? ' is-selected' : ''}${row.outdated ? ' is-outdated' : ''}${row.shared ? ' is-shared' : ''}${row.waiting ? ' is-waiting' : ''}`
+}
+
 export function countsOf(rows: readonly CaseRow[]): CaseCounts {
   const counts: CaseCounts = { passed: 0, failed: 0, inconclusive: 0, error: 0, waiting: 0, total: rows.length }
   for (const row of rows) {
