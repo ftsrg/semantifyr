@@ -29050,10 +29050,7 @@
  },
  "results": {
   "LevelCrossing.TwoTrainsCanBeInTheCrossing": {
-   "status": "passed",
-   "portfolioId": "smart",
    "report": {
-    "version": 2,
     "kind": "run",
     "verificationCase": "_LevelCrossing::_TwoTrainsCanBeInTheCrossing",
     "portfolioId": "smart",
@@ -29074,61 +29071,61 @@
     "result": {
      "metadata": {
       "backendId": "nuxmv:kinduction-invar",
-      "startedAt": "2026-11-19T07:32:40.810753512Z"
+      "startedAt": "2026-11-20T00:58:11.901050832Z"
      },
      "verdict": "Passed",
      "soundness": "Exact",
      "isTrusted": true,
      "metrics": {
-      "totalDuration": "PT2.538716802S",
+      "totalDuration": "PT1.432200138S",
       "backend": {
-       "preparationDuration": "PT0.009662390S",
-       "verificationDuration": "PT0.866816832S",
-       "backAnnotationDuration": "PT0.017115287S"
+       "preparationDuration": "PT0.012661646S",
+       "verificationDuration": "PT0.295633636S",
+       "backAnnotationDuration": "PT0.005533145S"
       },
       "verifier": {
-       "compilationDuration": "PT0.240693189S",
+       "compilationDuration": "PT0.264583726S",
        "compilation": {
-        "createDuration": "PT0.009473686S",
-        "instantiationDuration": "PT0.003250916S",
-        "inliningDuration": "PT0.170065473S",
-        "flatteningDuration": "PT0.057903114S",
+        "createDuration": "PT0.005023246S",
+        "instantiationDuration": "PT0.003740230S",
+        "inliningDuration": "PT0.192351020S",
+        "flatteningDuration": "PT0.063469230S",
         "inliningOptimization": {
-         "duration": "PT0.012742842S",
+         "duration": "PT0.013706269S",
          "passes": [
           {
            "name": "OperationCallInlining",
-           "duration": "PT0.007017821S",
+           "duration": "PT0.008078131S",
            "runs": 855,
            "firings": 216
           },
           {
            "name": "ExpressionSimplificationPass",
-           "duration": "PT0.002714979S",
+           "duration": "PT0.002586372S",
            "runs": 3,
            "firings": 2
           },
           {
            "name": "OperationFlatteningPass",
-           "duration": "PT0.001445413S",
+           "duration": "PT0.001344030S",
            "runs": 3,
            "firings": 1
           },
           {
            "name": "RedundantOperationRemovalPass",
-           "duration": "PT0.000674345S",
+           "duration": "PT0.000718637S",
            "runs": 3,
            "firings": 1
           },
           {
            "name": "AssumeFalsePropagationPass",
-           "duration": "PT0.000748951S",
+           "duration": "PT0.000843940S",
            "runs": 3,
            "firings": 2
           },
           {
            "name": "PropertyExpressionNormalization",
-           "duration": "PT0.000010949S",
+           "duration": "PT0.000008439S",
            "runs": 1,
            "firings": 0
           }
@@ -29136,59 +29133,59 @@
          "analyses": []
         },
         "flatteningOptimization": {
-         "duration": "PT0.031878327S",
+         "duration": "PT0.031951485S",
          "passes": [
           {
            "name": "ExpressionSimplificationPass",
-           "duration": "PT0.000379761S",
+           "duration": "PT0.000375310S",
            "runs": 2,
            "firings": 0
           },
           {
            "name": "OperationFlatteningPass",
-           "duration": "PT0.000205790S",
+           "duration": "PT0.000202062S",
            "runs": 2,
            "firings": 0
           },
           {
            "name": "RedundantOperationRemovalPass",
-           "duration": "PT0.000288328S",
+           "duration": "PT0.000193686S",
            "runs": 2,
            "firings": 0
           },
           {
            "name": "AssumeFalsePropagationPass",
-           "duration": "PT0.000215782S",
+           "duration": "PT0.000200570S",
            "runs": 2,
            "firings": 0
           },
           {
            "name": "ConstantVariableSubstitutionPass",
-           "duration": "PT0.001295267S",
+           "duration": "PT0.001394983S",
            "runs": 2,
            "firings": 0
           },
           {
            "name": "CopyPropagationPass",
-           "duration": "PT0.017075296S",
+           "duration": "PT0.017010534S",
            "runs": 2,
            "firings": 0
           },
           {
            "name": "DeadStoreEliminationPass",
-           "duration": "PT0.000340135S",
+           "duration": "PT0.000397330S",
            "runs": 2,
            "firings": 1
           },
           {
            "name": "DeadCodeRemovalPass",
-           "duration": "PT0.007298379S",
+           "duration": "PT0.007330868S",
            "runs": 2,
            "firings": 0
           },
           {
            "name": "VariableLivenessPass",
-           "duration": "PT0.004685583S",
+           "duration": "PT0.004716047S",
            "runs": 2,
            "firings": 1
           }
@@ -29196,17 +29193,17 @@
          "analyses": [
           {
            "name": "ConstantValueAnalysis",
-           "duration": "PT0.001242111S",
+           "duration": "PT0.001328504S",
            "computations": 2
           },
           {
            "name": "ReachingDefinitionsAnalysis",
-           "duration": "PT0.017012281S",
+           "duration": "PT0.016946348S",
            "computations": 2
           },
           {
            "name": "ConeOfInfluenceAnalysis",
-           "duration": "PT0.007078191S",
+           "duration": "PT0.007065993S",
            "computations": 2
           }
          ]
@@ -29227,8 +29224,8 @@
          "expressions": 684
         }
        },
-       "backAnnotationDuration": "PT0.010848827S",
-       "portfolioDuration": "PT2.527475617S"
+       "backAnnotationDuration": "PT0.002594570S",
+       "portfolioDuration": "PT1.431742558S"
       }
      },
      "message": null
@@ -29770,18 +29767,14 @@
         }
        ]
       }
-     ],
-     "missingCalls": null
+     ]
     }
    },
-   "witnessUri": "file:///workspace/.artifacts/LevelCrossing.TwoTrainsCanBeInTheCrossing/verification/model._LevelCrossing._TwoTrainsCanBeInTheCrossing/witness.semantifyr",
-   "traceUri": "file:///workspace/.artifacts/LevelCrossing.TwoTrainsCanBeInTheCrossing/verification/model._LevelCrossing._TwoTrainsCanBeInTheCrossing/trace.get"
+   "witnessUri": "file:///workspace/.artifacts/LevelCrossing.TwoTrains-0dedb5aa/verification/model._LevelCrossing._TwoTrainsCanBeInTheCrossing/witness.semantifyr",
+   "traceUri": "file:///workspace/.artifacts/LevelCrossing.TwoTrains-0dedb5aa/verification/model._LevelCrossing._TwoTrainsCanBeInTheCrossing/trace.get"
   },
   "LevelCrossing.BarrierDownWhileTrainInCrossing": {
-   "status": "failed",
-   "portfolioId": "smart",
    "report": {
-    "version": 2,
     "kind": "run",
     "verificationCase": "_LevelCrossing::_BarrierDownWhileTrainInCrossing",
     "portfolioId": "smart",
@@ -29802,61 +29795,61 @@
     "result": {
      "metadata": {
       "backendId": "nuxmv:kinduction-invar",
-      "startedAt": "2026-11-19T07:32:40.822447974Z"
+      "startedAt": "2026-11-20T00:58:11.912414765Z"
      },
      "verdict": "Failed",
      "soundness": "Exact",
      "isTrusted": true,
      "metrics": {
-      "totalDuration": "PT4.000212677S",
+      "totalDuration": "PT3.546158896S",
       "backend": {
-       "preparationDuration": "PT0.008497850S",
-       "verificationDuration": "PT2.594595409S",
-       "backAnnotationDuration": "PT0.024752178S"
+       "preparationDuration": "PT0.005952659S",
+       "verificationDuration": "PT2.385473314S",
+       "backAnnotationDuration": "PT0.006480394S"
       },
       "verifier": {
-       "compilationDuration": "PT0.251885525S",
+       "compilationDuration": "PT0.286032393S",
        "compilation": {
-        "createDuration": "PT0.007347679S",
-        "instantiationDuration": "PT0.005026658S",
-        "inliningDuration": "PT0.170414656S",
-        "flatteningDuration": "PT0.069096532S",
+        "createDuration": "PT0.005224788S",
+        "instantiationDuration": "PT0.005404316S",
+        "inliningDuration": "PT0.208406506S",
+        "flatteningDuration": "PT0.066996783S",
         "inliningOptimization": {
-         "duration": "PT0.011668623S",
+         "duration": "PT0.024435861S",
          "passes": [
           {
            "name": "OperationCallInlining",
-           "duration": "PT0.006444296S",
+           "duration": "PT0.018129354S",
            "runs": 855,
            "firings": 216
           },
           {
            "name": "ExpressionSimplificationPass",
-           "duration": "PT0.002440974S",
+           "duration": "PT0.002775586S",
            "runs": 3,
            "firings": 2
           },
           {
            "name": "OperationFlatteningPass",
-           "duration": "PT0.001270594S",
+           "duration": "PT0.001774371S",
            "runs": 3,
            "firings": 1
           },
           {
            "name": "RedundantOperationRemovalPass",
-           "duration": "PT0.000617801S",
+           "duration": "PT0.000769101S",
            "runs": 3,
            "firings": 1
           },
           {
            "name": "AssumeFalsePropagationPass",
-           "duration": "PT0.000778698S",
+           "duration": "PT0.000859745S",
            "runs": 3,
            "firings": 2
           },
           {
            "name": "PropertyExpressionNormalization",
-           "duration": "PT0.000010318S",
+           "duration": "PT0.000016320S",
            "runs": 1,
            "firings": 0
           }
@@ -29864,59 +29857,59 @@
          "analyses": []
         },
         "flatteningOptimization": {
-         "duration": "PT0.039604310S",
+         "duration": "PT0.040539492S",
          "passes": [
           {
            "name": "ExpressionSimplificationPass",
-           "duration": "PT0.000575380S",
+           "duration": "PT0.000374693S",
            "runs": 2,
            "firings": 0
           },
           {
            "name": "OperationFlatteningPass",
-           "duration": "PT0.000366979S",
+           "duration": "PT0.000236820S",
            "runs": 2,
            "firings": 0
           },
           {
            "name": "RedundantOperationRemovalPass",
-           "duration": "PT0.000310879S",
+           "duration": "PT0.000231251S",
            "runs": 2,
            "firings": 0
           },
           {
            "name": "AssumeFalsePropagationPass",
-           "duration": "PT0.000356412S",
+           "duration": "PT0.000216072S",
            "runs": 2,
            "firings": 0
           },
           {
            "name": "ConstantVariableSubstitutionPass",
-           "duration": "PT0.001843408S",
+           "duration": "PT0.001387431S",
            "runs": 2,
            "firings": 0
           },
           {
            "name": "CopyPropagationPass",
-           "duration": "PT0.017803307S",
+           "duration": "PT0.017242808S",
            "runs": 2,
            "firings": 0
           },
           {
            "name": "DeadStoreEliminationPass",
-           "duration": "PT0.000331754S",
+           "duration": "PT0.000504526S",
            "runs": 2,
            "firings": 1
           },
           {
            "name": "DeadCodeRemovalPass",
-           "duration": "PT0.010460534S",
+           "duration": "PT0.015382098S",
            "runs": 2,
            "firings": 0
           },
           {
            "name": "VariableLivenessPass",
-           "duration": "PT0.007433270S",
+           "duration": "PT0.004855749S",
            "runs": 2,
            "firings": 1
           }
@@ -29924,17 +29917,17 @@
          "analyses": [
           {
            "name": "ConstantValueAnalysis",
-           "duration": "PT0.001797800S",
+           "duration": "PT0.001335206S",
            "computations": 2
           },
           {
            "name": "ReachingDefinitionsAnalysis",
-           "duration": "PT0.017741809S",
+           "duration": "PT0.017167117S",
            "computations": 2
           },
           {
            "name": "ConeOfInfluenceAnalysis",
-           "duration": "PT0.009983444S",
+           "duration": "PT0.015141815S",
            "computations": 2
           }
          ]
@@ -29955,8 +29948,8 @@
          "expressions": 688
         }
        },
-       "backAnnotationDuration": "PT0.004404298S",
-       "portfolioDuration": "PT3.995443191S"
+       "backAnnotationDuration": "PT0.016974011S",
+       "portfolioDuration": "PT3.545828077S"
       }
      },
      "message": null
@@ -30827,12 +30820,11 @@
         }
        ]
       }
-     ],
-     "missingCalls": null
+     ]
     }
    },
-   "witnessUri": "file:///workspace/.artifacts/LevelCrossing.BarrierDownWhileTrainInCrossing/verification/model._LevelCrossing._BarrierDownWhileTrainInCrossing/witness.semantifyr",
-   "traceUri": "file:///workspace/.artifacts/LevelCrossing.BarrierDownWhileTrainInCrossing/verification/model._LevelCrossing._BarrierDownWhileTrainInCrossing/trace.get"
+   "witnessUri": "file:///workspace/.artifacts/LevelCrossing.BarrierDo-a485e04f/verification/model._LevelCrossing._BarrierDownWhileTrainInCrossing/witness.semantifyr",
+   "traceUri": "file:///workspace/.artifacts/LevelCrossing.BarrierDo-a485e04f/verification/model._LevelCrossing._BarrierDownWhileTrainInCrossing/trace.get"
   }
  },
  "validations": {
@@ -30840,7 +30832,6 @@
    "status": "valid",
    "portfolioId": "smart",
    "report": {
-    "version": 2,
     "kind": "re-check",
     "verificationCase": "_LevelCrossing::_TwoTrainsCanBeInTheCrossing",
     "portfolioId": "smart",
@@ -30860,62 +30851,62 @@
     "timeout": "PT5M",
     "result": {
      "metadata": {
-      "backendId": "uppaal:default",
-      "startedAt": "2026-11-19T07:32:46.584492078Z"
+      "backendId": "nuxmv:kinduction-invar",
+      "startedAt": "2026-11-20T00:58:15.952672272Z"
      },
      "verdict": "Passed",
-     "soundness": "UnderApproximating",
+     "soundness": "Exact",
      "isTrusted": true,
      "metrics": {
-      "totalDuration": "PT3.166182471S",
+      "totalDuration": "PT2.277620783S",
       "backend": {
-       "preparationDuration": "PT0.007557992S",
-       "verificationDuration": "PT2.498888292S",
-       "backAnnotationDuration": "PT0.105606124S"
+       "preparationDuration": "PT0.012449727S",
+       "verificationDuration": "PT1.658964380S",
+       "backAnnotationDuration": "PT0.017211207S"
       },
       "verifier": {
-       "compilationDuration": "PT1.880268154S",
+       "compilationDuration": "PT1.935564812S",
        "compilation": {
-        "createDuration": "PT0.008284773S",
-        "instantiationDuration": "PT0.037596046S",
-        "inliningDuration": "PT1.088663226S",
-        "flatteningDuration": "PT0.745724109S",
+        "createDuration": "PT0.005448420S",
+        "instantiationDuration": "PT0.046518277S",
+        "inliningDuration": "PT1.431913950S",
+        "flatteningDuration": "PT0.451684165S",
         "inliningOptimization": {
-         "duration": "PT0.077653838S",
+         "duration": "PT0.099890668S",
          "passes": [
           {
            "name": "OperationCallInlining",
-           "duration": "PT0.032981946S",
+           "duration": "PT0.052355309S",
            "runs": 2351,
            "firings": 598
           },
           {
            "name": "ExpressionSimplificationPass",
-           "duration": "PT0.018631460S",
+           "duration": "PT0.017922094S",
            "runs": 3,
            "firings": 2
           },
           {
            "name": "OperationFlatteningPass",
-           "duration": "PT0.011199012S",
+           "duration": "PT0.010506724S",
            "runs": 3,
            "firings": 1
           },
           {
            "name": "RedundantOperationRemovalPass",
-           "duration": "PT0.006693183S",
+           "duration": "PT0.005982515S",
            "runs": 3,
            "firings": 1
           },
           {
            "name": "AssumeFalsePropagationPass",
-           "duration": "PT0.007786349S",
+           "duration": "PT0.012798129S",
            "runs": 3,
            "firings": 2
           },
           {
            "name": "PropertyExpressionNormalization",
-           "duration": "PT0.000019814S",
+           "duration": "PT0.000028500S",
            "runs": 1,
            "firings": 0
           }
@@ -30923,59 +30914,59 @@
          "analyses": []
         },
         "flatteningOptimization": {
-         "duration": "PT0.427955940S",
+         "duration": "PT0.332771779S",
          "passes": [
           {
            "name": "ExpressionSimplificationPass",
-           "duration": "PT0.004420360S",
+           "duration": "PT0.002817548S",
            "runs": 3,
            "firings": 1
           },
           {
            "name": "OperationFlatteningPass",
-           "duration": "PT0.002776713S",
+           "duration": "PT0.001943814S",
            "runs": 3,
            "firings": 0
           },
           {
            "name": "RedundantOperationRemovalPass",
-           "duration": "PT0.002823488S",
+           "duration": "PT0.002120575S",
            "runs": 3,
            "firings": 1
           },
           {
            "name": "AssumeFalsePropagationPass",
-           "duration": "PT0.002684966S",
+           "duration": "PT0.001824448S",
            "runs": 3,
            "firings": 0
           },
           {
            "name": "ConstantVariableSubstitutionPass",
-           "duration": "PT0.010677226S",
+           "duration": "PT0.007123919S",
            "runs": 3,
            "firings": 0
           },
           {
            "name": "CopyPropagationPass",
-           "duration": "PT0.178750205S",
+           "duration": "PT0.131563457S",
            "runs": 3,
            "firings": 1
           },
           {
            "name": "DeadStoreEliminationPass",
-           "duration": "PT0.120770305S",
+           "duration": "PT0.075004869S",
            "runs": 3,
            "firings": 1
           },
           {
            "name": "DeadCodeRemovalPass",
-           "duration": "PT0.052388732S",
+           "duration": "PT0.060215095S",
            "runs": 3,
            "firings": 0
           },
           {
            "name": "VariableLivenessPass",
-           "duration": "PT0.052253268S",
+           "duration": "PT0.049811261S",
            "runs": 3,
            "firings": 1
           }
@@ -30983,17 +30974,17 @@
          "analyses": [
           {
            "name": "ConstantValueAnalysis",
-           "duration": "PT0.010463050S",
+           "duration": "PT0.006971106S",
            "computations": 2
           },
           {
            "name": "ReachingDefinitionsAnalysis",
-           "duration": "PT0.293255576S",
+           "duration": "PT0.200707285S",
            "computations": 3
           },
           {
            "name": "ConeOfInfluenceAnalysis",
-           "duration": "PT0.050234493S",
+           "duration": "PT0.057455011S",
            "computations": 2
           }
          ]
@@ -31014,8 +31005,8 @@
          "expressions": 2513
         }
        },
-       "backAnnotationDuration": "PT0.003912332S",
-       "portfolioDuration": "PT3.161967240S"
+       "backAnnotationDuration": "PT0.005753851S",
+       "portfolioDuration": "PT2.277250522S"
       }
      },
      "message": null
@@ -31452,7 +31443,7 @@
          "calls": []
         },
         {
-         "self": "root.component._controller._Main.transition_Idle_to_TrainPresent_on_trackA_trainApproaching",
+         "self": "root.component._controller._Main.transition_Idle_to_TrainPresent_on_trackB_trainApproaching",
          "transition": "semantifyr::gamma::statecharts::Transition::fire",
          "arguments": {},
          "calls": [
@@ -31509,17 +31500,14 @@
         }
        ]
       }
-     ],
-     "missingCalls": null
+     ]
     }
-   },
-   "witnessUri": "file:///workspace/.artifacts/LevelCrossing.TwoTrainsCanBeInTheCrossing/verification/model._LevelCrossing._TwoTrainsCanBeInTheCrossing/validation/witness.semantifyr"
+   }
   },
   "LevelCrossing.BarrierDownWhileTrainInCrossing": {
    "status": "valid",
    "portfolioId": "smart",
    "report": {
-    "version": 2,
     "kind": "re-check",
     "verificationCase": "_LevelCrossing::_BarrierDownWhileTrainInCrossing",
     "portfolioId": "smart",
@@ -31540,61 +31528,61 @@
     "result": {
      "metadata": {
       "backendId": "theta:bounded-bmc",
-      "startedAt": "2026-11-19T07:32:50.450751506Z"
+      "startedAt": "2026-11-20T00:58:19.857550735Z"
      },
      "verdict": "Passed",
      "soundness": "Exact",
      "isTrusted": true,
      "metrics": {
-      "totalDuration": "PT7.064762882S",
+      "totalDuration": "PT6.983127429S",
       "backend": {
-       "preparationDuration": "PT0.219412478S",
-       "verificationDuration": "PT5.749986262S",
-       "backAnnotationDuration": "PT0.712822785S"
+       "preparationDuration": "PT0.184133628S",
+       "verificationDuration": "PT6.431544985S",
+       "backAnnotationDuration": "PT0.078984805S"
       },
       "verifier": {
-       "compilationDuration": "PT5.186684662S",
+       "compilationDuration": "PT4.019699911S",
        "compilation": {
-        "createDuration": "PT0.003237906S",
-        "instantiationDuration": "PT0.030876506S",
-        "inliningDuration": "PT2.937857158S",
-        "flatteningDuration": "PT2.214713092S",
+        "createDuration": "PT0.003901616S",
+        "instantiationDuration": "PT0.023856705S",
+        "inliningDuration": "PT3.033250545S",
+        "flatteningDuration": "PT0.958691045S",
         "inliningOptimization": {
-         "duration": "PT0.132488342S",
+         "duration": "PT0.279263673S",
          "passes": [
           {
            "name": "OperationCallInlining",
-           "duration": "PT0.051355341S",
+           "duration": "PT0.116656204S",
            "runs": 4595,
            "firings": 1171
           },
           {
            "name": "ExpressionSimplificationPass",
-           "duration": "PT0.033570589S",
+           "duration": "PT0.064691872S",
            "runs": 5,
            "firings": 4
           },
           {
            "name": "OperationFlatteningPass",
-           "duration": "PT0.019387291S",
+           "duration": "PT0.050378973S",
            "runs": 5,
            "firings": 1
           },
           {
            "name": "RedundantOperationRemovalPass",
-           "duration": "PT0.012901749S",
+           "duration": "PT0.021226721S",
            "runs": 5,
            "firings": 1
           },
           {
            "name": "AssumeFalsePropagationPass",
-           "duration": "PT0.014941827S",
+           "duration": "PT0.025585191S",
            "runs": 5,
            "firings": 2
           },
           {
            "name": "PropertyExpressionNormalization",
-           "duration": "PT0.000016829S",
+           "duration": "PT0.000017833S",
            "runs": 1,
            "firings": 0
           }
@@ -31602,59 +31590,59 @@
          "analyses": []
         },
         "flatteningOptimization": {
-         "duration": "PT1.705353935S",
+         "duration": "PT0.522060875S",
          "passes": [
           {
            "name": "ExpressionSimplificationPass",
-           "duration": "PT0.010970561S",
+           "duration": "PT0.004116901S",
            "runs": 3,
            "firings": 1
           },
           {
            "name": "OperationFlatteningPass",
-           "duration": "PT0.006793163S",
+           "duration": "PT0.002664529S",
            "runs": 3,
            "firings": 0
           },
           {
            "name": "RedundantOperationRemovalPass",
-           "duration": "PT0.007359869S",
+           "duration": "PT0.002717391S",
            "runs": 3,
            "firings": 1
           },
           {
            "name": "AssumeFalsePropagationPass",
-           "duration": "PT0.007203283S",
+           "duration": "PT0.002640043S",
            "runs": 3,
            "firings": 0
           },
           {
            "name": "ConstantVariableSubstitutionPass",
-           "duration": "PT0.027724148S",
+           "duration": "PT0.017054143S",
            "runs": 3,
            "firings": 0
           },
           {
            "name": "CopyPropagationPass",
-           "duration": "PT0.853043409S",
+           "duration": "PT0.226124643S",
            "runs": 3,
            "firings": 1
           },
           {
            "name": "DeadStoreEliminationPass",
-           "duration": "PT0.463979742S",
+           "duration": "PT0.120105535S",
            "runs": 3,
            "firings": 1
           },
           {
            "name": "DeadCodeRemovalPass",
-           "duration": "PT0.194174177S",
+           "duration": "PT0.076719842S",
            "runs": 3,
            "firings": 0
           },
           {
            "name": "VariableLivenessPass",
-           "duration": "PT0.132519075S",
+           "duration": "PT0.069533385S",
            "runs": 3,
            "firings": 1
           }
@@ -31662,17 +31650,17 @@
          "analyses": [
           {
            "name": "ConstantValueAnalysis",
-           "duration": "PT0.027466085S",
+           "duration": "PT0.016915234S",
            "computations": 2
           },
           {
            "name": "ReachingDefinitionsAnalysis",
-           "duration": "PT1.294339891S",
+           "duration": "PT0.338206038S",
            "computations": 3
           },
           {
            "name": "ConeOfInfluenceAnalysis",
-           "duration": "PT0.187707966S",
+           "duration": "PT0.073644216S",
            "computations": 2
           }
          ]
@@ -31693,8 +31681,8 @@
          "expressions": 5982
         }
        },
-       "backAnnotationDuration": "PT0.006736925S",
-       "portfolioDuration": "PT7.057745792S"
+       "backAnnotationDuration": "PT0.022327533S",
+       "portfolioDuration": "PT6.982749403S"
       }
      },
      "message": null
@@ -32389,19 +32377,17 @@
         }
        ]
       }
-     ],
-     "missingCalls": null
+     ]
     }
-   },
-   "witnessUri": "file:///workspace/.artifacts/LevelCrossing.BarrierDownWhileTrainInCrossing/verification/model._LevelCrossing._BarrierDownWhileTrainInCrossing/validation/witness.semantifyr"
+   }
   }
  },
  "reads": {
-  "file:///workspace/.artifacts/LevelCrossing.BarrierDownWhileTrainInCrossing/verification/model._LevelCrossing._BarrierDownWhileTrainInCrossing/trace.get": "import LevelCrossing\n\ntrace BarrierDownWhileTrainInCrossingTrace of BarrierDownWhileTrainInCrossing\n\nstep {\n    act {\n        reset\n    }\n    assert {\n        state trackA.Main.Free;\n        state trackB.Main.Free;\n        state controller.Main.Idle;\n        state barrier.Main.Up;\n    }\n}\nstep {\n    act {\n        raise trackASensors.approach\n        raise trackBSensors.approach\n        schedule component\n    }\n    assert {\n        transition trackA from Free to Approaching;\n        raise trackA.controller.trainApproaching;\n        transition trackB from Free to Approaching;\n        raise trackB.controller.trainApproaching;\n        state trackA.Main.Approaching;\n        state trackB.Main.Approaching;\n        state controller.Main.Idle;\n        state barrier.Main.Up;\n    }\n}\nstep {\n    act {\n        raise trackASensors.near\n        raise trackASensors.enter\n        raise trackASensors.leave\n        raise trackBSensors.near\n        raise trackBSensors.enter\n        raise trackBSensors.leave\n        schedule component\n    }\n    assert {\n        transition trackA from Approaching to Near;\n        transition trackB from Approaching to Near;\n        transition controller from Idle to TrainPresent when trackA.trainApproaching;\n        raise controller.barrier.lower;\n        state trackA.Main.Near;\n        state trackB.Main.Near;\n        state controller.Main.TrainPresent;\n        state barrier.Main.Up;\n    }\n}\nstep {\n    act {\n        raise trackASensors.near\n        raise trackBSensors.approach\n        raise trackBSensors.near\n        raise trackBSensors.enter\n        raise trackBSensors.leave\n        schedule component\n    }\n    assert {\n        transition trackB from Near to InCrossing;\n        transition barrier from Up to Down;\n        state trackA.Main.Near;\n        state trackB.Main.InCrossing;\n        state controller.Main.TrainPresent;\n        state barrier.Main.Down;\n    }\n}\nstep {\n    act {\n        raise trackASensors.approach\n        raise trackASensors.near\n        raise trackASensors.enter\n        raise trackBSensors.near\n        raise trackBSensors.enter\n        raise trackBSensors.leave\n        schedule component\n    }\n    assert {\n        transition trackA from Near to InCrossing;\n        transition trackB from InCrossing to Free;\n        raise trackB.controller.trainLeft;\n        state trackA.Main.InCrossing;\n        state trackB.Main.Free;\n        state controller.Main.TrainPresent;\n        state barrier.Main.Down;\n    }\n}\nstep {\n    act {\n        raise trackASensors.approach\n        raise trackASensors.near\n        raise trackASensors.enter\n        raise trackBSensors.approach\n        raise trackBSensors.near\n        raise trackBSensors.enter\n        schedule component\n    }\n    assert {\n        transition trackB from Free to Approaching;\n        raise trackB.controller.trainApproaching;\n        transition controller from TrainPresent to Idle when trackB.trainLeft;\n        raise controller.barrier.lift;\n        state trackA.Main.InCrossing;\n        state trackB.Main.Approaching;\n        state controller.Main.Idle;\n        state barrier.Main.Down;\n    }\n}\nstep {\n    act {\n        raise trackASensors.approach\n        raise trackASensors.near\n        raise trackASensors.enter\n        raise trackBSensors.approach\n        raise trackBSensors.near\n        raise trackBSensors.enter\n        schedule component\n    }\n    assert {\n        transition trackB from Approaching to Near;\n        transition controller from Idle to TrainPresent when trackB.trainApproaching;\n        raise controller.barrier.lower;\n        transition barrier from Down to Up;\n        state trackA.Main.InCrossing;\n        state trackB.Main.Near;\n        state controller.Main.TrainPresent;\n        state barrier.Main.Up;\n    }\n}\n",
-  "file:///workspace/.artifacts/LevelCrossing.BarrierDownWhileTrainInCrossing/verification/model._LevelCrossing._BarrierDownWhileTrainInCrossing/witness.semantifyr": "witness of _LevelCrossing::_BarrierDownWhileTrainInCrossing\n\nvar step: int := 0\n\ncontains root: _LevelCrossing::_BarrierDownWhileTrainInCrossing\n\ninit {\n    assume(step == 0)\n    inline root.init()\n    assume(root.component._trackA._Main.activeState == root.component._trackA._Main._Free)\n    assume(root.component._trackB._Main.activeState == root.component._trackB._Main._Free)\n    assume(root.component._controller._Main.activeState == root.component._controller._Main._Idle)\n    assume(root.component._barrier._Main.activeState == root.component._barrier._Main._Up)\n    assume(root.component._trackA._sensors.interface._approach.isRaised == false)\n    assume(root.component._trackA._sensors.interface._near.isRaised == false)\n    assume(root.component._trackA._sensors.interface._enter.isRaised == false)\n    assume(root.component._trackA._sensors.interface._leave.isRaised == false)\n    assume(root.component._trackA._controller.interface._trainApproaching.isRaised == false)\n    assume(root.component._trackA._controller.interface._trainLeft.isRaised == false)\n    assume(root.component._trackB._sensors.interface._approach.isRaised == false)\n    assume(root.component._trackB._sensors.interface._near.isRaised == false)\n    assume(root.component._trackB._sensors.interface._enter.isRaised == false)\n    assume(root.component._trackB._sensors.interface._leave.isRaised == false)\n    assume(root.component._trackB._controller.interface._trainApproaching.isRaised == false)\n    assume(root.component._trackB._controller.interface._trainLeft.isRaised == false)\n    assume(root.component._controller._trackA.interface._trainApproaching.isRaised == false)\n    assume(root.component._controller._trackA.interface._trainLeft.isRaised == false)\n    assume(root.component._controller._trackB.interface._trainApproaching.isRaised == false)\n    assume(root.component._controller._trackB.interface._trainLeft.isRaised == false)\n    assume(root.component._controller._barrier.interface._lower.isRaised == false)\n    assume(root.component._controller._barrier.interface._lift.isRaised == false)\n    assume(root.component._barrier._controller.interface._lower.isRaised == false)\n    assume(root.component._barrier._controller.interface._lift.isRaised == false)\n    step := 1\n}\n\ntran {\n    assume(step == 1)\n    inline root.main()\n    assume(root.component._trackA._Main.activeState == root.component._trackA._Main._Approaching)\n    assume(root.component._trackB._Main.activeState == root.component._trackB._Main._Approaching)\n    assume(root.component._controller._Main.activeState == root.component._controller._Main._Idle)\n    assume(root.component._barrier._Main.activeState == root.component._barrier._Main._Up)\n    assume(root.component._trackA._sensors.interface._approach.isRaised == false)\n    assume(root.component._trackA._sensors.interface._near.isRaised == false)\n    assume(root.component._trackA._sensors.interface._enter.isRaised == false)\n    assume(root.component._trackA._sensors.interface._leave.isRaised == false)\n    assume(root.component._trackA._controller.interface._trainApproaching.isRaised == true)\n    assume(root.component._trackA._controller.interface._trainLeft.isRaised == false)\n    assume(root.component._trackB._sensors.interface._approach.isRaised == false)\n    assume(root.component._trackB._sensors.interface._near.isRaised == false)\n    assume(root.component._trackB._sensors.interface._enter.isRaised == false)\n    assume(root.component._trackB._sensors.interface._leave.isRaised == false)\n    assume(root.component._trackB._controller.interface._trainApproaching.isRaised == true)\n    assume(root.component._trackB._controller.interface._trainLeft.isRaised == false)\n    assume(root.component._controller._trackA.interface._trainApproaching.isRaised == true)\n    assume(root.component._controller._trackA.interface._trainLeft.isRaised == false)\n    assume(root.component._controller._trackB.interface._trainApproaching.isRaised == true)\n    assume(root.component._controller._trackB.interface._trainLeft.isRaised == false)\n    assume(root.component._controller._barrier.interface._lower.isRaised == false)\n    assume(root.component._controller._barrier.interface._lift.isRaised == false)\n    assume(root.component._barrier._controller.interface._lower.isRaised == false)\n    assume(root.component._barrier._controller.interface._lift.isRaised == false)\n    step := 2\n} or {\n    assume(step == 2)\n    inline root.main()\n    assume(root.component._trackA._Main.activeState == root.component._trackA._Main._Near)\n    assume(root.component._trackB._Main.activeState == root.component._trackB._Main._Near)\n    assume(root.component._controller._Main.activeState == root.component._controller._Main._TrainPresent)\n    assume(root.component._barrier._Main.activeState == root.component._barrier._Main._Up)\n    assume(root.component._trackA._sensors.interface._approach.isRaised == false)\n    assume(root.component._trackA._sensors.interface._near.isRaised == false)\n    assume(root.component._trackA._sensors.interface._enter.isRaised == false)\n    assume(root.component._trackA._sensors.interface._leave.isRaised == false)\n    assume(root.component._trackA._controller.interface._trainApproaching.isRaised == false)\n    assume(root.component._trackA._controller.interface._trainLeft.isRaised == false)\n    assume(root.component._trackB._sensors.interface._approach.isRaised == false)\n    assume(root.component._trackB._sensors.interface._near.isRaised == false)\n    assume(root.component._trackB._sensors.interface._enter.isRaised == false)\n    assume(root.component._trackB._sensors.interface._leave.isRaised == false)\n    assume(root.component._trackB._controller.interface._trainApproaching.isRaised == false)\n    assume(root.component._trackB._controller.interface._trainLeft.isRaised == false)\n    assume(root.component._controller._trackA.interface._trainApproaching.isRaised == false)\n    assume(root.component._controller._trackA.interface._trainLeft.isRaised == false)\n    assume(root.component._controller._trackB.interface._trainApproaching.isRaised == false)\n    assume(root.component._controller._trackB.interface._trainLeft.isRaised == false)\n    assume(root.component._controller._barrier.interface._lower.isRaised == true)\n    assume(root.component._controller._barrier.interface._lift.isRaised == false)\n    assume(root.component._barrier._controller.interface._lower.isRaised == true)\n    assume(root.component._barrier._controller.interface._lift.isRaised == false)\n    step := 3\n} or {\n    assume(step == 3)\n    inline root.main()\n    assume(root.component._trackA._Main.activeState == root.component._trackA._Main._Near)\n    assume(root.component._trackB._Main.activeState == root.component._trackB._Main._InCrossing)\n    assume(root.component._controller._Main.activeState == root.component._controller._Main._TrainPresent)\n    assume(root.component._barrier._Main.activeState == root.component._barrier._Main._Down)\n    assume(root.component._trackA._sensors.interface._approach.isRaised == false)\n    assume(root.component._trackA._sensors.interface._near.isRaised == false)\n    assume(root.component._trackA._sensors.interface._enter.isRaised == false)\n    assume(root.component._trackA._sensors.interface._leave.isRaised == false)\n    assume(root.component._trackA._controller.interface._trainApproaching.isRaised == false)\n    assume(root.component._trackA._controller.interface._trainLeft.isRaised == false)\n    assume(root.component._trackB._sensors.interface._approach.isRaised == false)\n    assume(root.component._trackB._sensors.interface._near.isRaised == false)\n    assume(root.component._trackB._sensors.interface._enter.isRaised == false)\n    assume(root.component._trackB._sensors.interface._leave.isRaised == false)\n    assume(root.component._trackB._controller.interface._trainApproaching.isRaised == false)\n    assume(root.component._trackB._controller.interface._trainLeft.isRaised == false)\n    assume(root.component._controller._trackA.interface._trainApproaching.isRaised == false)\n    assume(root.component._controller._trackA.interface._trainLeft.isRaised == false)\n    assume(root.component._controller._trackB.interface._trainApproaching.isRaised == false)\n    assume(root.component._controller._trackB.interface._trainLeft.isRaised == false)\n    assume(root.component._controller._barrier.interface._lower.isRaised == false)\n    assume(root.component._controller._barrier.interface._lift.isRaised == false)\n    assume(root.component._barrier._controller.interface._lower.isRaised == false)\n    assume(root.component._barrier._controller.interface._lift.isRaised == false)\n    step := 4\n} or {\n    assume(step == 4)\n    inline root.main()\n    assume(root.component._trackA._Main.activeState == root.component._trackA._Main._InCrossing)\n    assume(root.component._trackB._Main.activeState == root.component._trackB._Main._Free)\n    assume(root.component._controller._Main.activeState == root.component._controller._Main._TrainPresent)\n    assume(root.component._barrier._Main.activeState == root.component._barrier._Main._Down)\n    assume(root.component._trackA._sensors.interface._approach.isRaised == false)\n    assume(root.component._trackA._sensors.interface._near.isRaised == false)\n    assume(root.component._trackA._sensors.interface._enter.isRaised == false)\n    assume(root.component._trackA._sensors.interface._leave.isRaised == false)\n    assume(root.component._trackA._controller.interface._trainApproaching.isRaised == false)\n    assume(root.component._trackA._controller.interface._trainLeft.isRaised == false)\n    assume(root.component._trackB._sensors.interface._approach.isRaised == false)\n    assume(root.component._trackB._sensors.interface._near.isRaised == false)\n    assume(root.component._trackB._sensors.interface._enter.isRaised == false)\n    assume(root.component._trackB._sensors.interface._leave.isRaised == false)\n    assume(root.component._trackB._controller.interface._trainApproaching.isRaised == false)\n    assume(root.component._trackB._controller.interface._trainLeft.isRaised == true)\n    assume(root.component._controller._trackA.interface._trainApproaching.isRaised == false)\n    assume(root.component._controller._trackA.interface._trainLeft.isRaised == false)\n    assume(root.component._controller._trackB.interface._trainApproaching.isRaised == false)\n    assume(root.component._controller._trackB.interface._trainLeft.isRaised == true)\n    assume(root.component._controller._barrier.interface._lower.isRaised == false)\n    assume(root.component._controller._barrier.interface._lift.isRaised == false)\n    assume(root.component._barrier._controller.interface._lower.isRaised == false)\n    assume(root.component._barrier._controller.interface._lift.isRaised == false)\n    step := 5\n} or {\n    assume(step == 5)\n    inline root.main()\n    assume(root.component._trackA._Main.activeState == root.component._trackA._Main._InCrossing)\n    assume(root.component._trackB._Main.activeState == root.component._trackB._Main._Approaching)\n    assume(root.component._controller._Main.activeState == root.component._controller._Main._Idle)\n    assume(root.component._barrier._Main.activeState == root.component._barrier._Main._Down)\n    assume(root.component._trackA._sensors.interface._approach.isRaised == false)\n    assume(root.component._trackA._sensors.interface._near.isRaised == false)\n    assume(root.component._trackA._sensors.interface._enter.isRaised == false)\n    assume(root.component._trackA._sensors.interface._leave.isRaised == false)\n    assume(root.component._trackA._controller.interface._trainApproaching.isRaised == false)\n    assume(root.component._trackA._controller.interface._trainLeft.isRaised == false)\n    assume(root.component._trackB._sensors.interface._approach.isRaised == false)\n    assume(root.component._trackB._sensors.interface._near.isRaised == false)\n    assume(root.component._trackB._sensors.interface._enter.isRaised == false)\n    assume(root.component._trackB._sensors.interface._leave.isRaised == false)\n    assume(root.component._trackB._controller.interface._trainApproaching.isRaised == true)\n    assume(root.component._trackB._controller.interface._trainLeft.isRaised == false)\n    assume(root.component._controller._trackA.interface._trainApproaching.isRaised == false)\n    assume(root.component._controller._trackA.interface._trainLeft.isRaised == false)\n    assume(root.component._controller._trackB.interface._trainApproaching.isRaised == true)\n    assume(root.component._controller._trackB.interface._trainLeft.isRaised == false)\n    assume(root.component._controller._barrier.interface._lower.isRaised == false)\n    assume(root.component._controller._barrier.interface._lift.isRaised == true)\n    assume(root.component._barrier._controller.interface._lower.isRaised == false)\n    assume(root.component._barrier._controller.interface._lift.isRaised == true)\n    step := 6\n} or {\n    assume(step == 6)\n    inline root.main()\n    assume(root.component._trackA._Main.activeState == root.component._trackA._Main._InCrossing)\n    assume(root.component._trackB._Main.activeState == root.component._trackB._Main._Near)\n    assume(root.component._controller._Main.activeState == root.component._controller._Main._TrainPresent)\n    assume(root.component._barrier._Main.activeState == root.component._barrier._Main._Up)\n    assume(root.component._trackA._sensors.interface._approach.isRaised == false)\n    assume(root.component._trackA._sensors.interface._near.isRaised == false)\n    assume(root.component._trackA._sensors.interface._enter.isRaised == false)\n    assume(root.component._trackA._sensors.interface._leave.isRaised == false)\n    assume(root.component._trackA._controller.interface._trainApproaching.isRaised == false)\n    assume(root.component._trackA._controller.interface._trainLeft.isRaised == false)\n    assume(root.component._trackB._sensors.interface._approach.isRaised == false)\n    assume(root.component._trackB._sensors.interface._near.isRaised == false)\n    assume(root.component._trackB._sensors.interface._enter.isRaised == false)\n    assume(root.component._trackB._sensors.interface._leave.isRaised == false)\n    assume(root.component._trackB._controller.interface._trainApproaching.isRaised == false)\n    assume(root.component._trackB._controller.interface._trainLeft.isRaised == false)\n    assume(root.component._controller._trackA.interface._trainApproaching.isRaised == false)\n    assume(root.component._controller._trackA.interface._trainLeft.isRaised == false)\n    assume(root.component._controller._trackB.interface._trainApproaching.isRaised == false)\n    assume(root.component._controller._trackB.interface._trainLeft.isRaised == false)\n    assume(root.component._controller._barrier.interface._lower.isRaised == true)\n    assume(root.component._controller._barrier.interface._lift.isRaised == false)\n    assume(root.component._barrier._controller.interface._lower.isRaised == true)\n    assume(root.component._barrier._controller.interface._lift.isRaised == false)\n    step := 7\n}\n\nprop {\n    !root.prop()\n}",
-  "file:///workspace/.artifacts/LevelCrossing.TwoTrainsCanBeInTheCrossing/verification/model._LevelCrossing._TwoTrainsCanBeInTheCrossing/witness.semantifyr": "witness of _LevelCrossing::_TwoTrainsCanBeInTheCrossing\n\nvar step: int := 0\n\ncontains root: _LevelCrossing::_TwoTrainsCanBeInTheCrossing\n\ninit {\n    assume(step == 0)\n    inline root.init()\n    assume(root.component._trackA._Main.activeState == root.component._trackA._Main._Free)\n    assume(root.component._trackB._Main.activeState == root.component._trackB._Main._Free)\n    assume(root.component._controller._Main.activeState == root.component._controller._Main._Idle)\n    assume(root.component._barrier._Main.activeState == root.component._barrier._Main._Up)\n    assume(root.component._trackA._sensors.interface._approach.isRaised == false)\n    assume(root.component._trackA._sensors.interface._near.isRaised == false)\n    assume(root.component._trackA._sensors.interface._enter.isRaised == false)\n    assume(root.component._trackA._sensors.interface._leave.isRaised == false)\n    assume(root.component._trackA._controller.interface._trainApproaching.isRaised == false)\n    assume(root.component._trackA._controller.interface._trainLeft.isRaised == false)\n    assume(root.component._trackB._sensors.interface._approach.isRaised == false)\n    assume(root.component._trackB._sensors.interface._near.isRaised == false)\n    assume(root.component._trackB._sensors.interface._enter.isRaised == false)\n    assume(root.component._trackB._sensors.interface._leave.isRaised == false)\n    assume(root.component._trackB._controller.interface._trainApproaching.isRaised == false)\n    assume(root.component._trackB._controller.interface._trainLeft.isRaised == false)\n    assume(root.component._controller._trackA.interface._trainApproaching.isRaised == false)\n    assume(root.component._controller._trackA.interface._trainLeft.isRaised == false)\n    assume(root.component._controller._trackB.interface._trainApproaching.isRaised == false)\n    assume(root.component._controller._trackB.interface._trainLeft.isRaised == false)\n    assume(root.component._controller._barrier.interface._lower.isRaised == false)\n    assume(root.component._controller._barrier.interface._lift.isRaised == false)\n    assume(root.component._barrier._controller.interface._lower.isRaised == false)\n    assume(root.component._barrier._controller.interface._lift.isRaised == false)\n    step := 1\n}\n\ntran {\n    assume(step == 1)\n    inline root.main()\n    assume(root.component._trackA._Main.activeState == root.component._trackA._Main._Approaching)\n    assume(root.component._trackB._Main.activeState == root.component._trackB._Main._Approaching)\n    assume(root.component._controller._Main.activeState == root.component._controller._Main._Idle)\n    assume(root.component._barrier._Main.activeState == root.component._barrier._Main._Up)\n    assume(root.component._trackA._sensors.interface._approach.isRaised == false)\n    assume(root.component._trackA._sensors.interface._near.isRaised == false)\n    assume(root.component._trackA._sensors.interface._enter.isRaised == false)\n    assume(root.component._trackA._sensors.interface._leave.isRaised == false)\n    assume(root.component._trackA._controller.interface._trainApproaching.isRaised == true)\n    assume(root.component._trackA._controller.interface._trainLeft.isRaised == false)\n    assume(root.component._trackB._sensors.interface._approach.isRaised == false)\n    assume(root.component._trackB._sensors.interface._near.isRaised == false)\n    assume(root.component._trackB._sensors.interface._enter.isRaised == false)\n    assume(root.component._trackB._sensors.interface._leave.isRaised == false)\n    assume(root.component._trackB._controller.interface._trainApproaching.isRaised == true)\n    assume(root.component._trackB._controller.interface._trainLeft.isRaised == false)\n    assume(root.component._controller._trackA.interface._trainApproaching.isRaised == true)\n    assume(root.component._controller._trackA.interface._trainLeft.isRaised == false)\n    assume(root.component._controller._trackB.interface._trainApproaching.isRaised == true)\n    assume(root.component._controller._trackB.interface._trainLeft.isRaised == false)\n    assume(root.component._controller._barrier.interface._lower.isRaised == false)\n    assume(root.component._controller._barrier.interface._lift.isRaised == false)\n    assume(root.component._barrier._controller.interface._lower.isRaised == false)\n    assume(root.component._barrier._controller.interface._lift.isRaised == false)\n    step := 2\n} or {\n    assume(step == 2)\n    inline root.main()\n    assume(root.component._trackA._Main.activeState == root.component._trackA._Main._Near)\n    assume(root.component._trackB._Main.activeState == root.component._trackB._Main._Near)\n    assume(root.component._controller._Main.activeState == root.component._controller._Main._TrainPresent)\n    assume(root.component._barrier._Main.activeState == root.component._barrier._Main._Up)\n    assume(root.component._trackA._sensors.interface._approach.isRaised == false)\n    assume(root.component._trackA._sensors.interface._near.isRaised == false)\n    assume(root.component._trackA._sensors.interface._enter.isRaised == false)\n    assume(root.component._trackA._sensors.interface._leave.isRaised == false)\n    assume(root.component._trackA._controller.interface._trainApproaching.isRaised == false)\n    assume(root.component._trackA._controller.interface._trainLeft.isRaised == false)\n    assume(root.component._trackB._sensors.interface._approach.isRaised == false)\n    assume(root.component._trackB._sensors.interface._near.isRaised == false)\n    assume(root.component._trackB._sensors.interface._enter.isRaised == false)\n    assume(root.component._trackB._sensors.interface._leave.isRaised == false)\n    assume(root.component._trackB._controller.interface._trainApproaching.isRaised == false)\n    assume(root.component._trackB._controller.interface._trainLeft.isRaised == false)\n    assume(root.component._controller._trackA.interface._trainApproaching.isRaised == false)\n    assume(root.component._controller._trackA.interface._trainLeft.isRaised == false)\n    assume(root.component._controller._trackB.interface._trainApproaching.isRaised == false)\n    assume(root.component._controller._trackB.interface._trainLeft.isRaised == false)\n    assume(root.component._controller._barrier.interface._lower.isRaised == true)\n    assume(root.component._controller._barrier.interface._lift.isRaised == false)\n    assume(root.component._barrier._controller.interface._lower.isRaised == true)\n    assume(root.component._barrier._controller.interface._lift.isRaised == false)\n    step := 3\n} or {\n    assume(step == 3)\n    inline root.main()\n    assume(root.component._trackA._Main.activeState == root.component._trackA._Main._InCrossing)\n    assume(root.component._trackB._Main.activeState == root.component._trackB._Main._InCrossing)\n    assume(root.component._controller._Main.activeState == root.component._controller._Main._TrainPresent)\n    assume(root.component._barrier._Main.activeState == root.component._barrier._Main._Down)\n    assume(root.component._trackA._sensors.interface._approach.isRaised == false)\n    assume(root.component._trackA._sensors.interface._near.isRaised == false)\n    assume(root.component._trackA._sensors.interface._enter.isRaised == false)\n    assume(root.component._trackA._sensors.interface._leave.isRaised == false)\n    assume(root.component._trackA._controller.interface._trainApproaching.isRaised == false)\n    assume(root.component._trackA._controller.interface._trainLeft.isRaised == false)\n    assume(root.component._trackB._sensors.interface._approach.isRaised == false)\n    assume(root.component._trackB._sensors.interface._near.isRaised == false)\n    assume(root.component._trackB._sensors.interface._enter.isRaised == false)\n    assume(root.component._trackB._sensors.interface._leave.isRaised == false)\n    assume(root.component._trackB._controller.interface._trainApproaching.isRaised == false)\n    assume(root.component._trackB._controller.interface._trainLeft.isRaised == false)\n    assume(root.component._controller._trackA.interface._trainApproaching.isRaised == false)\n    assume(root.component._controller._trackA.interface._trainLeft.isRaised == false)\n    assume(root.component._controller._trackB.interface._trainApproaching.isRaised == false)\n    assume(root.component._controller._trackB.interface._trainLeft.isRaised == false)\n    assume(root.component._controller._barrier.interface._lower.isRaised == false)\n    assume(root.component._controller._barrier.interface._lift.isRaised == false)\n    assume(root.component._barrier._controller.interface._lower.isRaised == false)\n    assume(root.component._barrier._controller.interface._lift.isRaised == false)\n    step := 4\n}\n\nprop {\n    root.prop()\n}",
-  "file:///workspace/.artifacts/LevelCrossing.TwoTrainsCanBeInTheCrossing/verification/model._LevelCrossing._TwoTrainsCanBeInTheCrossing/trace.get": "import LevelCrossing\n\ntrace TwoTrainsCanBeInTheCrossingTrace of TwoTrainsCanBeInTheCrossing\n\nstep {\n    act {\n        reset\n    }\n    assert {\n        state trackA.Main.Free;\n        state trackB.Main.Free;\n        state controller.Main.Idle;\n        state barrier.Main.Up;\n    }\n}\nstep {\n    act {\n        raise trackASensors.approach\n        raise trackBSensors.approach\n        schedule component\n    }\n    assert {\n        transition trackA from Free to Approaching;\n        raise trackA.controller.trainApproaching;\n        transition trackB from Free to Approaching;\n        raise trackB.controller.trainApproaching;\n        state trackA.Main.Approaching;\n        state trackB.Main.Approaching;\n        state controller.Main.Idle;\n        state barrier.Main.Up;\n    }\n}\nstep {\n    act {\n        raise trackASensors.near\n        raise trackBSensors.approach\n        raise trackBSensors.near\n        raise trackBSensors.enter\n        raise trackBSensors.leave\n        schedule component\n    }\n    assert {\n        transition trackA from Approaching to Near;\n        transition trackB from Approaching to Near;\n        transition controller from Idle to TrainPresent when trackA.trainApproaching;\n        raise controller.barrier.lower;\n        state trackA.Main.Near;\n        state trackB.Main.Near;\n        state controller.Main.TrainPresent;\n        state barrier.Main.Up;\n    }\n}\nstep {\n    act {\n        raise trackASensors.enter\n        raise trackBSensors.approach\n        raise trackBSensors.near\n        raise trackBSensors.enter\n        raise trackBSensors.leave\n        schedule component\n    }\n    assert {\n        transition trackA from Near to InCrossing;\n        transition trackB from Near to InCrossing;\n        transition barrier from Up to Down;\n        state trackA.Main.InCrossing;\n        state trackB.Main.InCrossing;\n        state controller.Main.TrainPresent;\n        state barrier.Main.Down;\n    }\n}\n",
-  "file:///workspace/.semantifyr/builtin/standard.semantifyr": "/*\n * SPDX-FileCopyrightText: 2025-2026 The Semantifyr Authors\n *\n * SPDX-License-Identifier: EPL-2.0\n */\n\n/*\n * The standard library, in scope in every file without an import, below the file's own package and its imports. It declares the primitive datatypes, `Anything`, the base class of every class, and the annotations the tools read.\n */\npackage semantifyr\n\n/*\n * The supertype of every type.\n */\nextern datatype any\n\n/*\n * Integer numbers.\n */\nextern datatype int\n\n/*\n * Real numbers.\n */\nextern datatype real\n\n/*\n * The Boolean values `true` and `false`.\n */\nextern datatype bool\n\n/*\n * Sequences of characters.\n */\nextern datatype string\n\n/*\n * Clocks measure time. A clock starts at 0, advances by the wait before every main step, is reset to 0 by assignment and is read only in comparisons with integers.\n */\nextern datatype clock\n\n/*\n * The implicit supertype of every class. Its `init` and its main transition do nothing, and a class that declares its own replaces them, with or without `redefine`.\n */\nclass Anything {\n    // contains children: Anything[0..*] opposite parent;\n    // container parent: Anything[0..1] opposite children;\n    /*\n     * The base main transition.\n     */\n    tran {\n    }\n\n    /*\n     * The base init transition.\n     */\n    init {\n    }\n}\n\n/*\n * Marks a class as a verification case, which the tools find and verify. The optional `summary` is the text the editors show for the case in place of its name.\n */\nannotation VerificationCase(summary: string[0..1])\n\n/*\n * Gives a verification case a category, such as `@Tag(\"slow\")`, by which the command line selects and skips cases.\n */\nannotation Tag(category: string)\n\n/*\n * Marks a variable that a backend may track from the start of its search. It is a hint for the backend's speed and changes neither the verdict nor the trace.\n */\nannotation Control\n\n/*\n * Marks a containment feature whose instance is created once in a model and shared by every instance of the class that declares the feature, instead of once for each.\n */\nannotation Shared\n\n/*\n * Marks a transition whose calls the trace lists: each call that fired, in the step it fired in, with its receiver's path from the root instance, such as `root.kitchen.lamp`, and the values of its arguments when the call fired.\n * \n * No argument of a call to a traced transition may be a record, or a real or string computed at run time.\n */\nannotation Trace\n\n/*\n * Excludes a variable from the optimizer passes that could remove or fold it, so that it stays in the model a backend receives and in the witness.\n */\nannotation NonOptimizable\n",
+  "file:///workspace/.artifacts/LevelCrossing.BarrierDo-a485e04f/verification/model._LevelCrossing._BarrierDownWhileTrainInCrossing/trace.get": "import LevelCrossing\n\ntrace BarrierDownWhileTrainInCrossingTrace of BarrierDownWhileTrainInCrossing\n\nstep {\n    act {\n        reset\n    }\n    assert {\n        state trackA.Main.Free;\n        state trackB.Main.Free;\n        state controller.Main.Idle;\n        state barrier.Main.Up;\n    }\n}\nstep {\n    act {\n        raise trackASensors.approach\n        raise trackBSensors.approach\n        schedule component\n    }\n    assert {\n        transition trackA from Free to Approaching;\n        raise trackA.controller.trainApproaching;\n        transition trackB from Free to Approaching;\n        raise trackB.controller.trainApproaching;\n        state trackA.Main.Approaching;\n        state trackB.Main.Approaching;\n        state controller.Main.Idle;\n        state barrier.Main.Up;\n    }\n}\nstep {\n    act {\n        raise trackASensors.near\n        raise trackASensors.enter\n        raise trackASensors.leave\n        raise trackBSensors.near\n        raise trackBSensors.enter\n        raise trackBSensors.leave\n        schedule component\n    }\n    assert {\n        transition trackA from Approaching to Near;\n        transition trackB from Approaching to Near;\n        transition controller from Idle to TrainPresent when trackA.trainApproaching;\n        raise controller.barrier.lower;\n        state trackA.Main.Near;\n        state trackB.Main.Near;\n        state controller.Main.TrainPresent;\n        state barrier.Main.Up;\n    }\n}\nstep {\n    act {\n        raise trackASensors.near\n        raise trackBSensors.approach\n        raise trackBSensors.near\n        raise trackBSensors.enter\n        raise trackBSensors.leave\n        schedule component\n    }\n    assert {\n        transition trackB from Near to InCrossing;\n        transition barrier from Up to Down;\n        state trackA.Main.Near;\n        state trackB.Main.InCrossing;\n        state controller.Main.TrainPresent;\n        state barrier.Main.Down;\n    }\n}\nstep {\n    act {\n        raise trackASensors.approach\n        raise trackASensors.near\n        raise trackASensors.enter\n        raise trackBSensors.near\n        raise trackBSensors.enter\n        raise trackBSensors.leave\n        schedule component\n    }\n    assert {\n        transition trackA from Near to InCrossing;\n        transition trackB from InCrossing to Free;\n        raise trackB.controller.trainLeft;\n        state trackA.Main.InCrossing;\n        state trackB.Main.Free;\n        state controller.Main.TrainPresent;\n        state barrier.Main.Down;\n    }\n}\nstep {\n    act {\n        raise trackASensors.approach\n        raise trackASensors.near\n        raise trackASensors.enter\n        raise trackBSensors.approach\n        raise trackBSensors.near\n        raise trackBSensors.enter\n        schedule component\n    }\n    assert {\n        transition trackB from Free to Approaching;\n        raise trackB.controller.trainApproaching;\n        transition controller from TrainPresent to Idle when trackB.trainLeft;\n        raise controller.barrier.lift;\n        state trackA.Main.InCrossing;\n        state trackB.Main.Approaching;\n        state controller.Main.Idle;\n        state barrier.Main.Down;\n    }\n}\nstep {\n    act {\n        raise trackASensors.approach\n        raise trackASensors.near\n        raise trackASensors.enter\n        raise trackBSensors.approach\n        raise trackBSensors.near\n        raise trackBSensors.enter\n        schedule component\n    }\n    assert {\n        transition trackB from Approaching to Near;\n        transition controller from Idle to TrainPresent when trackB.trainApproaching;\n        raise controller.barrier.lower;\n        transition barrier from Down to Up;\n        state trackA.Main.InCrossing;\n        state trackB.Main.Near;\n        state controller.Main.TrainPresent;\n        state barrier.Main.Up;\n    }\n}\n",
+  "file:///workspace/.artifacts/LevelCrossing.BarrierDo-a485e04f/verification/model._LevelCrossing._BarrierDownWhileTrainInCrossing/witness.semantifyr": "witness of _LevelCrossing::_BarrierDownWhileTrainInCrossing\n\nvar step: int := 0\n\ncontains root: _LevelCrossing::_BarrierDownWhileTrainInCrossing\n\ninit {\n    assume(step == 0)\n    inline root.init()\n    assume(root.component._trackA._Main.activeState == root.component._trackA._Main._Free)\n    assume(root.component._trackB._Main.activeState == root.component._trackB._Main._Free)\n    assume(root.component._controller._Main.activeState == root.component._controller._Main._Idle)\n    assume(root.component._barrier._Main.activeState == root.component._barrier._Main._Up)\n    assume(root.component._trackA._sensors.interface._approach.isRaised == false)\n    assume(root.component._trackA._sensors.interface._near.isRaised == false)\n    assume(root.component._trackA._sensors.interface._enter.isRaised == false)\n    assume(root.component._trackA._sensors.interface._leave.isRaised == false)\n    assume(root.component._trackA._controller.interface._trainApproaching.isRaised == false)\n    assume(root.component._trackA._controller.interface._trainLeft.isRaised == false)\n    assume(root.component._trackB._sensors.interface._approach.isRaised == false)\n    assume(root.component._trackB._sensors.interface._near.isRaised == false)\n    assume(root.component._trackB._sensors.interface._enter.isRaised == false)\n    assume(root.component._trackB._sensors.interface._leave.isRaised == false)\n    assume(root.component._trackB._controller.interface._trainApproaching.isRaised == false)\n    assume(root.component._trackB._controller.interface._trainLeft.isRaised == false)\n    assume(root.component._controller._trackA.interface._trainApproaching.isRaised == false)\n    assume(root.component._controller._trackA.interface._trainLeft.isRaised == false)\n    assume(root.component._controller._trackB.interface._trainApproaching.isRaised == false)\n    assume(root.component._controller._trackB.interface._trainLeft.isRaised == false)\n    assume(root.component._controller._barrier.interface._lower.isRaised == false)\n    assume(root.component._controller._barrier.interface._lift.isRaised == false)\n    assume(root.component._barrier._controller.interface._lower.isRaised == false)\n    assume(root.component._barrier._controller.interface._lift.isRaised == false)\n    step := 1\n}\n\ntran {\n    assume(step == 1)\n    inline root.main()\n    assume(root.component._trackA._Main.activeState == root.component._trackA._Main._Approaching)\n    assume(root.component._trackB._Main.activeState == root.component._trackB._Main._Approaching)\n    assume(root.component._controller._Main.activeState == root.component._controller._Main._Idle)\n    assume(root.component._barrier._Main.activeState == root.component._barrier._Main._Up)\n    assume(root.component._trackA._sensors.interface._approach.isRaised == false)\n    assume(root.component._trackA._sensors.interface._near.isRaised == false)\n    assume(root.component._trackA._sensors.interface._enter.isRaised == false)\n    assume(root.component._trackA._sensors.interface._leave.isRaised == false)\n    assume(root.component._trackA._controller.interface._trainApproaching.isRaised == true)\n    assume(root.component._trackA._controller.interface._trainLeft.isRaised == false)\n    assume(root.component._trackB._sensors.interface._approach.isRaised == false)\n    assume(root.component._trackB._sensors.interface._near.isRaised == false)\n    assume(root.component._trackB._sensors.interface._enter.isRaised == false)\n    assume(root.component._trackB._sensors.interface._leave.isRaised == false)\n    assume(root.component._trackB._controller.interface._trainApproaching.isRaised == true)\n    assume(root.component._trackB._controller.interface._trainLeft.isRaised == false)\n    assume(root.component._controller._trackA.interface._trainApproaching.isRaised == true)\n    assume(root.component._controller._trackA.interface._trainLeft.isRaised == false)\n    assume(root.component._controller._trackB.interface._trainApproaching.isRaised == true)\n    assume(root.component._controller._trackB.interface._trainLeft.isRaised == false)\n    assume(root.component._controller._barrier.interface._lower.isRaised == false)\n    assume(root.component._controller._barrier.interface._lift.isRaised == false)\n    assume(root.component._barrier._controller.interface._lower.isRaised == false)\n    assume(root.component._barrier._controller.interface._lift.isRaised == false)\n    step := 2\n} or {\n    assume(step == 2)\n    inline root.main()\n    assume(root.component._trackA._Main.activeState == root.component._trackA._Main._Near)\n    assume(root.component._trackB._Main.activeState == root.component._trackB._Main._Near)\n    assume(root.component._controller._Main.activeState == root.component._controller._Main._TrainPresent)\n    assume(root.component._barrier._Main.activeState == root.component._barrier._Main._Up)\n    assume(root.component._trackA._sensors.interface._approach.isRaised == false)\n    assume(root.component._trackA._sensors.interface._near.isRaised == false)\n    assume(root.component._trackA._sensors.interface._enter.isRaised == false)\n    assume(root.component._trackA._sensors.interface._leave.isRaised == false)\n    assume(root.component._trackA._controller.interface._trainApproaching.isRaised == false)\n    assume(root.component._trackA._controller.interface._trainLeft.isRaised == false)\n    assume(root.component._trackB._sensors.interface._approach.isRaised == false)\n    assume(root.component._trackB._sensors.interface._near.isRaised == false)\n    assume(root.component._trackB._sensors.interface._enter.isRaised == false)\n    assume(root.component._trackB._sensors.interface._leave.isRaised == false)\n    assume(root.component._trackB._controller.interface._trainApproaching.isRaised == false)\n    assume(root.component._trackB._controller.interface._trainLeft.isRaised == false)\n    assume(root.component._controller._trackA.interface._trainApproaching.isRaised == false)\n    assume(root.component._controller._trackA.interface._trainLeft.isRaised == false)\n    assume(root.component._controller._trackB.interface._trainApproaching.isRaised == false)\n    assume(root.component._controller._trackB.interface._trainLeft.isRaised == false)\n    assume(root.component._controller._barrier.interface._lower.isRaised == true)\n    assume(root.component._controller._barrier.interface._lift.isRaised == false)\n    assume(root.component._barrier._controller.interface._lower.isRaised == true)\n    assume(root.component._barrier._controller.interface._lift.isRaised == false)\n    step := 3\n} or {\n    assume(step == 3)\n    inline root.main()\n    assume(root.component._trackA._Main.activeState == root.component._trackA._Main._Near)\n    assume(root.component._trackB._Main.activeState == root.component._trackB._Main._InCrossing)\n    assume(root.component._controller._Main.activeState == root.component._controller._Main._TrainPresent)\n    assume(root.component._barrier._Main.activeState == root.component._barrier._Main._Down)\n    assume(root.component._trackA._sensors.interface._approach.isRaised == false)\n    assume(root.component._trackA._sensors.interface._near.isRaised == false)\n    assume(root.component._trackA._sensors.interface._enter.isRaised == false)\n    assume(root.component._trackA._sensors.interface._leave.isRaised == false)\n    assume(root.component._trackA._controller.interface._trainApproaching.isRaised == false)\n    assume(root.component._trackA._controller.interface._trainLeft.isRaised == false)\n    assume(root.component._trackB._sensors.interface._approach.isRaised == false)\n    assume(root.component._trackB._sensors.interface._near.isRaised == false)\n    assume(root.component._trackB._sensors.interface._enter.isRaised == false)\n    assume(root.component._trackB._sensors.interface._leave.isRaised == false)\n    assume(root.component._trackB._controller.interface._trainApproaching.isRaised == false)\n    assume(root.component._trackB._controller.interface._trainLeft.isRaised == false)\n    assume(root.component._controller._trackA.interface._trainApproaching.isRaised == false)\n    assume(root.component._controller._trackA.interface._trainLeft.isRaised == false)\n    assume(root.component._controller._trackB.interface._trainApproaching.isRaised == false)\n    assume(root.component._controller._trackB.interface._trainLeft.isRaised == false)\n    assume(root.component._controller._barrier.interface._lower.isRaised == false)\n    assume(root.component._controller._barrier.interface._lift.isRaised == false)\n    assume(root.component._barrier._controller.interface._lower.isRaised == false)\n    assume(root.component._barrier._controller.interface._lift.isRaised == false)\n    step := 4\n} or {\n    assume(step == 4)\n    inline root.main()\n    assume(root.component._trackA._Main.activeState == root.component._trackA._Main._InCrossing)\n    assume(root.component._trackB._Main.activeState == root.component._trackB._Main._Free)\n    assume(root.component._controller._Main.activeState == root.component._controller._Main._TrainPresent)\n    assume(root.component._barrier._Main.activeState == root.component._barrier._Main._Down)\n    assume(root.component._trackA._sensors.interface._approach.isRaised == false)\n    assume(root.component._trackA._sensors.interface._near.isRaised == false)\n    assume(root.component._trackA._sensors.interface._enter.isRaised == false)\n    assume(root.component._trackA._sensors.interface._leave.isRaised == false)\n    assume(root.component._trackA._controller.interface._trainApproaching.isRaised == false)\n    assume(root.component._trackA._controller.interface._trainLeft.isRaised == false)\n    assume(root.component._trackB._sensors.interface._approach.isRaised == false)\n    assume(root.component._trackB._sensors.interface._near.isRaised == false)\n    assume(root.component._trackB._sensors.interface._enter.isRaised == false)\n    assume(root.component._trackB._sensors.interface._leave.isRaised == false)\n    assume(root.component._trackB._controller.interface._trainApproaching.isRaised == false)\n    assume(root.component._trackB._controller.interface._trainLeft.isRaised == true)\n    assume(root.component._controller._trackA.interface._trainApproaching.isRaised == false)\n    assume(root.component._controller._trackA.interface._trainLeft.isRaised == false)\n    assume(root.component._controller._trackB.interface._trainApproaching.isRaised == false)\n    assume(root.component._controller._trackB.interface._trainLeft.isRaised == true)\n    assume(root.component._controller._barrier.interface._lower.isRaised == false)\n    assume(root.component._controller._barrier.interface._lift.isRaised == false)\n    assume(root.component._barrier._controller.interface._lower.isRaised == false)\n    assume(root.component._barrier._controller.interface._lift.isRaised == false)\n    step := 5\n} or {\n    assume(step == 5)\n    inline root.main()\n    assume(root.component._trackA._Main.activeState == root.component._trackA._Main._InCrossing)\n    assume(root.component._trackB._Main.activeState == root.component._trackB._Main._Approaching)\n    assume(root.component._controller._Main.activeState == root.component._controller._Main._Idle)\n    assume(root.component._barrier._Main.activeState == root.component._barrier._Main._Down)\n    assume(root.component._trackA._sensors.interface._approach.isRaised == false)\n    assume(root.component._trackA._sensors.interface._near.isRaised == false)\n    assume(root.component._trackA._sensors.interface._enter.isRaised == false)\n    assume(root.component._trackA._sensors.interface._leave.isRaised == false)\n    assume(root.component._trackA._controller.interface._trainApproaching.isRaised == false)\n    assume(root.component._trackA._controller.interface._trainLeft.isRaised == false)\n    assume(root.component._trackB._sensors.interface._approach.isRaised == false)\n    assume(root.component._trackB._sensors.interface._near.isRaised == false)\n    assume(root.component._trackB._sensors.interface._enter.isRaised == false)\n    assume(root.component._trackB._sensors.interface._leave.isRaised == false)\n    assume(root.component._trackB._controller.interface._trainApproaching.isRaised == true)\n    assume(root.component._trackB._controller.interface._trainLeft.isRaised == false)\n    assume(root.component._controller._trackA.interface._trainApproaching.isRaised == false)\n    assume(root.component._controller._trackA.interface._trainLeft.isRaised == false)\n    assume(root.component._controller._trackB.interface._trainApproaching.isRaised == true)\n    assume(root.component._controller._trackB.interface._trainLeft.isRaised == false)\n    assume(root.component._controller._barrier.interface._lower.isRaised == false)\n    assume(root.component._controller._barrier.interface._lift.isRaised == true)\n    assume(root.component._barrier._controller.interface._lower.isRaised == false)\n    assume(root.component._barrier._controller.interface._lift.isRaised == true)\n    step := 6\n} or {\n    assume(step == 6)\n    inline root.main()\n    assume(root.component._trackA._Main.activeState == root.component._trackA._Main._InCrossing)\n    assume(root.component._trackB._Main.activeState == root.component._trackB._Main._Near)\n    assume(root.component._controller._Main.activeState == root.component._controller._Main._TrainPresent)\n    assume(root.component._barrier._Main.activeState == root.component._barrier._Main._Up)\n    assume(root.component._trackA._sensors.interface._approach.isRaised == false)\n    assume(root.component._trackA._sensors.interface._near.isRaised == false)\n    assume(root.component._trackA._sensors.interface._enter.isRaised == false)\n    assume(root.component._trackA._sensors.interface._leave.isRaised == false)\n    assume(root.component._trackA._controller.interface._trainApproaching.isRaised == false)\n    assume(root.component._trackA._controller.interface._trainLeft.isRaised == false)\n    assume(root.component._trackB._sensors.interface._approach.isRaised == false)\n    assume(root.component._trackB._sensors.interface._near.isRaised == false)\n    assume(root.component._trackB._sensors.interface._enter.isRaised == false)\n    assume(root.component._trackB._sensors.interface._leave.isRaised == false)\n    assume(root.component._trackB._controller.interface._trainApproaching.isRaised == false)\n    assume(root.component._trackB._controller.interface._trainLeft.isRaised == false)\n    assume(root.component._controller._trackA.interface._trainApproaching.isRaised == false)\n    assume(root.component._controller._trackA.interface._trainLeft.isRaised == false)\n    assume(root.component._controller._trackB.interface._trainApproaching.isRaised == false)\n    assume(root.component._controller._trackB.interface._trainLeft.isRaised == false)\n    assume(root.component._controller._barrier.interface._lower.isRaised == true)\n    assume(root.component._controller._barrier.interface._lift.isRaised == false)\n    assume(root.component._barrier._controller.interface._lower.isRaised == true)\n    assume(root.component._barrier._controller.interface._lift.isRaised == false)\n    step := 7\n}\n\nprop {\n    !root.prop()\n}",
+  "file:///workspace/.artifacts/LevelCrossing.TwoTrains-0dedb5aa/verification/model._LevelCrossing._TwoTrainsCanBeInTheCrossing/witness.semantifyr": "witness of _LevelCrossing::_TwoTrainsCanBeInTheCrossing\n\nvar step: int := 0\n\ncontains root: _LevelCrossing::_TwoTrainsCanBeInTheCrossing\n\ninit {\n    assume(step == 0)\n    inline root.init()\n    assume(root.component._trackA._Main.activeState == root.component._trackA._Main._Free)\n    assume(root.component._trackB._Main.activeState == root.component._trackB._Main._Free)\n    assume(root.component._controller._Main.activeState == root.component._controller._Main._Idle)\n    assume(root.component._barrier._Main.activeState == root.component._barrier._Main._Up)\n    assume(root.component._trackA._sensors.interface._approach.isRaised == false)\n    assume(root.component._trackA._sensors.interface._near.isRaised == false)\n    assume(root.component._trackA._sensors.interface._enter.isRaised == false)\n    assume(root.component._trackA._sensors.interface._leave.isRaised == false)\n    assume(root.component._trackA._controller.interface._trainApproaching.isRaised == false)\n    assume(root.component._trackA._controller.interface._trainLeft.isRaised == false)\n    assume(root.component._trackB._sensors.interface._approach.isRaised == false)\n    assume(root.component._trackB._sensors.interface._near.isRaised == false)\n    assume(root.component._trackB._sensors.interface._enter.isRaised == false)\n    assume(root.component._trackB._sensors.interface._leave.isRaised == false)\n    assume(root.component._trackB._controller.interface._trainApproaching.isRaised == false)\n    assume(root.component._trackB._controller.interface._trainLeft.isRaised == false)\n    assume(root.component._controller._trackA.interface._trainApproaching.isRaised == false)\n    assume(root.component._controller._trackA.interface._trainLeft.isRaised == false)\n    assume(root.component._controller._trackB.interface._trainApproaching.isRaised == false)\n    assume(root.component._controller._trackB.interface._trainLeft.isRaised == false)\n    assume(root.component._controller._barrier.interface._lower.isRaised == false)\n    assume(root.component._controller._barrier.interface._lift.isRaised == false)\n    assume(root.component._barrier._controller.interface._lower.isRaised == false)\n    assume(root.component._barrier._controller.interface._lift.isRaised == false)\n    step := 1\n}\n\ntran {\n    assume(step == 1)\n    inline root.main()\n    assume(root.component._trackA._Main.activeState == root.component._trackA._Main._Approaching)\n    assume(root.component._trackB._Main.activeState == root.component._trackB._Main._Approaching)\n    assume(root.component._controller._Main.activeState == root.component._controller._Main._Idle)\n    assume(root.component._barrier._Main.activeState == root.component._barrier._Main._Up)\n    assume(root.component._trackA._sensors.interface._approach.isRaised == false)\n    assume(root.component._trackA._sensors.interface._near.isRaised == false)\n    assume(root.component._trackA._sensors.interface._enter.isRaised == false)\n    assume(root.component._trackA._sensors.interface._leave.isRaised == false)\n    assume(root.component._trackA._controller.interface._trainApproaching.isRaised == true)\n    assume(root.component._trackA._controller.interface._trainLeft.isRaised == false)\n    assume(root.component._trackB._sensors.interface._approach.isRaised == false)\n    assume(root.component._trackB._sensors.interface._near.isRaised == false)\n    assume(root.component._trackB._sensors.interface._enter.isRaised == false)\n    assume(root.component._trackB._sensors.interface._leave.isRaised == false)\n    assume(root.component._trackB._controller.interface._trainApproaching.isRaised == true)\n    assume(root.component._trackB._controller.interface._trainLeft.isRaised == false)\n    assume(root.component._controller._trackA.interface._trainApproaching.isRaised == true)\n    assume(root.component._controller._trackA.interface._trainLeft.isRaised == false)\n    assume(root.component._controller._trackB.interface._trainApproaching.isRaised == true)\n    assume(root.component._controller._trackB.interface._trainLeft.isRaised == false)\n    assume(root.component._controller._barrier.interface._lower.isRaised == false)\n    assume(root.component._controller._barrier.interface._lift.isRaised == false)\n    assume(root.component._barrier._controller.interface._lower.isRaised == false)\n    assume(root.component._barrier._controller.interface._lift.isRaised == false)\n    step := 2\n} or {\n    assume(step == 2)\n    inline root.main()\n    assume(root.component._trackA._Main.activeState == root.component._trackA._Main._Near)\n    assume(root.component._trackB._Main.activeState == root.component._trackB._Main._Near)\n    assume(root.component._controller._Main.activeState == root.component._controller._Main._TrainPresent)\n    assume(root.component._barrier._Main.activeState == root.component._barrier._Main._Up)\n    assume(root.component._trackA._sensors.interface._approach.isRaised == false)\n    assume(root.component._trackA._sensors.interface._near.isRaised == false)\n    assume(root.component._trackA._sensors.interface._enter.isRaised == false)\n    assume(root.component._trackA._sensors.interface._leave.isRaised == false)\n    assume(root.component._trackA._controller.interface._trainApproaching.isRaised == false)\n    assume(root.component._trackA._controller.interface._trainLeft.isRaised == false)\n    assume(root.component._trackB._sensors.interface._approach.isRaised == false)\n    assume(root.component._trackB._sensors.interface._near.isRaised == false)\n    assume(root.component._trackB._sensors.interface._enter.isRaised == false)\n    assume(root.component._trackB._sensors.interface._leave.isRaised == false)\n    assume(root.component._trackB._controller.interface._trainApproaching.isRaised == false)\n    assume(root.component._trackB._controller.interface._trainLeft.isRaised == false)\n    assume(root.component._controller._trackA.interface._trainApproaching.isRaised == false)\n    assume(root.component._controller._trackA.interface._trainLeft.isRaised == false)\n    assume(root.component._controller._trackB.interface._trainApproaching.isRaised == false)\n    assume(root.component._controller._trackB.interface._trainLeft.isRaised == false)\n    assume(root.component._controller._barrier.interface._lower.isRaised == true)\n    assume(root.component._controller._barrier.interface._lift.isRaised == false)\n    assume(root.component._barrier._controller.interface._lower.isRaised == true)\n    assume(root.component._barrier._controller.interface._lift.isRaised == false)\n    step := 3\n} or {\n    assume(step == 3)\n    inline root.main()\n    assume(root.component._trackA._Main.activeState == root.component._trackA._Main._InCrossing)\n    assume(root.component._trackB._Main.activeState == root.component._trackB._Main._InCrossing)\n    assume(root.component._controller._Main.activeState == root.component._controller._Main._TrainPresent)\n    assume(root.component._barrier._Main.activeState == root.component._barrier._Main._Down)\n    assume(root.component._trackA._sensors.interface._approach.isRaised == false)\n    assume(root.component._trackA._sensors.interface._near.isRaised == false)\n    assume(root.component._trackA._sensors.interface._enter.isRaised == false)\n    assume(root.component._trackA._sensors.interface._leave.isRaised == false)\n    assume(root.component._trackA._controller.interface._trainApproaching.isRaised == false)\n    assume(root.component._trackA._controller.interface._trainLeft.isRaised == false)\n    assume(root.component._trackB._sensors.interface._approach.isRaised == false)\n    assume(root.component._trackB._sensors.interface._near.isRaised == false)\n    assume(root.component._trackB._sensors.interface._enter.isRaised == false)\n    assume(root.component._trackB._sensors.interface._leave.isRaised == false)\n    assume(root.component._trackB._controller.interface._trainApproaching.isRaised == false)\n    assume(root.component._trackB._controller.interface._trainLeft.isRaised == false)\n    assume(root.component._controller._trackA.interface._trainApproaching.isRaised == false)\n    assume(root.component._controller._trackA.interface._trainLeft.isRaised == false)\n    assume(root.component._controller._trackB.interface._trainApproaching.isRaised == false)\n    assume(root.component._controller._trackB.interface._trainLeft.isRaised == false)\n    assume(root.component._controller._barrier.interface._lower.isRaised == false)\n    assume(root.component._controller._barrier.interface._lift.isRaised == false)\n    assume(root.component._barrier._controller.interface._lower.isRaised == false)\n    assume(root.component._barrier._controller.interface._lift.isRaised == false)\n    step := 4\n}\n\nprop {\n    root.prop()\n}",
+  "file:///workspace/.artifacts/LevelCrossing.TwoTrains-0dedb5aa/verification/model._LevelCrossing._TwoTrainsCanBeInTheCrossing/trace.get": "import LevelCrossing\n\ntrace TwoTrainsCanBeInTheCrossingTrace of TwoTrainsCanBeInTheCrossing\n\nstep {\n    act {\n        reset\n    }\n    assert {\n        state trackA.Main.Free;\n        state trackB.Main.Free;\n        state controller.Main.Idle;\n        state barrier.Main.Up;\n    }\n}\nstep {\n    act {\n        raise trackASensors.approach\n        raise trackBSensors.approach\n        schedule component\n    }\n    assert {\n        transition trackA from Free to Approaching;\n        raise trackA.controller.trainApproaching;\n        transition trackB from Free to Approaching;\n        raise trackB.controller.trainApproaching;\n        state trackA.Main.Approaching;\n        state trackB.Main.Approaching;\n        state controller.Main.Idle;\n        state barrier.Main.Up;\n    }\n}\nstep {\n    act {\n        raise trackASensors.near\n        raise trackBSensors.approach\n        raise trackBSensors.near\n        raise trackBSensors.enter\n        raise trackBSensors.leave\n        schedule component\n    }\n    assert {\n        transition trackA from Approaching to Near;\n        transition trackB from Approaching to Near;\n        transition controller from Idle to TrainPresent when trackA.trainApproaching;\n        raise controller.barrier.lower;\n        state trackA.Main.Near;\n        state trackB.Main.Near;\n        state controller.Main.TrainPresent;\n        state barrier.Main.Up;\n    }\n}\nstep {\n    act {\n        raise trackASensors.enter\n        raise trackBSensors.approach\n        raise trackBSensors.near\n        raise trackBSensors.enter\n        raise trackBSensors.leave\n        schedule component\n    }\n    assert {\n        transition trackA from Near to InCrossing;\n        transition trackB from Near to InCrossing;\n        transition barrier from Up to Down;\n        state trackA.Main.InCrossing;\n        state trackB.Main.InCrossing;\n        state controller.Main.TrainPresent;\n        state barrier.Main.Down;\n    }\n}\n",
+  "file:///workspace/.semantifyr/builtin/standard.semantifyr": "/*\n * SPDX-FileCopyrightText: 2025-2026 The Semantifyr Authors\n *\n * SPDX-License-Identifier: EPL-2.0\n */\n\n/*\n * The standard library, in scope in every file without an import, below the file's own package and its imports. It declares the primitive datatypes, `Anything`, the base class of every class, and the annotations the tools read.\n */\npackage semantifyr\n\n/*\n * The supertype of every type.\n */\nextern datatype any\n\n/*\n * Integer numbers.\n */\nextern datatype int\n\n/*\n * Real numbers.\n */\nextern datatype real\n\n/*\n * The Boolean values `true` and `false`.\n */\nextern datatype bool\n\n/*\n * Sequences of characters.\n */\nextern datatype string\n\n/*\n * Clocks measure time. A clock starts at 0, advances by the wait before every main step, is reset to 0 by assignment and is read only in comparisons with integers known at compile time.\n */\nextern datatype clock\n\n/*\n * The implicit supertype of every class. Its `init` and its main transition do nothing, and a class that declares its own replaces them, with or without `redefine`.\n */\nclass Anything {\n    // contains children: Anything[0..*] opposite parent;\n    // container parent: Anything[0..1] opposite children;\n    /*\n     * The base main transition.\n     */\n    tran {\n    }\n\n    /*\n     * The base init transition.\n     */\n    init {\n    }\n}\n\n/*\n * Marks a class as a verification case, which the tools find and verify. The optional `summary` is the text the editors show for the case in place of its name.\n */\nannotation VerificationCase(summary: string[0..1])\n\n/*\n * Gives a verification case a category, such as `@Tag(\"slow\")`, by which the command line selects and skips cases.\n */\nannotation Tag(category: string)\n\n/*\n * Marks a variable that a backend may track from the start of its search. It is a hint for the backend's speed and changes neither the verdict nor the trace.\n */\nannotation Control\n\n/*\n * Marks a containment feature whose instance is created once in a model and shared by every instance of the class that declares the feature, instead of once for each.\n */\nannotation Shared\n\n/*\n * Marks a transition whose calls the trace lists: each call that fired, in the step it fired in, with its receiver's path from the root instance, such as `root.kitchen.lamp`, and the values of its arguments when the call fired.\n * \n * No argument of a call to a traced transition may be a record, or a real or string computed at run time.\n */\nannotation Trace\n\n/*\n * Excludes a variable from the optimizer passes that could remove or fold it, so that it stays in the model a backend receives and in the witness.\n */\nannotation NonOptimizable\n",
   "file:///workspace/Library/Actions.semantifyr": "/*\n * SPDX-FileCopyrightText: 2025 The Semantifyr Authors\n *\n * SPDX-License-Identifier: EPL-2.0\n */\n\npackage semantifyr::gamma::actions\n\nimport semantifyr::gamma::variables\nimport semantifyr::gamma::expressions\nimport semantifyr::gamma::events\nimport semantifyr::gamma::ports\n\nabstract class Action {\n    redefine tran {\n    }\n}\n\nclass RaiseEventAction : Action {\n    refers port: Port[1]\n    refers event: Event[1]\n    contains arguments: Argument[0..*]\n\n    redefine tran {\n        inline for (argument in arguments) {\n            inline argument.parameter.set(argument.expression.evaluate())\n        }\n        inline port.setOutputEvent(event)\n    }\n}\n\nclass Argument {\n    refers parameter: Parameter[1]\n    contains expression: Expression[1]\n}\n\nclass SetTimeoutAction : Action {\n    refers timeout: Timeout[1]\n\n    redefine tran {\n        inline timeout.set()\n    }\n}\n\nclass AssignmentAction : Action {\n    refers variable: Variable[1]\n    contains expression: Expression[1]\n\n    redefine tran {\n        inline variable.set(expression.evaluate())\n    }\n}\n",
   "file:///workspace/Library/Asynchronous.semantifyr": "/*\n * SPDX-FileCopyrightText: 2026 The Semantifyr Authors\n *\n * SPDX-License-Identifier: EPL-2.0\n */\n\npackage semantifyr::gamma::asynchronous\n\nimport semantifyr::gamma::components\nimport semantifyr::gamma::events\nimport semantifyr::gamma::ports\n\nclass Clock {\n    refers rate: int\n\n    var elapsed: clock := 0\n\n    prop isUp(): bool {\n        return elapsed >= rate\n    }\n}\n\nabstract class StoredParameter {\n    container message: StoredMessage[0..1] opposite parameters\n\n    refers declaration: ParameterDeclaration\n    refers parameter: Parameter\n    refers capacity: int = message.queue.capacity\n\n    abstract tran store(index: int, value: any)\n\n    abstract tran storeArbitrary(index: int)\n\n    abstract tran deliver()\n\n    abstract tran shift()\n\n    abstract tran clear()\n}\n\nclass StoredInteger : StoredParameter {\n    var values: int[capacity] := [0, ...]\n\n    redefine tran store(index: int, value: int) {\n        values[index] := value\n    }\n\n    redefine tran storeArbitrary(index: int) {\n        var value: int := 0\n        havoc(value)\n        values[index] := value\n    }\n\n    redefine tran deliver() {\n        inline parameter.set(values[0])\n    }\n\n    redefine tran shift() {\n        inline for (index in 0..<capacity - 1) {\n            values[index] := values[index + 1]\n        }\n        values[capacity - 1] := 0\n    }\n\n    redefine tran clear() {\n        inline for (index in 0..<capacity) {\n            values[index] := 0\n        }\n    }\n}\n\nclass StoredBoolean : StoredParameter {\n    var values: bool[capacity] := [false, ...]\n\n    redefine tran store(index: int, value: bool) {\n        values[index] := value\n    }\n\n    redefine tran storeArbitrary(index: int) {\n        var value: bool := false\n        havoc(value)\n        values[index] := value\n    }\n\n    redefine tran deliver() {\n        inline parameter.set(values[0])\n    }\n\n    redefine tran shift() {\n        inline for (index in 0..<capacity - 1) {\n            values[index] := values[index + 1]\n        }\n        values[capacity - 1] := false\n    }\n\n    redefine tran clear() {\n        inline for (index in 0..<capacity) {\n            values[index] := false\n        }\n    }\n}\n\nclass StoredMessage {\n    container queue: MessageQueue[0..1] opposite messages\n    contains parameters: StoredParameter[0..*] opposite message\n\n    refers port: Port[0..1]\n    refers source: Event[0..1]\n    refers event: Event[0..1]\n    refers clock: Clock[0..1]\n\n    tran store(index: int, raised: Event) {\n        inline for (parameter in parameters) {\n            inline for (raisedParameter in raised.parameters) {\n                inline if (parameter.declaration == raisedParameter.declaration) {\n                    inline parameter.store(index, raisedParameter.evaluate())\n                }\n            }\n        }\n    }\n\n    tran storeArbitrary(index: int) {\n        inline for (parameter in parameters) {\n            inline parameter.storeArbitrary(index)\n        }\n    }\n\n    tran deliver() {\n        inline if (event != nothing) {\n            event.isRaised := true\n        }\n        inline for (parameter in parameters) {\n            inline parameter.deliver()\n        }\n    }\n\n    tran shift() {\n        inline for (parameter in parameters) {\n            inline parameter.shift()\n        }\n    }\n\n    tran clear() {\n        inline for (parameter in parameters) {\n            inline parameter.clear()\n        }\n    }\n}\n\nclass MessageQueue {\n    container adapter: AsynchronousAdapter[0..1] opposite queues\n    contains messages: StoredMessage[0..*] opposite queue\n    contains runningMessages: StoredMessage[0..*] subsets messages\n    contains resettingMessages: StoredMessage[0..*] subsets messages\n    contains clearingMessages: StoredMessage[0..*] subsets messages\n    contains clearingAllMessages: StoredMessage[0..*] subsets messages\n    contains clearingOtherMessages: StoredMessage[0..*] subsets messages\n\n    refers capacity: int\n    refers priority: int\n    refers position: int\n    refers rank: int\n    refers environmental: bool = false\n    refers discardsOldest: bool = false\n\n    var stored: StoredMessage[0..capacity] := [nothing, ...]\n    var size: int := 0\n\n    prop isEmpty(): bool {\n        return size <= 0\n    }\n\n    prop isFull(): bool {\n        return size >= capacity\n    }\n\n    tran enqueue(message: StoredMessage, raised: Event) {\n        inline if (capacity > 0) {\n            inline message.store(size, raised)\n            inline enqueueTick(message)\n        }\n    }\n\n    tran enqueueArbitrary(message: StoredMessage) {\n        inline if (capacity > 0) {\n            inline message.storeArbitrary(size)\n            inline enqueueTick(message)\n        }\n    }\n\n    tran enqueueTick(message: StoredMessage) {\n        inline if (capacity > 0) {\n            stored[size] := message\n            size := size + 1\n        }\n    }\n\n    tran receive() {\n        inline if (capacity > 0) {\n            var head: StoredMessage[0..1] := stored[0]\n            inline for (message in messages) {\n                if (head == message) {\n                    inline message.deliver()\n                }\n            }\n            inline shift()\n            inline if (runningMessages == messages) {\n                inline adapter.run()\n            } else {\n                inline if (runningMessages != nothing) {\n                    var runs: bool := false\n                    inline for (message in runningMessages) {\n                        runs := runs || head == message\n                    }\n                    if (runs) {\n                        inline adapter.run()\n                    }\n                }\n            }\n            inline if (resettingMessages == messages) {\n                inline adapter.resetComponent()\n            } else {\n                inline if (resettingMessages != nothing) {\n                    var resets: bool := false\n                    inline for (message in resettingMessages) {\n                        resets := resets || head == message\n                    }\n                    if (resets) {\n                        inline adapter.resetComponent()\n                    }\n                }\n            }\n            inline if (clearingMessages == messages) {\n                inline clear()\n            } else {\n                inline if (clearingMessages != nothing) {\n                    var clears: bool := false\n                    inline for (message in clearingMessages) {\n                        clears := clears || head == message\n                    }\n                    if (clears) {\n                        inline clear()\n                    }\n                }\n            }\n            inline if (clearingAllMessages == messages) {\n                inline adapter.clearQueues()\n            } else {\n                inline if (clearingAllMessages != nothing) {\n                    var clearsAll: bool := false\n                    inline for (message in clearingAllMessages) {\n                        clearsAll := clearsAll || head == message\n                    }\n                    if (clearsAll) {\n                        inline adapter.clearQueues()\n                    }\n                }\n            }\n            inline if (clearingOtherMessages == messages) {\n                inline adapter.clearOtherQueues(self)\n            } else {\n                inline if (clearingOtherMessages != nothing) {\n                    var clearsOthers: bool := false\n                    inline for (message in clearingOtherMessages) {\n                        clearsOthers := clearsOthers || head == message\n                    }\n                    if (clearsOthers) {\n                        inline adapter.clearOtherQueues(self)\n                    }\n                }\n            }\n        }\n    }\n\n    tran shift() {\n        inline if (capacity > 0) {\n            inline for (index in 0..<capacity - 1) {\n                stored[index] := stored[index + 1]\n            }\n            stored[capacity - 1] := nothing\n            inline for (message in messages) {\n                inline message.shift()\n            }\n            size := size - 1\n        }\n    }\n\n    tran clear() {\n        inline for (index in 0..<capacity) {\n            stored[index] := nothing\n        }\n        inline for (message in messages) {\n            inline message.clear()\n        }\n        size := 0\n    }\n\n    tran receiveEnvironmentMessage() {\n        choice {\n        } or {\n            inline for choice (message in messages) {\n                inline if (message.port != nothing) {\n                    inline message.port.receiveInputMessage(message.source)\n                    inline enqueueArbitrary(message)\n                }\n            }\n        }\n    }\n\n    tran receiveClockTick(clock: Clock) {\n        inline for (message in messages) {\n            inline if (message.clock == clock) {\n                inline dropOldestWhenFull()\n                if (!isFull()) {\n                    inline enqueueTick(message)\n                }\n            }\n        }\n    }\n\n    // the environment never drops a message, as in Gamma, so only a dispatch and a clock tick call this\n    tran dropOldestWhenFull() {\n        inline if (discardsOldest) {\n            if (isFull()) {\n                inline shift()\n            }\n        }\n    }\n}\n\nabstract class AsynchronousAdapter : Component {\n    contains wrapped: Component\n    contains queues: MessageQueue[0..*] opposite adapter\n    contains clocks: Clock[0..*]\n\n    refers scheduleCount: int = 1\n\n    redefine init {\n        inline wrapped.init()\n    }\n\n    redefine tran schedule() {\n        inline tickClocks()\n        inline receiveMessage()\n    }\n\n    tran tickClocks() {\n        inline for (clock in clocks) {\n            // no wait passes a tick, so the clock ticks once every rate\n            assume(clock.elapsed <= clock.rate)\n            if (clock.isUp()) {\n                clock.elapsed := 0\n                inline for (queue in queues) {\n                    inline queue.receiveClockTick(clock)\n                }\n            }\n        }\n    }\n\n    tran receiveMessage() {\n        var received: bool := false\n        inline for (turn in queues) {\n            inline for (queue in queues) {\n                inline if (queue.rank == turn.position) {\n                    if (!received && !queue.isEmpty()) {\n                        received := true\n                        inline queue.receive()\n                    }\n                }\n            }\n        }\n    }\n\n    tran run() {\n        inline wrapped.resetOutputEvents()\n        inline wrapped.main()\n    }\n\n    tran resetComponent() {\n        inline wrapped.restore()\n        inline wrapped.init()\n    }\n\n    tran clearQueues() {\n        inline for (queue in queues) {\n            inline queue.clear()\n        }\n    }\n\n    tran clearOtherQueues(kept: MessageQueue) {\n        inline for (queue in queues) {\n            inline if (queue != kept) {\n                inline queue.clear()\n            }\n        }\n    }\n\n    // a run resets the wrapped component's outputs, so a raised output stays until the adapter runs again\n    redefine tran resetOutputEvents() {\n    }\n\n    redefine tran havocInputEvents() {\n        inline for (queue in queues) {\n            inline if (queue.environmental) {\n                inline for (attempt in 1..queue.capacity) {\n                    inline offerEnvironmentMessage(queue)\n                }\n            }\n        }\n    }\n\n    tran offerEnvironmentMessage(queue: MessageQueue) {\n        var load: int := queue.size\n        var constrained: bool := false\n        inline for (other in queues) {\n            inline if (other.priority > queue.priority) {\n                load := load + other.size\n                constrained := true\n            }\n        }\n        if (!queue.isFull() && (!constrained || load < scheduleCount)) {\n            inline queue.receiveEnvironmentMessage()\n        }\n    }\n}\n\nclass MessageDispatch {\n    refers source: AsynchronousAdapter\n    refers event: Event\n    refers message: StoredMessage\n    refers resetsSource: bool = true\n\n    tran dispatch() {\n        if (event.isRaised) {\n            inline message.queue.dropOldestWhenFull()\n            if (!message.queue.isFull()) {\n                inline message.queue.enqueue(message, event)\n            }\n            inline if (resetsSource) {\n                inline event.reset()\n            }\n        }\n    }\n}\n\nabstract class AsynchronousComposite : Component {\n    contains adapters: AsynchronousAdapter[0..*]\n    contains dispatches: MessageDispatch[0..*]\n\n    redefine init {\n        inline for (adapter in adapters) {\n            inline adapter.init()\n        }\n\n        inline for (dispatch in dispatches) {\n            inline dispatch.dispatch()\n        }\n    }\n\n    tran tickClocks() {\n        inline for (adapter in adapters) {\n            inline adapter.tickClocks()\n        }\n    }\n\n    tran turn(adapter: AsynchronousAdapter) {\n        inline adapter.receiveMessage()\n        inline for (dispatch in dispatches) {\n            inline if (dispatch.source == adapter) {\n                inline dispatch.dispatch()\n            }\n        }\n    }\n\n    redefine tran resetOutputEvents() {\n    }\n\n    redefine tran havocInputEvents() {\n        inline for (adapter in adapters) {\n            inline adapter.havocInputEvents()\n        }\n    }\n}\n\nclass AsynchronousCompositeComponent : AsynchronousComposite {\n    // an adapter with no message does nothing when chosen, so a cycle may pass with no run\n    redefine tran schedule() {\n        inline tickClocks()\n        inline for choice (adapter in adapters) {\n            inline turn(adapter)\n        }\n    }\n}\n\nclass AsynchronousExecutionStep {\n    refers adapter: AsynchronousAdapter[1]\n}\n\nclass ScheduledAsynchronousCompositeComponent : AsynchronousComposite {\n    contains executionSteps: AsynchronousExecutionStep[0..*]\n\n    redefine tran schedule() {\n        inline tickClocks()\n        inline for (step in executionSteps) {\n            inline turn(step.adapter)\n        }\n    }\n}\n",
   "file:///workspace/Library/Components.semantifyr": "/*\n * SPDX-FileCopyrightText: 2025 The Semantifyr Authors\n *\n * SPDX-License-Identifier: EPL-2.0\n */\n\npackage semantifyr::gamma::components\n\nimport semantifyr::gamma::events\nimport semantifyr::gamma::ports\n\nabstract class Component {\n    contains ports: Port[0..*]\n    contains timeouts: Timeout[0..*]\n\n    redefine tran {\n        inline schedule()\n    }\n\n    abstract tran schedule()\n\n    tran resetInputEvents() {\n        inline for (port in ports) {\n            inline port.resetInputEvents()\n        }\n    }\n\n    tran havocInputEvents() {\n        inline for (port in ports) {\n            inline port.havocInputEvents()\n        }\n    }\n\n    tran resetOutputEvents() {\n        inline for (port in ports) {\n            inline port.resetOutputEvents()\n        }\n    }\n\n    // timeouts are left as Gamma's initializing action leaves them, a state sets its own when entered\n    tran restore() {\n        inline for (port in ports) {\n            inline port.restore()\n        }\n    }\n}\n\nclass Channel {\n    refers inputPort: Port[1]\n    refers outputPort: Port[1]\n\n    redefine tran {\n        inline inputPort.transferOutputEvents(outputPort)\n        inline outputPort.transferOutputEvents(inputPort)\n    }\n\n    tran resetOutputEventsOf(component: Component) {\n        inline for (port in component.ports) {\n            inline if (port == inputPort) {\n                inline inputPort.resetOutputEvents()\n            }\n            inline if (port == outputPort) {\n                inline outputPort.resetOutputEvents()\n            }\n        }\n    }\n\n    tran transferOutputEventsOf(component: Component) {\n        inline for (port in component.ports) {\n            inline if (port == inputPort) {\n                inline inputPort.transferOutputEvents(outputPort)\n            }\n            inline if (port == outputPort) {\n                inline outputPort.transferOutputEvents(inputPort)\n            }\n        }\n    }\n}\n\nabstract class CompositeComponent : Component {\n    contains components: Component[0..*]\n    contains channels: Channel[0..*]\n\n    redefine init {\n        inline for (component in components) {\n            inline component.init()\n        }\n\n        inline for (channel in channels) {\n            inline channel.main()\n        }\n    }\n\n    redefine tran restore() {\n        inline for (port in ports) {\n            inline port.restore()\n        }\n\n        inline for (component in components) {\n            inline component.restore()\n        }\n    }\n}\n\nclass SyncComponent : CompositeComponent {\n    redefine tran schedule() {\n        inline for (component in components) {\n            inline component.resetOutputEvents()\n            inline component.main()\n        }\n\n        inline for (channel in channels) {\n            inline channel.main()\n        }\n\n        inline resetInputEvents()\n    }\n}\n\nclass ExecutionStep {\n    refers component: Component[1]\n}\n\nclass CascadeComponent : CompositeComponent {\n    contains executionSteps: ExecutionStep[0..*]\n\n    // a channel delivers at the raise; its source's outputs are not state in Gamma, so they are cleared before the source runs again\n    redefine tran schedule() {\n        inline for (step in executionSteps) {\n            inline for (channel in channels) {\n                inline channel.resetOutputEventsOf(step.component)\n            }\n\n            inline step.component.main()\n\n            inline for (channel in channels) {\n                inline channel.transferOutputEventsOf(step.component)\n            }\n        }\n    }\n}\n",

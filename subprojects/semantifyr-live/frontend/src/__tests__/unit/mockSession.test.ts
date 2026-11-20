@@ -6,6 +6,7 @@
 
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
+import { caseOutcomeOf, type VerificationCaseResult } from '@semantifyr/editor-common'
 import { describe, expect, it, vi } from 'vitest'
 
 import { flavorFixture, textKey } from '../../__ui__/mock/fixtures'
@@ -158,7 +159,7 @@ describe('the mock session', () => {
     }
 
     expect((await answered(2)).error?.code).toBe(-32800)
-    expect((await answered(1)).result).toMatchObject({ status: 'passed' })
+    expect(caseOutcomeOf((await answered(1)).result as VerificationCaseResult).status).toBe('passed')
     expect(session.commands('oxsts.case.verify')).toHaveLength(2)
     const changed = sent.filter((message) => {
       return 'method' in message && message.method === 'semantifyr/live/session/verification/changed'
