@@ -43,19 +43,21 @@ import hu.bme.mit.semantifyr.verifier.caseDirectoryName
 import hu.bme.mit.semantifyr.verifier.portfolio.ConcurrencyGate
 import hu.bme.mit.semantifyr.verifier.portfolio.PortfolioLeg
 import hu.bme.mit.semantifyr.verifier.portfolio.PortfolioTask
+import hu.bme.mit.semantifyr.verifier.portfolio.SingleBackendPortfolio
 import hu.bme.mit.semantifyr.verifier.portfolio.VerificationPortfolio
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 import org.assertj.core.api.Assertions.assertThat
-import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.eclipse.emf.common.util.URI
 import org.eclipse.emf.ecore.EObject
 import org.eclipse.emf.ecore.util.EcoreUtil
 import org.eclipse.xtext.serializer.ISerializer
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.io.TempDir
-import org.mockito.kotlin.doThrow
+import org.mockito.kotlin.doAnswer
 import org.mockito.kotlin.mock
 import java.nio.file.Path
 import kotlin.coroutines.cancellation.CancellationException
@@ -86,7 +88,9 @@ class SemantifyrVerifierImplTest {
     @Test
     suspend fun `successful portfolio verdict propagates to VerificationResult`(@TempDir output: Path) {
         val backendResult = decisiveResult(VerificationVerdict.Passed, "fake-backend")
-        val portfolio = ScriptedPortfolio { _, _ -> backendResult }
+        val portfolio = ScriptedPortfolio { _, _ ->
+            backendResult
+        }
 
         val result = build(portfolio, output)
             .verify(loadFirstCase()).report.result
@@ -180,16 +184,16 @@ class SemantifyrVerifierImplTest {
     }
 
     @Test
-    fun `CancellationException from the portfolio is rethrown`(@TempDir output: Path) = runTest {
+    suspend fun `CancellationException from the portfolio is rethrown`(@TempDir output: Path) {
         val portfolio = ScriptedPortfolio { _, _ ->
             throw CancellationException("caller cancelled")
         }
 
-        assertThatThrownBy {
-            kotlinx.coroutines.runBlocking {
-                build(portfolio, output).verify(loadFirstCase())
-            }
-        }.isInstanceOf(CancellationException::class.java)
+        val exception = assertThrows<CancellationException> {
+            build(portfolio, output).verify(loadFirstCase())
+        }
+
+        assertThat(exception).hasMessage("caller cancelled")
     }
 
     @Test
@@ -210,7 +214,9 @@ class SemantifyrVerifierImplTest {
 
     @Test
     suspend fun `failed metadata sets backend to null when the portfolio errors`(@TempDir output: Path) {
-        val portfolio = ScriptedPortfolio { _, _ -> error("boom") }
+        val portfolio = ScriptedPortfolio { _, _ ->
+            error("boom")
+        }
 
         val result = build(portfolio, output)
             .verify(loadFirstCase()).report.result
@@ -220,7 +226,9 @@ class SemantifyrVerifierImplTest {
 
     @Test
     suspend fun `report json is written to a directory named after the model file and the qualified name of the case`(@TempDir output: Path) {
-        val portfolio = ScriptedPortfolio { _, _ -> decisiveResult(VerificationVerdict.Passed) }
+        val portfolio = ScriptedPortfolio { _, _ ->
+            decisiveResult(VerificationVerdict.Passed)
+        }
         val case = loadFirstCase()
 
         val outcome = build(portfolio, output, artifacts = ArtifactConfig.ALL).verify(case)
@@ -246,11 +254,12 @@ class SemantifyrVerifierImplTest {
 
     @Test
     suspend fun `a run whose witness cannot be read back fails and the portfolio's other run answers`(@TempDir output: Path) {
+        val readBackFailed = CompletableDeferred<Unit>()
         val broken = FakeBackend("broken") {
-            decisiveResult(VerificationVerdict.Failed, "broken").copy(isTrusted = true, inlinedWitness = brokenWitness())
+            decisiveResult(VerificationVerdict.Failed, "broken").copy(isTrusted = true, inlinedWitness = brokenWitness(readBackFailed))
         }
         val answering = FakeBackend("answering") {
-            delay(200)
+            readBackFailed.await()
             decisiveResult(VerificationVerdict.Passed, "answering").copy(isTrusted = true)
         }
         val portfolio = RacingPortfolio(
@@ -283,8 +292,38 @@ class SemantifyrVerifierImplTest {
     }
 
     @Test
+    suspend fun `a single run whose witness cannot be read back fails the case with a report`(@TempDir output: Path) {
+        val broken = FakeBackend("broken") {
+            decisiveResult(VerificationVerdict.Failed, "broken").copy(inlinedWitness = brokenWitness())
+        }
+
+        val outcome = build(SingleBackendPortfolio(broken, FakeConfig("broken")), output).verify(loadFirstCase())
+
+        assertThat(outcome.report.result.verdict).isEqualTo(VerificationVerdict.Errored)
+        assertThat(outcome.report.result.message).contains("could not be read back", "broken witness")
+        assertThat(outcome.report.trace).isNull()
+        assertThat(outcome.reportPath).exists()
+    }
+
+    @Test
+    suspend fun `a read-back that outlasts the timeout is a Timeout without a trace`(@TempDir output: Path) {
+        val portfolio = ScriptedPortfolio { _, _ ->
+            decisiveResult(VerificationVerdict.Failed).copy(inlinedWitness = endlessWitness())
+        }
+
+        val outcome = build(portfolio, output, timeout = 5.seconds).verify(loadFirstCase())
+
+        assertThat(outcome.report.result.verdict).isEqualTo(VerificationVerdict.Timeout)
+        assertThat(outcome.report.result.message).contains("while back-annotating the witness of fake-backend's Failed verdict")
+        assertThat(outcome.report.trace).isNull()
+        assertThat(outcome.witness).isNull()
+    }
+
+    @Test
     suspend fun `the compilation duration is the compilation's unfolding duration`(@TempDir output: Path) {
-        val portfolio = ScriptedPortfolio { _, _ -> decisiveResult(VerificationVerdict.Passed) }
+        val portfolio = ScriptedPortfolio { _, _ ->
+            decisiveResult(VerificationVerdict.Passed)
+        }
 
         val result = build(portfolio, output, artifacts = ArtifactConfig.ALL).verify(loadFirstCase()).report.result
 
@@ -326,7 +365,9 @@ class SemantifyrVerifierImplTest {
 
     @Test
     suspend fun `re-verifying a witness keeps the verify's artifacts and leaves the witness model unchanged`(@TempDir output: Path) {
-        val portfolio = ScriptedPortfolio { _, _ -> decisiveResult(VerificationVerdict.Passed) }
+        val portfolio = ScriptedPortfolio { _, _ ->
+            decisiveResult(VerificationVerdict.Passed)
+        }
         val verifier = build(portfolio, output)
         val case = loadFirstCase()
         verifier.verify(case)
@@ -365,9 +406,13 @@ class SemantifyrVerifierImplTest {
     private fun loadFirstCase(): VerificationCase {
         val context = loader.loadStandaloneModel(modelPath)
         val classDeclaration = context.modelResources.asSequence()
-            .flatMap { it.contents }
+            .flatMap {
+                it.contents
+            }
             .filterIsInstance<OxstsModelPackage>()
-            .flatMap { it.declarations }
+            .flatMap {
+                it.declarations
+            }
             .filterIsInstance<ClassDeclaration>()
             .first()
         return VerificationCase(
@@ -455,11 +500,25 @@ class SemantifyrVerifierImplTest {
         }
     }
 
-    private fun brokenWitness(): InlinedWitness {
+    private fun brokenWitness(readBackFailed: CompletableDeferred<Unit> = CompletableDeferred()): InlinedWitness {
         return mock<InlinedWitness> {
             on {
                 initializedState
-            } doThrow IllegalStateException("broken witness")
+            } doAnswer {
+                readBackFailed.complete(Unit)
+                throw IllegalStateException("broken witness")
+            }
+        }
+    }
+
+    private fun endlessWitness(): InlinedWitness {
+        return mock<InlinedWitness> {
+            on {
+                initializedState
+            } doAnswer {
+                Thread.sleep(Long.MAX_VALUE)
+                error("the read-back was not interrupted")
+            }
         }
     }
 
