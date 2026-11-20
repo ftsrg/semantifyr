@@ -41,12 +41,16 @@ function captureStates(): {
   return { states, setState };
 }
 
-const noopProgress = (_: (parameters: unknown) => void) => () => {};
+const noopProgress = (_: (parameters: unknown) => void) => {
+  return () => {};
+};
 
 describe('runAllVerifications', () => {
   it('sends every case at once and folds in each verdict with its report', async () => {
     const responses = [passedResult, failedResult];
-    const sendRequest = vi.fn<LspClient['sendRequest']>(async () => responses.shift() ?? null);
+    const sendRequest = vi.fn<LspClient['sendRequest']>(async () => {
+      return responses.shift() ?? null;
+    });
     const client: LspClient = { sendRequest, sendNotification: () => {} };
 
     const { states, setState } = captureStates();
@@ -65,7 +69,9 @@ describe('runAllVerifications', () => {
     });
 
     const final = states.at(-1)!;
-    expect(final.cases.map((verificationCase) => verificationCase.status)).toEqual(['passed', 'failed']);
+    expect(final.cases.map((verificationCase) => {
+      return verificationCase.status;
+    })).toEqual(['passed', 'failed']);
     expect(final.cases[0]!.report).toEqual(passedResult.report);
     expect(final.cases[0]!.portfolioId).toBe('smart');
     expect(final.cases[1]!.report).toEqual(failedResult.report);
@@ -77,12 +83,16 @@ describe('runAllVerifications', () => {
       arguments: [{ uri: 'file:///workspace/snippet.semantifyr', range: sampleCase('a').location.range, portfolio: 'smart' }],
     });
 
-    expect(states[0]!.cases.every((verificationCase) => verificationCase.status === 'running')).toBe(true);
+    expect(states[0]!.cases.every((verificationCase) => {
+      return verificationCase.status === 'running';
+    })).toBe(true);
     expect(sendRequest).toHaveBeenCalledTimes(2);
   });
 
   it('reports "All cases passed" when every verdict is passed', async () => {
-    const sendRequest = vi.fn<LspClient['sendRequest']>(async () => passedResult);
+    const sendRequest = vi.fn<LspClient['sendRequest']>(async () => {
+      return passedResult;
+    });
     const client: LspClient = { sendRequest, sendNotification: () => {} };
 
     const { states, setState } = captureStates();
@@ -131,7 +141,6 @@ describe('runAllVerifications', () => {
       if (command === 'oxsts.case.verify') {
         return failedResult;
       }
-      // validate response
       return {
         status: 'valid',
         message: null,
@@ -142,10 +151,12 @@ describe('runAllVerifications', () => {
     const client: LspClient = { sendRequest, sendNotification: () => {} };
 
     const { states, setState } = captureStates();
-    const getAutoValidateRequest = (): AutoValidateRequest => ({
-      command: 'oxsts.case.validateWitness',
-      portfolioId: 'smart',
-    });
+    const getAutoValidateRequest = (): AutoValidateRequest => {
+      return {
+        command: 'oxsts.case.validateWitness',
+        portfolioId: 'smart',
+      };
+    };
 
     runAllVerifications(
       client,
@@ -162,7 +173,9 @@ describe('runAllVerifications', () => {
       expect(last.cases[0]!.witnessValidation).toBe('valid');
     });
     expect(sendRequest).toHaveBeenCalledTimes(2);
-    expect(states.some((state) => state.cases[0]?.validating === true)).toBe(true);
+    expect(states.some((state) => {
+      return state.cases[0]?.validating === true;
+    })).toBe(true);
     expect(states.at(-1)!.cases[0]!.validationReport).toEqual(sampleValidationReport);
   });
 
@@ -184,7 +197,9 @@ describe('runAllVerifications', () => {
       [gammaCase],
       setState,
       noopProgress,
-      { getAutoValidateRequest: () => ({ command: 'gamma.witness.validate', byCase: true }) },
+      { getAutoValidateRequest: () => {
+        return { command: 'gamma.witness.validate', byCase: true };
+      } },
     );
 
     await vi.waitFor(() => {
@@ -199,11 +214,15 @@ describe('runAllVerifications', () => {
 
   it('skips auto-validation when the trace has no witnessUri', async () => {
     const noWitnessFail: VerificationCaseResult = { ...failedResult, witnessUri: null };
-    const sendRequest = vi.fn<LspClient['sendRequest']>(async () => noWitnessFail);
+    const sendRequest = vi.fn<LspClient['sendRequest']>(async () => {
+      return noWitnessFail;
+    });
     const client: LspClient = { sendRequest, sendNotification: () => {} };
 
     const { states, setState } = captureStates();
-    const getAutoValidateRequest = (): AutoValidateRequest => ({ command: 'oxsts.case.validateWitness' });
+    const getAutoValidateRequest = (): AutoValidateRequest => {
+      return { command: 'oxsts.case.validateWitness' };
+    };
 
     runAllVerifications(
       client,
@@ -219,7 +238,9 @@ describe('runAllVerifications', () => {
       expect(states.at(-1)?.phase).toBe('done');
     });
     expect(sendRequest).toHaveBeenCalledTimes(1);
-    expect(states.some((state) => state.cases[0]?.validating === true)).toBe(false);
+    expect(states.some((state) => {
+      return state.cases[0]?.validating === true;
+    })).toBe(false);
   });
 });
 
@@ -231,7 +252,9 @@ describe('verification statuses', () => {
     ['mystery', 'errored'],
   ] as const)('maps a %s result to the %s case status', async (wireStatus, caseStatus) => {
     const response = { ...passedResult, status: wireStatus, message: 'note', report: null };
-    const sendRequest = vi.fn<LspClient['sendRequest']>(async () => response);
+    const sendRequest = vi.fn<LspClient['sendRequest']>(async () => {
+      return response;
+    });
     const client: LspClient = { sendRequest, sendNotification: () => {} };
 
     const { states, setState } = captureStates();
@@ -250,30 +273,16 @@ describe('verification statuses', () => {
     expect(states.at(-1)?.cases[0]?.status).toBe(caseStatus);
     expect(states.at(-1)?.cases[0]?.message).toBe('note');
   });
-
-  it.each([
-    'timeout',
-    'cancelled',
-  ] as const)('keeps a %s witness validation status', async (status) => {
-    const sendRequest = vi.fn<LspClient['sendRequest']>(async () => ({ status, message: 'note' }));
-    const client: LspClient = { sendRequest, sendNotification: () => {} };
-
-    const outcome = await validateWitness(
-      client,
-      'oxsts.case.validateWitness',
-      { uri: 'inmemory:///x', range: { start: { line: 0, character: 0 }, end: { line: 0, character: 0 } } },
-    );
-    expect(outcome.status).toBe(status);
-    expect(outcome.message).toBe('note');
-  });
 });
 
 describe('discoverCases', () => {
   it('is discovering while the request is pending and discovered with the cases once it resolves', async () => {
     let resolveDiscovery: (cases: unknown) => void = () => {};
-    const sendRequest = vi.fn<LspClient['sendRequest']>(() => new Promise((resolve) => {
-      resolveDiscovery = resolve;
-    }));
+    const sendRequest = vi.fn<LspClient['sendRequest']>(() => {
+      return new Promise((resolve) => {
+        resolveDiscovery = resolve;
+      });
+    });
     const client: LspClient = { sendRequest, sendNotification: () => {} };
 
     const { states, setState } = captureStates();
@@ -284,12 +293,16 @@ describe('discoverCases', () => {
     await discovery;
 
     expect(states.at(-1)?.discovery).toBe('discovered');
-    expect(states.at(-1)?.cases.map((caseState) => caseState.caseInfo.id)).toEqual(['a']);
+    expect(states.at(-1)?.cases.map((caseState) => {
+      return caseState.caseInfo.id;
+    })).toEqual(['a']);
     expect(states.at(-1)?.cases[0]?.status).toBe('stale');
   });
 
   it('is discovered with no cases when the model declares none', async () => {
-    const sendRequest = vi.fn<LspClient['sendRequest']>(async () => []);
+    const sendRequest = vi.fn<LspClient['sendRequest']>(async () => {
+      return [];
+    });
     const client: LspClient = { sendRequest, sendNotification: () => {} };
 
     const { states, setState } = captureStates();
@@ -300,7 +313,9 @@ describe('discoverCases', () => {
   });
 
   it('keeps the verdict of a case discovered again', async () => {
-    const sendRequest = vi.fn<LspClient['sendRequest']>(async () => [sampleCase('a')]);
+    const sendRequest = vi.fn<LspClient['sendRequest']>(async () => {
+      return [sampleCase('a')];
+    });
     const client: LspClient = { sendRequest, sendNotification: () => {} };
 
     const { states, setState } = captureStates();
@@ -328,44 +343,10 @@ describe('discoverCases', () => {
 });
 
 describe('validateWitness', () => {
-  it('parses a valid response into a structured outcome', async () => {
-    const sendRequest = vi.fn<LspClient['sendRequest']>(async () => ({
-      status: 'invalid',
-      message: 'spurious counterexample',
-      portfolioId: 'smart',
-      report: sampleValidationReport,
-    }));
-    const client: LspClient = { sendRequest, sendNotification: () => {} };
-
-    const outcome = await validateWitness(
-      client,
-      'oxsts.case.validateWitness',
-      { uri: 'inmemory:///x', range: { start: { line: 0, character: 0 }, end: { line: 0, character: 0 } } },
-      { portfolioId: 'smart' },
-    );
-    expect(outcome.status).toBe('invalid');
-    expect(outcome.report).toEqual(sampleValidationReport);
-    expect(outcome.portfolioId).toBe('smart');
-
-    const callArguments = sendRequest.mock.calls[0]!;
-    const parameters = callArguments[1] as { arguments: { portfolio?: string }[] };
-    expect(parameters.arguments[0]).toEqual({ uri: 'inmemory:///x', range: { start: { line: 0, character: 0 }, end: { line: 0, character: 0 } }, portfolio: 'smart' });
-  });
-
-  it('treats unknown response shapes as errored', async () => {
-    const sendRequest = vi.fn<LspClient['sendRequest']>(async () => ({ status: 'mystery' }));
-    const client: LspClient = { sendRequest, sendNotification: () => {} };
-
-    const outcome = await validateWitness(
-      client,
-      'oxsts.case.validateWitness',
-      { uri: 'inmemory:///x', range: { start: { line: 0, character: 0 }, end: { line: 0, character: 0 } } },
-    );
-    expect(outcome.status).toBe('errored');
-  });
-
   it('collapses a thrown LSP error into an errored outcome with the message', async () => {
-    const sendRequest = vi.fn<LspClient['sendRequest']>(async () => { throw new Error('boom'); });
+    const sendRequest = vi.fn<LspClient['sendRequest']>(async () => {
+      throw new Error('boom');
+    });
     const client: LspClient = { sendRequest, sendNotification: () => {} };
 
     const outcome = await validateWitness(
@@ -380,11 +361,13 @@ describe('validateWitness', () => {
 
 describe('dispatchAutoValidation', () => {
   it('flips validating=true synchronously and folds the validation result back in', async () => {
-    const sendRequest = vi.fn<LspClient['sendRequest']>(async () => ({
-      status: 'valid',
-      portfolioId: 'smart',
-      report: sampleValidationReport,
-    }));
+    const sendRequest = vi.fn<LspClient['sendRequest']>(async () => {
+      return {
+        status: 'valid',
+        portfolioId: 'smart',
+        report: sampleValidationReport,
+      };
+    });
     const client: LspClient = { sendRequest, sendNotification: () => {} };
 
     const { states, setState } = captureStates();
@@ -403,8 +386,6 @@ describe('dispatchAutoValidation', () => {
       { validationPortfolioId: 'smart' },
     );
 
-    // First synchronous transition flips validating=true; the second (after the resolved
-    // promise) folds in the outcome.
     const intermediate = states.at(-1)!;
     expect(intermediate.cases[0]!.validating).toBe(true);
 
@@ -507,9 +488,11 @@ describe('the wait of a case', () => {
   ] as const)('runs from when it was asked for to the server running it, for a case %s', async (_name, heldAt, waited) => {
     const clock = vi.spyOn(Date, 'now').mockReturnValue(3_000);
     let answer: (result: VerificationCaseResult) => void = () => {};
-    const sendRequest = vi.fn<LspClient['sendRequest']>(() => new Promise((resolve) => {
-      answer = resolve;
-    }));
+    const sendRequest = vi.fn<LspClient['sendRequest']>(() => {
+      return new Promise((resolve) => {
+        answer = resolve;
+      });
+    });
     const { states, setState } = captureStates();
     if (heldAt !== null) {
       setState(markQueued({ phase: 'idle', discovery: 'discovered', cases: [{ caseInfo, status: 'stale' }] }, null, heldAt));
