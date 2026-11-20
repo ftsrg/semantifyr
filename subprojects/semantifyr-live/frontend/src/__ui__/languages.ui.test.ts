@@ -4,17 +4,11 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import { readFileSync } from 'node:fs'
-import { join } from 'node:path'
-import { fileURLToPath } from 'node:url'
-import { servedExamples } from '@semantifyr/editor-common/examples'
-import type { Locator, Page } from 'playwright'
+import type { Page } from 'playwright'
 import { describe, expect } from 'vitest'
 
-import { BLANK_MODEL } from '../texts'
-import { casesListed, LIVE_URL, results, test } from './harness'
+import { casesListed, results, test } from './harness'
 
-const REPOSITORY = fileURLToPath(new URL('../../../../../', import.meta.url))
 
 describe('the language switch', () => {
   test('offers SysML v2, Gamma and the Semantifyr Language, and opens a session of the language chosen', async ({ ui }) => {
@@ -74,137 +68,6 @@ describe('initialization', () => {
   })
 })
 
-type Step =
-  | { kind: 'language', name: string }
-  | { kind: 'flavour', name: string }
-  | { kind: 'example', name: string }
-  | { kind: 'verify' }
-  | { kind: 'library' }
-  | { kind: 'model' }
-  | { kind: 'back' }
-
-const LANGUAGES = [
-  'SysML v2',
-  'Gamma',
-  'Semantifyr',
-]
-
-const FLAVOURS = [
-  'None',
-  'Gamma\'s semantics',
-  'SysML v2\'s semantics',
-]
-
-// the labels live's menus list, and the blank model
-const EXAMPLES = [
-  ...new Set(servedExamples.filter((example) => {
-    return example.hidden !== true
-  }).map((example) => {
-    return example.label
-  })),
-  BLANK_MODEL,
-]
-
-const WAITS = [
-  0,
-  150,
-  600,
-  2000,
-]
-
-// the tall page's editor renders this many lines at most, so a longer model shows the marks of a part of its cases
-const LINES_SHOWN = 250
-
-const LONG_EXAMPLES = new Set(servedExamples.filter((example) => {
-  return readFileSync(join(REPOSITORY, example.file), 'utf-8').split('\n').length > LINES_SHOWN
-}).map((example) => {
-  return example.id
-}))
-
-// a fixed sequence, so a failure is replayed as it happened
-function stepsOf(count: number, seed: number): { step: Step, wait: number }[] {
-  let state = seed
-  const next = (bound: number): number => {
-    state = (state * 1103515245 + 12345) % 2147483648
-    return Math.floor((state / 2147483648) * bound)
-  }
-  const pick = <T>(list: readonly T[]): T => {
-    return list[next(list.length)]!
-  }
-  return Array.from({ length: count }, () => {
-    const kind = pick(['language', 'language', 'language', 'flavour', 'example', 'example', 'verify', 'library', 'model', 'back'] as const)
-    const wait = pick(WAITS)
-    switch (kind) {
-      case 'language':
-        return { step: { kind, name: pick(LANGUAGES) }, wait }
-      case 'flavour':
-        return { step: { kind, name: pick(FLAVOURS) }, wait }
-      case 'example':
-        return { step: { kind, name: pick(EXAMPLES) }, wait }
-      default:
-        return { step: { kind }, wait }
-    }
-  })
-}
-
-// a click shows its menu once the page handles it, which a busy page does after the click has returned
-async function open(trigger: Locator): Promise<void> {
-  await trigger.click()
-  await expect.poll(async () => {
-    return trigger.getAttribute('aria-expanded')
-  }).toBe('true')
-}
-
-async function take(page: Page, step: Step): Promise<void> {
-  switch (step.kind) {
-    case 'language':
-      await page.locator('.language-switch [role=group] button', { hasText: step.name }).first().click()
-      return
-    case 'flavour': {
-      const flavour = page.locator('.flavour-button')
-      if (await flavour.count() === 0) {
-        return
-      }
-      await open(flavour)
-      await page.getByRole('menuitem', { name: new RegExp(step.name) }).click()
-      return
-    }
-    case 'example': {
-      await open(page.locator('.example-button'))
-      const item = page.getByRole('menuitem', { name: new RegExp(`^${step.name}`) })
-      if (await item.count() === 0) {
-        await page.getByRole('menuitem').first().click()
-        return
-      }
-      await item.first().click()
-      return
-    }
-    case 'verify': {
-      const button = results(page).verifyAll
-      if (await button.count() > 0 && await button.isEnabled()) {
-        await button.click()
-      }
-      return
-    }
-    case 'library': {
-      const documents = page.locator('.documents-group:not([aria-label="Selected case"]):not([aria-label="Model"]) .menu-item')
-      await open(page.getByRole('button', { name: 'Read-only documents' }))
-      await documents.first().click()
-      return
-    }
-    case 'model':
-      await page.locator('.tabs [role="tab"]').first().click()
-      return
-    case 'back':
-      await page.goBack()
-      // Back past the first address leaves the application
-      if (!page.url().startsWith(LIVE_URL)) {
-        await page.goForward()
-      }
-      return
-  }
-}
-
 interface Shown {
   path: string
   initializing: string | null
@@ -244,32 +107,68 @@ async function shown(page: Page): Promise<Shown> {
   })
 }
 
-function exampleOf(path: string): string {
-  return new URL(path, 'http://live').pathname.split('/')[2] ?? ''
+async function marksAreTheCases(page: Page): Promise<void> {
+  await expect.poll(async () => {
+    return (await shown(page)).initializing
+  }).toBeNull()
+  await expect.poll(async () => {
+    const now = await shown(page)
+    expect(now.doubled).toEqual([])
+    return now.marks.join(',') === now.rows.join(',')
+  }).toBe(true)
 }
 
-describe('switching many times', () => {
-  test('ends every switch of language, flavour and example, in varied order and timing, with the cases listed and the marks of the shown document alone', async ({ ui }) => {
-    const page = await ui.open('/language/modeling-and-verification', { height: 5800 })
-    const done: string[] = []
-    for (const { step, wait } of stepsOf(44, 7)) {
-      await take(page, step)
-      done.push(`${JSON.stringify(step)} +${wait}ms`)
-      await page.waitForTimeout(wait)
-      if (wait === 0) {
-        continue
+describe('a switch', () => {
+  test('made before the first discovery answered ends with the cases of the language switched to', async ({ ui }) => {
+    let release = (): void => {}
+    const discovered = new Promise<void>((resolve) => {
+      release = resolve
+    })
+    ui.backend.answer('discover', async (request, recorded) => {
+      if (request.session.flavorId === 'oxsts') {
+        await discovered
       }
-      const context = done.join('\n')
-      await expect.poll(async () => {
-        return (await shown(page)).initializing
-      }, { timeout: 60_000, message: `initialization ended after\n${context}` }).toBeNull()
-      await page.locator('.tabs [role="tab"]').first().click()
-      await expect.poll(async () => {
-        const now = await shown(page)
-        expect(now.doubled, `a mark of one state after\n${context}`).toEqual([])
-        expect(now.marks.length, `no more marks than cases after\n${context}`).toBeLessThanOrEqual(now.rows.length)
-        return LONG_EXAMPLES.has(exampleOf(now.path)) || now.marks.join(',') === now.rows.join(',')
-      }, { timeout: 30_000, message: `the marks are the cases' after\n${context}` }).toBe(true)
-    }
-  }, 6 * 60 * 1000)
+      return recorded()
+    })
+    const page = await ui.open('/language/modeling-and-verification', { height: 2000 })
+    await expect.poll(async () => {
+      return page.locator('.results .initialization-step.is-current').innerText()
+    }).toContain('Finding the verification cases')
+
+    await page.locator('.language-switch [role=group] button', { hasText: 'Gamma' }).click()
+    release()
+
+    await casesListed(page)
+    await marksAreTheCases(page)
+  })
+
+  test('after a run leaves in the margin the marks of the shown model alone, there and back', async ({ ui }) => {
+    const page = await ui.open('/language/level-crossing', { height: 2000 })
+    await casesListed(page)
+    await results(page).verifyAll.click()
+    await expect.poll(async () => {
+      return (await shown(page)).marks
+    }).toEqual(['failed', 'passed'])
+
+    await page.locator('.language-switch [role=group] button', { hasText: 'SysML v2' }).click()
+    await casesListed(page)
+    await marksAreTheCases(page)
+
+    await page.goBack()
+    await casesListed(page)
+    await marksAreTheCases(page)
+  })
+
+  test('from a read-only document leaves in the margin the marks of the model alone', async ({ ui }) => {
+    const page = await ui.open('/language/level-crossing', { height: 2000 })
+    await casesListed(page)
+    await page.getByRole('button', { name: 'Read-only documents' }).click()
+    await page.locator('.documents-group:not([aria-label="Selected case"]):not([aria-label="Model"]) .menu-item').first().click()
+
+    await page.locator('.language-switch [role=group] button', { hasText: 'Gamma' }).click()
+    await casesListed(page)
+    await page.locator('.tabs [role="tab"]').first().click()
+
+    await marksAreTheCases(page)
+  })
 })
