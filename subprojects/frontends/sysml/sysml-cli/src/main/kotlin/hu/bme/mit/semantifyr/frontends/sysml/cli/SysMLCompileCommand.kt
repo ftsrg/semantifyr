@@ -25,6 +25,7 @@ import kotlin.io.path.nameWithoutExtension
 
 class SysMLCompileCommand @Inject constructor(
     private val fileExtensionProvider: FileExtensionProvider,
+    private val compiler: SysMLv2Compiler,
 ) : SuspendingCliktCommand("compile") {
     private val logger by loggerFactory()
 
@@ -52,7 +53,7 @@ class SysMLCompileCommand @Inject constructor(
 
         echo("Compiling $model to $target")
         try {
-            SysMLv2Compiler().compile(model, target)
+            compiler.compile(model, target)
         } catch (exception: Exception) {
             throw CommandExit(ExitCode.Compilation, exception.message ?: exception::class.simpleName)
         }

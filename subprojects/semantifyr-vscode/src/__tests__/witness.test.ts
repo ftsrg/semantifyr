@@ -7,24 +7,31 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { renderTrace, WitnessView } from '../witness.js';
 import { registerOutputChannel } from '../outputChannel.js';
-import { counterexample, resolutionNote, result, witnessUri } from './fixtures.js';
+import { counterexample, validationReport, resolutionNote, result, witnessUri } from './fixtures.js';
 import { createExtensionContext, resetVscode, state, TestItem, TestMessage, Uri, ViewColumn, commands, window, workspace } from './stubs/vscode.js';
-import type { WitnessValidationResult } from '@semantifyr/editor-common';
+import type { ReportTrace, WitnessValidationResult } from '@semantifyr/editor-common';
 
 describe('renderTrace', () => {
-    it('lists the calls and the state changes of each step', () => {
-        expect(renderTrace('Safe', result('failed', counterexample), counterexample)).toBe([
+    it('gives a result without a report its status, portfolio and message alone', () => {
+        expect(renderTrace('Safe', result('cancelled', null, 'Verification cancelled'))).toBe([
             '# Safe',
             '',
-            'Verdict: failed (backend theta-cegar-expl, portfolio theta)',
+            'Verdict: cancelled (portfolio theta) - Verification cancelled',
+            '',
+        ].join('\n'));
+    });
+
+    it('lists the calls and the state changes of each step', () => {
+        expect(renderTrace('Safe', result('failed', counterexample))).toBe([
+            '# Safe',
+            '',
+            'Verdict: failed (backend theta-cegar-expl, portfolio theta, exact)',
             '',
             `Witness: ${witnessUri}`,
             '',
             '## Init',
             '',
-            'Calls:',
-            '',
-            '- `root.init()`',
+            'No calls.',
             '',
             'State:',
             '',
@@ -37,8 +44,7 @@ describe('renderTrace', () => {
             '',
             'Calls:',
             '',
-            '- `root.main()`',
-            '  - `root.lamp.toggle(brightness=2)`',
+            '- `root.lamp.toggle(brightness=2)`',
             '',
             'Changes:',
             '',
@@ -50,58 +56,83 @@ describe('renderTrace', () => {
         ].join('\n'));
     });
 
-    it.each([
-        ['file:/tmp/semantifyr/lamp.Safe/witness.semantifyr', 'Witness'],
-        ['file:/tmp/semantifyr/crossroads.Green/trace.get', 'Gamma trace'],
-    ])('labels the opened file %s as %s', (uri, label) => {
-        const trace = { ...counterexample, witnessUri: uri };
+    it('lists the Gamma trace before the witness of a result that has both', () => {
+        const traceUri = 'file:/tmp/semantifyr/crossroads.Green/trace.get';
 
-        expect(renderTrace('Safe', result('failed', trace), trace).split('\n')[4]).toBe(`${label}: ${uri}`);
+        expect(renderTrace('Safe', { ...result('failed', counterexample), traceUri }).split('\n').slice(4, 7)).toEqual([`Gamma trace: ${traceUri}`, '', `Witness: ${witnessUri}`]);
+    });
+
+    it('names a trace by its language', () => {
+        const traceUri = 'file:/tmp/semantifyr/crossroads.Green/trace.sysml';
+
+        expect(renderTrace('Safe', { ...result('failed', counterexample), traceUri }).split('\n')[4]).toBe(`SysML trace: ${traceUri}`);
     });
 
     it('appends the message of a passed verdict to the verdict line', () => {
-        const document = renderTrace('Safe', result('passed', counterexample, resolutionNote), counterexample);
+        const document = renderTrace('Safe', result('passed', counterexample, resolutionNote));
 
-        expect(document.split('\n')[2]).toBe(`Verdict: passed (backend theta-cegar-expl, portfolio theta) - ${resolutionNote}`);
+        expect(document.split('\n')[2]).toBe(`Verdict: passed (backend theta-cegar-expl, portfolio theta, exact) - ${resolutionNote}`);
     });
 
     it.each([null, ''])('keeps the verdict line of a passed verdict with the message %j bare', (message) => {
-        const document = renderTrace('Safe', result('passed', counterexample, message), counterexample);
+        const document = renderTrace('Safe', result('passed', counterexample, message));
 
-        expect(document.split('\n')[2]).toBe('Verdict: passed (backend theta-cegar-expl, portfolio theta)');
+        expect(document.split('\n')[2]).toBe('Verdict: passed (backend theta-cegar-expl, portfolio theta, exact)');
+    });
+
+    it('names the soundness of a verdict that is not exact from its report', () => {
+        const passed = result('passed', counterexample);
+        const underApproximating = { ...passed, report: { ...passed.report!, result: { ...passed.report!.result, soundness: 'UnderApproximating' as const } } };
+
+        expect(renderTrace('Safe', underApproximating).split('\n')[2]).toBe('Verdict: passed (backend theta-cegar-expl, portfolio theta, under-approximating)');
     });
 
     it('adds the witness validation below the verdict', () => {
-        const validation: WitnessValidationResult = { status: 'invalid', verdict: 'passed', message: 'spurious', backendId: 'theta-bmc', portfolioId: 'smart', metrics: null };
+        const validation: WitnessValidationResult = { status: 'invalid', message: 'spurious', portfolioId: 'smart', report: null };
 
-        const document = renderTrace('Safe', result('failed', counterexample), counterexample, validation);
+        const document = renderTrace('Safe', result('failed', counterexample), validation);
 
         expect(document.split('\n').slice(2, 5)).toEqual([
-            'Verdict: failed (backend theta-cegar-expl, portfolio theta)',
+            'Verdict: failed (backend theta-cegar-expl, portfolio theta, exact)',
             '',
-            'Validation: Witness invalid (backend theta-bmc, portfolio smart) - spurious',
+            'Validation: Witness invalid (portfolio smart) - spurious',
         ]);
     });
 
-    it('leaves out a missing witness and origin', () => {
-        const trace = {
-            callTrace: { initializedStep: { traces: [] }, steps: [{ traces: [] }] },
-            witnessState: { initializedStep: { values: [] }, steps: [{ values: [{ variable: 'root.mode', value: 'A | B' }] }] },
-            witnessUri: null,
-        };
+    it('names the validation\'s backend, duration and soundness from its report', () => {
+        const validation: WitnessValidationResult = { status: 'valid', message: null, portfolioId: 'smart', report: validationReport() };
 
-        const document = renderTrace('Reachable', { ...result('passed', trace), backendId: null, portfolioId: null }, trace);
+        const document = renderTrace('Safe', result('failed', counterexample), validation);
+
+        expect(document.split('\n')[4]).toBe('Validation: Witness valid (backend spin-safe-dfs, portfolio smart, 1.5 s, under-approximating)');
+    });
+
+    it('leaves out a missing witness and backend', () => {
+        const trace: ReportTrace = {
+            ...counterexample,
+            initial: { state: 0, calls: [] },
+            states: [{ values: { 'root.mode': 'A' } }, { values: { 'root.mode': 'A | B' } }],
+            steps: [{ source: 0, target: 1, elapsed: 0, calls: [] }],
+        };
+        const passed = result('passed', trace);
+        const report = { ...passed.report!, result: { ...passed.report!.result, metadata: { ...passed.report!.result.metadata, backendId: null } } };
+
+        const document = renderTrace('Reachable', { ...passed, report, witnessUri: null });
 
         expect(document).toBe([
             '# Reachable',
             '',
-            'Verdict: passed',
+            'Verdict: passed (portfolio theta, exact)',
             '',
             '## Init',
             '',
             'No calls.',
             '',
-            'No state.',
+            'State:',
+            '',
+            '| Variable | Value |',
+            '| --- | --- |',
+            '| `root.mode` | `A` |',
             '',
             '## Step 1',
             '',
@@ -114,6 +145,14 @@ describe('renderTrace', () => {
             '| `root.mode` | `A \\| B` |',
             '',
         ].join('\n'));
+    });
+});
+
+describe('renderTrace of what the report adds', () => {
+    it('gives each step its elapsed time in a timed model', () => {
+        const trace: ReportTrace = { ...counterexample, steps: [{ source: 0, target: 1, elapsed: '3/2', calls: [] }] };
+
+        expect(renderTrace('Safe', result('failed', trace))).toContain('## Step 1\n\nElapsed: 3/2\n');
     });
 });
 
@@ -151,7 +190,7 @@ describe('WitnessView', () => {
         expect(document.uri.scheme).toBe('semantifyr-trace');
         expect(document.uri.path).toBe('/Safe.md');
         expect(document.languageId).toBe('markdown');
-        expect(document.getText()).toBe(renderTrace('Safe', result('failed', counterexample), counterexample));
+        expect(document.getText()).toBe(renderTrace('Safe', result('failed', counterexample)));
     });
 
     it('accepts the test item itself from the test explorer', async () => {
@@ -163,7 +202,7 @@ describe('WitnessView', () => {
     });
 
     it('opens only the trace when the result carries no witness file', async () => {
-        view.record(item as never, result('passed', { ...counterexample, witnessUri: null }));
+        view.record(item as never, { ...result('passed', counterexample), witnessUri: null });
 
         await showWitness(item);
 
@@ -192,7 +231,9 @@ describe('WitnessView', () => {
 
     it('keeps one trace document per case and refreshes it on a rerun', async () => {
         const changes: string[] = [];
-        view.onDidChange((uri) => changes.push(String(uri)));
+        view.onDidChange((uri) => {
+            return changes.push(String(uri));
+        });
         const other = new TestItem('lamp::Reachable', 'Reachable', modelUri);
 
         view.record(item as never, result('failed', counterexample));
@@ -227,7 +268,7 @@ describe('WitnessView validation', () => {
     }
 
     function validation(status: WitnessValidationResult['status'], message: string | null = null): WitnessValidationResult {
-        return { status, verdict: null, message, backendId: null, portfolioId: 'smart', metrics: null };
+        return { status, message, portfolioId: 'smart', report: null };
     }
 
     function traceDocument(): string {
@@ -235,7 +276,9 @@ describe('WitnessView validation', () => {
     }
 
     it('validates under a cancellable progress and adds the result to the trace', async () => {
-        view.record(item as never, result('failed', counterexample), async () => validation('valid'));
+        view.record(item as never, result('failed', counterexample), async () => {
+            return validation('valid');
+        });
 
         await validateWitness({ test: item });
 
@@ -250,7 +293,9 @@ describe('WitnessView validation', () => {
         ['inconclusive', 'showWarningMessage', 'ACanBeGreen: Validation inconclusive (portfolio smart) - spurious'],
         ['timeout', 'showWarningMessage', 'ACanBeGreen: Validation timed out (portfolio smart) - spurious'],
     ] as const)('reports a %s witness through %s', async (status, method, text) => {
-        view.record(item as never, result('failed', counterexample), async () => validation(status, 'spurious'));
+        view.record(item as never, result('failed', counterexample), async () => {
+            return validation(status, 'spurious');
+        });
 
         await validateWitness(item);
 

@@ -6,21 +6,25 @@
 
 package hu.bme.mit.semantifyr.live.backend.lsp.session
 
+import hu.bme.mit.semantifyr.backend.BackendMetrics
+import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.compiler.pipeline.context.CompilationMetrics
 import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseRequest
 import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseResult
-import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationMetrics
 import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationStatus
-import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationTrace
 import hu.bme.mit.semantifyr.lang.ide.server.wire.WitnessValidationResult
 import hu.bme.mit.semantifyr.lang.ide.server.wire.WitnessValidationStatus
 import hu.bme.mit.semantifyr.live.backend.BackendConfig
 import hu.bme.mit.semantifyr.live.backend.VerificationConfig
 import hu.bme.mit.semantifyr.live.backend.data.VerificationKind
+import hu.bme.mit.semantifyr.live.backend.exceptions.WorkspaceUriException
 import hu.bme.mit.semantifyr.live.backend.lsp.service.SessionLanguageClient
 import hu.bme.mit.semantifyr.live.backend.lsp.service.SharedExecutorProvider
 import hu.bme.mit.semantifyr.live.backend.testing.LspWire
-import hu.bme.mit.semantifyr.verifier.CompilationMetricsDto
+import hu.bme.mit.semantifyr.verifier.ReportKind
+import hu.bme.mit.semantifyr.verifier.VerificationMetrics
+import hu.bme.mit.semantifyr.verifier.VerifierMetrics
+import hu.bme.mit.semantifyr.verifier.fakeVerificationReport
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.future.await
@@ -78,8 +82,8 @@ class SessionVerificationManagerTest {
 
     private fun result(kind: VerificationKind): Any {
         return when (kind) {
-            VerificationKind.Verify -> VerificationCaseResult(VerificationStatus.PASSED, null, "theta", "smart", null, null)
-            VerificationKind.Validate -> WitnessValidationResult(WitnessValidationStatus.VALID, VerificationStatus.FAILED, null, "theta", "smart", null)
+            VerificationKind.Verify -> VerificationCaseResult(VerificationStatus.PASSED, null, "smart", null, null, null)
+            VerificationKind.Validate -> WitnessValidationResult(WitnessValidationStatus.VALID, null, "smart", null)
         }
     }
 
@@ -181,7 +185,7 @@ class SessionVerificationManagerTest {
 
     @Test
     suspend fun `a verify drops the queued validation of the witness its case left`() {
-        val witnessResult = VerificationCaseResult(VerificationStatus.FAILED, null, "theta", "smart", null, VerificationTrace(null, null, witnessUri))
+        val witnessResult = VerificationCaseResult(VerificationStatus.FAILED, null, "smart", null, witnessUri, null)
         launch(VerificationKind.Verify, documentUri, 1) {
             witnessResult
         }.await()
@@ -218,23 +222,35 @@ class SessionVerificationManagerTest {
     }
 
     @Test
+    suspend fun `a request naming a file outside the workspace is refused without the server's path`() {
+        val result = launch(VerificationKind.Validate, documentUri, 1) {
+            throw WorkspaceUriException("uri escapes workspace: file:///srv/sessions/session/../../etc/passwd")
+        }.await() as WitnessValidationResult
+
+        assertThat(result.status()).isEqualTo(WitnessValidationStatus.ERRORED)
+        assertThat(result.message()).isEqualTo("The request names a file outside the workspace")
+    }
+
+    @Test
     suspend fun `a finished verification records the time of each phase by backend`() {
-        val compilation = CompilationMetricsDto.fromMetrics(
-            CompilationMetrics(
-                createDuration = 1.milliseconds,
-                instantiationDuration = 2.milliseconds,
-                inliningDuration = 3.milliseconds,
-                flatteningDuration = 4.milliseconds,
+        val metrics = VerificationMetrics(
+            totalDuration = 100.milliseconds,
+            backend = BackendMetrics(
+                preparationDuration = 20.milliseconds,
+                verificationDuration = 50.milliseconds,
+                backAnnotationDuration = 20.milliseconds,
+            ),
+            verifier = VerifierMetrics(
+                compilationDuration = 10.milliseconds,
+                compilation = CompilationMetrics(
+                    createDuration = 1.milliseconds,
+                    instantiationDuration = 2.milliseconds,
+                    inliningDuration = 3.milliseconds,
+                    flatteningDuration = 4.milliseconds,
+                ),
             ),
         )
-        val metrics = VerificationMetrics(
-            Duration.ofMillis(100),
-            Duration.ofMillis(30),
-            Duration.ofMillis(50),
-            Duration.ofMillis(20),
-            compilation,
-        )
-        val result = VerificationCaseResult(VerificationStatus.PASSED, null, "theta", "smart", metrics, null)
+        val result = VerificationCaseResult(VerificationStatus.PASSED, null, "smart", fakeVerificationReport(VerificationVerdict.Passed, "theta", ReportKind.Run, metrics), null, null)
 
         launch(VerificationKind.Verify, documentUri, 1) {
             result

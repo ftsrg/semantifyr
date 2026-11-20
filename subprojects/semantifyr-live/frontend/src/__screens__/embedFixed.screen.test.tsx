@@ -9,7 +9,6 @@ import { describe, expect, it, onTestFinished } from 'vitest'
 import { commands, page, server, userEvent } from 'vitest/browser'
 
 import { connectionLost, INITIAL_CONNECTION } from '../lib/stores/connection'
-import type { ResolvedColorMode } from '../lib/util/colorMode'
 import type { VerificationCaseState, VerificationState } from '../lib/verification/engine'
 import { documentKey } from '../lib/workspace/live'
 import { ShellRoot } from '../shells/ShellRoot'
@@ -17,6 +16,8 @@ import { CaseTrace } from '../trace/CaseTrace'
 import { caseOf, finished, seedLive, type Seed, type Seeded } from './seededLive'
 import type { MouseAction } from '../../vitest.screen.config'
 import { caseState, LANGUAGES, seedWithTrace } from './traces'
+import { settledOn } from './settled'
+import { colorModes } from './themes'
 
 // Goal: an embed in a frame of a fixed size fills it and never grows: the document does not scroll, the open trace and the model
 // both show inside the frame, beside each other in a slide's frame and below each other in a narrow one
@@ -292,15 +293,17 @@ const STATES: Readonly<Record<string, ScreenState>> = {
       await mouse('mouseReleased', x, y, 1)
       await mouse('mousePressed', x, y, 2)
       await mouse('mouseReleased', x, y, 2)
-      await new Promise((resolve) => {
-        setTimeout(resolve, 100)
-      })
+      const narrowest = SPLITS.at(-1)!
+      await expect.poll(() => {
+        return columns().results
+      }).not.toBe(narrowest.results)
       SPLITS.push(columns())
       document.querySelector<HTMLElement>('.embed > .splitter')!.focus()
       await userEvent.keyboard('{ArrowLeft}')
-      await new Promise((resolve) => {
-        setTimeout(resolve, 100)
-      })
+      const reset = SPLITS.at(-1)!
+      await expect.poll(() => {
+        return columns().results
+      }).not.toBe(reset.results)
       SPLITS.push(columns())
     },
     expectState: () => {
@@ -339,8 +342,8 @@ const STATES: Readonly<Record<string, ScreenState>> = {
 }
 
 describe('the embed in a fixed frame', () => {
-  for (const colorMode of ['light', 'dark'] as const satisfies readonly ResolvedColorMode[]) {
-    for (const [state, screen] of Object.entries(STATES)) {
+  for (const [index, [state, screen]] of Object.entries(STATES).entries()) {
+    for (const colorMode of colorModes(index === 0)) {
       it(`fills ${screen.frame.width} by ${screen.frame.height} with ${state} in the ${colorMode} theme`, async () => {
         await page.viewport(screen.frame.width, screen.frame.height)
         const address = `${window.location.pathname}${window.location.search}`
@@ -359,10 +362,7 @@ describe('the embed in a fixed frame', () => {
           return document.querySelector('.monaco-editor .view-line')
         }, { timeout: 60_000 }).toBeTruthy()
         await screen.act?.()
-        await new Promise((resolve) => {
-          setTimeout(resolve, 600)
-        })
-        screen.expectState()
+        await settledOn(screen.expectState)
 
         const embed = document.querySelector<HTMLElement>('[data-testid=embed-shell]')!
         const frame = embed.getBoundingClientRect()

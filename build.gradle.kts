@@ -12,7 +12,14 @@ plugins {
     `jacoco-report-aggregation`
 }
 
-val javadocModules = listOf("oxsts.lang", "oxsts.model")
+val javadocModules = listOf(
+    "oxsts.lang",
+    "oxsts.model",
+)
+
+val undocumentedModules = listOf(
+    "corpus-check",
+)
 
 // build-logic's semantifyrArtifact, which the root project does not load
 fun semantifyrArtifact(kind: String): Action<AttributeContainer> {
@@ -36,7 +43,7 @@ dependencies {
             jacocoAggregation(project(subproject.path))
         }
         subproject.plugins.withId("org.jetbrains.kotlin.jvm") {
-            if (subproject.name !in javadocModules) {
+            if (subproject.name !in javadocModules && subproject.name !in undocumentedModules) {
                 dokka(project(subproject.path))
             }
         }
@@ -78,35 +85,55 @@ configurations.consumable("apiDocsElements") {
     }
 }
 
-val suiteReportTasks = reporting.reports.run {
-    listOf(
-        register<JacocoCoverageReport>("mergedJacocoTestReport") { testSuiteName = "test" },
-        register<JacocoCoverageReport>("mergedJacocoVerificationTestReport") { testSuiteName = "verificationTest" },
-        register<JacocoCoverageReport>("mergedJacocoIntegrationTestReport") { testSuiteName = "integrationTest" },
-    ).map { report ->
-        report.flatMap { it.reportTask }
+val suiteReportTasks = listOf(
+    "test",
+    "adapterTest",
+    "semanticTest",
+    "integrationTest",
+    "endToEndTest",
+).map { suite ->
+    reporting.reports.register<JacocoCoverageReport>("${suite}CoverageReport") {
+        testSuiteName = suite
+    }.flatMap {
+        it.reportTask
     }
 }
 
-tasks.register<JacocoReport>("mergedJacocoReport") {
+val coverageReport = tasks.register<JacocoReport>("coverageReport") {
     group = "verification"
 
     suiteReportTasks.forEach { reportTask ->
-        executionData.from(reportTask.map { it.executionData })
-        sourceDirectories.from(reportTask.map { it.sourceDirectories })
-        classDirectories.from(reportTask.map { it.classDirectories })
+        executionData.from(
+            reportTask.map {
+                it.executionData
+            },
+        )
+        sourceDirectories.from(
+            reportTask.map {
+                it.sourceDirectories
+            },
+        )
+        classDirectories.from(
+            reportTask.map {
+                it.classDirectories
+            },
+        )
     }
 
     reports {
         xml.required = true
-        html.required = true
     }
+}
+
+tasks.named("sonar") {
+    dependsOn(coverageReport)
 }
 
 val generatedSourceExclusions = "**/src-gen/**,**/generated/**,**/xtext-gen/**,**/emf-gen/**"
 
 sonar {
     properties {
+        property("sonar.coverage.jacoco.xmlReportPaths", coverageReport.get().reports.xml.outputLocation.get().asFile)
         property("sonar.coverage.exclusions", generatedSourceExclusions)
         property("sonar.exclusions", generatedSourceExclusions)
         property("sonar.projectKey", "ftsrg_semantifyr")

@@ -22,6 +22,7 @@ plugins {
     `java-test-fixtures`
     jacoco
     id("hu.bme.mit.semantifyr.gradle.conventions.formatting")
+    id("hu.bme.mit.semantifyr.gradle.conventions.pack")
     id("org.sonarqube")
 }
 
@@ -104,7 +105,6 @@ testing {
             targets.all {
                 testTask.configure {
                     jvmArgumentProviders.add(MockitoAgentArgumentProvider(files(mockitoAgentClasspath)))
-                    finalizedBy(tasks.jacocoTestReport)
                 }
             }
         }
@@ -113,11 +113,6 @@ testing {
 
 tasks.jacocoTestReport {
     inputs.files(tasks.test)
-}
-
-tasks.named("sonarResolver") {
-    // the nightly runs only on fured, so its report must not pull nightlyTest into CI
-    inputs.files(tasks.withType<JacocoReport>().matching { it.name != "jacocoNightlyTestReport" })
 }
 
 // plain values only, as the plugin is not yet updated to providers
@@ -135,11 +130,6 @@ sonar {
         })
         property("sonar.java.test.binaries", nonMainSourceSets.flatMap {
             it.output.classesDirs.files
-        })
-        property("sonar.coverage.jacoco.xmlReportPaths", tasks.withType<JacocoReport>().map {
-            it.reports.xml.outputLocation.get().asFile
-        }.filter {
-            it.exists()
         })
     }
 }

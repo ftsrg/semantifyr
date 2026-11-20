@@ -33,7 +33,6 @@ jobs:
             sed -e 's/@instance@/semantifyr-live/g' -e 's/@environment@/production/g' "$source" > "$release/production-$name"
             sed -e 's/@instance@/semantifyr-live-staging/g' -e 's/@environment@/staging/g' "$source" > "$release/staging-$name"
           done
-      # Grafana skips a dashboard it cannot parse and stays healthy, so the deploy would not fail on it
       - name: Check the dashboards
         run: jq empty "$RUNNER_TEMP"/release/*.json
       - name: Configure SSH

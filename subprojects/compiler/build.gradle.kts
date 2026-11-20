@@ -9,6 +9,7 @@ import hu.bme.mit.semantifyr.gradle.conventions.semantifyrArtifact
 
 plugins {
     id("hu.bme.mit.semantifyr.gradle.conventions.jvm")
+    id("hu.bme.mit.semantifyr.gradle.conventions.suites")
     id("hu.bme.mit.semantifyr.gradle.conventions.benchmark")
     kotlin("jvm")
     kotlin("plugin.serialization")
@@ -29,10 +30,25 @@ dependencies {
     testFixturesApi(testFixtures(project(":oxsts.lang")))
 }
 
-tasks.named("test") {
-    inputs.dir(rootProject.layout.projectDirectory.dir("oxsts-test-models"))
-        .withPropertyName("oxstsTestModels")
-        .withPathSensitivity(PathSensitivity.RELATIVE)
+listOf(
+    "test",
+    "integrationTest",
+).forEach {
+    tasks.named(it) {
+        inputs.dir(rootProject.layout.projectDirectory.dir("oxsts-test-models"))
+            .withPropertyName("oxstsTestModels")
+            .withPathSensitivity(PathSensitivity.RELATIVE)
+    }
+}
+
+testing {
+    suites {
+        named<JvmTestSuite>("integrationTest") {
+            dependencies {
+                implementation(libs.kotlinx.coroutines.core)
+            }
+        }
+    }
 }
 
 val benchmarkSysmlCorpus = configurations.dependencyScope("benchmarkSysmlCorpus")

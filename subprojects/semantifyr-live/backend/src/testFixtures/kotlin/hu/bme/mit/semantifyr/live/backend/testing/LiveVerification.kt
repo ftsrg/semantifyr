@@ -22,7 +22,7 @@ import kotlin.time.Duration.Companion.minutes
 private val gson = Gson()
 
 suspend fun verifyEndToEnd(
-    tmp: Path,
+    temporaryDirectory: Path,
     flavor: String,
     modelSource: String,
     pickCase: (List<VerificationCaseSpecification>) -> VerificationCaseSpecification,
@@ -34,7 +34,7 @@ suspend fun verifyEndToEnd(
     verifyTimeout: Duration = 1.minutes,
 ) {
     StagedTestSupport.assumeStaged()
-    withRealServer(config(tmp)) { client, port ->
+    withRealServer(config(temporaryDirectory)) { client, port ->
         client.webSocket("ws://localhost:$port/ws/lsp/$flavor") {
             send(Frame.Text(LspWire.initializeRequest()))
             awaitResponseFor(id = 1)
@@ -90,10 +90,4 @@ fun List<VerificationCaseSpecification>.pickByLabelSuffix(suffix: String): Verif
     return firstOrNull {
         it.label().endsWith(suffix)
     } ?: error("Expected verification case ending in '$suffix' in the discovered list: $this")
-}
-
-fun acceptAnyKnownStatus(label: String, result: VerificationCaseResult) {
-    assertThat(result.status())
-        .describedAs("verification status for $label: $result")
-        .isIn("passed", "failed", "inconclusive", "not_supported")
 }

@@ -11,10 +11,11 @@ import { page, server } from 'vitest/browser'
 
 import { toVscodeDiagnostics } from '../lib/session/problems'
 import { connectionLost, INITIAL_CONNECTION } from '../lib/stores/connection'
-import type { ResolvedColorMode } from '../lib/util/colorMode'
 import type { VerificationCaseState, VerificationState } from '../lib/verification/engine'
 import { ShellRoot } from '../shells/ShellRoot'
 import { caseOf, finished, seedLive, type Seed } from './seededLive'
+import { settledOn } from './settled'
+import { colorModes } from './themes'
 
 // Goal: what the desktop shows while a case is run again, in both themes
 
@@ -138,8 +139,8 @@ const STATES: Readonly<Record<string, ScreenState>> = {
 }
 
 describe('the fixes of the desktop shell', () => {
-  for (const colorMode of ['light', 'dark'] as const satisfies readonly ResolvedColorMode[]) {
-    for (const [state, screen] of Object.entries(STATES)) {
+  for (const [index, [state, screen]] of Object.entries(STATES).entries()) {
+    for (const colorMode of colorModes(index === 0)) {
       it(`shows ${state} in the ${colorMode} theme`, async () => {
         const { live, shell } = seedLive(screen.seed)
         const container = document.createElement('div')
@@ -154,10 +155,7 @@ describe('the fixes of the desktop shell', () => {
           return document.querySelector('.monaco-editor .view-line, [data-testid=waiting-model]')
         }, { timeout: 60_000 }).toBeTruthy()
         await screen.act?.()
-        await new Promise((resolve) => {
-          setTimeout(resolve, 600)
-        })
-        screen.expectState()
+        await settledOn(screen.expectState)
         await page.screenshot({ path: `../../build/screens/${server.browser}/fixes-${state}-${colorMode}.png` })
       })
     }

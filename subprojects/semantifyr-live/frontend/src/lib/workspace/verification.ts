@@ -129,9 +129,9 @@ function answeredWithin<T>(answer: Promise<T>, timeoutMs: number, message: strin
 
 function firstWithTrace(cases: readonly VerificationCaseState[]): VerificationCaseState | undefined {
   return cases.find((caseState) => {
-    return caseState.status === 'failed' && caseState.trace !== undefined
+    return caseState.status === 'failed' && caseState.report?.trace
   }) ?? cases.find((caseState) => {
-    return caseState.trace !== undefined
+    return caseState.report?.trace
   })
 }
 
@@ -474,7 +474,7 @@ export function createVerification(options: VerificationOptions): Verification {
       const target = stateOf(key).cases.find((caseState) => {
         return caseState.caseInfo.id === caseId
       })
-      const witnessUri = target?.trace?.witnessUri
+      const witnessUri = target?.witnessUri
       if (!target || !witnessUri) {
         return
       }

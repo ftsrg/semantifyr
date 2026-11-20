@@ -76,7 +76,7 @@ class QueueMapping(
 class ClockMapping(
     val clock: ClockDeclaration,
     val rate: Int,
-    val deltaTime: Int,
+    val unit: TimeUnit,
 )
 
 class AdapterMapping(
@@ -113,7 +113,6 @@ class DispatchMapping(
 object AsynchronousMapping {
 
     const val DEFAULT_CAPACITY = 4
-    const val MILLISECONDS_PER_STEP = 1000
 
     fun isAdapter(component: ComponentDeclaration): Boolean {
         return component is AsynchronousAdapterDeclaration || (component is StatechartDeclaration && component.isAsynchronous)
@@ -155,13 +154,7 @@ object AsynchronousMapping {
     private fun adapterOf(adapter: AsynchronousAdapterDeclaration): AdapterMapping {
         val wrappedComponent = adapter.wrappedComponent.component
         val clocks = adapter.clocks.map {
-            val value = GammaUtils.evaluateInteger(it.value) ?: 0
-            val deltaTime = if (it.unit == TimeUnit.MILLISECOND) {
-                MILLISECONDS_PER_STEP
-            } else {
-                1
-            }
-            ClockMapping(it, value, deltaTime)
+            ClockMapping(it, GammaUtils.evaluateInteger(it.value) ?: 0, it.unit)
         }
         val functioning = adapter.messageQueues.filter {
             capacityOf(it) > 0

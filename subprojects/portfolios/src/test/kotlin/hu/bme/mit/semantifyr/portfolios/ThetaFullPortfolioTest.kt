@@ -32,7 +32,7 @@ class ThetaFullPortfolioTest {
             PassingBackend("theta"),
         )
 
-        val result = portfolio.verify(parentInjector, stubRequest(output), gate, ExecutionEnvironment.Empty, ProgressContext.Silent)
+        val result = portfolio.verify(parentInjector, stubRequest(output), gate, ExecutionEnvironment.Empty, ProgressContext.Silent, noReadBack)
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Passed)
     }
@@ -44,7 +44,7 @@ class ThetaFullPortfolioTest {
         val theta = SlowBackend<ThetaConfig>("theta")
         val portfolio = ThetaFullPortfolio(theta)
 
-        val result = portfolio.verify(parentInjector, stubRequest(output, timeout = 200.milliseconds), gate, ExecutionEnvironment.Empty, ProgressContext.Silent)
+        val result = portfolio.verify(parentInjector, stubRequest(output, timeout = 200.milliseconds), gate, ExecutionEnvironment.Empty, ProgressContext.Silent, noReadBack)
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Timeout)
         assertThat(result.message).contains("no trusted verdict within 200ms")
@@ -59,9 +59,9 @@ class ThetaFullPortfolioTest {
             PassingBackend("theta", UnavailableKey),
         )
 
-        val result = portfolio.verify(parentInjector, stubRequest(output), gate, ExecutionEnvironment.Empty, ProgressContext.Silent)
+        val result = portfolio.verify(parentInjector, stubRequest(output), gate, ExecutionEnvironment.Empty, ProgressContext.Silent, noReadBack)
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Inconclusive)
-        assertThat(result.message).contains("Theta cannot be run")
+        assertThat(result.message).contains("fake-unavailable cannot be run")
     }
 }

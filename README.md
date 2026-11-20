@@ -43,7 +43,7 @@ Semantifyr is a research prototype of a PhD project at the Budapest University o
 
 ## Build from source
 
-Use Java 25. `./gradlew build` assembles and tests the project, including the verification smoke tests; Gradle provides Theta, and a test that needs nuXmv, Spin or Uppaal is skipped when that backend is not on `PATH`. `./gradlew integrationTest` runs the conformance and frontend suites, `./gradlew nightlyTest` the long-running cases.
+Use Java 25. `./gradlew build` builds and tests the project, and `./gradlew pack` builds the packages. Gradle provides Theta, and a test that needs nuXmv, Spin or Uppaal is skipped when that backend is not on `PATH`.
 
 ## Benchmarks
 

@@ -127,7 +127,8 @@ public class LanguageFileExtensionTest {
 
         assertThat(resourceSet.getResources())
                 .extracting(resource -> resource.getURI().lastSegment())
-                .containsAll(libraryFileNames());
+                .containsAll(libraryFileNames())
+                .doesNotContain("notes.txt");
     }
 
     @Test
@@ -146,7 +147,8 @@ public class LanguageFileExtensionTest {
 
             assertThat(resourceSet.getResources())
                     .extracting(resource -> resource.getURI().lastSegment())
-                    .containsAll(libraryFileNames());
+                    .containsAll(libraryFileNames())
+                    .doesNotContain("notes.txt");
         }
     }
 

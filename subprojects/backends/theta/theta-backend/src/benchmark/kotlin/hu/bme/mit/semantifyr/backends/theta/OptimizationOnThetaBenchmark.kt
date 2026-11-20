@@ -31,7 +31,7 @@ data class OptimizationCell(
 private val models = mapOf(
     "sysml-crossroads" to ModelCase("build/benchmark-models/sysml/library", "build/benchmark-models/sysml/crossroads.semantifyr", "TrafficLightABehaviorNormalGreenUnreachableViolated"),
     "gamma-level-crossing" to ModelCase("build/benchmark-models/gamma/library", "build/benchmark-models/gamma/LevelCrossing.semantifyr", "_TwoTrainsCanBeInTheCrossing"),
-    "tutorial-hierarchy" to ModelCase(null, "build/benchmark-models/tutorial/hierarchy.semantifyr", "NeverBothGreen"),
+    "tutorial-extending-the-library-nested-states" to ModelCase(null, "build/benchmark-models/tutorial/extending-the-library-nested-states.semantifyr", "NeverBothGreen"),
 )
 
 private val allPasses = OptimizationPass.entries.toSet()

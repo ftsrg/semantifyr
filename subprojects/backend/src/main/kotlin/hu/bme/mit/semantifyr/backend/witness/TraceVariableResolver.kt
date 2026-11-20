@@ -1,0 +1,39 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package hu.bme.mit.semantifyr.backend.witness
+
+import hu.bme.mit.semantifyr.compiler.pipeline.utils.eAllOfType
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
+
+class TraceVariableResolver(
+    inlinedOxsts: InlinedOxsts,
+    backendNameOf: (VariableDeclaration) -> String,
+    private val addedNames: Set<String>,
+    private val traceDescription: String,
+) {
+
+    // a trace names state variables, so a state variable wins a name it shares with a local
+    private val variablesByName = inlinedOxsts.eAllOfType<VariableDeclaration>().associateBy {
+        backendNameOf(it)
+    } + inlinedOxsts.variables.associateBy {
+        backendNameOf(it)
+    }
+
+    private val stateVariables = inlinedOxsts.variables.toSet()
+
+    fun stateVariableOf(name: String): VariableDeclaration? {
+        if (name in addedNames) {
+            return null
+        }
+        val variable = variablesByName[name] ?: throw WitnessFailedException("$traceDescription holds $name, which names no variable of the model")
+        if (variable !in stateVariables) {
+            return null
+        }
+        return variable
+    }
+}

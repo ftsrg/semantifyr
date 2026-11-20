@@ -10,6 +10,7 @@ import com.google.inject.Inject
 import com.google.inject.Injector
 import hu.bme.mit.semantifyr.backend.BackendTestModels
 import hu.bme.mit.semantifyr.backend.scopes.withVerificationScope
+import hu.bme.mit.semantifyr.backend.scopes.withVerificationScopeBlocking
 import hu.bme.mit.semantifyr.backends.theta.ThetaBackendModule
 import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
@@ -17,7 +18,6 @@ import hu.bme.mit.semantifyr.xsts.lang.xsts.XstsModel
 import org.eclipse.emf.common.util.URI
 import java.io.ByteArrayOutputStream
 import java.io.File
-import kotlin.io.path.Path
 
 @InjectWithOxsts
 abstract class ThetaTransformationTestBase {
@@ -36,16 +36,14 @@ abstract class ThetaTransformationTestBase {
         URI.createFileURI(File("build/test-tmp/model.xsts").absolutePath)
     }
 
-    protected fun capabilityChecker(): ThetaCapabilityChecker {
-        return childInjector.getInstance(ThetaCapabilityChecker::class.java)
+    protected fun capabilityChecker(type: Class<out ThetaCapabilityChecker>): ThetaCapabilityChecker {
+        return withVerificationScopeBlocking {
+            childInjector.getInstance(type)
+        }
     }
 
     protected fun parse(source: String, vararg packages: String): InlinedOxsts {
         return models.parse(source, *packages)
-    }
-
-    protected fun compile(file: String, className: String): InlinedOxsts {
-        return models.compile(file, className, Path("build", "test-artifacts", javaClass.simpleName, className))
     }
 
     protected fun serialize(xsts: XstsModel): String {

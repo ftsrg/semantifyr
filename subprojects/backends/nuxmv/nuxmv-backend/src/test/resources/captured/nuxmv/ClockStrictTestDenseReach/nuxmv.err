@@ -1,0 +1,2 @@
+WARNING: line: 24: case conditions are not exhaustive
+at line 25 CASE has no explicit default condition

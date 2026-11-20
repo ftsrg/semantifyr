@@ -91,7 +91,9 @@ describe('servedModels', () => {
 
 describe('distribution', () => {
   it('takes nearest-rank percentiles and skips missing values', () => {
-    const values = [...Array.from({ length: 20 }, (_, index) => index + 1), null]
+    const values = [...Array.from({ length: 20 }, (_, index) => {
+      return index + 1
+    }), null]
     expect(distribution(values)).toEqual({ count: 20, median: 10, p95: 19, max: 20 })
   })
 
@@ -191,17 +193,17 @@ describe('validateResult', () => {
     return {
       status: VerificationStatus.Failed,
       message: null,
-      backendId: 'theta',
       portfolioId: 'smart',
-      metrics: null,
-      trace: { callTrace: { steps: [] } as never, witnessState: { steps: [] } as never, witnessUri: witness },
+      report: null,
+      witnessUri: witness,
+      traceUri: null,
     }
   }
 
   function fakeClient(): LspClient & { sendRequest: ReturnType<typeof vi.fn> } {
     return {
       sendRequest: vi.fn(async () => {
-        return { status: 'valid', verdict: 'failed', message: null, backendId: 'theta', portfolioId: 'smart', metrics: { totalDuration: 'PT2S' } }
+        return { status: 'valid', message: null, portfolioId: 'smart', report: { kind: 're-check', result: { metrics: { totalDuration: 'PT2S' } } } }
       }),
       sendNotification: () => {},
     }
@@ -249,7 +251,7 @@ describe('validateResult', () => {
     expect(validation).toEqual({ name: 'Case', edited: true, status: 'valid', message: null, wallMs: 0, queueMs: 250, serverMs: 2000 })
   })
 
-  it('sends the case location for a flavor that validates by case', async () => {
+  it('sends the case location and the witness for a flavor that validates by case', async () => {
     const client = fakeClient()
 
     await validateResult(client, runningAfter(0), {
@@ -263,7 +265,7 @@ describe('validateResult', () => {
 
     expect(client.sendRequest.mock.calls[0]![1]).toEqual({
       command: 'gamma.witness.validate',
-      arguments: [{ ...verificationCase.location, portfolio: 'smart' }],
+      arguments: [{ ...verificationCase.location, witnessUri, portfolio: 'smart' }],
     })
   })
 

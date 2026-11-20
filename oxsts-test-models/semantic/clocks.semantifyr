@@ -1,0 +1,714 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package semantifyr::verification::lang::clocks
+
+@VerificationCase
+@Tag("expect-pass")
+class ClockDeadlineOnOtherPathReach {
+    var elapsed: clock := 0
+    var late: bool := false
+
+    redefine tran {
+        choice {
+            assume(elapsed <= 5)
+        } or {
+            assume(elapsed >= 6)
+            assume(elapsed <= 6)
+            late := true
+            elapsed := 0
+        }
+    }
+
+    prop {
+        return EF late
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+class ClockDeadlineOnSamePathUnreachable {
+    var elapsed: clock := 0
+    var late: bool := false
+
+    redefine tran {
+        choice {
+            assume(elapsed <= 5)
+        } or {
+            assume(elapsed <= 5)
+            assume(elapsed >= 6)
+            late := true
+            elapsed := 0
+        }
+    }
+
+    prop {
+        return EF late
+    }
+}
+
+@VerificationCase
+@Tag("expect-pass")
+class ClockInitPassesNoTime {
+    var elapsed: clock := 0
+    var early: bool := false
+
+    redefine init {
+        choice {
+            assume(elapsed >= 1)
+            early := true
+        } or {
+        }
+    }
+
+    redefine tran {
+        assume(elapsed <= 1)
+    }
+
+    prop {
+        return AG !early
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+class ClockInitPassesNoTimeViolated {
+    var elapsed: clock := 0
+    var early: bool := false
+
+    redefine tran {
+        assume(elapsed <= 1)
+        choice {
+            assume(elapsed >= 1)
+            early := true
+        } or {
+        }
+    }
+
+    prop {
+        return AG !early
+    }
+}
+
+@VerificationCase
+@Tag("expect-pass")
+class ClockZeroDelayAfterReset {
+    var lap: clock := 0
+    var total: clock := 0
+    var late: bool := false
+
+    redefine tran {
+        assume(lap <= 0)
+        assume(total <= 1)
+        lap := 0
+        choice {
+            assume(total >= 1)
+            late := true
+        } or {
+        }
+    }
+
+    prop {
+        return AG !late
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+class ClockZeroDelayAfterResetViolated {
+    var lap: clock := 0
+    var total: clock := 0
+    var late: bool := false
+
+    redefine tran {
+        assume(lap <= 1)
+        assume(total <= 1)
+        lap := 0
+        choice {
+            assume(total >= 1)
+            late := true
+        } or {
+        }
+    }
+
+    prop {
+        return AG !late
+    }
+}
+
+@VerificationCase
+@Tag("expect-pass")
+class ClockResetReadsZero {
+    var elapsed: clock := 0
+    var late: bool := false
+
+    redefine tran {
+        assume(elapsed <= 2)
+        elapsed := 0
+        choice {
+            assume(elapsed >= 1)
+            late := true
+        } or {
+        }
+    }
+
+    prop {
+        return AG !late
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+class ClockResetReadsZeroViolated {
+    var elapsed: clock := 0
+    var late: bool := false
+
+    redefine tran {
+        assume(elapsed <= 2)
+        choice {
+            assume(elapsed >= 1)
+            late := true
+        } or {
+        }
+        elapsed := 0
+    }
+
+    prop {
+        return AG !late
+    }
+}
+
+@VerificationCase
+@Tag("expect-pass")
+class ClockStrictTestDenseReach {
+    var elapsed: clock := 0
+    var between: bool := false
+
+    redefine tran {
+        assume(elapsed <= 1)
+        choice {
+            assume(elapsed > 0 && elapsed < 1)
+            between := true
+        } or {
+        }
+        elapsed := 0
+    }
+
+    prop {
+        return EF between
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+class ClockStrictTestDenseUnreachable {
+    var elapsed: clock := 0
+    var between: bool := false
+
+    redefine tran {
+        assume(elapsed <= 0)
+        choice {
+            assume(elapsed > 0 && elapsed < 1)
+            between := true
+        } or {
+        }
+        elapsed := 0
+    }
+
+    prop {
+        return EF between
+    }
+}
+
+@VerificationCase
+@Tag("expect-pass")
+class ClockNegatedTestReach {
+    var elapsed: clock := 0
+    var late: bool := false
+
+    redefine tran {
+        assume(elapsed <= 6)
+        choice {
+            assume(!(elapsed <= 5))
+            late := true
+            elapsed := 0
+        } or {
+        }
+    }
+
+    prop {
+        return EF late
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+class ClockNegatedTestUnreachable {
+    var elapsed: clock := 0
+    var late: bool := false
+
+    redefine tran {
+        assume(elapsed <= 6)
+        choice {
+            assume(!(elapsed >= 0))
+            late := true
+            elapsed := 0
+        } or {
+        }
+    }
+
+    prop {
+        return EF late
+    }
+}
+
+@VerificationCase
+@Tag("expect-pass")
+class ClockStrictUpperBoundReach {
+    var elapsed: clock := 0
+    var hit: bool := false
+
+    redefine tran {
+        assume(elapsed <= 2)
+        choice {
+            assume(elapsed >= 1)
+            assume(elapsed < 2)
+            hit := true
+        } or {
+        }
+    }
+
+    prop {
+        return EF hit
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+class ClockStrictUpperBoundUnreachable {
+    var elapsed: clock := 0
+    var hit: bool := false
+
+    redefine tran {
+        assume(elapsed <= 2)
+        choice {
+            assume(elapsed >= 2)
+            assume(elapsed < 2)
+            hit := true
+        } or {
+        }
+    }
+
+    prop {
+        return EF hit
+    }
+}
+
+@VerificationCase
+@Tag("expect-pass")
+class ClockEqualityReach {
+    var elapsed: clock := 0
+    var hit: bool := false
+
+    redefine tran {
+        choice {
+            assume(elapsed == 3)
+            hit := true
+        } or {
+        }
+    }
+
+    prop {
+        return EF hit
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+class ClockEqualityUnreachable {
+    var elapsed: clock := 0
+    var hit: bool := false
+
+    redefine tran {
+        assume(elapsed <= 2)
+        choice {
+            assume(elapsed == 3)
+            hit := true
+        } or {
+        }
+    }
+
+    prop {
+        return EF hit
+    }
+}
+
+@VerificationCase
+@Tag("expect-pass")
+class ClockNotEqualReach {
+    var elapsed: clock := 0
+    var hit: bool := false
+
+    redefine tran {
+        assume(elapsed <= 1)
+        choice {
+            assume(elapsed != 0)
+            hit := true
+        } or {
+        }
+    }
+
+    prop {
+        return EF hit
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+class ClockNotEqualUnreachable {
+    var elapsed: clock := 0
+    var hit: bool := false
+
+    redefine tran {
+        assume(elapsed <= 0)
+        choice {
+            assume(elapsed != 0)
+            hit := true
+        } or {
+        }
+    }
+
+    prop {
+        return EF hit
+    }
+}
+
+@VerificationCase
+@Tag("expect-pass")
+class ClockIfGuardReach {
+    var elapsed: clock := 0
+    var hit: bool := false
+
+    redefine tran {
+        assume(elapsed <= 2)
+        if (elapsed >= 2) {
+            hit := true
+        }
+    }
+
+    prop {
+        return EF hit
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+class ClockIfGuardUnreachable {
+    var elapsed: clock := 0
+    var hit: bool := false
+
+    redefine tran {
+        assume(elapsed <= 1)
+        if (elapsed >= 2) {
+            hit := true
+        }
+    }
+
+    prop {
+        return EF hit
+    }
+}
+
+@VerificationCase
+@Tag("expect-pass")
+class ClockStoredTestReach {
+    var elapsed: clock := 0
+    var late: bool := false
+
+    redefine tran {
+        assume(elapsed <= 2)
+        late := elapsed >= 2
+    }
+
+    prop {
+        return EF late
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+class ClockStoredTestUnreachable {
+    var elapsed: clock := 0
+    var late: bool := false
+
+    redefine tran {
+        assume(elapsed <= 1)
+        late := elapsed >= 2
+    }
+
+    prop {
+        return EF late
+    }
+}
+
+@VerificationCase
+@Tag("expect-pass")
+class ClockConditionalValueReach {
+    var elapsed: clock := 0
+    var count: int := 0
+
+    redefine tran {
+        assume(elapsed <= 2)
+        count := if (elapsed >= 2) then 1 else 0
+    }
+
+    prop {
+        return EF count == 1
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+class ClockConditionalValueUnreachable {
+    var elapsed: clock := 0
+    var count: int := 0
+
+    redefine tran {
+        assume(elapsed <= 1)
+        count := if (elapsed >= 2) then 1 else 0
+    }
+
+    prop {
+        return EF count == 1
+    }
+}
+
+class Timer {
+    var elapsed: clock := 0
+
+    tran restart() {
+        elapsed := 0
+    }
+}
+
+@VerificationCase
+@Tag("expect-pass")
+class ClockThroughReferenceReach {
+    contains first: Timer
+    contains second: Timer
+    var current: Timer := first
+    var hit: bool := false
+
+    redefine tran {
+        assume(second.elapsed <= 2)
+        inline current.restart()
+        current := second
+        choice {
+            assume(current.elapsed >= 1)
+            hit := true
+        } or {
+        }
+    }
+
+    prop {
+        return EF hit
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+class ClockThroughReferenceUnreachable {
+    contains first: Timer
+    contains second: Timer
+    var current: Timer := first
+    var hit: bool := false
+
+    redefine tran {
+        assume(second.elapsed <= 0)
+        inline current.restart()
+        current := second
+        choice {
+            assume(current.elapsed >= 1)
+            hit := true
+        } or {
+        }
+    }
+
+    prop {
+        return EF hit
+    }
+}
+
+class Alarm {
+    refers limit: int
+    var elapsed: clock := 0
+    var rang: bool := false
+
+    tran ring(after: int) {
+        assume(elapsed <= limit)
+        choice {
+            assume(elapsed >= after)
+            rang := true
+        } or {
+        }
+    }
+}
+
+@VerificationCase
+@Tag("expect-pass")
+class ClockBoundFromFeatureReach {
+    contains alarm: Alarm {
+        redefine refers limit: int = 3
+    }
+
+    redefine tran {
+        inline alarm.ring(3)
+    }
+
+    prop {
+        return EF alarm.rang
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+class ClockBoundFromFeatureUnreachable {
+    contains alarm: Alarm {
+        redefine refers limit: int = 2
+    }
+
+    redefine tran {
+        inline alarm.ring(3)
+    }
+
+    prop {
+        return EF alarm.rang
+    }
+}
+
+@VerificationCase
+@Tag("expect-pass")
+class ClockNegativeBoundReach {
+    var elapsed: clock := 0
+    var hit: bool := false
+
+    redefine tran {
+        choice {
+            assume(elapsed >= -1)
+            hit := true
+        } or {
+        }
+    }
+
+    prop {
+        return EF hit
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+class ClockNegativeBoundUnreachable {
+    var elapsed: clock := 0
+    var hit: bool := false
+
+    redefine tran {
+        choice {
+            assume(elapsed <= -1)
+            hit := true
+        } or {
+        }
+    }
+
+    prop {
+        return EF hit
+    }
+}
+
+@VerificationCase
+@Tag("expect-pass")
+class ClockInstancesReach {
+    contains first: Timer
+    contains second: Timer
+    var hit: bool := false
+
+    redefine tran {
+        assume(first.elapsed <= 1)
+        inline first.restart()
+        choice {
+            assume(second.elapsed >= 3)
+            hit := true
+        } or {
+        }
+    }
+
+    prop {
+        return EF hit
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+class ClockInstancesUnreachable {
+    contains first: Timer
+    contains second: Timer
+    var hit: bool := false
+
+    redefine tran {
+        assume(first.elapsed <= 1)
+        inline first.restart()
+        choice {
+            assume(first.elapsed >= 1)
+            hit := true
+        } or {
+        }
+    }
+
+    prop {
+        return EF hit
+    }
+}
+
+@VerificationCase
+@Tag("expect-pass")
+class ClockSaturationReach {
+    var lap: clock := 0
+    var total: clock := 0
+    var count: int := 0
+
+    redefine tran {
+        assume(lap >= 2)
+        assume(total <= 7)
+        lap := 0
+        if (count < 3) {
+            count := count + 1
+        }
+    }
+
+    prop {
+        return EF count == 3
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+class ClockSaturationUnreachable {
+    var lap: clock := 0
+    var total: clock := 0
+    var count: int := 0
+
+    redefine tran {
+        assume(lap >= 2)
+        assume(total <= 5)
+        lap := 0
+        if (count < 3) {
+            count := count + 1
+        }
+    }
+
+    prop {
+        return EF count == 3
+    }
+}

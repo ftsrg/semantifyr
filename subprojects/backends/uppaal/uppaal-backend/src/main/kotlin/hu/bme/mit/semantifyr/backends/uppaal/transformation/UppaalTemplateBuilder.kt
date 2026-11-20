@@ -18,8 +18,7 @@ class UppaalTemplateBuilder @Inject constructor(
     private val uppaalOperationTransformer: UppaalOperationTransformer,
 ) {
 
-    fun build(inlinedOxsts: InlinedOxsts): UppaalTemplate {
-        val context = UppaalEmissionContext()
+    fun build(inlinedOxsts: InlinedOxsts, context: UppaalEmissionContext): UppaalTemplate {
         renderInitTransitions(context, inlinedOxsts.initTransition.branches)
         renderMainTransitions(context, inlinedOxsts.mainTransition.branches)
 

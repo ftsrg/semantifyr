@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import type { LibrariesResponse, PortfolioInfo, VerificationCaseSpecification, VerificationTrace } from '@semantifyr/editor-common'
+import { isoDurationToMs, type PortfolioInfo, type ReportTrace, type VerificationCaseSpecification } from '@semantifyr/editor-common'
 
 import { findExample, liveFlavors, type LiveFlavor } from '../examples'
 import { SemantifyrLiveApi } from '../lib/api/lspExtensions'
@@ -17,7 +17,6 @@ import { connectionConnected, INITIAL_CONNECTION, type ConnectionState } from '.
 import { failStep, finishStep, initializationOf, InitializationSteps, startStep, type InitializationState } from '../lib/stores/initialization'
 import { createSettingsStore, type Settings } from '../lib/stores/settings'
 import { constantStore, createStore } from '../lib/stores/store'
-import { isoDurationToMs } from '../lib/util/duration'
 import type { VerificationCaseState, VerificationState } from '../lib/verification/engine'
 import { createDocumentTabs, type ReadOnlyDocument } from '../lib/workspace/documentTabs'
 import { documentKey, documentUri, type AddressProblem, type Catalog, type DocumentRecord, type Live } from '../lib/workspace/live'
@@ -25,6 +24,9 @@ import type { SharedResults } from '../lib/workspace/sharedResults'
 import type { QueuedVerification, RunTiming } from '../lib/workspace/verification'
 import { createShellState, type ShellState } from '../shells/shellState'
 import { servedFlavors } from '../__tests__/fixtures/flavors'
+import { reportOf } from '../__tests__/fixtures/reports'
+import type { RestFixture } from '../__ui__/mock/fixtures'
+import restFixture from '../__ui__/mock/fixtures/rest.json'
 
 export interface Seed {
   flavorId?: string
@@ -63,78 +65,7 @@ export interface Seeded {
 
 const BACKEND = 'http://live.example'
 
-// the libraries' files as the server lists them, the standard library in part
-const LIBRARY_LISTING: LibrariesResponse = {
-  builtin: [
-    'standard.semantifyr',
-  ],
-  semantic: {
-    'oxsts-with-gamma-library': [
-      'Actions.semantifyr',
-      'Asynchronous.semantifyr',
-      'Components.semantifyr',
-      'Events.semantifyr',
-      'Expressions.semantifyr',
-      'Ports.semantifyr',
-      'Statecharts.semantifyr',
-      'Triggers.semantifyr',
-      'Variables.semantifyr',
-      'Verification.semantifyr',
-    ],
-    'oxsts-with-sysmlv2-library': [
-      'Actions.semantifyr',
-      'Attributes.semantifyr',
-      'Expressions.semantifyr',
-      'Items.semantifyr',
-      'Parts.semantifyr',
-      'Ports.semantifyr',
-      'States.semantifyr',
-      'Triggers.semantifyr',
-      'Verification.semantifyr',
-    ],
-    'gamma': [
-      'Actions.semantifyr',
-      'Asynchronous.semantifyr',
-      'Components.semantifyr',
-      'Events.semantifyr',
-      'Expressions.semantifyr',
-      'Ports.semantifyr',
-      'Statecharts.semantifyr',
-      'Triggers.semantifyr',
-      'Variables.semantifyr',
-      'Verification.semantifyr',
-    ],
-  },
-  sysml: [
-    'Kernel Libraries/Kernel Data Type Library/Collections.kerml',
-    'Kernel Libraries/Kernel Data Type Library/ScalarValues.kerml',
-    'Kernel Libraries/Kernel Data Type Library/VectorValues.kerml',
-    'Kernel Libraries/Kernel Function Library/BaseFunctions.kerml',
-    'Kernel Libraries/Kernel Function Library/BooleanFunctions.kerml',
-    'Systems Library/Actions.sysml',
-    'Systems Library/Allocations.sysml',
-    'Systems Library/AnalysisCases.sysml',
-    'Systems Library/Attributes.sysml',
-    'Systems Library/Calculations.sysml',
-    'Systems Library/Cases.sysml',
-    'Systems Library/Connections.sysml',
-    'Systems Library/Constraints.sysml',
-    'Systems Library/Flows.sysml',
-    'Systems Library/Interfaces.sysml',
-    'Systems Library/Items.sysml',
-    'Systems Library/Metadata.sysml',
-    'Systems Library/Parts.sysml',
-    'Systems Library/Ports.sysml',
-    'Systems Library/Requirements.sysml',
-    'Systems Library/StandardViewDefinitions.sysml',
-    'Systems Library/States.sysml',
-    'Systems Library/SysML.sysml',
-    'Systems Library/UseCases.sysml',
-    'Systems Library/VerificationCases.sysml',
-    'Systems Library/Views.sysml',
-    'Verification.sysml',
-  ],
-}
+const LIBRARY_LISTING = (restFixture as Pick<RestFixture, 'libraries'>).libraries
 
 export const CONNECTED = connectionConnected(INITIAL_CONNECTION, Date.now())
 
@@ -190,13 +121,12 @@ function runtimeOf(flavor: LiveFlavor, connection: ConnectionState, steps: Initi
   }
 }
 
-// a Live over stores set to one state, with actions that do nothing
 // a seeded run's cases ran together from its start, each for the time its metrics give
 function ranFromStart(state: VerificationState, startedAt: number): VerificationState {
   return {
     ...state,
     cases: state.cases.map((caseState) => {
-      const duration = caseState.metrics?.totalDuration
+      const duration = caseState.report?.result.metrics.totalDuration
       return duration === undefined ? caseState : { ...caseState, ranDuring: { start: startedAt, end: startedAt + isoDurationToMs(duration) } }
     }),
   }
@@ -291,10 +221,12 @@ export function caseOf(id: string, line: number, uri = 'file:///workspace/snippe
   }
 }
 
-const EMPTY_TRACE: VerificationTrace = {
-  callTrace: { initializedStep: { traces: [] }, steps: [] },
-  witnessState: { initializedStep: { values: [] }, steps: [] },
-  witnessUri: null,
+const EMPTY_TRACE: ReportTrace = {
+  transitions: [],
+  variables: [],
+  initial: { state: 0, calls: [] },
+  states: [{ values: {} }],
+  steps: [],
 }
 
 export function finished(caseInfo: VerificationCaseSpecification, status: 'passed' | 'failed', seconds: number): VerificationCaseState {
@@ -302,10 +234,8 @@ export function finished(caseInfo: VerificationCaseSpecification, status: 'passe
     caseInfo,
     status,
     resultStatus: status,
-    metrics: { totalDuration: `PT${seconds}S`, preparationDuration: 'PT0S', verificationDuration: `PT${seconds}S`, backAnnotationDuration: 'PT0S' },
-    backendId: 'theta',
     portfolioId: 'smart',
-    trace: EMPTY_TRACE,
+    report: reportOf({ verdict: status === 'passed' ? 'Passed' : 'Failed', backendId: 'theta', seconds, trace: EMPTY_TRACE }),
     witnessValidation: 'valid',
   }
 }

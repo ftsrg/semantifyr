@@ -5,18 +5,17 @@
  */
 
 import type React from 'react'
-import type { VerificationMetrics } from '@semantifyr/editor-common'
+import { formatSeconds, isoDurationToMs, soundnessLabel, type VerificationReport } from '@semantifyr/editor-common'
 
 import { useStore } from '../lib/stores/useStore'
-import { isoDurationToMs } from '../lib/util/duration'
 import type { VerificationCaseState } from '../lib/verification/engine'
-import { formatSeconds, waitedPhrase } from '../lib/workspace/caseRows'
+import { waitedPhrase } from '../lib/workspace/caseRows'
 import { useLive } from '../lib/workspace/liveContext'
 import { portfolioName } from '../lib/workspace/portfolioChoices'
 import { BACKEND_NAMES } from '../texts'
 
 // a backend is named by the part of its id before the configuration
-function backendNameOf(backendId: string | undefined): string | null {
+function backendNameOf(backendId: string | null | undefined): string | null {
   if (!backendId) {
     return null
   }
@@ -24,18 +23,24 @@ function backendNameOf(backendId: string | undefined): string | null {
   return BACKEND_NAMES[backend] ?? backend
 }
 
-function runLine(metrics: VerificationMetrics | undefined, portfolio: string, backendId: string | undefined, waited: number | undefined): string {
-  const parts = [
-    metrics ? formatSeconds(isoDurationToMs(metrics.totalDuration)) : null,
+function runLine(report: VerificationReport | undefined, portfolio: string, waited: number | undefined): string {
+  const result = report?.result
+  const backend = backendNameOf(result?.metadata.backendId)
+  return [
+    result === undefined ? null : formatSeconds(isoDurationToMs(result.metrics.totalDuration)),
     waitedPhrase(waited),
     portfolio,
+    backend === null ? null : `decided by ${backend}`,
+    result === undefined ? null : soundnessLabel(result.soundness),
   ]
-  const backend = backendNameOf(backendId)
-  return [...parts, backend === null ? null : `decided by ${backend}`]
     .filter((part) => {
       return part !== null
     })
     .join(', ')
+}
+
+function validationRunLine(caseState: VerificationCaseState, portfolio: (id: string | null | undefined) => string): string {
+  return runLine(caseState.validationReport, portfolio(caseState.validationPortfolioIdUsed), caseState.validationWaited)
 }
 
 function validationLine(caseState: VerificationCaseState, portfolio: (id: string | null | undefined) => string, chosen: string): string {
@@ -47,9 +52,9 @@ function validationLine(caseState: VerificationCaseState, portfolio: (id: string
     case 'cancelled':
       return 'not run'
     case 'valid':
-      return `validated, ${runLine(caseState.validationMetrics, portfolio(caseState.validationPortfolioIdUsed), caseState.validationBackendId, caseState.validationWaited)}`
+      return `validated, ${validationRunLine(caseState, portfolio)}`
     default:
-      return `validation failed, ${runLine(caseState.validationMetrics, portfolio(caseState.validationPortfolioIdUsed), caseState.validationBackendId, caseState.validationWaited)}`
+      return `validation failed, ${validationRunLine(caseState, portfolio)}`
   }
 }
 
@@ -68,7 +73,7 @@ export function RunDetails({ caseState }: { caseState: VerificationCaseState }):
     <div className="run-details" data-testid="run-details">
       <span className="run-line">
         <span className="run-label">Verification</span>
-        <span>{runLine(caseState.metrics, portfolio(caseState.portfolioId), caseState.backendId, caseState.waited)}</span>
+        <span>{runLine(caseState.report, portfolio(caseState.portfolioId), caseState.waited)}</span>
       </span>
       <span className="run-line">
         <span className="run-label">Validation</span>

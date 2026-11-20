@@ -192,7 +192,7 @@ class TrivialVerdictTest {
             qualifiedName = "trivial::tests::$classToVerify",
         )
         val verifier = buildVerifier(portfolio)
-        return verifier.verify(verificationCase)
+        return verifier.verify(verificationCase).report.result
     }
 
     private fun buildVerifier(portfolio: ErroringPortfolio): SemantifyrVerifier {

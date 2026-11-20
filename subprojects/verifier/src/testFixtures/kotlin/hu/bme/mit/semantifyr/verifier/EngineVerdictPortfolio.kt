@@ -11,28 +11,23 @@ import hu.bme.mit.semantifyr.backend.BackendConfig
 import hu.bme.mit.semantifyr.backend.BackendVerificationRequest
 import hu.bme.mit.semantifyr.backend.BackendVerificationResult
 import hu.bme.mit.semantifyr.backend.VerificationBackend
-import hu.bme.mit.semantifyr.backend.execution.AvailabilityReport
 import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
-import hu.bme.mit.semantifyr.backend.execution.ExecutorKey
 import hu.bme.mit.semantifyr.verifier.portfolio.ConcurrencyGate
 import hu.bme.mit.semantifyr.verifier.portfolio.PortfolioLeg
 import hu.bme.mit.semantifyr.verifier.portfolio.VerificationPortfolio
 
 // an engine suite compares the engine's own verdict with the case's, also where its soundness direction does not trust it
 class EngineVerdictPortfolio<T : BackendConfig>(
-    private val backend: VerificationBackend<T>,
-    private val configuration: T,
+    backend: VerificationBackend<T>,
+    configuration: T,
 ) : VerificationPortfolio() {
+
+    private val leg = PortfolioLeg(backend, configuration)
 
     override val id = "${backend.id}-${configuration.id}"
     override val displayName = "${backend.id} ${configuration.id}"
     override val description = "The verdict of ${backend.id} ${configuration.id}, trusted or not"
-    override val executorKeys: Set<ExecutorKey<*>> = setOf(backend.executorKey)
-    override val legs = listOf(PortfolioLeg("${backend.id}:${configuration.id}", configuration.soundness))
-
-    override fun availability(environment: ExecutionEnvironment): AvailabilityReport {
-        return environment.availability(backend.executorKey)
-    }
+    override val legs = listOf(leg)
 
     override suspend fun verify(
         parentInjector: Injector,
@@ -40,9 +35,10 @@ class EngineVerdictPortfolio<T : BackendConfig>(
         gate: ConcurrencyGate,
         environment: ExecutionEnvironment,
         progress: ProgressContext,
+        readBack: suspend (BackendVerificationResult) -> BackendVerificationResult,
     ): BackendVerificationResult {
         return gate.withPermit {
-            backend.verify(parentInjector, configuration, request, environment)
+            leg.run(parentInjector, request, environment, readBack)
         }
     }
 }

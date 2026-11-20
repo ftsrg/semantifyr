@@ -7,7 +7,11 @@
 package hu.bme.mit.semantifyr.backends.spin.trace
 
 import com.google.inject.Inject
+import hu.bme.mit.semantifyr.backend.transformation.WHOLE_DELAY_VARIABLE_NAME
+import hu.bme.mit.semantifyr.backend.witness.Fraction
 import hu.bme.mit.semantifyr.backend.witness.InlinedWitness
+import hu.bme.mit.semantifyr.backend.witness.TraceVariableResolver
+import hu.bme.mit.semantifyr.backend.witness.WitnessFailedException
 import hu.bme.mit.semantifyr.backend.witness.WitnessState
 import hu.bme.mit.semantifyr.backend.witness.WitnessStateValue
 import hu.bme.mit.semantifyr.backend.witness.linearInlinedWitness
@@ -26,10 +30,12 @@ class SpinInlinedOxstsWitnessTransformer @Inject constructor(
     private val spinVariableTransformer: SpinVariableTransformer,
 ) {
 
-    fun transform(inlinedOxsts: InlinedOxsts, trace: SpinTrace): InlinedWitness {
-        val nameToVar = inlinedOxsts.variables.associateBy {
-            spinVariableTransformer.nameOf(it)
-        }
+    fun transform(
+        inlinedOxsts: InlinedOxsts,
+        trace: SpinTrace,
+        addedNames: Set<String>,
+    ): InlinedWitness {
+        val resolver = TraceVariableResolver(inlinedOxsts, spinVariableTransformer::nameOf, addedNames, "Spin's replay")
 
         // the replay prints a global only when it changes, so every value starts from its declaration
         val running = mutableMapOf<VariableDeclaration, Expression>()
@@ -39,11 +45,17 @@ class SpinInlinedOxstsWitnessTransformer @Inject constructor(
             }
         }
 
+        var delay = Fraction.ZERO
         val states = trace.states.mapNotNull { state ->
             for ((name, raw) in state.variableValues) {
-                val variable = nameToVar[name] ?: continue
-                val value = parseValue(variable, raw) ?: continue
-                running[variable] = value
+                if (name == WHOLE_DELAY_VARIABLE_NAME) {
+                    delay = raw.toBigIntegerOrNull()?.let {
+                        Fraction.of(it)
+                    } ?: throw WitnessFailedException("Spin's replay holds $raw for the delay, which is no whole amount")
+                    continue
+                }
+                val variable = resolver.stateVariableOf(name) ?: continue
+                running[variable] = parseValue(variable, raw) ?: throw WitnessFailedException("Spin's replay holds $raw for $name, which is no value of its type")
             }
             val stable = state.variableValues[SPIN_STABLE_FLAG]
             if (stable != "1" && stable != "true") {
@@ -54,7 +66,7 @@ class SpinInlinedOxstsWitnessTransformer @Inject constructor(
                     WitnessStateValue(variable, it.copy())
                 }
             }
-            WitnessState(values)
+            WitnessState(values, emptyList(), delay)
         }
 
         return linearInlinedWitness(inlinedOxsts, states)

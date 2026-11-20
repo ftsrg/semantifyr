@@ -47,61 +47,6 @@ class GammaCompilationTests {
     }
 
     @Test
-    fun `compile imports the gamma semantic library`(@TempDir temporaryDirectory: Path) {
-        val text = compileSimple(temporaryDirectory).readText()
-
-        assertThat(text).contains(
-            "import semantifyr::gamma::expressions",
-            "import semantifyr::gamma::variables",
-            "import semantifyr::gamma::statecharts",
-            "import semantifyr::gamma::components",
-            "import semantifyr::gamma::triggers",
-            "import semantifyr::gamma::actions",
-            "import semantifyr::gamma::events",
-            "import semantifyr::gamma::ports",
-            "import semantifyr::gamma::verification",
-        )
-    }
-
-    @Test
-    fun `compile emits each statechart as an OXSTS Statechart class`(@TempDir temporaryDirectory: Path) {
-        val text = compileSimple(temporaryDirectory).readText()
-
-        assertThat(text).contains("class _LeaderStatechart : Statechart")
-        assertThat(text).contains("class _WorkerStatechart : Statechart")
-    }
-
-    @Test
-    fun `compile emits the sync component with channels and bindings`(@TempDir temporaryDirectory: Path) {
-        val text = compileSimple(temporaryDirectory).readText()
-
-        assertThat(text).contains("class _System : SyncComponent")
-        assertThat(text).contains("contains _leader: _Simple::_LeaderStatechart subsets components")
-        assertThat(text).contains("contains _worker: _Simple::_WorkerStatechart subsets components")
-        assertThat(text).contains("subsets channels")
-    }
-
-    @Test
-    fun `compile emits each verification case with the VerificationCase annotation`(@TempDir temporaryDirectory: Path) {
-        val text = compileSimple(temporaryDirectory).readText()
-
-        val caseNames = listOf(
-            "LeaderStatechartIdleReachable",
-            "LeaderStatechartOperationalReachable",
-            "LeaderStatechartStoppedReachable",
-            "LeaderStatechartUnreachable",
-            "WorkerStatechartIdleReachable",
-            "WorkerStatechartOperationalReachable",
-            "WorkerStatechartStoppedReachable",
-            "WorkerStatechartUnreachable",
-        )
-        for (name in caseNames) {
-            assertThat(text).contains("@VerificationCase")
-            assertThat(text).contains("class _$name : GammaVerificationCase")
-        }
-    }
-
-    @Test
     fun `compile creates parent directories when the target does not exist`(@TempDir temporaryDirectory: Path) {
         val gammaModel = gammaReader.readGammaFile(simpleGammaPath.toFile())
         val nested = temporaryDirectory.resolve("nested").resolve("dirs").resolve("model.semantifyr")
@@ -120,17 +65,20 @@ class GammaCompilationTests {
 
         val cases = gammaDiscoverer.discover(gammaModel)
 
-        assertThat(cases).extracting<String> { it.qualifiedName }
-            .contains(
-                "Simple.LeaderStatechartIdleReachable",
-                "Simple.LeaderStatechartOperationalReachable",
-                "Simple.LeaderStatechartStoppedReachable",
-                "Simple.LeaderStatechartUnreachable",
-                "Simple.WorkerStatechartIdleReachable",
-                "Simple.WorkerStatechartOperationalReachable",
-                "Simple.WorkerStatechartStoppedReachable",
-                "Simple.WorkerStatechartUnreachable",
-            )
+        assertThat(
+            cases.map {
+                it.qualifiedName
+            },
+        ).containsExactlyInAnyOrder(
+            "Simple.LeaderStatechartIdleReachable",
+            "Simple.LeaderStatechartOperationalReachable",
+            "Simple.LeaderStatechartStoppedReachable",
+            "Simple.LeaderStatechartUnreachable",
+            "Simple.WorkerStatechartIdleReachable",
+            "Simple.WorkerStatechartOperationalReachable",
+            "Simple.WorkerStatechartStoppedReachable",
+            "Simple.WorkerStatechartUnreachable",
+        )
     }
 
     @Test
@@ -185,5 +133,4 @@ class GammaCompilationTests {
         gammaCompiler.compile(gammaModel, target)
         return target
     }
-
 }

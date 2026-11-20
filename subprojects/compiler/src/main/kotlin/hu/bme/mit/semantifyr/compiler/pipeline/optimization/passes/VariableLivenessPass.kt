@@ -25,6 +25,7 @@ import hu.bme.mit.semantifyr.compiler.pipeline.utils.mayWriteBetween
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.variableReadExpressions
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.variableWrites
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinAnnotationHandler
+import hu.bme.mit.semantifyr.oxsts.lang.semantics.clock.ClockTestAnalysis
 import hu.bme.mit.semantifyr.oxsts.lang.utils.OxstsUtils
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssignmentOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
@@ -39,6 +40,7 @@ class VariableLivenessPass @Inject constructor(
     private val metaCompileTimeExpressionEvaluatorProvider: MetaCompileTimeExpressionEvaluatorProvider,
     private val compilationArtifactManager: CompilationArtifactManager,
     private val builtinAnnotationHandler: BuiltinAnnotationHandler,
+    private val clockTestAnalysis: ClockTestAnalysis,
 ) : Pass<EvaluableCompilationContext> {
 
     override fun run(input: EvaluableCompilationContext, analysisManager: AnalysisManager): PassResult {
@@ -51,6 +53,7 @@ class VariableLivenessPass @Inject constructor(
             evaluator,
             compilationArtifactManager,
             builtinAnnotationHandler,
+            clockTestAnalysis,
         ).execute()
         return if (changed) {
             PassResult.Changed
@@ -66,6 +69,7 @@ class VariableLivenessComputation(
     private val evaluator: MetaCompileTimeExpressionEvaluator,
     private val compilationArtifactManager: CompilationArtifactManager,
     private val builtinAnnotationHandler: BuiltinAnnotationHandler,
+    private val clockTestAnalysis: ClockTestAnalysis,
 ) {
 
     private sealed interface WorkItem {
@@ -98,8 +102,9 @@ class VariableLivenessComputation(
             worklist.add(WorkItem.Unread(it))
         }
 
+        // a clock never reset still advances, so its initializer is not its value
         allVariables.filter {
-            it.expression != null && it !in assignedValues
+            it.expression != null && it !in assignedValues && !clockTestAnalysis.isClock(it)
         }.forEach {
             worklist.add(WorkItem.UnassignedInitialized(it))
         }

@@ -7,6 +7,7 @@
 package hu.bme.mit.semantifyr.backends.spin.transformation
 
 import hu.bme.mit.semantifyr.backend.BackendUnsupportedException
+import hu.bme.mit.semantifyr.backend.transformation.WHOLE_DELAY_VARIABLE_NAME
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -43,7 +44,7 @@ class SpinModelTransformerTest : SpinTransformationTestBase() {
 
     @Test
     suspend fun `a model renders globals, the stable flag, the init block, the transition loop and the claim`() {
-        val artifacts = transform(
+        val lines = promelaLines(
             """
                 var counter : int := 0
                 init {
@@ -57,31 +58,26 @@ class SpinModelTransformerTest : SpinTransformationTestBase() {
             """,
         )
 
-        assertThat(artifacts.promela).isEqualTo(
-            """
-                int counter = 0;
-
-                bool $SPIN_STABLE_FLAG = false;
-
-                init {
-                    atomic {
-                        $SPIN_STABLE_FLAG = false;
-                        skip;
-                        $SPIN_STABLE_FLAG = true;
-                    }
-                    do
-                    :: atomic {
-                        $SPIN_STABLE_FLAG = false;
-                        counter = (counter + 1);
-                        $SPIN_STABLE_FLAG = true;
-                    }
-                    od;
-                }
-
-                ltl p { [] (!$SPIN_STABLE_FLAG || ((counter < 3))) }
-
-            """.trimIndent(),
+        assertThat(lines).contains(
+            "int counter = 0;",
+            "bool $SPIN_STABLE_FLAG = false;",
         )
+        assertThat(lines).containsSequence(
+            "init {",
+            "atomic {",
+            "$SPIN_STABLE_FLAG = false;",
+            "skip;",
+            "$SPIN_STABLE_FLAG = true;",
+            "}",
+            "do",
+            ":: atomic {",
+            "$SPIN_STABLE_FLAG = false;",
+            "counter = (counter + 1);",
+            "$SPIN_STABLE_FLAG = true;",
+            "}",
+            "od;",
+        )
+        assertThat(lines).contains("ltl p { [] (!$SPIN_STABLE_FLAG || ((counter < 3))) }")
     }
 
     @Test
@@ -342,9 +338,22 @@ class SpinModelTransformerTest : SpinTransformationTestBase() {
         val lines = promelaLines(
             """
                 var counter : int := 0
-                init { }
-                tran { choice { if (counter < 3) { counter := 1 } } or { if (counter > 5) { counter := 2 } } }
-                prop { AG true }
+                init {
+                }
+                tran {
+                    choice {
+                        if (counter < 3) {
+                            counter := 1
+                        }
+                    } or {
+                        if (counter > 5) {
+                            counter := 2
+                        }
+                    }
+                }
+                prop {
+                    AG true
+                }
             """,
         )
 
@@ -357,9 +366,18 @@ class SpinModelTransformerTest : SpinTransformationTestBase() {
         val lines = promelaLines(
             """
                 var counter : int := 0
-                init { }
-                tran { if (counter < 3) { counter := 1 } else { counter := 2 } }
-                prop { AG true }
+                init {
+                }
+                tran {
+                    if (counter < 3) {
+                        counter := 1
+                    } else {
+                        counter := 2
+                    }
+                }
+                prop {
+                    AG true
+                }
             """,
         )
 
@@ -371,9 +389,16 @@ class SpinModelTransformerTest : SpinTransformationTestBase() {
         val lines = promelaLines(
             """
                 var counter : int := 0
-                init { }
-                tran { if (counter < 3) { counter := 1 } }
-                prop { AG true }
+                init {
+                }
+                tran {
+                    if (counter < 3) {
+                        counter := 1
+                    }
+                }
+                prop {
+                    AG true
+                }
             """,
         )
 
@@ -385,9 +410,14 @@ class SpinModelTransformerTest : SpinTransformationTestBase() {
         val lines = promelaLines(
             """
                 var counter : int := 0
-                init { }
-                tran { havoc(counter) }
-                prop { AG counter < 5 }
+                init {
+                }
+                tran {
+                    havoc(counter)
+                }
+                prop {
+                    AG counter < 5
+                }
             """,
         )
 
@@ -399,9 +429,14 @@ class SpinModelTransformerTest : SpinTransformationTestBase() {
         val lines = promelaLines(
             """
                 var flag : bool := false
-                init { }
-                tran { havoc(flag) }
-                prop { AG true }
+                init {
+                }
+                tran {
+                    havoc(flag)
+                }
+                prop {
+                    AG true
+                }
             """,
         )
 
@@ -413,9 +448,14 @@ class SpinModelTransformerTest : SpinTransformationTestBase() {
         val lines = promelaLines(
             """
                 var color : test::colors::Color := test::colors::Color::Red
-                init { }
-                tran { havoc(color) }
-                prop { AG true }
+                init {
+                }
+                tran {
+                    havoc(color)
+                }
+                prop {
+                    AG true
+                }
             """,
         )
 
@@ -427,9 +467,15 @@ class SpinModelTransformerTest : SpinTransformationTestBase() {
         val promela = transform(
             """
                 var counter : int := 0
-                init { }
-                tran { var delta : int := 2 counter := counter + delta }
-                prop { AG true }
+                init {
+                }
+                tran {
+                    var delta : int := 2
+                    counter := counter + delta
+                }
+                prop {
+                    AG true
+                }
             """,
         ).promela
 
@@ -443,9 +489,14 @@ class SpinModelTransformerTest : SpinTransformationTestBase() {
         val lines = promelaLines(
             """
                 var counter : int := 0
-                init { }
-                tran { counter := ((counter + 1) - (2 * counter)) / 3 }
-                prop { AG counter == -counter }
+                init {
+                }
+                tran {
+                    counter := ((counter + 1) - (2 * counter)) / 3
+                }
+                prop {
+                    AG counter == -counter
+                }
             """,
         )
 
@@ -458,9 +509,14 @@ class SpinModelTransformerTest : SpinTransformationTestBase() {
             """
                 var left : bool := false
                 var right : bool := true
-                init { }
-                tran { left := (left && right) || !(left ^^ right) }
-                prop { AG true }
+                init {
+                }
+                tran {
+                    left := (left && right) || !(left ^^ right)
+                }
+                prop {
+                    AG true
+                }
             """,
         )
 
@@ -472,9 +528,14 @@ class SpinModelTransformerTest : SpinTransformationTestBase() {
         val lines = promelaLines(
             """
                 var counter : int := 0
-                init { }
-                tran { assume(counter < 1 && counter <= 2 && counter > -3 && counter >= -4 && counter == 0 && counter != 5) }
-                prop { AG true }
+                init {
+                }
+                tran {
+                    assume(counter < 1 && counter <= 2 && counter > -3 && counter >= -4 && counter == 0 && counter != 5)
+                }
+                prop {
+                    AG true
+                }
             """,
         )
 
@@ -486,9 +547,14 @@ class SpinModelTransformerTest : SpinTransformationTestBase() {
         val lines = promelaLines(
             """
                 var counter : int := 0
-                init { }
-                tran { counter := if counter < 3 then counter + 1 else 0 }
-                prop { AG (if counter < 3 then counter == 0 else counter == 1) }
+                init {
+                }
+                tran {
+                    counter := if counter < 3 then counter + 1 else 0
+                }
+                prop {
+                    AG (if counter < 3 then counter == 0 else counter == 1)
+                }
             """,
         )
 
@@ -503,9 +569,16 @@ class SpinModelTransformerTest : SpinTransformationTestBase() {
         val lines = promelaLines(
             """
                 var counter : int := 0
-                init { counter := 1 } or { counter := 2 }
-                tran { }
-                prop { AG true }
+                init {
+                    counter := 1
+                } or {
+                    counter := 2
+                }
+                tran {
+                }
+                prop {
+                    AG true
+                }
             """,
         )
 
@@ -531,9 +604,16 @@ class SpinModelTransformerTest : SpinTransformationTestBase() {
         val lines = promelaLines(
             """
                 var counter : int := 0
-                init { }
-                tran { counter := 1 } or { counter := 2 }
-                prop { AG true }
+                init {
+                }
+                tran {
+                    counter := 1
+                } or {
+                    counter := 2
+                }
+                prop {
+                    AG true
+                }
             """,
         )
 
@@ -558,9 +638,13 @@ class SpinModelTransformerTest : SpinTransformationTestBase() {
         val property = transform(
             """
                 var counter : int := 0
-                init { }
-                tran { }
-                prop { AG counter == 5 }
+                init {
+                }
+                tran {
+                }
+                prop {
+                    AG counter == 5
+                }
             """,
         ).property
 
@@ -573,9 +657,13 @@ class SpinModelTransformerTest : SpinTransformationTestBase() {
         val property = transform(
             """
                 var counter : int := 0
-                init { }
-                tran { }
-                prop { EF counter == 5 }
+                init {
+                }
+                tran {
+                }
+                prop {
+                    EF counter == 5
+                }
             """,
         ).property
 
@@ -589,14 +677,33 @@ class SpinModelTransformerTest : SpinTransformationTestBase() {
             """
                 var counter : int := 0
                 var flag : bool := false
-                init { choice { counter := 1 } or { havoc(flag) } } or { counter := 2 }
+                init {
+                    choice {
+                        counter := 1
+                    } or {
+                        havoc(flag)
+                    }
+                } or {
+                    counter := 2
+                }
                 tran {
                     assume(counter < 5)
-                    if (flag) { choice { counter := counter + 1 } or { var delta : int := 1 counter := counter - delta } } else { havoc(counter) }
+                    if (flag) {
+                        choice {
+                            counter := counter + 1
+                        } or {
+                            var delta : int := 1
+                            counter := counter - delta
+                        }
+                    } else {
+                        havoc(counter)
+                    }
                 } or {
                     flag := !flag
                 }
-                prop { AG counter < 5 }
+                prop {
+                    AG counter < 5
+                }
             """,
         ).promela
         val lines = promela.lines()
@@ -604,7 +711,11 @@ class SpinModelTransformerTest : SpinTransformationTestBase() {
             SPIN_STABLE_FLAG in it.value && !it.value.startsWith("bool ") && !it.value.startsWith("ltl ")
         }
 
-        assertThat(flagLines).hasSize(8)
+        val stepOpenings = lines.count {
+            it.matches(Regex("    (:: )?atomic \\{"))
+        }
+        assertThat(stepOpenings).isPositive()
+        assertThat(flagLines).hasSize(2 * stepOpenings)
         for ((index, line) in flagLines) {
             if (line == "        $SPIN_STABLE_FLAG = false;") {
                 assertThat(lines[index - 1]).matches("    (:: )?atomic \\{")
@@ -621,9 +732,13 @@ class SpinModelTransformerTest : SpinTransformationTestBase() {
             transform(
                 """
                     var ratio : real := 0.5
-                    init { }
-                    tran { }
-                    prop { AG true }
+                    init {
+                    }
+                    tran {
+                    }
+                    prop {
+                        AG true
+                    }
                 """,
             )
         }
@@ -637,11 +752,59 @@ class SpinModelTransformerTest : SpinTransformationTestBase() {
             transform(
                 """
                     var counter : int := 0
-                    init { }
-                    tran { for (index in 0..2) { counter := counter + index } }
-                    prop { AG true }
+                    init {
+                    }
+                    tran {
+                        for (index in 0..2) {
+                            counter := counter + index
+                        }
+                    }
+                    prop {
+                        AG true
+                    }
                 """,
             )
         }
+    }
+
+    @Test
+    suspend fun `every main step starts with a bounded whole delay that advances each clock up to its saturation, and init waits for nothing`() {
+        val lines = promelaLines(
+            """
+                var elapsed : clock := 0
+                var late : bool := false
+                init {
+                }
+                tran {
+                    assume(elapsed <= 2)
+                    choice {
+                        assume(elapsed >= 2)
+                        late := true
+                        elapsed := 0
+                    } or {
+                    }
+                }
+                prop {
+                    AG !late
+                }
+            """,
+        )
+
+        assertThat(lines).contains("int $WHOLE_DELAY_VARIABLE_NAME = 0;")
+        assertThat(lines).containsSequence(
+            "init {",
+            "atomic {",
+            "$SPIN_STABLE_FLAG = false;",
+            "skip;",
+            "$SPIN_STABLE_FLAG = true;",
+            "}",
+        )
+        assertThat(lines).containsSequence(
+            ":: atomic {",
+            "$SPIN_STABLE_FLAG = false;",
+            "select ($WHOLE_DELAY_VARIABLE_NAME : 0 .. 3);",
+            "elapsed = (elapsed + $WHOLE_DELAY_VARIABLE_NAME >= 3 -> 3 : elapsed + $WHOLE_DELAY_VARIABLE_NAME);",
+            "((elapsed <= 2));",
+        )
     }
 }

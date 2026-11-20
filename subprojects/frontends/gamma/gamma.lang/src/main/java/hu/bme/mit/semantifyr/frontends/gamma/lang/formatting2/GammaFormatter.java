@@ -88,6 +88,7 @@ public class GammaFormatter extends AbstractJavaFormatter {
 
     protected void format(TimeElapseAct timeElapseAct, IFormattableDocument document) {
         document.append(regionFor(timeElapseAct).keyword("elapse"), this::oneSpace);
+        document.surround(regionFor(timeElapseAct).keyword("/"), this::noSpace);
     }
 
     protected void format(RaiseEventAct raiseEventAct, IFormattableDocument document) {

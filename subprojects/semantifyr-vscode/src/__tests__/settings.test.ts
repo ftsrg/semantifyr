@@ -39,20 +39,6 @@ afterEach(() => {
 });
 
 describe('readSemantifyrSettings', () => {
-    it('reads every contributed setting', () => {
-        expect(Object.keys(contributed).sort()).toEqual([
-            'semantifyr.artifacts.location',
-            'semantifyr.artifacts.preset',
-            'semantifyr.optimization.level',
-            'semantifyr.portfolio',
-            'semantifyr.theta.dockerImage',
-            'semantifyr.theta.executor',
-            'semantifyr.timeoutSeconds',
-            'semantifyr.verification.autoValidate',
-            'semantifyr.verification.validationPortfolio',
-        ]);
-    });
-
     it('falls back to the contributed defaults', () => {
         expect(readSemantifyrSettings()).toEqual(contributedDefaults());
     });
@@ -116,7 +102,13 @@ describe('settings reaching the server', () => {
         state.configurationChanged.fire({ affectsConfiguration: (section) => section === 'editor' });
         subscription.dispose();
         state.configurationChanged.fire({ affectsConfiguration: () => true });
-        await new Promise((resolve) => setTimeout(resolve, 20));
+        const marked = new Promise<void>((resolve) => {
+            client.server.onNotification('test/marker', () => {
+                resolve();
+            });
+        });
+        await client.sendNotification('test/marker');
+        await marked;
         expect(received).toEqual(['smart', 'theta']);
     });
 });

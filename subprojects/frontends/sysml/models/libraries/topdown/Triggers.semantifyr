@@ -17,7 +17,7 @@ abstract class AcceptAction {
         return true // should be abstract, but no good way to specify defaults atm
     }
 
-    tran passTime() {
+    tran sendTimeSignal() {
     }
 
     tran assumeIsTriggered() {
@@ -55,20 +55,28 @@ class AcceptItemAction : AcceptAction {
 class AcceptTimeoutAction : AcceptAction {
     refers afterTime: int = 1
 
-    var remainingTime: int := 0
+    var waited: clock := 0
+    var signalSent: bool := false
 
-    redefine tran passTime() {
-        if (remainingTime > 0) {
-            remainingTime := remainingTime - 1
+    // the time signal is sent the moment the wait reaches afterTime, and no step passes that moment while it is unsent
+    redefine tran sendTimeSignal() {
+        if (!signalSent) {
+            assume(waited <= afterTime)
+            choice {
+                assume(waited >= afterTime)
+                signalSent := true
+            } or {
+            }
         }
     }
 
     redefine prop isTriggered(): bool {
-        return remainingTime <= 0
+        return signalSent
     }
 
     redefine tran initialize() {
-        remainingTime := afterTime
+        waited := 0
+        signalSent := false
     }
 }
 

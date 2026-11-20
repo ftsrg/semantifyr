@@ -8,10 +8,11 @@ import { createRoot } from 'react-dom/client'
 import { describe, expect, it, onTestFinished } from 'vitest'
 import { page, server } from 'vitest/browser'
 
-import type { ResolvedColorMode } from '../lib/util/colorMode'
 import type { VerificationCaseState, VerificationState } from '../lib/verification/engine'
 import { ShellRoot } from '../shells/ShellRoot'
 import { caseOf, finished, seedLive, type Seed } from './seededLive'
+import { settledOn } from './settled'
+import { colorModes } from './themes'
 
 // Goal: a tablet gets the desktop shell, and in either orientation nothing of it overflows the viewport or clips its words
 
@@ -106,9 +107,9 @@ function expectEllipsized(button: string, label: string): void {
 }
 
 describe('the desktop shell on a tablet', () => {
-  for (const [orientation, size] of Object.entries(ORIENTATIONS)) {
-    for (const colorMode of ['light', 'dark'] as const satisfies readonly ResolvedColorMode[]) {
-      for (const [state, screen] of Object.entries(STATES)) {
+  for (const [orientationIndex, [orientation, size]] of Object.entries(ORIENTATIONS).entries()) {
+    for (const [stateIndex, [state, screen]] of Object.entries(STATES).entries()) {
+      for (const colorMode of colorModes(orientationIndex === 0 && stateIndex === 0)) {
         it(`lays out ${state} in ${orientation} in the ${colorMode} theme`, async () => {
           await page.viewport(size.width, size.height)
           const { live, shell } = seedLive(screen.seed)
@@ -123,14 +124,13 @@ describe('the desktop shell on a tablet', () => {
           await expect.poll(() => {
             return document.querySelector('.monaco-editor .view-line')
           }, { timeout: 60_000 }).toBeTruthy()
-          await new Promise((resolve) => {
-            setTimeout(resolve, 600)
+          await settledOn(() => {
+            expect(count('[data-testid=desktop-shell]')).toBe(1)
+            for (const name of ['Open', 'Save']) {
+              expect(page.getByRole('button', { name, exact: true }).elements(), `${name} named in the toolbar`).toHaveLength(1)
+            }
+            screen.expectState()
           })
-          expect(count('[data-testid=desktop-shell]')).toBe(1)
-          for (const name of ['Open', 'Save']) {
-            expect(page.getByRole('button', { name, exact: true }).elements(), `${name} named in the toolbar`).toHaveLength(1)
-          }
-          screen.expectState()
           const { scrollWidth, clientWidth } = document.documentElement
           expect(scrollWidth, 'horizontal overflow').toBeLessThanOrEqual(clientWidth)
           expectInViewport('.toolbar .button, .toolbar .segmented-option, .results-header .button, .statusbar')

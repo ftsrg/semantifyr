@@ -7,20 +7,17 @@
 package hu.bme.mit.semantifyr.portfolios
 
 import com.google.inject.Injector
-import hu.bme.mit.semantifyr.backend.BackendMetrics
 import hu.bme.mit.semantifyr.backend.BackendVerificationRequest
 import hu.bme.mit.semantifyr.backend.BackendVerificationResult
 import hu.bme.mit.semantifyr.backend.VerificationBackend
-import hu.bme.mit.semantifyr.backend.VerificationMetadata
-import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.backend.execution.AvailabilityReport
 import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
-import hu.bme.mit.semantifyr.backend.execution.ExecutorKey
 import hu.bme.mit.semantifyr.backends.theta.ThetaBackend
 import hu.bme.mit.semantifyr.backends.theta.ThetaConfig
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.verifier.ProgressContext
 import hu.bme.mit.semantifyr.verifier.portfolio.ConcurrencyGate
+import hu.bme.mit.semantifyr.verifier.portfolio.PortfolioOutcome
 import hu.bme.mit.semantifyr.verifier.portfolio.PortfolioTask
 import hu.bme.mit.semantifyr.verifier.portfolio.VerificationPortfolio
 import kotlin.time.Clock
@@ -39,20 +36,8 @@ class ThetaFullPortfolio(
         PortfolioTask(theta, ThetaConfig.BoundedKInduction, "kinduction"),
     )
 
-    override val executorKeys: Set<ExecutorKey<*>> = tasks.map { it.executorKey }.toSet()
-    override val legs = tasks.map { it.leg }
-
-    override fun availability(environment: ExecutionEnvironment): AvailabilityReport {
-        val anyAvailable = tasks.any {
-            it.isAvailable(environment)
-        }
-        return if (anyAvailable) {
-            AvailabilityReport.Available
-        } else {
-            AvailabilityReport.Unavailable(
-                reason = "Theta cannot be run.",
-            )
-        }
+    override val legs = tasks.map {
+        it.leg
     }
 
     override suspend fun verify(
@@ -61,22 +46,16 @@ class ThetaFullPortfolio(
         gate: ConcurrencyGate,
         environment: ExecutionEnvironment,
         progress: ProgressContext,
+        readBack: suspend (BackendVerificationResult) -> BackendVerificationResult,
     ): BackendVerificationResult {
         val startedAt = Clock.System.now()
-        if (!tasks.any { it.isAvailable(environment) }) {
+        val availability = availability(environment)
+        if (availability is AvailabilityReport.Unavailable) {
             logger.info { "$id: no available Theta executor on this host" }
-            return BackendVerificationResult(
-                metadata = VerificationMetadata(
-                    backendId = null,
-                    startedAt = startedAt,
-                ),
-                verdict = VerificationVerdict.Inconclusive,
-                metrics = BackendMetrics(),
-                message = "Theta cannot be run.",
-            )
+            return PortfolioOutcome.NoDecision(availability.reason, emptyList()).toBackendVerificationResult(startedAt)
         }
         progress.reportProgress("racing ${tasks.size} Theta configurations")
-        val outcome = firstDecisive(startCase(parentInjector, request, gate, environment, progress)) {
+        val outcome = firstDecisive(startCase(parentInjector, request, gate, environment, progress, readBack)) {
             legs(tasks)
         }
         return outcome.toBackendVerificationResult(startedAt)

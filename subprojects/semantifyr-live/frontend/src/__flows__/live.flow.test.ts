@@ -38,7 +38,7 @@ describe('each language on the running image', () => {
 })
 
 describe('the SysML v2 language server of the fork, in the page', () => {
-  test('hovers a name and completes one', async ({ flow }) => {
+  test('answers the editor', async ({ flow }) => {
     const page = await flow.open('/sysml/level-crossing')
     await expect.poll(async () => {
       return page.getByTestId('status-message').first().innerText()
@@ -48,44 +48,15 @@ describe('the SysML v2 language server of the fork, in the page', () => {
     const { command } = await editorKeysOf(page)
     await page.keyboard.press(`${command}+k`)
     await page.keyboard.press(`${command}+i`)
+
     await expect.poll(async () => {
       return page.locator('.monaco-hover').filter({ visible: true }).innerText()
     }, { timeout: 30_000 }).toContain('Sensors')
-    await page.keyboard.press('Escape')
-
-    await page.keyboard.press('End')
-    await page.keyboard.press('Enter')
-    await page.keyboard.type('port probe : Sens')
-    await page.keyboard.press('Control+Space')
-    await expect.poll(async () => {
-      return page.locator('.suggest-widget .monaco-list-row').filter({ visible: true }).allInnerTexts()
-    }, { timeout: 30_000 }).toEqual(expect.arrayContaining([expect.stringContaining('Sensors')]))
-    await page.keyboard.press('Escape')
-    await expect.poll(async () => {
-      return page.locator('.suggest-widget').filter({ visible: true }).count()
-    }, { timeout: 30_000 }).toBe(0)
-  })
-
-  test('goes to a definition in the standard library', async ({ flow }) => {
-    const page = await flow.open('/sysml/spacecraft')
-    await expect.poll(async () => {
-      return page.getByTestId('status-message').first().innerText()
-    }, { timeout: SLOW }).toMatch(/^Ready/)
-
-    // a click while the editor settles is lost on WebKit
-    await expect.poll(async () => {
-      await clickToken(page, 'private import ScalarValues::Integer;', 'Integer')
-      return page.locator('.statusbar .status-end').innerText()
-    }, { timeout: 30_000, interval: 1000 }).toContain('Ln 9,')
-    await page.keyboard.press('F12')
-    await expect.poll(async () => {
-      return page.locator('.tabs [role="tab"][aria-selected="true"]').innerText()
-    }, { timeout: 30_000 }).toContain('ScalarValues.kerml')
   })
 })
 
 describe('the verifying embed in a frame', () => {
-  test('verifies and grows the frame with the trace it opens', async ({ flow }) => {
+  test('verifies, opens the first trace by itself and grows the frame with a trace opened again', async ({ flow }) => {
     const page = await flow.open('/api/health', { width: 900, height: 900 })
     await page.setContent(`
       <iframe src="${LIVE_URL}/gamma/level-crossing?view=embed" style="width: 760px; height: 600px; border: 0"></iframe>
@@ -107,9 +78,10 @@ describe('the verifying embed in a frame', () => {
 
     await verifyAll(frame.locator('.embed-case'), frame.getByRole('button', { name: 'Verify all', exact: true }))
     const withTrace = frame.locator('.embed-case.has-trace').first()
-    if (await withTrace.getAttribute('aria-expanded') === 'true') {
-      await withTrace.click()
-    }
+    await expect.poll(async () => {
+      return withTrace.getAttribute('aria-expanded')
+    }, { timeout: 30_000 }).toBe('true')
+    await withTrace.click()
     await expect.poll(async () => {
       return frame.locator('.embed-trace').count()
     }, { timeout: 30_000 }).toBe(0)

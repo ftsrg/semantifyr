@@ -122,12 +122,13 @@ describe('servedRuntime', () => {
     expect(statuses.at(-1)?.status).toBe('connected')
 
     closeCurrentSocket(CloseCode.SessionTerminated, 'Session terminated')
-    await vi.advanceTimersByTimeAsync(10_000)
-    runtime.reconnect()
-    await vi.advanceTimersByTimeAsync(10_000)
-
     expect(statuses.at(-1)).toEqual({ status: 'failed', reason: 'Session terminated' })
     expect(runtime.connection.get().terminated).toBe(true)
+
+    runtime.reconnect()
+    await vi.advanceTimersByTimeAsync(0)
+
+    expect(statuses.at(-1)).toEqual({ status: 'failed', reason: 'Session terminated' })
     expect(connections.callbacks).toHaveLength(1)
     await runtime.dispose()
   })
@@ -204,18 +205,16 @@ describe('servedRuntime', () => {
     await runtime.dispose()
   })
 
-  it('retries a session the server refuses before it starts with a growing wait, and starts once the server takes it', async () => {
-    connections.refusals = 3
+  it('retries a session the server refuses before it starts, keeps the server step failed while it waits, and starts once the server takes it', async () => {
+    connections.refusals = 1
     const { runtime, statuses } = await startRuntime()
     expect(statuses.at(-1)).toEqual({ status: 'connecting', reason: 'Session limit reached' })
-    expect(runtime.connection.get()).toMatchObject({ refused: true, retryAt: Date.now() + 1_000 })
+    expect(runtime.connection.get().refused).toBe(true)
     expect(stepStates(runtime)).toEqual(['connect:done', 'server:failed', 'initialize:pending', 'cases:pending'])
 
     await vi.advanceTimersByTimeAsync(1_000)
-    expect(runtime.connection.get()).toMatchObject({ refused: true, retryAt: Date.now() + 2_000 })
-    await vi.advanceTimersByTimeAsync(2_000 + 4_000)
 
-    expect(connections.callbacks).toHaveLength(4)
+    expect(connections.callbacks).toHaveLength(2)
     expect(statuses.at(-1)?.status).toBe('connected')
     expect(stepStates(runtime)).toEqual(['connect:done', 'server:done', 'initialize:running', 'cases:running'])
     await runtime.dispose()

@@ -102,6 +102,8 @@ class OxstsFlattener @Inject constructor(
         val variableMappings = mutableMapOf<Instance, Map<VariableDeclaration, VariableDeclaration>>()
         val flattenedEvaluationTransformer = FlatExpressionEvaluationTransformer()
 
+        registerRootInstanceDomains(inlinedOxsts, instanceTree, variableInstanceDomain)
+
         logger.debug { "Pulling down variables" }
         if (pullDownVariables(inlinedOxsts, instanceTree, variableInstanceDomain, variableHolders, variableMappings)) {
             compilationArtifactManager.commitStep(CompilationPass.VariablePullDown)
@@ -196,6 +198,20 @@ class OxstsFlattener @Inject constructor(
         return inlinedOxsts.variables.size > variableCount
     }
 
+    private fun registerRootInstanceDomains(
+        inlinedOxsts: InlinedOxsts,
+        instanceTree: InstanceTree,
+        variableInstanceDomain: MutableMap<VariableDeclaration, Set<Instance>>,
+    ) {
+        val builtinAnything = builtinSymbolResolver.anythingClass(inlinedOxsts)
+
+        for (variable in inlinedOxsts.variables) {
+            val domain = variable.typeSpecification?.domain as? ClassDeclaration ?: continue
+            variableInstanceDomain[variable] = instanceCollector.instancesOfType(instanceTree.rootInstance, domain)
+            variable.typeSpecification.domain = builtinAnything
+        }
+    }
+
     private fun registerArraySlots(
         arraySlotVariables: Map<VariableDeclaration, List<VariableDeclaration>>,
         variableHolders: MutableMap<VariableDeclaration, Instance>,
@@ -217,7 +233,7 @@ class OxstsFlattener @Inject constructor(
             }.key
             for ((index, slotVariable) in slotVariables.withIndex()) {
                 variableHolders[slotVariable] = holder
-                arraySlots[slotVariable] = ArraySlot(originalVariable, index)
+                arraySlots[slotVariable] = ArraySlot(originalVariable, index, slotVariables.size)
                 if (recordField != null) {
                     recordFields[slotVariable] = recordField
                 }

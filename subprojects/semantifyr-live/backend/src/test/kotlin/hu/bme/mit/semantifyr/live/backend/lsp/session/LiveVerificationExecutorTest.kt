@@ -6,10 +6,12 @@
 
 package hu.bme.mit.semantifyr.live.backend.lsp.session
 
+import com.google.gson.JsonElement
 import hu.bme.mit.semantifyr.lang.ide.server.commands.CommandGson
 import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseRequest
 import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseResult
-import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationTrace
+import hu.bme.mit.semantifyr.lang.ide.server.wire.WitnessValidationRequest
+import hu.bme.mit.semantifyr.live.backend.exceptions.WorkspaceUriException
 import hu.bme.mit.semantifyr.live.backend.lsp.document.SessionDocument
 import hu.bme.mit.semantifyr.live.backend.lsp.document.SessionDocumentManager
 import hu.bme.mit.semantifyr.live.backend.lsp.service.SessionRequestManager
@@ -18,7 +20,9 @@ import org.assertj.core.api.Assertions.assertThat
 import org.eclipse.lsp4j.ExecuteCommandParams
 import org.eclipse.xtext.util.CancelIndicator
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import org.mockito.kotlin.any
+import org.mockito.kotlin.argumentCaptor
 import org.mockito.kotlin.doAnswer
 import org.mockito.kotlin.doReturn
 import org.mockito.kotlin.mock
@@ -51,71 +55,92 @@ class LiveVerificationExecutorTest {
         }
     }
 
-    private fun noArgs() = ExecuteCommandParams("oxsts.case.verify", emptyList())
+    private fun verifyCommandWithoutArguments(): ExecuteCommandParams {
+        return ExecuteCommandParams("oxsts.case.verify", emptyList())
+    }
 
-    private fun argsWithUri(uri: String) = ExecuteCommandParams(
-        "oxsts.case.verify",
-        listOf<Any>(CommandGson.INSTANCE.toJsonTree(VerificationCaseRequest(uri, null, null))),
-    )
+    private fun verifyCommandOn(uri: String): ExecuteCommandParams {
+        return ExecuteCommandParams(
+            "oxsts.case.verify",
+            listOf<Any>(CommandGson.INSTANCE.toJsonTree(VerificationCaseRequest(uri, null, null))),
+        )
+    }
 
     @Test
     fun `a non-verification-result is returned unchanged`() = runTest {
         val fixture = Fixture("plain-result")
-        assertThat(executor.execute(fixture.requestManager, fixture.documents, noArgs())).isEqualTo("plain-result")
+        assertThat(executor.execute(fixture.requestManager, fixture.documents, verifyCommandWithoutArguments())).isEqualTo("plain-result")
     }
 
     @Test
     fun `a result without a trace is returned unchanged`() = runTest {
-        val raw = VerificationCaseResult("passed", "ok", "theta", "smart", null, null)
+        val raw = VerificationCaseResult("passed", "ok", "smart", null, null, null)
         val fixture = Fixture(raw)
-        assertThat(executor.execute(fixture.requestManager, fixture.documents, noArgs())).isSameAs(raw)
+        assertThat(executor.execute(fixture.requestManager, fixture.documents, verifyCommandWithoutArguments())).isEqualTo(raw)
     }
 
     @Test
-    fun `a witness URI inside the workspace is rewritten and the inline source dropped`() = runTest {
-        val serverUri = "file:/abs/sessions/x/.artifacts/Case/witness.semantifyr"
+    fun `a witness URI and a trace URI inside the workspace are rewritten to the client's`() = runTest {
+        val witnessUri = "file:///abs/sessions/x/.artifacts/Case/witness.semantifyr"
+        val traceUri = "file:///abs/sessions/x/.artifacts/Case/trace.get"
         val raw = VerificationCaseResult(
             "failed",
             "counterexample",
-            "theta",
             "smart",
             null,
-            VerificationTrace(null, null, serverUri),
+            witnessUri,
+            traceUri,
         )
         val fixture = Fixture(raw)
-        whenever(fixture.documents.toClientUri(serverUri)).thenReturn("file:///workspace/.artifacts/Case/witness.semantifyr")
+        whenever(fixture.documents.toClientUri(witnessUri)).thenReturn("file:///workspace/.artifacts/Case/witness.semantifyr")
+        whenever(fixture.documents.toClientUri(traceUri)).thenReturn("file:///workspace/.artifacts/Case/trace.get")
 
-        val result = executor.execute(fixture.requestManager, fixture.documents, noArgs()) as VerificationCaseResult
+        val result = executor.execute(fixture.requestManager, fixture.documents, verifyCommandWithoutArguments()) as VerificationCaseResult
         assertThat(result.status()).isEqualTo("failed")
-        assertThat(result.trace().witnessUri()).isEqualTo("file:///workspace/.artifacts/Case/witness.semantifyr")
+        assertThat(result.witnessUri()).isEqualTo("file:///workspace/.artifacts/Case/witness.semantifyr")
+        assertThat(result.traceUri()).isEqualTo("file:///workspace/.artifacts/Case/trace.get")
     }
 
     @Test
-    fun `a witness URI outside the workspace is left untouched`() = runTest {
-        val outsideUri = "file:///tmp/elsewhere/witness.semantifyr"
-        val raw = VerificationCaseResult(
-            "failed",
-            "counterexample",
-            "theta",
-            "smart",
-            null,
-            VerificationTrace(null, null, outsideUri),
-        )
-        val fixture = Fixture(raw)
-        whenever(fixture.documents.toClientUri(outsideUri)).thenReturn(outsideUri)
+    fun `the witness a validation by case is given reaches the language server at its server URI`() = runTest {
+        val fixture = Fixture("ignored")
+        val clientWitnessUri = "file:///workspace/.artifacts/Case/witness.semantifyr"
+        val serverWitnessUri = "file:///abs/sessions/x/.artifacts/Case/witness.semantifyr"
+        whenever(fixture.documents.workspaceUriOf(clientWitnessUri)).thenReturn(serverWitnessUri)
+        val request = WitnessValidationRequest("file:///workspace/snippet.gamma", null, "smart", clientWitnessUri)
 
-        assertThat(executor.execute(fixture.requestManager, fixture.documents, noArgs())).isSameAs(raw)
+        executor.execute(fixture.requestManager, fixture.documents, ExecuteCommandParams("gamma.witness.validate", listOf<Any>(CommandGson.INSTANCE.toJsonTree(request))))
+
+        val forwarded = argumentCaptor<ExecuteCommandParams>()
+        verify(fixture.requestManager).executeCommand(forwarded.capture())
+        val forwardedRequest = CommandGson.INSTANCE.fromJson(forwarded.firstValue.arguments.single() as JsonElement, WitnessValidationRequest::class.java)
+        assertThat(forwardedRequest).isEqualTo(WitnessValidationRequest("file:///workspace/snippet.gamma", null, "smart", serverWitnessUri))
+    }
+
+    @Test
+    fun `a validation naming a witness outside the workspace never reaches the language server`() = runTest {
+        val fixture = Fixture("ignored")
+        val outsideUri = "file:///etc/passwd"
+        whenever(fixture.documents.workspaceUriOf(outsideUri)).thenThrow(WorkspaceUriException("uri escapes workspace"))
+        val request = WitnessValidationRequest("file:///workspace/snippet.gamma", null, "smart", outsideUri)
+
+        assertThrows<WorkspaceUriException> {
+            executor.execute(fixture.requestManager, fixture.documents, ExecuteCommandParams("gamma.witness.validate", listOf<Any>(CommandGson.INSTANCE.toJsonTree(request))))
+        }
+        verify(fixture.requestManager, never()).executeCommand(any())
     }
 
     @Test
     fun `an on-disk-but-untracked target document is pre-opened before the command runs`() = runTest {
-        val fixture = Fixture("ignored").apply { runWritesInline() }
+        val fixture = Fixture("ignored").apply {
+            runWritesInline()
+        }
         val uri = "file:///workspace/.artifacts/Case/witness.semantifyr"
         whenever(fixture.documents.find(uri)).thenReturn(null)
         whenever(fixture.documents.existsOnDisk(uri)).thenReturn(true)
         whenever(fixture.documents.openExistingByClient(uri)).thenReturn(mock<SessionDocument>())
 
-        executor.execute(fixture.requestManager, fixture.documents, argsWithUri(uri))
+        executor.execute(fixture.requestManager, fixture.documents, verifyCommandOn(uri))
 
         verify(fixture.documents).openExistingByClient(uri)
     }
@@ -126,7 +151,7 @@ class LiveVerificationExecutorTest {
         val uri = "file:///workspace/snippet.semantifyr"
         whenever(fixture.documents.find(uri)).thenReturn(mock<SessionDocument>())
 
-        executor.execute(fixture.requestManager, fixture.documents, argsWithUri(uri))
+        executor.execute(fixture.requestManager, fixture.documents, verifyCommandOn(uri))
 
         verify(fixture.documents, never()).openExistingByClient(any())
     }

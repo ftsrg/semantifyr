@@ -11,6 +11,8 @@ import hu.bme.mit.semantifyr.backend.BackendMetrics
 import hu.bme.mit.semantifyr.backend.BackendVerificationResult
 import hu.bme.mit.semantifyr.backend.VerificationMetadata
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
+import hu.bme.mit.semantifyr.backend.hasTrace
+import hu.bme.mit.semantifyr.backend.witness.Fraction
 import hu.bme.mit.semantifyr.backend.witness.InlinedWitness
 import hu.bme.mit.semantifyr.backend.witness.WitnessState
 import hu.bme.mit.semantifyr.logging.info
@@ -38,9 +40,10 @@ class TrivialVerifier @Inject constructor(
     }
 
     fun verifyTrivially(inlinedOxsts: InlinedOxsts, startedAt: Instant): BackendVerificationResult {
-        val body = when (val expression = inlinedOxsts.property.expression) {
-            is AG -> expression.body
-            is EF -> expression.body
+        val property = inlinedOxsts.property.expression
+        val body = when (property) {
+            is AG -> property.body
+            is EF -> property.body
             else -> error("Specified property is not in the expected form")
         }
 
@@ -64,18 +67,17 @@ class TrivialVerifier @Inject constructor(
             ),
             verdict = verdict,
             metrics = BackendMetrics(),
-            inlinedWitness = trivialWitness(inlinedOxsts),
+            inlinedWitness = trivialWitness(inlinedOxsts).takeIf {
+                hasTrace(verdict, property)
+            },
             message = "Property decided at compile time.",
         )
     }
 
     private fun trivialWitness(inlinedOxsts: InlinedOxsts): InlinedWitness {
-        val initializedState = WitnessState(values = emptyList())
-        val transitionState = WitnessState(values = emptyList())
         return InlinedWitness(
-            initializedState = initializedState,
-            transitionStates = listOf(transitionState),
-            nextStateMap = mapOf(initializedState to listOf(transitionState)),
+            initializedState = WitnessState(values = emptyList(), clockValues = emptyList(), elapsed = Fraction.ZERO),
+            transitionStates = listOf(WitnessState(values = emptyList(), clockValues = emptyList(), elapsed = Fraction.ZERO)),
             inlinedOxsts = inlinedOxsts,
         )
     }

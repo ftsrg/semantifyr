@@ -33,7 +33,7 @@ jobs:
           printf '%s\n' "$NIGHTLY_KNOWN_HOSTS" > ~/.ssh/known_hosts
           printf 'Host fured\n  HostName %s\n  Port %s\n  User %s\n  IdentityFile ~/.ssh/nightly\n  ServerAliveInterval 60\n' \
             "$NIGHTLY_HOST" "$NIGHTLY_PORT" "$NIGHTLY_USER" > ~/.ssh/config
-      - name: Run the integration and nightly suites on fured
+      - name: Run the nightly on fured
         run: ssh fured run "$GITHUB_SHA"
       - name: Fetch the test results
         if: ${{ !cancelled() }}

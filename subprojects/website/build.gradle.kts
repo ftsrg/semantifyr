@@ -6,6 +6,7 @@
 
 import com.github.gradle.node.npm.task.NpmTask
 import groovy.json.JsonSlurper
+import hu.bme.mit.semantifyr.gradle.conventions.commitHash
 import hu.bme.mit.semantifyr.gradle.conventions.javaRuntimeLibrary
 import hu.bme.mit.semantifyr.gradle.conventions.oxstsFileExtension
 import hu.bme.mit.semantifyr.gradle.conventions.readsServedExamples
@@ -13,6 +14,7 @@ import hu.bme.mit.semantifyr.gradle.conventions.registerRenderPictures
 import hu.bme.mit.semantifyr.gradle.conventions.semantifyrArtifact
 import hu.bme.mit.semantifyr.gradle.conventions.servedExampleSources
 import hu.bme.mit.semantifyr.gradle.conventions.stampOnSuccess
+import hu.bme.mit.semantifyr.gradle.conventions.testBrowser
 import hu.bme.mit.semantifyr.gradle.conventions.testChromium
 
 plugins {
@@ -180,9 +182,33 @@ val generatedReference = listOf(
     generatedReferenceTask("exit-codes"),
     generatedReferenceTask("report-fields"),
     generatedReferenceTask("verdicts"),
-    generatedReferenceTask("trace-fields"),
-    generatedReferenceTask("witness-fields"),
 )
+
+// written for the alias @generated-witness: the witness model the verifier derives from the stored timed report
+val witnessReferenceDir = rootProject.layout.projectDirectory.dir("oxsts-test-models/witness")
+val generatedWitnessDir = layout.buildDirectory.dir("generated-witness")
+
+val generatedWitness = tasks.register<JavaExec>("generatedWitness") {
+    classpath = generate.runtimeClasspath
+    mainClass = "hu.bme.mit.semantifyr.website.GenerateWitnessKt"
+    jvmArgs("-Dguice_bytecode_gen_option=DISABLED")
+    inputs.file(witnessReferenceDir.file("blinker.semantifyr")).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.file(witnessReferenceDir.file("blinker.report.json")).withPathSensitivity(PathSensitivity.RELATIVE)
+    outputs.dir(generatedWitnessDir)
+    outputs.cacheIf { true }
+    val outputDirectory = generatedWitnessDir.get().asFile
+    // relative paths keep the arguments, and so the cache key, the same in every checkout
+    workingDir = outputDirectory
+    args(
+        witnessReferenceDir.file("blinker.semantifyr").asFile.relativeTo(outputDirectory).invariantSeparatorsPath,
+        witnessReferenceDir.file("blinker.report.json").asFile.relativeTo(outputDirectory).invariantSeparatorsPath,
+        "blinker.witness.$oxstsFileExtension",
+    )
+    doFirst {
+        outputDirectory.deleteRecursively()
+        outputDirectory.mkdirs()
+    }
+}
 
 tasks.npmInstall {
     workingDir = rootProject.projectDir
@@ -250,9 +276,6 @@ val cloneApiDocs = tasks.register<Sync>("cloneApiDocs") {
     into(layout.buildDirectory.dir("api-static/api"))
 }
 
-// the lessons' stages, which the pages import beside the served examples
-val lessonStagesDir = rootProject.layout.projectDirectory.dir("oxsts-test-models/tutorial")
-
 fun NpmTask.configureSharedInputs() {
     inputs.dir(project.layout.projectDirectory.dir("src")).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.file(project.layout.projectDirectory.file("docusaurus.config.ts")).withPathSensitivity(PathSensitivity.RELATIVE)
@@ -271,9 +294,9 @@ fun NpmTask.configureSharedInputs() {
     inputs.file(rootProject.layout.projectDirectory.file("deploy/live/env.example")).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.file(rootProject.layout.projectDirectory.file("subprojects/semantifyr-vscode/package.json")).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.file(sourceAliasesFile).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.files(generatedWitness).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(sourceAliasDirectories).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(servedExampleSources()).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.dir(lessonStagesDir).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(cloneGrammars).withPathSensitivity(PathSensitivity.RELATIVE)
     // the builds keep their own caches under node_modules/.cache, which say nothing of the result
     dependsOn(tasks.npmInstall)
@@ -290,8 +313,10 @@ fun NpmTask.configureSharedInputs() {
 val npmAssemble = tasks.register<NpmTask>("npmAssemble") {
     configureSharedInputs()
     inputs.property("liveBackendUrl", providers.environmentVariable("SEMANTIFYR_LIVE_URL").orElse(""))
-    // the deploying workflow names the commit, and its tag when it is a release; any other build describes the development branch
-    inputs.property("siteCommit", providers.environmentVariable("SEMANTIFYR_SITE_COMMIT").orElse(""))
+    val commitHash = commitHash()
+    inputs.property("siteCommit", commitHash)
+    environment.put("SEMANTIFYR_SITE_COMMIT", commitHash)
+    // the deploying workflow names its tag when it is a release
     inputs.property("siteTag", providers.environmentVariable("SEMANTIFYR_SITE_TAG").orElse(""))
     inputs.files(cliReference).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(generatedReference).withPathSensitivity(PathSensitivity.RELATIVE)
@@ -332,8 +357,12 @@ val npmCheck = tasks.register<NpmTask>("npmCheck") {
 
 val walkBrowser = testChromium("The keyboard walk needs")
 
-tasks.register<NpmTask>("walkTest") {
+val uiTest = tasks.register<NpmTask>("uiTest") {
     group = "verification"
+    val testBrowser = testBrowser()
+    onlyIf("the walk runs in Chromium alone") {
+        testBrowser.get() == "chromium"
+    }
 
     configureSharedInputs()
     inputs.file(project.layout.projectDirectory.file("vitest.walk.config.mts")).withPathSensitivity(PathSensitivity.RELATIVE)
@@ -346,6 +375,11 @@ tasks.register<NpmTask>("walkTest") {
 
     stampOnSuccess()
     outputs.cacheIf { true }
+}
+
+tasks.register("continuousIntegration") {
+    group = "verification"
+    dependsOn(uiTest)
 }
 
 // written for the alias @phases
@@ -455,6 +489,9 @@ tasks {
         inputs.file(sourceAliasesFile)
             .withPropertyName("sourceAliases")
             .withPathSensitivity(PathSensitivity.RELATIVE)
+        inputs.files(generatedWitness)
+            .withPropertyName("generatedWitness")
+            .withPathSensitivity(PathSensitivity.RELATIVE)
         inputs.files(sourceAliasDirectories)
             .withPropertyName("importedModels")
             .withPathSensitivity(PathSensitivity.RELATIVE)
@@ -463,12 +500,9 @@ tasks {
         inputs.files(servedExampleSources())
             .withPropertyName("servedExamples")
             .withPathSensitivity(PathSensitivity.RELATIVE)
-        inputs.dir(lessonStagesDir)
-            .withPropertyName("lessonStages")
-            .withPathSensitivity(PathSensitivity.RELATIVE)
     }
 
-    assemble {
+    pack {
         dependsOn(npmAssemble)
     }
 

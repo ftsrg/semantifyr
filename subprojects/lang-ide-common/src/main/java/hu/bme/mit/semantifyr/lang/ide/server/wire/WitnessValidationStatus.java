@@ -6,6 +6,8 @@
 
 package hu.bme.mit.semantifyr.lang.ide.server.wire;
 
+import hu.bme.mit.semantifyr.backend.VerificationVerdict;
+
 public final class WitnessValidationStatus {
 
     public static final String VALID = "valid";
@@ -16,4 +18,13 @@ public final class WitnessValidationStatus {
     public static final String CANCELLED = "cancelled";
 
     private WitnessValidationStatus() {}
+
+    public static String of(VerificationVerdict verdict) {
+        return switch (verdict) {
+            case Passed -> VALID;
+            case Failed -> INVALID;
+            case Inconclusive, Timeout, NotSupported -> INCONCLUSIVE;
+            case Errored -> ERRORED;
+        };
+    }
 }

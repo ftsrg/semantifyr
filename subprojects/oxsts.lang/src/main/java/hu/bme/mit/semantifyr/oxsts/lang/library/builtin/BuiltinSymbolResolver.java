@@ -21,7 +21,6 @@ public class BuiltinSymbolResolver {
     public static final QualifiedName CONTROL_ANNOTATION_NAME = BuiltinLibrary.BUILTIN_LIBRARY_NAME.append("Control");
     public static final QualifiedName SHARED_ANNOTATION_NAME = BuiltinLibrary.BUILTIN_LIBRARY_NAME.append("Shared");
     public static final QualifiedName TRACE_ANNOTATION_NAME = BuiltinLibrary.BUILTIN_LIBRARY_NAME.append("Trace");
-    public static final QualifiedName CLOCK_ANNOTATION_NAME = BuiltinLibrary.BUILTIN_LIBRARY_NAME.append("Clock");
 
     public static final QualifiedName NON_OPTIMIZABLE_ANNOTATION_NAME =
             BuiltinLibrary.BUILTIN_LIBRARY_NAME.append("NonOptimizable");
@@ -42,6 +41,7 @@ public class BuiltinSymbolResolver {
     public static final QualifiedName INT_NAME = BuiltinLibrary.BUILTIN_LIBRARY_NAME.append("int");
     public static final QualifiedName REAL_NAME = BuiltinLibrary.BUILTIN_LIBRARY_NAME.append("real");
     public static final QualifiedName STRING_NAME = BuiltinLibrary.BUILTIN_LIBRARY_NAME.append("string");
+    public static final QualifiedName CLOCK_NAME = BuiltinLibrary.BUILTIN_LIBRARY_NAME.append("clock");
 
     @Inject
     protected BuiltinLibrary builtinLibrary;
@@ -65,10 +65,6 @@ public class BuiltinSymbolResolver {
 
     public AnnotationDeclaration traceAnnotation(EObject context) {
         return findInBuiltin(context, AnnotationDeclaration.class, TRACE_ANNOTATION_NAME);
-    }
-
-    public AnnotationDeclaration clockAnnotation(EObject context) {
-        return findInBuiltin(context, AnnotationDeclaration.class, CLOCK_ANNOTATION_NAME);
     }
 
     public AnnotationDeclaration nonOptimizableAnnotation(EObject context) {
@@ -115,6 +111,10 @@ public class BuiltinSymbolResolver {
 
     public DataTypeDeclaration stringDatatype(EObject context) {
         return findInBuiltin(context, DataTypeDeclaration.class, STRING_NAME);
+    }
+
+    public DataTypeDeclaration clockDatatype(EObject context) {
+        return findInBuiltin(context, DataTypeDeclaration.class, CLOCK_NAME);
     }
 
     protected <T extends Declaration> T findInAnything(EObject context, Class<T> type, String name) {

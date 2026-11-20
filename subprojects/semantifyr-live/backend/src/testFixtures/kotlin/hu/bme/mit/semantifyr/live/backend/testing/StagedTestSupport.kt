@@ -57,8 +57,6 @@ object StagedTestSupport {
         filename: String,
     ): String {
         assumeTrue(directory != null, "$propertyName system property not set")
-        val source = checkNotNull(directory).resolve(filename)
-        assumeTrue(Files.exists(source), "$filename not found at $source")
-        return Files.readString(source)
+        return Files.readString(checkNotNull(directory).resolve(filename))
     }
 }

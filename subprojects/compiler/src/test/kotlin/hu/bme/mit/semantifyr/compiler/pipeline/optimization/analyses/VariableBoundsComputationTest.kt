@@ -460,6 +460,30 @@ class VariableBoundsComputationTest : AnalysisTestBase() {
         assertThat(result.variableRanges[inlined.varNamed("doubled")]).isEqualTo(IntegerRange(0, 20))
     }
 
+    @Test
+    fun `a clock reset to zero gets no range and its comparison does not cut the path`() {
+        val (inlined, result) = runVariableBounds(
+            """
+                inlined oxsts of semantifyr::Anything
+                var elapsed: clock := 0
+                var late: int := 0
+                init {
+                }
+                tran {
+                    elapsed := 0
+                    assume(elapsed >= 3)
+                    late := 1
+                }
+                prop {
+                    AG (late <= 1)
+                }
+            """,
+        )
+
+        assertThat(result.variableRanges).doesNotContainKey(inlined.varNamed("elapsed"))
+        assertThat(result.variableRanges[inlined.varNamed("late")]).isEqualTo(IntegerRange(0, 1))
+    }
+
     private fun InlinedOxsts.varNamed(name: String): VariableDeclaration {
         return eAllOfType<VariableDeclaration>().single {
             it.name == name

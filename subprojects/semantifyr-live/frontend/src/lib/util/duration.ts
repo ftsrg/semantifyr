@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import { parse as parseIso } from 'iso8601-duration';
+import { isoDurationToMs } from '@semantifyr/editor-common';
 
 export function formatDuration(totalSeconds: number): string {
   if (totalSeconds < 60) return `${totalSeconds}s`;
@@ -17,53 +17,11 @@ export function formatDuration(totalSeconds: number): string {
 }
 
 export function formatIsoDuration(iso: string): string {
-  let parsed;
-  try {
-    parsed = parseIso(iso);
-  } catch {
-    return '0s';
-  }
-  const seconds = Math.floor(parsed.seconds ?? 0);
-  const minutes = parsed.minutes ?? 0;
-  const hours = parsed.hours ?? 0;
-  const days = (parsed.days ?? 0) + (parsed.weeks ?? 0) * 7;
-  if (days > 0) return `${days}d ${hours}h`;
-  if (hours > 0) return `${hours}h ${minutes}m`;
-  if (minutes > 0) return `${minutes}m ${seconds}s`;
-  return `${seconds}s`;
-}
-
-export function isoDurationToMs(iso: string): number {
-  let parsed;
-  try {
-    parsed = parseIso(iso);
-  } catch {
-    return 0;
-  }
-  return (
-    ((parsed.weeks ?? 0) * 7 * 86400 +
-      (parsed.days ?? 0) * 86400 +
-      (parsed.hours ?? 0) * 3600 +
-      (parsed.minutes ?? 0) * 60 +
-      (parsed.seconds ?? 0)) *
-    1000
-  );
+  return formatDuration(Math.floor(isoDurationToMs(iso) / 1000));
 }
 
 export function formatIsoDurationDetailed(iso: string): string {
-  let parsed;
-  try {
-    parsed = parseIso(iso);
-  } catch {
-    return '0 s';
-  }
-  const totalMs =
-    ((parsed.weeks ?? 0) * 7 * 86400 +
-      (parsed.days ?? 0) * 86400 +
-      (parsed.hours ?? 0) * 3600 +
-      (parsed.minutes ?? 0) * 60 +
-      (parsed.seconds ?? 0)) *
-    1000;
+  const totalMs = isoDurationToMs(iso);
   if (totalMs < 1000) return `${Math.round(totalMs)} ms`;
   const totalSeconds = totalMs / 1000;
   if (totalSeconds < 60) {

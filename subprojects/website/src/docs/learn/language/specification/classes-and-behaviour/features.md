@@ -114,6 +114,14 @@ A feature's multiplicity specifies how many target values are permitted. The mul
 
 The infinity literal `*` is allowed in ranges (`0..*`); a bare `[*]` is rejected.
 
+A bound is an integer, and a range's two ends are integers or `*`; any other bound, such as `[true]` or `[1..true]`, is rejected, in every declaration that has a multiplicity.
+
+```oxsts issue=OXSTS.TYPE_MISMATCH
+class Shelf {
+  var slots: int[true] := [0]
+}
+```
+
 ## `opposite`
 
 `opposite` declares a bidirectional relationship: an instance is in one feature of another exactly when that other is in the opposite feature of the first, so navigating either way finds the same link. The two features name each other as `opposite`, and the opposite of a `container` is a `contains` and that of a `contains` a `container`.

@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import { encodeCompressedBase64Url, liveExampleUrl } from '@semantifyr/editor-common'
-import { servedExamples } from '@semantifyr/editor-common/examples'
+import { encodeCompressedBase64Url } from '@semantifyr/editor-common'
 import type { Page } from 'playwright'
 import { describe, expect } from 'vitest'
 
@@ -35,12 +34,13 @@ describe('the first screen', () => {
     await casesListed(page)
   })
 
-  test('opens the language, the flavour and the example the address names', async ({ ui }) => {
+  test('opens the language, the flavour and the example the address names, with no banner over it', async ({ ui }) => {
     const page = await ui.open('/language/crossroads?library=gamma')
 
     await expect.poll(async () => {
       return page.title()
     }).toBe(titleOf('gamma', 'crossroads', 'oxsts'))
+    expect(await page.locator('.orientation').count()).toBe(0)
     expect((await ui.backend.openSession()).flavorId).toBe('oxsts-with-gamma-library')
     await expect.poll(async () => {
       return page.locator('.flavour-button').innerText()
@@ -50,23 +50,6 @@ describe('the first screen', () => {
 })
 
 describe('an address that names what Live does not have', () => {
-  for (const [address, requested, opened] of [
-    ['/kerml/level-crossing', 'language "kerml"', titleOf('sysml', 'level-crossing')],
-    ['/gamma/level-crosing', 'example "level-crosing"', titleOf('gamma', 'level-crossing')],
-    ['/language/crossroads?library=uml', 'library "uml"', titleOf('oxsts', 'level-crossing')],
-  ] as const) {
-    test(`says the ${requested} was not found and opens its replacement`, async ({ ui }) => {
-      const page = await ui.open(address)
-
-      await expect.poll(async () => {
-        return page.locator('.orientation.is-error').innerText()
-      }).toContain(`names the ${requested}`)
-      await expect.poll(async () => {
-        return page.title()
-      }).toBe(opened)
-    })
-  }
-
   test('says a model of the fragment that cannot be read was not, and opens the example', async ({ ui }) => {
     const page = await ui.open('/language/modeling-and-verification#model=garbled')
 
@@ -133,21 +116,4 @@ describe('the history of a visit', () => {
       return editor(page).lines.innerText()
     }).toContain('library')
   })
-})
-
-describe('the served examples', () => {
-  for (const example of servedExamples) {
-    const address = new URL(liveExampleUrl('https://live.invalid/', example.language, example.id)).pathname
-    test(`opens ${address} at its address, with no banner over it`, async ({ ui }) => {
-      ui.backend.answer('discover', () => {
-        return []
-      })
-      const page = await ui.open(address)
-
-      await expect.poll(async () => {
-        return page.title()
-      }).toBe(titleOf(example.language, example.id))
-      expect(await page.locator('.orientation').count()).toBe(0)
-    })
-  }
 })

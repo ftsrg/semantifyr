@@ -5,8 +5,10 @@
  */
 
 import { describe, expect, it, vi } from 'vitest'
-import type { VerificationCaseSpecification } from '@semantifyr/editor-common'
-import { verdictOfLauncherVerdict, verdictWords } from '@semantifyr/editor-common/terms'
+import { type ReportVerdict, STATUS_OF_VERDICT, type VerificationCaseSpecification } from '@semantifyr/editor-common'
+
+import { reportOf } from '../fixtures/reports'
+import { sampleReport } from '../fixtures/verification-results'
 
 import { editorColorsFrom, toHexColor } from '../../lib/session/editorTheme'
 import { fileUriOfLibrary, isLibraryFileUri, libraryUriOf } from '../../lib/session/readOnlyDocuments'
@@ -38,7 +40,14 @@ function caseAt(id: string, line: number): VerificationCaseSpecification {
 }
 
 function result(id: string, status: VerificationCaseState['status'], extra: Partial<VerificationCaseState> = {}): VerificationCaseState {
-  return { caseInfo: caseAt(id, 1), status, resultStatus: status, metrics: { totalDuration: 'PT2.9S', preparationDuration: 'PT0S', verificationDuration: 'PT0S', backAnnotationDuration: 'PT0S' }, ...extra }
+  const verdict = Object.entries(STATUS_OF_VERDICT).find(([, statusOfVerdict]) => {
+    return statusOfVerdict === status
+  })?.[0] as ReportVerdict | undefined
+  const state: VerificationCaseState = { caseInfo: caseAt(id, 1), status, resultStatus: status, ...extra }
+  if (verdict === undefined || extra.report !== undefined) {
+    return state
+  }
+  return { ...state, report: reportOf({ verdict, backendId: 'theta', seconds: 2.9 }) }
 }
 
 function statusInput(): ShellStatusInput {
@@ -65,6 +74,8 @@ const CASES_KNOWN = startStep(finishStep(finishStep(STEPS, InitializationSteps.c
 
 const READY = finishStep(CASES_KNOWN, InitializationSteps.initialize.id, 0)
 
+const FINDING_CASES = startStep(startStep(finishStep(STEPS, InitializationSteps.connect.id, 0), InitializationSteps.initialize.id, 0), InitializationSteps.cases.id, 0)
+
 function statusOf(input: Partial<ShellStatusInput>): string {
   return shellStatus({ ...statusInput(), ...input }).text
 }
@@ -76,17 +87,6 @@ describe('a case row', () => {
     expect(caseRowOf(result('a', 'not_supported', { message: 'not supported: unbounded' }))).toMatchObject({ status: 'inconclusive', message: 'not supported: unbounded' })
     expect(caseRowOf(result('a', 'errored', { message: 'broke' }))).toMatchObject({ status: 'error', word: 'Error', message: 'broke' })
     expect(caseRowOf({ caseInfo: caseAt('a', 1), status: 'stale', message: 'Verification cancelled' })).toMatchObject({ status: 'not-run', word: 'Not run', message: 'cancelled', time: null })
-  })
-
-  it('shows each of the launcher\'s six verdicts as the terms map it, a timeout and a not supported answer as inconclusive with the exact verdict named', () => {
-    expect(Object.keys(verdictOfLauncherVerdict)).toHaveLength(6)
-    for (const [launcherVerdict, verdict] of Object.entries(verdictOfLauncherVerdict)) {
-      const status = launcherVerdict.toLowerCase() as VerificationCaseState['status']
-      expect(caseRowOf(result('a', status)), launcherVerdict).toMatchObject({ status: verdict, word: verdictWords[verdict] })
-    }
-    expect(verdictOfLauncherVerdict).toMatchObject({ TIMEOUT: 'inconclusive', NOT_SUPPORTED: 'inconclusive' })
-    expect(caseRowOf(result('a', 'timeout')).message).toBe('timed out')
-    expect(caseRowOf(result('a', 'not_supported')).message).toBe('not supported')
   })
 
   it('says what an inconclusive and an errored case mean when the server sent no message', () => {
@@ -102,9 +102,8 @@ describe('a case row', () => {
   })
 
   it('keeps the verdict of a case run again, with its trace and its count, until the new one arrives', () => {
-    const trace = { callTrace: { initializedStep: { traces: [] }, steps: [] }, witnessState: { initializedStep: { values: [] }, steps: [] }, witnessUri: null }
     const rows = [
-      result('a', 'failed', { status: 'running', serverState: 'Running', trace }),
+      result('a', 'failed', { status: 'running', serverState: 'Running', report: reportOf({ verdict: 'Failed', backendId: 'theta', seconds: 2.9, trace: sampleReport.trace }) }),
       result('b', 'passed', { status: 'queued' }),
       { caseInfo: caseAt('c', 1), status: 'queued' as const },
     ].map(caseRowOf)
@@ -221,6 +220,7 @@ describe('the status line', () => {
 
   it('says why Verify all did not run, and what initializes', () => {
     expect(statusOf({ blockedErrors: 2 })).toBe('Verify all did not run: the model has 2 errors')
+    expect(statusOf({ blockedErrors: 1 })).toBe('Verify all did not run: the model has 1 error')
     const initializing = startStep(STEPS, InitializationSteps.connect.id, 0)
     expect(statusOf({ initialization: initializing })).toBe('Initializing SysML v2: connecting to the server')
   })
@@ -229,6 +229,7 @@ describe('the status line', () => {
     const verification: VerificationState = { phase: 'idle', discovery: 'discovered', cases: [result('a', 'stale')] }
     expect(statusOf({ initialization: CASES_KNOWN, verification })).toBe('Initializing the language server')
     expect(statusOf({ initialization: CASES_KNOWN, verification, queued: { caseId: null } })).toBe('Verify all waits: initializing the language server')
+    expect(statusOf({ initialization: FINDING_CASES, queued: { caseId: null } })).toBe('Verify all waits: finding the verification cases')
     expect(shellStatus({ ...statusInput(), initialization: CASES_KNOWN, verification, queued: { caseId: 'example::a' } })).toMatchObject({ kind: 'busy', text: 'Verify ', caseName: 'a', after: ' waits: initializing the language server' })
   })
 

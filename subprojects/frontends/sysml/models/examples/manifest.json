@@ -26,6 +26,7 @@
                 { "name": "RegionSubstatesAreMutuallyExclusiveTestCase", "verdict": "Passed", "tier": "Integration" },
                 { "name": "TimeoutTransitionFiresAfterDelayTestCase", "verdict": "Passed", "tier": "Integration" },
                 { "name": "WaitingAndDoneAreMutuallyExclusiveTestCase", "verdict": "Passed", "tier": "Integration" },
+                { "name": "SimultaneousDeadlinesFireInDifferentStepsTestCase", "verdict": "Passed", "tier": "Integration" },
                 { "name": "GuardConditionGatesTransitionTestCase", "verdict": "Passed", "tier": "Integration" },
                 { "name": "GuardAccumulatesCounterTestCase", "verdict": "Passed", "tier": "Integration" },
                 { "name": "DoneNotReachableBeforeGuardSatisfiedTestCase", "verdict": "Passed", "tier": "Integration" },
@@ -127,14 +128,14 @@
             "file": "landing_gear.sysml",
             "cases": [
                 { "name": "GearCanBeRetracted", "verdict": "Passed", "tier": "Integration" },
-                { "name": "BayClosedInCruise", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "BayClosedInCruise", "verdict": "Passed", "tier": "Integration" },
                 { "name": "GearMovesOnlyWithDoorsOpen", "verdict": "Failed", "tier": "Integration" }
             ]
         },
         {
             "file": "door_access.sysml",
             "cases": [
-                { "name": "LockedReachable", "verdict": "Passed", "tier": "Smoke" },
+                { "name": "LockedReachable", "verdict": "Passed", "tier": "Integration" },
                 { "name": "CheckingReachable", "verdict": "Passed", "tier": "Integration" },
                 { "name": "CheckingUnreachableViolated", "verdict": "Failed", "tier": "Integration", "falsification": true },
                 { "name": "UnlockedReachable", "verdict": "Passed", "tier": "Integration" },
@@ -207,10 +208,10 @@
         {
             "file": "crossroads.sysml",
             "cases": [
-                { "name": "PoliceCanInterrupt", "verdict": "Passed", "tier": "Nightly" },
-                { "name": "LightACanBlink", "verdict": "Passed", "tier": "Nightly" },
-                { "name": "RoadBCanGetGreen", "verdict": "Passed", "tier": "Nightly" },
-                { "name": "NeverBothGreen", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "PoliceCanInterrupt", "verdict": "Passed", "tier": "Integration" },
+                { "name": "LightACanBlink", "verdict": "Passed", "tier": "Integration" },
+                { "name": "RoadBCanGetGreen", "verdict": "Passed", "tier": "Integration" },
+                { "name": "NeverBothGreen", "verdict": "Passed", "tier": "Integration" },
                 { "name": "ControllerOperatingReachable", "verdict": "Passed", "tier": "Nightly" },
                 { "name": "ControllerOperatingBothYellowReachable", "verdict": "Passed", "tier": "Nightly" },
                 { "name": "ControllerOperatingBothRedReachable", "verdict": "Passed", "tier": "Nightly" },
@@ -247,9 +248,9 @@
         {
             "file": "compressedspacecraft.sysml",
             "cases": [
-                { "name": "TransmissionCanStart", "verdict": "Passed", "tier": "Nightly" },
-                { "name": "ChargeNeverBelow40", "verdict": "Passed", "tier": "Nightly" },
-                { "name": "CanTransmitWhileRecharging", "verdict": "Passed", "tier": "Nightly" },
+                { "name": "TransmissionCanStart", "verdict": "Passed", "tier": "Integration" },
+                { "name": "ChargeNeverBelow40", "verdict": "Passed", "tier": "Integration" },
+                { "name": "CanTransmitWhileRecharging", "verdict": "Passed", "tier": "Integration" },
                 { "name": "StationBehaviorIdleReachable", "verdict": "Passed", "tier": "Nightly" },
                 { "name": "StationBehaviorOperationReachable", "verdict": "Passed", "tier": "Nightly" },
                 { "name": "StationBehaviorOperationWaitingReachable", "verdict": "Passed", "tier": "Nightly" },

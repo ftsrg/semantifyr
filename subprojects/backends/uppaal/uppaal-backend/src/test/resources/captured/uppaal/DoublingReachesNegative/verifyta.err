@@ -1,0 +1,1 @@
+model.xml:/nta/template[1]/transition[2]/label[1]:1: [error] Assignment of value '1073741824' to variable '__root__x' is out of range.

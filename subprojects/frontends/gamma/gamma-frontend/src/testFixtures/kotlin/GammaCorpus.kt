@@ -28,8 +28,6 @@ data class GammaCorpusEntry(
 }
 
 object GammaCorpus {
-    val semantics: Path = Path("..", "models", "semantics")
-
     val corpus: Path = Path("..", "models", "corpus")
 
     // the served examples and their test models, as the build copies them for the tests

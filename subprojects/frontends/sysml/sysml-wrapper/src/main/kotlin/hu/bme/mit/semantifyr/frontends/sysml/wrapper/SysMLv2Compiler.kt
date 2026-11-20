@@ -86,38 +86,33 @@ class SysMLv2Compiler(
             .resolve("${sourcePath.fileName}-${sha256Hex(files)}.$fileExtension")
     }
 
-    // the trace command validates the trace in the model's workspace and writes nothing when it does not validate
     fun trace(
         sourcePath: Path,
-        witnessPath: Path,
-        tracePath: Path,
+        reportPath: Path,
         nameMapPath: Path,
-        caseName: String,
         outputPath: Path,
     ): Path {
         require(Files.isRegularFile(sourcePath)) {
             "SysMLv2 source does not exist or is not a regular file: $sourcePath"
         }
-        for (input in listOf(witnessPath, tracePath, nameMapPath)) {
+        for (input in listOf(reportPath, nameMapPath)) {
             require(Files.isRegularFile(input)) {
                 "Trace input does not exist or is not a regular file: $input"
             }
         }
 
-        logger.info { "Generating the SysMLv2 trace of '$caseName' from '$tracePath' via bundled CLI '$cliPath'" }
+        logger.info { "Generating the SysMLv2 trace of '$reportPath' via bundled CLI '$cliPath'" }
 
         Files.createDirectories(outputPath.toAbsolutePath().parent)
         val temporary = outputPath.resolveSibling(".tmp-${UUID.randomUUID()}.sysml")
         try {
             runCli(
-                "SysMLv2 trace generation of '$caseName'",
+                "SysMLv2 trace generation of '$reportPath'",
                 "trace",
                 sourcePath.toString(),
                 sysmlLibraryPath.toString(),
-                witnessPath.toString(),
-                tracePath.toString(),
+                reportPath.toString(),
                 nameMapPath.toString(),
-                caseName,
                 "-o",
                 temporary.toString(),
             )
@@ -147,8 +142,7 @@ class SysMLv2Compiler(
         logger.info { "Compiling SysMLv2 source '$sourcePath' via bundled CLI '$cliPath'" }
 
         Files.createDirectories(entry.parent)
-        // the command line of sysml-2ls writes the name map beside an output ending in .oxsts alone
-        val temporary = entry.resolveSibling(".tmp-${UUID.randomUUID()}.oxsts")
+        val temporary = entry.resolveSibling(".tmp-${UUID.randomUUID()}.${entry.extension}")
         try {
             runCli(
                 "SysML v2 compilation of '$sourcePath'",

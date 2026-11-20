@@ -16,6 +16,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.EnumLiteral
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 
 enum class NuxmvVariableKind {
+    Clock,
     Integer,
     Boolean,
     Enum,
@@ -48,16 +49,21 @@ class NuxmvVariableTransformer @Inject constructor(
         }
     }
 
-    private fun resolveKind(variableDeclaration: VariableDeclaration): NuxmvVariableKind {
+    fun kindOf(variableDeclaration: VariableDeclaration): NuxmvVariableKind? {
         val domain = variableDeclaration.typeSpecification?.domain
-            ?: error("Variable ${variableDeclaration.name} has no type specification")
-
         return when {
+            domain === builtinSymbolResolver.clockDatatype(variableDeclaration) -> NuxmvVariableKind.Clock
             domain is EnumDeclaration -> NuxmvVariableKind.Enum
             domain === builtinSymbolResolver.intDatatype(variableDeclaration) -> NuxmvVariableKind.Integer
             domain === builtinSymbolResolver.boolDatatype(variableDeclaration) -> NuxmvVariableKind.Boolean
-            else -> throw BackendUnsupportedException("nuXmv does not support variables of type ${domain.name} (${variableDeclaration.name})")
+            else -> null
         }
+    }
+
+    private fun resolveKind(variableDeclaration: VariableDeclaration): NuxmvVariableKind {
+        val domain = variableDeclaration.typeSpecification?.domain
+            ?: error("Variable ${variableDeclaration.name} has no type specification")
+        return kindOf(variableDeclaration) ?: throw BackendUnsupportedException("nuXmv does not support variables of type ${domain.name} (${variableDeclaration.name})")
     }
 
     fun nameOf(enumDeclaration: EnumDeclaration): String {

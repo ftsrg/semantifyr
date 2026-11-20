@@ -8,50 +8,83 @@ package hu.bme.mit.semantifyr.verifier.witness
 
 import com.google.inject.Inject
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
+import hu.bme.mit.semantifyr.backend.witness.Fraction
+import hu.bme.mit.semantifyr.compiler.pipeline.context.FlattenedCompilationContext
+import hu.bme.mit.semantifyr.compiler.pipeline.expression.InstanceReferenceProvider
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.RedefinitionAwareReferenceResolver
+import hu.bme.mit.semantifyr.compiler.pipeline.instantiation.InstanceNames
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.copy
+import hu.bme.mit.semantifyr.compiler.pipeline.utils.treeSequence
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinSymbolResolver
+import hu.bme.mit.semantifyr.oxsts.lang.semantics.clock.ClockTestAnalysis
 import hu.bme.mit.semantifyr.oxsts.lang.utils.OxstsUtils
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssignmentOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssumptionOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ComparisonOp
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.DataTypeDeclaration
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.DomainDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ElementReference
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.EnumDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.FeatureDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.FeatureKind
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlineCall
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.Operation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.PostfixUnaryExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.PropertyDeclaration
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.RecordDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ReferenceExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.SequenceOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.TransitionDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.TransitionKind
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
+import hu.bme.mit.semantifyr.verifier.ReportState
+import hu.bme.mit.semantifyr.verifier.ReportTrace
+import hu.bme.mit.semantifyr.verifier.ReportValue
+import java.math.BigInteger
 
 class ClassWitnessBackAnnotator @Inject constructor(
     private val builtinSymbolResolver: BuiltinSymbolResolver,
     private val redefinitionAwareReferenceResolver: RedefinitionAwareReferenceResolver,
+    private val classWitnessTransformer: ClassWitnessTransformer,
+    private val instanceReferenceProvider: InstanceReferenceProvider,
+    private val reportValueConverter: ReportValueConverter,
+    private val clockTestAnalysis: ClockTestAnalysis,
 ) {
+    private class ReportPaths(
+        val variables: Map<String, ClassWitnessVariable>,
+        val instances: Map<String, Expression>,
+    )
+
     private inner class WitnessContext(
-        val classWitness: ClassWitness,
+        val reportTrace: ReportTrace,
+        val compilation: FlattenedCompilationContext,
         val verdict: VerificationVerdict,
     ) {
-        val stepValues = mutableMapOf<ClassWitnessState, Int>()
-        private var lastStepValue = 0
-        private val ClassWitnessState.stepValue
-            get() = stepValues.getOrPut(this) {
-                lastStepValue++
-            }
+        private val classDeclaration = compilation.inlinedOxsts.classDeclaration
+
+        private val paths = reportPaths(compilation)
+
+        private val clocks = compilation.inlinedOxsts.variables.filter {
+            it in compilation.flatteningInfo.variableHolders && clockTestAnalysis.isClock(it)
+        }.map {
+            reportValueConverter.path(classWitnessTransformer.locate(it, compilation).reference)
+        }
+
+        private val hasClocks = clocks.isNotEmpty()
+
+        private val clockStates = reportTrace.states.withIndex().map { (index, state) ->
+            clockValues(index, state)
+        }
+
+        private val scale = timeScale()
 
         private val rootFeature by lazy {
             OxstsFactory.createFeatureDeclaration().also {
                 it.kind = FeatureKind.CONTAINMENT
                 it.typeSpecification = OxstsFactory.createTypeSpecification().also {
-                    it.domain = classWitness.inlinedOxsts.classDeclaration
+                    it.domain = classDeclaration
                 }
-                it.name = "root"
+                it.name = InstanceNames.ROOT_FEATURE_NAME
             }
         }
 
@@ -60,7 +93,18 @@ class ClassWitnessBackAnnotator @Inject constructor(
                 it.name = "step"
                 it.annotation = OxstsFactory.createAnnotationContainer()
                 it.typeSpecification = OxstsFactory.createTypeSpecification().also {
-                    it.domain = builtinSymbolResolver.intDatatype(classWitness.inlinedOxsts.classDeclaration)
+                    it.domain = builtinSymbolResolver.intDatatype(classDeclaration)
+                }
+                it.expression = OxstsFactory.createLiteralInteger(0)
+            }
+        }
+
+        private val timeVariable by lazy {
+            OxstsFactory.createVariableDeclaration().also {
+                it.name = "time"
+                it.annotation = OxstsFactory.createAnnotationContainer()
+                it.typeSpecification = OxstsFactory.createTypeSpecification().also {
+                    it.domain = builtinSymbolResolver.clockDatatype(classDeclaration)
                 }
                 it.expression = OxstsFactory.createLiteralInteger(0)
             }
@@ -73,9 +117,13 @@ class ClassWitnessBackAnnotator @Inject constructor(
         fun createInlinedOxsts(): InlinedOxsts {
             val inlinedOxsts = OxstsFactory.createInlinedOxsts()
             inlinedOxsts.rootFeature = rootFeature
-            inlinedOxsts.classDeclaration = classWitness.inlinedOxsts.classDeclaration
+            inlinedOxsts.classDeclaration = classDeclaration
             inlinedOxsts.isWitness = true
             inlinedOxsts.variables += stateVariable
+            if (hasClocks) {
+                inlinedOxsts.timeScale = scale.intValueExact()
+                inlinedOxsts.variables += timeVariable
+            }
             inlinedOxsts.initTransition = createInitTransitionDeclaration()
             inlinedOxsts.mainTransition = createMainTransitionDeclaration()
             inlinedOxsts.property = createPropertyDeclaration()
@@ -83,28 +131,30 @@ class ClassWitnessBackAnnotator @Inject constructor(
         }
 
         private fun createInitTransitionDeclaration(): TransitionDeclaration {
-            val initTransition = builtinSymbolResolver.anythingInitTransition(classWitness.inlinedOxsts.classDeclaration)
+            val initTransition = builtinSymbolResolver.anythingInitTransition(classDeclaration)
             val transition = redefinitionAwareReferenceResolver.resolve(rootFeature, initTransition) as TransitionDeclaration
 
             return OxstsFactory.createTransitionDeclaration().also {
                 it.kind = TransitionKind.INIT
-                it.branches += createStateOperation(classWitness.initializedState, transition)
+                it.branches += createStepOperation(0, transition, reportTrace.initial.state, null)
             }
         }
 
         private fun createMainTransitionDeclaration(): TransitionDeclaration {
-            val mainTransition = builtinSymbolResolver.anythingMainTransition(classWitness.inlinedOxsts.classDeclaration)
+            val mainTransition = builtinSymbolResolver.anythingMainTransition(classDeclaration)
             val transition = redefinitionAwareReferenceResolver.resolve(rootFeature, mainTransition) as TransitionDeclaration
 
             return OxstsFactory.createTransitionDeclaration().also {
                 it.kind = TransitionKind.TRAN
 
-                if (classWitness.transitionStates.isEmpty()) {
+                if (reportTrace.steps.isEmpty()) {
                     it.branches += OxstsFactory.createSequenceOperation()
                 }
 
-                for (state in classWitness.transitionStates) {
-                    it.branches += createStateOperation(state, transition)
+                var time = Fraction.ZERO
+                for ((index, step) in reportTrace.steps.withIndex()) {
+                    time += step.elapsed
+                    it.branches += createStepOperation(index + 1, transition, step.target, time)
                 }
             }
         }
@@ -128,57 +178,131 @@ class ClassWitnessBackAnnotator @Inject constructor(
             }
         }
 
-        private fun createStateOperation(
-            state: ClassWitnessState,
+        private fun createStepOperation(
+            position: Int,
             transition: TransitionDeclaration,
+            state: Int,
+            time: Fraction?,
         ): SequenceOperation {
             val realTransitionDeclaration = redefinitionAwareReferenceResolver.resolve(rootFeature, transition) as TransitionDeclaration
 
             return OxstsFactory.createSequenceOperation().also {
-                it.steps += createStateVariableAssumption(state.stepValue)
+                it.steps += createAssumption(OxstsFactory.createElementReference(stateVariable), OxstsFactory.createLiteralInteger(position))
 
                 it.steps += createInlineTransitionCall(realTransitionDeclaration)
 
-                it.steps += state.toAssumptionOperations()
+                if (time != null && hasClocks) {
+                    it.steps += createAssumption(OxstsFactory.createElementReference(timeVariable), scaled(time))
+                }
 
-                if (classWitness.getNextStates(state).size > 1) {
-                    it.steps += createNextStateTransitionOperation(state)
+                it.steps += stateAssumptions(reportTrace.states[state])
+
+                it.steps += OxstsFactory.createAssignmentOperation().also { assignment ->
+                    assignment.reference = OxstsFactory.createElementReference(stateVariable)
+                    assignment.expression = OxstsFactory.createLiteralInteger(position + 1)
+                }
+            }
+        }
+
+        private fun stateAssumptions(state: ReportState): List<AssumptionOperation> {
+            return state.values.flatMap { (key, value) ->
+                val variable = paths.variables[key] ?: error("the report names the variable $key, which the verified model does not hold")
+                if (variable.recordField != null) {
+                    recordAssumptions(variable.reference.rooted(), variable.declaredVariable.typeSpecification.domain, value)
+                } else if (clockTestAnalysis.isClock(variable.declaredVariable)) {
+                    listOf(createAssumption(variable.reference.rooted(), scaled(value.toFraction())))
                 } else {
-                    it.steps += createStateVariableAssignment(state.stepValue + 1)
+                    listOf(createAssumption(variable.reference.rooted(), literal(value, variable.declaredVariable.typeSpecification.domain)))
                 }
             }
         }
 
-        private fun createNextStateTransitionOperation(state: ClassWitnessState): Operation {
-            val nextStates = classWitness.getNextStates(state)
-
-            if (nextStates.size == 1) {
-                return createStateVariableAssignment(nextStates.single().stepValue)
-            }
-
-            return OxstsFactory.createChoiceOperation().also {
-                for (nextState in nextStates) {
-                    it.branches += OxstsFactory.createSequenceOperation().also {
-                        it.steps += createStateVariableAssignment(nextState.stepValue)
-                    }
+        private fun recordAssumptions(
+            reference: Expression,
+            domain: DomainDeclaration,
+            value: ReportValue,
+        ): List<AssumptionOperation> {
+            val record = domain as? RecordDeclaration ?: error("a record value is reported for the type ${domain.name}")
+            val fields = value as? ReportValue.Record ?: error("the value of a record is an object of its fields")
+            return fields.fields.flatMap { (name, fieldValue) ->
+                val field = record.members.filterIsInstance<VariableDeclaration>().singleOrNull {
+                    it.name == name
+                } ?: error("the record ${record.name} has no field $name")
+                val fieldReference = OxstsFactory.createNavigationSuffixExpression().also {
+                    it.primary = reference.copy()
+                    it.member = field
+                }
+                if (fieldValue is ReportValue.Record) {
+                    recordAssumptions(fieldReference, field.typeSpecification.domain, fieldValue)
+                } else {
+                    listOf(createAssumption(fieldReference, literal(fieldValue, field.typeSpecification.domain)))
                 }
             }
         }
 
-        private fun createStateVariableAssumption(value: Int): AssumptionOperation {
+        private fun literal(value: ReportValue, domain: DomainDeclaration): Expression {
+            return when (value) {
+                is ReportValue.Bool -> OxstsFactory.createLiteralBoolean(value.value)
+                is ReportValue.Integer -> OxstsFactory.createLiteralInteger(value.value)
+                is ReportValue.Real -> OxstsFactory.createLiteralReal().also {
+                    it.value = value.value
+                }
+                is ReportValue.Null -> OxstsFactory.createLiteralNothing()
+                is ReportValue.Text -> when (domain) {
+                    is EnumDeclaration -> enumLiteral(domain, value.value)
+                    is DataTypeDeclaration -> error("the text ${value.value} is reported for the data type ${domain.name}")
+                    else -> instance(value.value)
+                }
+                is ReportValue.Array -> error("a state holds an array slot by slot")
+                is ReportValue.Record -> error("a record value is assumed field by field")
+            }
+        }
+
+        private fun enumLiteral(enumDeclaration: EnumDeclaration, name: String): Expression {
+            val literal = enumDeclaration.literals.singleOrNull {
+                it.name == name
+            } ?: error("the enum ${enumDeclaration.name} has no literal $name")
+            return OxstsFactory.createElementReference(literal)
+        }
+
+        private fun instance(path: String): Expression {
+            val reference = paths.instances[path] ?: error("the report names the instance $path, which the verified model does not hold")
+            return reference.rooted()
+        }
+
+        private fun clockValues(index: Int, state: ReportState): List<Fraction> {
+            for (key in state.values.keys) {
+                if (key !in paths.variables) {
+                    error("the report names the variable $key, which the verified model does not hold")
+                }
+            }
+            return clocks.map {
+                val value = state.values[it] ?: error("the state $index holds no value for the clock $it")
+                value.toFraction()
+            }
+        }
+
+        private fun timeScale(): BigInteger {
+            val amounts = reportTrace.steps.map {
+                it.elapsed
+            } + clockStates.flatten()
+            return amounts.fold(BigInteger.ONE) { scale, amount ->
+                scale / scale.gcd(amount.denominator) * amount.denominator
+            }
+        }
+
+        private fun scaled(amount: Fraction): Expression {
+            val units = amount.numerator * (scale / amount.denominator)
+            return OxstsFactory.createLiteralInteger(units.intValueExact())
+        }
+
+        private fun createAssumption(left: Expression, right: Expression): AssumptionOperation {
             return OxstsFactory.createAssumptionOperation().also {
                 it.expression = OxstsFactory.createComparisonOperator().also {
                     it.op = ComparisonOp.EQ
-                    it.left = OxstsFactory.createElementReference(stateVariable)
-                    it.right = OxstsFactory.createLiteralInteger(value)
+                    it.left = left
+                    it.right = right
                 }
-            }
-        }
-
-        private fun createStateVariableAssignment(value: Int): AssignmentOperation {
-            return OxstsFactory.createAssignmentOperation().also {
-                it.reference = OxstsFactory.createElementReference(stateVariable)
-                it.expression = OxstsFactory.createLiteralInteger(value)
             }
         }
 
@@ -195,51 +319,50 @@ class ClassWitnessBackAnnotator @Inject constructor(
             }
         }
 
-        private fun ClassWitnessStateValue.toAssumption(): AssumptionOperation {
-            return OxstsFactory.createAssumptionOperation().also {
-                it.expression = OxstsFactory.createComparisonOperator().also {
-                    it.op = ComparisonOp.EQ
-                    it.left = variableReference.copy().fixRootFeatureExpression(rootFeature)
-                    it.right = value.copy().fixRootFeatureExpression(rootFeature)
-                }
-            }
-        }
-
-        private fun Expression.fixRootFeatureExpression(actualRoot: FeatureDeclaration): Expression {
-            if (this !is ReferenceExpression) {
-                return this
+        private fun Expression.rooted(): Expression {
+            val copy = copy()
+            if (copy !is ReferenceExpression) {
+                return copy
             }
 
-            val innerMost = innerMostElementReference()
+            val innerMost = copy.innerMostElementReference()
 
             if (OxstsUtils.isElementContextual(innerMost.element)) {
-                innerMost.element = actualRoot
+                innerMost.element = rootFeature
             }
 
-            return this
+            return copy
         }
 
         private tailrec fun Expression.innerMostElementReference(): ElementReference {
             return when (this) {
                 is ElementReference -> this
                 is PostfixUnaryExpression -> primary.innerMostElementReference()
-                else -> error("Unsupported expression!")
-            }
-        }
-
-        private fun ClassWitnessState.toAssumptionOperations(): List<AssumptionOperation> {
-            return values.map {
-                it.toAssumption()
+                else -> error("a witness reference starts at an element, found ${eClass().name}")
             }
         }
 
     }
 
+    private fun reportPaths(compilation: FlattenedCompilationContext): ReportPaths {
+        val variables = linkedMapOf<String, ClassWitnessVariable>()
+        for (variable in compilation.flatteningInfo.variableHolders.keys) {
+            val located = classWitnessTransformer.locate(variable, compilation)
+            variables.putIfAbsent(reportValueConverter.path(located.reference), located)
+        }
+        val instances = compilation.rootInstance.treeSequence().drop(1).associate {
+            val reference = instanceReferenceProvider.getReference(it)
+            reportValueConverter.path(reference) to reference
+        }
+        return ReportPaths(variables, instances)
+    }
+
     fun createWitnessInlinedOxsts(
-        classWitness: ClassWitness,
+        reportTrace: ReportTrace,
+        compilation: FlattenedCompilationContext,
         verdict: VerificationVerdict,
     ): InlinedOxsts {
-        val context = WitnessContext(classWitness, verdict)
+        val context = WitnessContext(reportTrace, compilation, verdict)
         return context.createInlinedOxsts()
     }
 

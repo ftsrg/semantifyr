@@ -35,33 +35,6 @@ class SmartFullPortfolioStagesTest {
     private val parentInjector = mock(Injector::class.java)
 
     @Test
-    fun `with more configurations than slots the stages run one after another beside the configurations listed in a row`(
-        @TempDir output: Path,
-    ) = runTest {
-        val theta = scripted<ThetaConfig>("theta")
-        val spin = scripted<SpinConfig>("spin")
-        val portfolio = smart(theta = theta, spin = spin)
-
-        val result = portfolio.verify(parentInjector, stubRequest(output, timeout = 120.seconds), LimitedConcurrencyGate(9), ExecutionEnvironment.Empty, ProgressContext.Silent)
-
-        assertThat(result.verdict).isEqualTo(VerificationVerdict.Timeout)
-        assertThat(currentTime).isEqualTo(120_000)
-        assertThat(startsOf(theta) + startsOf(spin)).containsExactlyInAnyOrder(
-            "bounded-bmc@0s",
-            "safe-dfs@0s",
-            "bounded-kinduction@0s",
-            "cegar-expl@0s",
-            "cegar-pred-cart@10s",
-            "chc@10s",
-            "bounded-imc@10s",
-            "cegar-expl-pred-combined@10s",
-            "ic3@40s",
-            "collapse@40s",
-            "bitstate@40s",
-        )
-    }
-
-    @Test
     fun `Spin's collapse and bitstate stay out of the last stage after its plain search ended on its own`(
         @TempDir output: Path,
     ) = runTest {
@@ -73,7 +46,7 @@ class SmartFullPortfolioStagesTest {
         )
         val portfolio = smart(theta = scripted<ThetaConfig>("theta"), spin = spin)
 
-        val result = portfolio.verify(parentInjector, stubRequest(output, timeout = 120.seconds), LimitedConcurrencyGate(9), ExecutionEnvironment.Empty, ProgressContext.Silent)
+        val result = portfolio.verify(parentInjector, stubRequest(output, timeout = 120.seconds), LimitedConcurrencyGate(9), ExecutionEnvironment.Empty, ProgressContext.Silent, noReadBack)
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Timeout)
         assertThat(startsOf(spin)).containsExactly(
@@ -93,7 +66,7 @@ class SmartFullPortfolioStagesTest {
         )
         val portfolio = smart(spin = spin)
 
-        val result = portfolio.verify(parentInjector, stubRequest(output, timeout = 120.seconds), LimitedConcurrencyGate(2), ExecutionEnvironment.Empty, ProgressContext.Silent)
+        val result = portfolio.verify(parentInjector, stubRequest(output, timeout = 120.seconds), LimitedConcurrencyGate(2), ExecutionEnvironment.Empty, ProgressContext.Silent, noReadBack)
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
         assertThat(currentTime).isEqualTo(15_000)
@@ -123,7 +96,7 @@ class SmartFullPortfolioStagesTest {
         )
         val portfolio = smart(theta = theta, spin = spin)
 
-        portfolio.verify(parentInjector, stubRequest(output, timeout = 60.seconds), LimitedConcurrencyGate(9), ExecutionEnvironment.Empty, ProgressContext.Silent)
+        portfolio.verify(parentInjector, stubRequest(output, timeout = 60.seconds), LimitedConcurrencyGate(9), ExecutionEnvironment.Empty, ProgressContext.Silent, noReadBack)
 
         assertThat(startsOf(theta)).contains(
             "cegar-pred-cart@1s",
@@ -139,7 +112,7 @@ class SmartFullPortfolioStagesTest {
         val theta = scripted<ThetaConfig>("theta")
         val portfolio = smart(theta = theta, spin = scripted<SpinConfig>("spin"))
 
-        portfolio.verify(parentInjector, stubRequest(output, timeout = 45.seconds), LimitedConcurrencyGate(9), ExecutionEnvironment.Empty, ProgressContext.Silent)
+        portfolio.verify(parentInjector, stubRequest(output, timeout = 45.seconds), LimitedConcurrencyGate(9), ExecutionEnvironment.Empty, ProgressContext.Silent, noReadBack)
 
         assertThat(startsOf(theta)).containsExactlyInAnyOrder(
             "bounded-bmc@0s",
@@ -159,7 +132,7 @@ class SmartFullPortfolioStagesTest {
         val spin = scripted<SpinConfig>("spin")
         val portfolio = smart(theta = theta, spin = spin)
 
-        val result = portfolio.verify(parentInjector, stubRequest(output, timeout = 24.seconds), LimitedConcurrencyGate(9), ExecutionEnvironment.Empty, ProgressContext.Silent)
+        val result = portfolio.verify(parentInjector, stubRequest(output, timeout = 24.seconds), LimitedConcurrencyGate(9), ExecutionEnvironment.Empty, ProgressContext.Silent, noReadBack)
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Timeout)
         assertThat(currentTime).isEqualTo(24_000)
@@ -194,7 +167,7 @@ class SmartFullPortfolioStagesTest {
         )
         val portfolio = smart(theta = theta, spin = scripted<SpinConfig>("spin"))
 
-        val result = portfolio.verify(parentInjector, stubRequest(output, timeout = 120.seconds), LimitedConcurrencyGate(9), ExecutionEnvironment.Empty, ProgressContext.Silent)
+        val result = portfolio.verify(parentInjector, stubRequest(output, timeout = 120.seconds), LimitedConcurrencyGate(9), ExecutionEnvironment.Empty, ProgressContext.Silent, noReadBack)
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
         assertThat(result.isTrusted).isTrue
@@ -202,7 +175,7 @@ class SmartFullPortfolioStagesTest {
     }
 
     @Test
-    fun `with all four backends each stage holds its configurations`(
+    fun `with more configurations than slots the stages run one after another beside the configurations listed in a row`(
         @TempDir output: Path,
     ) = runTest {
         val theta = scripted<ThetaConfig>("theta")
@@ -211,8 +184,10 @@ class SmartFullPortfolioStagesTest {
         val spin = scripted<SpinConfig>("spin")
         val portfolio = smart(theta = theta, uppaal = uppaal, nuxmv = nuxmv, spin = spin)
 
-        portfolio.verify(parentInjector, stubRequest(output, timeout = 120.seconds), LimitedConcurrencyGate(9), ExecutionEnvironment.Empty, ProgressContext.Silent)
+        val result = portfolio.verify(parentInjector, stubRequest(output, timeout = 120.seconds), LimitedConcurrencyGate(9), ExecutionEnvironment.Empty, ProgressContext.Silent, noReadBack)
 
+        assertThat(result.verdict).isEqualTo(VerificationVerdict.Timeout)
+        assertThat(currentTime).isEqualTo(120_000)
         val starts = listOf(theta, uppaal, nuxmv, spin).flatMap { backend ->
             backend.starts.map {
                 "${backend.id}:${it.configuration}@${it.at}"
@@ -240,32 +215,6 @@ class SmartFullPortfolioStagesTest {
     }
 
     @Test
-    fun `the declared legs are every leg the stages may launch`() {
-        assertThat(
-            SmartFullPortfolio().legs.map {
-                it.id
-            },
-        ).containsExactlyInAnyOrder(
-            "theta:bounded-bmc",
-            "theta:bounded-kinduction",
-            "theta:bounded-imc",
-            "theta:cegar-expl",
-            "theta:cegar-pred-cart",
-            "theta:cegar-expl-pred-combined",
-            "theta:ic3",
-            "theta:chc",
-            "nuxmv:kinduction-invar",
-            "nuxmv:ic3-invar",
-            "nuxmv:bdd-invar",
-            "spin:safe-dfs",
-            "spin:collapse",
-            "spin:bitstate",
-            "uppaal:default",
-            "uppaal:over-approximation",
-        )
-    }
-
-    @Test
     fun `with as many slots as the second stage's legs and 120 s an invariant the explicit configuration proves alone within 30 s is answered`(
         @TempDir output: Path,
     ) = runTest {
@@ -283,7 +232,7 @@ class SmartFullPortfolioStagesTest {
         )
         val portfolio = smart(theta = theta, spin = spin)
 
-        val result = portfolio.verify(parentInjector, stubRequest(output, timeout = 120.seconds), LimitedConcurrencyGate(5), ExecutionEnvironment.Empty, ProgressContext.Silent)
+        val result = portfolio.verify(parentInjector, stubRequest(output, timeout = 120.seconds), LimitedConcurrencyGate(5), ExecutionEnvironment.Empty, ProgressContext.Silent, noReadBack)
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Passed)
         assertThat(result.metadata.backendId).isEqualTo("theta")

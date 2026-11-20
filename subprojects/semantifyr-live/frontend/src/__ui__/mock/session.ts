@@ -4,12 +4,13 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import type {
-  CompiledOxstsResult,
-  Range,
-  VerificationCaseResult,
-  VerificationCaseSpecification,
-  WitnessValidationResult,
+import {
+  caseOutcomeOf,
+  type CompiledOxstsResult,
+  type Range,
+  type VerificationCaseResult,
+  type VerificationCaseSpecification,
+  type WitnessValidationResult,
 } from '@semantifyr/editor-common'
 
 import { flavorFixture, textKey, type Diagnostic, type FlavorFixture, type ProgressValue, type RecordedDocument } from './fixtures'
@@ -510,7 +511,10 @@ export class MockSession {
     this.active.delete(id)
     this.announce()
     if (abort.signal.aborted && kind === 'Validate') {
-      return { status: 'errored', verdict: null, message: 'java.util.concurrent.CancellationException', backendId: null, portfolioId: active.portfolioId, metrics: null }
+      if (this.fixture.cancelledValidation === null) {
+        throw new Unanswered(`${this.flavorId}: no recorded answer to a cancelled validation`)
+      }
+      return this.fixture.cancelledValidation
     }
     return result
   }
@@ -524,7 +528,7 @@ export class MockSession {
   private recordedResult(caseRequest: CaseRequest): VerificationCaseResult {
     const recorded = caseRequest.caseId === null ? undefined : this.fixture.results[caseRequest.caseId]
     const result = recorded ?? Object.values(this.fixture.results).find((candidate) => {
-      return candidate.status === 'passed' && !candidate.trace
+      return caseOutcomeOf(candidate).status === 'passed' && !candidate.report?.trace
     })
     if (result === undefined) {
       throw new Unanswered(`${this.flavorId}: no recorded result for ${caseRequest.caseId}`)

@@ -6,10 +6,20 @@
 
 package hu.bme.mit.semantifyr.backends.nuxmv.transformation
 
+import com.google.inject.Inject
+import com.google.inject.Injector
+import hu.bme.mit.semantifyr.backend.BackendCapabilityChecker
+import hu.bme.mit.semantifyr.backend.scopes.withVerificationScopeBlocking
+import hu.bme.mit.semantifyr.backends.nuxmv.verification.NuxmvBackend
+import hu.bme.mit.semantifyr.backends.nuxmv.verification.NuxmvConfig
+import hu.bme.mit.semantifyr.compiler.pipeline.context.TransitionCallTraceMap
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 class NuxmvCapabilityCheckerTest : NuxmvTransformationTestBase() {
+
+    @Inject
+    private lateinit var oxstsInjector: Injector
 
     private val colors = """
         package test::colors
@@ -21,20 +31,20 @@ class NuxmvCapabilityCheckerTest : NuxmvTransformationTestBase() {
 
     private fun unsupported(body: String): List<String> {
         val inlinedOxsts = parse("inlined oxsts of semantifyr::Anything\n${body.trimIndent()}", colors)
-        return capabilityChecker().check(inlinedOxsts).map {
+        return capabilityChecker().check(inlinedOxsts, TransitionCallTraceMap(emptyMap())).map {
             it.description
         }
     }
 
     private fun unsupportedByBdd(body: String): List<String> {
         val inlinedOxsts = parse("inlined oxsts of semantifyr::Anything\n${body.trimIndent()}", colors)
-        return bddCapabilityChecker().check(inlinedOxsts).map {
+        return bddCapabilityChecker().check(inlinedOxsts, TransitionCallTraceMap(emptyMap())).map {
             it.description
         }
     }
 
     @Test
-    fun `the BDD engine refuses an integer variable`() {
+    fun `the BDD configuration refuses an integer variable`() {
         val unsupported = unsupportedByBdd(
             """
                 var counter : int := 0
@@ -54,7 +64,50 @@ class NuxmvCapabilityCheckerTest : NuxmvTransformationTestBase() {
     }
 
     @Test
-    fun `the BDD engine accepts boolean and enumeration variables`() {
+    fun `the BDD configuration refuses a clock`() {
+        val unsupported = unsupportedByBdd(
+            """
+                var elapsed : clock := 0
+                var late : bool := false
+                init {
+                }
+                tran {
+                    assume(elapsed <= 5)
+                    late := true
+                }
+                prop {
+                    AG !late
+                }
+            """,
+        )
+
+        assertThat(unsupported).containsExactly("clocks")
+    }
+
+    @Test
+    fun `the SMT configurations accept a clock`() {
+        val unsupported = unsupported(
+            """
+                var elapsed : clock := 0
+                var late : bool := false
+                init {
+                }
+                tran {
+                    assume(elapsed >= 6)
+                    late := true
+                    elapsed := 0
+                }
+                prop {
+                    AG !late
+                }
+            """,
+        )
+
+        assertThat(unsupported).isEmpty()
+    }
+
+    @Test
+    fun `the BDD configuration accepts boolean and enumeration variables`() {
         val unsupported = unsupportedByBdd(
             """
                 var flag : bool := false
@@ -133,5 +186,17 @@ class NuxmvCapabilityCheckerTest : NuxmvTransformationTestBase() {
             "string literals",
             "for-operations",
         )
+    }
+
+    @Test
+    fun `the BDD configuration gets the BDD checker and the SMT configurations the plain one`() {
+        assertThat(checkerOf(NuxmvConfig.BddInvar)).isInstanceOf(NuxmvBddCapabilityChecker::class.java)
+        assertThat(checkerOf(NuxmvConfig.KInductionInvar)).isExactlyInstanceOf(NuxmvCapabilityChecker::class.java)
+    }
+
+    private fun checkerOf(config: NuxmvConfig): BackendCapabilityChecker {
+        return withVerificationScopeBlocking {
+            NuxmvBackend().capabilityChecker(oxstsInjector, config)
+        }
     }
 }

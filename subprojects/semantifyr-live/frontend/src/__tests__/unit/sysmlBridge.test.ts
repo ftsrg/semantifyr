@@ -5,15 +5,14 @@
  */
 
 import { describe, expect, it } from 'vitest'
-import { VerificationStatus, type VerificationCaseResult } from '@semantifyr/editor-common'
+import { caseOutcomeOf, VerificationStatus, type VerificationCaseResult, type VerificationReport } from '@semantifyr/editor-common'
 import { createSysmlBridge, mapperProblems, SYSML_OXSTS_URI } from '../../lib/session/sysmlBridge'
 import type { LspClient } from '../../lib/verification/engine'
 
 const fileUri = 'file:///workspace/snippet.sysml'
 const sysmlRange = { start: { line: 4, character: 0 }, end: { line: 9, character: 1 } }
 const oxstsRange = { start: { line: 40, character: 0 }, end: { line: 60, character: 1 } }
-const callTrace = { steps: [] }
-const witnessState = { steps: [] }
+const report = { kind: 'run', verificationCase: 'semantifyr::sysml::model::LampNeverLit', portfolioId: 'smart', result: { verdict: 'Failed', message: null }, trace: { steps: [] } } as unknown as VerificationReport
 const nameMap = { modelHash: 'abc' }
 const witnessUri = 'file:///workspace/.artifacts/case/witness.semantifyr'
 
@@ -24,16 +23,12 @@ interface Command {
 
 function failedResult(): VerificationCaseResult {
   return {
-    status: VerificationStatus.Failed,
+    status: null,
     message: null,
-    backendId: 'theta',
-    portfolioId: 'smart',
-    metrics: null,
-    trace: {
-      callTrace: callTrace as never,
-      witnessState: witnessState as never,
-      witnessUri,
-    },
+    portfolioId: null,
+    report,
+    witnessUri,
+    traceUri: null,
   }
 }
 
@@ -81,7 +76,7 @@ function stubOxsts(result = failedResult()) {
         case 'oxsts.case.verify':
           return Promise.resolve(result)
         case 'oxsts.case.validateWitness':
-          return Promise.resolve({ status: 'valid', verdict: 'failed', message: null, backendId: null, portfolioId: null, metrics: null })
+          return Promise.resolve({ status: 'valid', message: null, portfolioId: null, report: null })
         default:
           return Promise.reject(new Error(`unexpected ${request.command}`))
       }
@@ -91,17 +86,27 @@ function stubOxsts(result = failedResult()) {
 }
 
 function verifyRequest(worker: LspClient, oxsts: LspClient) {
-  const bridge = createSysmlBridge({ fileUri, getWorkerClient: () => worker, getOxstsClient: () => oxsts })
+  const bridge = createSysmlBridge({ fileUri, getWorkerClient: () => {
+    return worker
+  }, getOxstsClient: () => {
+    return oxsts
+  } })
   const verifyArguments = { uri: fileUri, range: sysmlRange, portfolio: 'smart' }
   return {
     bridge,
-    run: () => bridge.client.sendRequest('workspace/executeCommand', { command: 'sysml.case.verify', arguments: [verifyArguments] }) as Promise<VerificationCaseResult>,
+    run: () => {
+      return bridge.client.sendRequest('workspace/executeCommand', { command: 'sysml.case.verify', arguments: [verifyArguments] }) as Promise<VerificationCaseResult>
+    },
   }
 }
 
 describe('sysml bridge', () => {
   it('discovers the verification case elements in the edited document', async () => {
-    const bridge = createSysmlBridge({ fileUri, getWorkerClient: () => stubWorker(), getOxstsClient: () => undefined })
+    const bridge = createSysmlBridge({ fileUri, getWorkerClient: () => {
+      return stubWorker()
+    }, getOxstsClient: () => {
+      return undefined
+    } })
 
     await expect(bridge.client.sendRequest('workspace/executeCommand', { command: 'sysml.case.discover', arguments: [fileUri] })).resolves.toEqual([
       { id: 'LampNeverLit', label: 'LampNeverLit', location: { uri: fileUri, range: sysmlRange } },
@@ -127,9 +132,10 @@ describe('sysml bridge', () => {
     })
     expect(worker.requests.at(-1)).toEqual({
       command: 'syside.semantifyr.sysml.trace',
-      arguments: [{ uri: fileUri, caseName: 'LampNeverLit', witness: witnessState, trace: callTrace, nameMap }],
+      arguments: [{ uri: fileUri, report, nameMap }],
     })
-    const traceUri = result.trace?.witnessUri ?? ''
+    expect(result.witnessUri).toBe(witnessUri)
+    const traceUri = result.traceUri ?? ''
     expect(traceUri).toBe('file:///workspace/traces/LampNeverLit.trace.sysml')
     await expect(bridge.client.sendRequest('semantifyr/live/session/document/read', { uri: traceUri })).resolves.toEqual({ text: 'part def LampNeverLitTrace;' })
   })
@@ -144,7 +150,11 @@ describe('sysml bridge', () => {
         : stubbed(method, params)
     }
     const oxsts = stubOxsts()
-    const bridge = createSysmlBridge({ fileUri, getWorkerClient: () => worker, getOxstsClient: () => oxsts.client })
+    const bridge = createSysmlBridge({ fileUri, getWorkerClient: () => {
+      return worker
+    }, getOxstsClient: () => {
+      return oxsts.client
+    } })
     const verifying = oxsts.client.sendRequest
     oxsts.client.sendRequest = async (method, params) => {
       if ((params as Command).command === 'oxsts.case.verify') {
@@ -159,7 +169,7 @@ describe('sysml bridge', () => {
     })
 
     expect(worker.requests.at(-1)?.arguments).toEqual([
-      { uri: fileUri, caseName: 'LampNeverLit', witness: witnessState, trace: callTrace, nameMap: { modelHash: 'hash1' } },
+      { uri: fileUri, report, nameMap: { modelHash: 'hash1' } },
     ])
   })
 
@@ -173,8 +183,14 @@ describe('sysml bridge', () => {
     }
     let session = stubOxsts()
     const firstSession = session
-    const bridge = createSysmlBridge({ fileUri, getWorkerClient: () => worker, getOxstsClient: () => session.client })
-    const verify = () => bridge.client.sendRequest('workspace/executeCommand', { command: 'sysml.case.verify', arguments: [{ uri: fileUri, range: sysmlRange }] })
+    const bridge = createSysmlBridge({ fileUri, getWorkerClient: () => {
+      return worker
+    }, getOxstsClient: () => {
+      return session.client
+    } })
+    const verify = () => {
+      return bridge.client.sendRequest('workspace/executeCommand', { command: 'sysml.case.verify', arguments: [{ uri: fileUri, range: sysmlRange }] })
+    }
 
     await verify()
     oxstsText = 'second'
@@ -182,7 +198,9 @@ describe('sysml bridge', () => {
     session = stubOxsts()
     await verify()
 
-    expect(firstSession.notifications.map((notification) => notification.method)).toEqual([
+    expect(firstSession.notifications.map((notification) => {
+      return notification.method
+    })).toEqual([
       'textDocument/didOpen',
       'textDocument/didChange',
     ])
@@ -190,12 +208,18 @@ describe('sysml bridge', () => {
       textDocument: { uri: SYSML_OXSTS_URI, version: 2 },
       contentChanges: [{ text: 'second' }],
     })
-    expect(session.notifications.map((notification) => notification.method)).toEqual(['textDocument/didOpen'])
+    expect(session.notifications.map((notification) => {
+      return notification.method
+    })).toEqual(['textDocument/didOpen'])
   })
 
   it('errors without reaching the backend when no case is at the requested range', async () => {
     const oxsts = stubOxsts()
-    const bridge = createSysmlBridge({ fileUri, getWorkerClient: () => stubWorker(), getOxstsClient: () => oxsts.client })
+    const bridge = createSysmlBridge({ fileUri, getWorkerClient: () => {
+      return stubWorker()
+    }, getOxstsClient: () => {
+      return oxsts.client
+    } })
     const otherRange = { start: { line: 12, character: 0 }, end: { line: 14, character: 1 } }
 
     const result = (await bridge.client.sendRequest('workspace/executeCommand', { command: 'sysml.case.verify', arguments: [{ uri: fileUri, range: otherRange }] })) as VerificationCaseResult
@@ -226,19 +250,19 @@ describe('sysml bridge', () => {
 
     const result = await run()
 
-    expect(result.status).toBe(VerificationStatus.Failed)
-    expect(result.message).toContain('no such element')
-    await expect(bridge.client.sendRequest('semantifyr/live/session/document/read', { uri: result.trace?.witnessUri })).resolves.toEqual({ text: null })
+    expect(caseOutcomeOf(result).status).toBe(VerificationStatus.Failed)
+    expect(caseOutcomeOf(result).message).toContain('no such element')
+    await expect(bridge.client.sendRequest('semantifyr/live/session/document/read', { uri: result.traceUri })).resolves.toEqual({ text: null })
   })
 
-  it('validates the OXSTS witness behind the trace', async () => {
+  it('validates the OXSTS witness through the OXSTS session', async () => {
     const oxsts = stubOxsts()
     const { run, bridge } = verifyRequest(stubWorker(), oxsts.client)
     const result = await run()
 
     await bridge.client.sendRequest('workspace/executeCommand', {
       command: 'sysml.witness.validate',
-      arguments: [{ uri: result.trace?.witnessUri, range: oxstsRange }],
+      arguments: [{ uri: result.witnessUri, range: oxstsRange }],
     })
 
     expect(oxsts.commands.at(-1)).toEqual({
@@ -254,17 +278,6 @@ describe('sysml bridge', () => {
 
     expect(bridge.translateNotification('semantifyr/live/session/verification/changed', params)).toEqual({
       active: [{ verificationId: '1', location: { uri: fileUri, range: sysmlRange } }],
-    })
-  })
-
-  it('reports a validation of the OXSTS witness at the trace the page knows', async () => {
-    const { run, bridge } = verifyRequest(stubWorker(), stubOxsts().client)
-    const result = await run()
-    const witnessRange = { start: { line: 0, character: 0 }, end: { line: 0, character: 0 } }
-    const params = { active: [{ verificationId: '2', kind: 'Validate', location: { uri: witnessUri, range: witnessRange } }] }
-
-    expect(bridge.translateNotification('semantifyr/live/session/verification/changed', params)).toEqual({
-      active: [{ verificationId: '2', kind: 'Validate', location: { uri: result.trace?.witnessUri, range: witnessRange } }],
     })
   })
 

@@ -31,7 +31,7 @@ A portfolio is a strategy for the backend runs: which backends run under which c
 
 ### The Verifier {#verifier}
 
-The verifier drives the path: it finds the cases of a model, has each one compiled and verified by the portfolio, and back-annotates the evidence into a witness, a Semantifyr model of the one execution the backend found, from which every trace is made. Validating a witness is a request of its own: the witness is verified again, as any model is. [Inlined Models](../learn/language/specification/library-and-output/inlined-models.md#witnesses) says what a witness is, and [Portfolios and Verdicts](../learn/backends/portfolios-and-verdicts.mdx#validation) how it is validated.
+The verifier drives the path: it finds the cases of a model, has each one compiled and verified by the portfolio, and back-annotates the evidence into a report of the one execution the backend found, from which every trace is made and the witness, a Semantifyr model of that execution, is derived. Validating a witness is a request of its own: the witness is verified again, as any model is. [Inlined Models](../learn/language/specification/library-and-output/inlined-models.md#witnesses) says what a witness is, and [Portfolios and Verdicts](../learn/backends/portfolios-and-verdicts.mdx#validation) how it is validated.
 
 ## What Runs the Path {#what-runs-the-path}
 

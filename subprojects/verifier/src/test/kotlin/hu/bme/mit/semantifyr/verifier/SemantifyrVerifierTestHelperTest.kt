@@ -13,13 +13,13 @@ import hu.bme.mit.semantifyr.backend.BackendVerificationResult
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.backend.execution.AvailabilityReport
 import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
-import hu.bme.mit.semantifyr.backend.execution.ExecutorKey
 import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts
 import hu.bme.mit.semantifyr.verifier.portfolio.ConcurrencyGate
 import hu.bme.mit.semantifyr.verifier.portfolio.PortfolioLeg
 import hu.bme.mit.semantifyr.verifier.portfolio.VerificationPortfolio
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.io.TempDir
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.EnumSource
@@ -37,6 +37,8 @@ class SemantifyrVerifierTestHelperTest {
     @TempDir
     lateinit var output: Path
 
+    private val simpleModel = Path("../../oxsts-test-models/simple/simple.semantifyr")
+
     @ParameterizedTest
     @EnumSource(
         VerificationVerdict::class,
@@ -49,45 +51,79 @@ class SemantifyrVerifierTestHelperTest {
         ],
     )
     suspend fun `a verdict other than the expected one fails`(verdict: VerificationVerdict) {
-        assertThat(check(FixedPortfolio(verdict)))
-            .isInstanceOf(AssertionFailedError::class.java)
+        assertThrows<AssertionFailedError> {
+            check(FixedPortfolio(verdict))
+        }
     }
 
     @Test
     suspend fun `the expected verdict passes`() {
-        assertThat(check(FixedPortfolio(VerificationVerdict.Passed))).isNull()
+        check(FixedPortfolio(VerificationVerdict.Passed))
     }
 
     @Test
     suspend fun `an unavailable portfolio skips`() {
-        assertThat(check(FixedPortfolio(VerificationVerdict.Passed, available = false)))
-            .isInstanceOf(TestAbortedException::class.java)
+        assertThrows<TestAbortedException> {
+            check(FixedPortfolio(VerificationVerdict.Passed, available = false))
+        }
     }
 
-    private suspend fun check(portfolio: VerificationPortfolio): Throwable? {
-        val context = helper.semantifyrLoader.loadStandaloneModel(Path("../../oxsts-test-models/simple/simple.semantifyr"))
-        val case = helper.collectVerificationCases(context).first {
-            it.qualifiedName.endsWith("::Incrementing")
+    @Test
+    suspend fun `a missing witness fails where the case expects one`() {
+        val failure = assertThrows<AssertionError> {
+            check(FixedPortfolio(VerificationVerdict.Passed), validationPortfolio = FixedPortfolio(VerificationVerdict.Passed))
         }
-        return runCatching {
-            helper.checkTestModel(
-                context = context,
-                case = case,
-                verificationPortfolio = portfolio,
-                outputDirectory = output,
-            )
-        }.exceptionOrNull()
+
+        assertThat(failure).hasMessageContaining("must carry a witness")
+    }
+
+    @Test
+    suspend fun `a case that expects no witness passes without one`() {
+        check(
+            FixedPortfolio(VerificationVerdict.Failed),
+            caseName = "StaysAtOne",
+            validationPortfolio = FixedPortfolio(VerificationVerdict.Passed),
+        )
+    }
+
+    @Test
+    fun `the witness cases are the passed reachabilities and the failed invariants`() {
+        val context = helper.semantifyrLoader.loadStandaloneModel(simpleModel)
+        val names = helper.collectVerificationCases(context, helper.casesExpectingWitness).map {
+            it.qualifiedName.substringAfterLast("::")
+        }
+        assertThat(names).containsExactlyInAnyOrder(
+            "Incrementing",
+            "CounterExceedsBound",
+        )
+    }
+
+    private suspend fun check(
+        portfolio: VerificationPortfolio,
+        caseName: String = "Incrementing",
+        validationPortfolio: VerificationPortfolio? = null,
+    ) {
+        val context = helper.semantifyrLoader.loadStandaloneModel(simpleModel)
+        val case = helper.collectVerificationCases(context).first {
+            it.qualifiedName.endsWith("::$caseName")
+        }
+        helper.checkTestModel(
+            context = context,
+            case = case,
+            verificationPortfolio = portfolio,
+            outputDirectory = output,
+            validationPortfolio = validationPortfolio,
+        )
     }
 
     private class FixedPortfolio(
         private val verdict: VerificationVerdict,
         private val available: Boolean = true,
     ) : VerificationPortfolio() {
-        override val executorKeys: Set<ExecutorKey<*>> = setOf(FakeExecutorKey)
         override val id: String = "fixed"
         override val displayName: String = id
         override val description: String = "test-only"
-        override val legs: List<PortfolioLeg> = emptyList()
+        override val legs: List<PortfolioLeg<*>> = emptyList()
 
         override fun availability(environment: ExecutionEnvironment): AvailabilityReport {
             return if (available) {
@@ -103,6 +139,7 @@ class SemantifyrVerifierTestHelperTest {
             gate: ConcurrencyGate,
             environment: ExecutionEnvironment,
             progress: ProgressContext,
+            readBack: suspend (BackendVerificationResult) -> BackendVerificationResult,
         ): BackendVerificationResult {
             return BackendVerificationResult(verdict = verdict, metadata = fakeMetadata(FakeExecutorKey.name))
         }

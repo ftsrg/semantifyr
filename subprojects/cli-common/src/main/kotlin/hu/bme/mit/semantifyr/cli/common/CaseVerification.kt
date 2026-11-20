@@ -14,9 +14,7 @@ import com.github.ajalt.clikt.parameters.options.help
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.options.switch
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
-import hu.bme.mit.semantifyr.verifier.BackAnnotationException
-import hu.bme.mit.semantifyr.verifier.VerificationResult
-import java.nio.file.Path
+import hu.bme.mit.semantifyr.verifier.VerificationOutcome
 import kotlin.coroutines.cancellation.CancellationException
 
 enum class VerifyOutput {
@@ -32,15 +30,10 @@ fun SuspendingCliktCommand.verifyOutputOption() = mutuallyExclusiveOptions(
         .help("One JSON object per case, one per line."),
 ).single().default(VerifyOutput.Text)
 
-class CaseOutcome(
-    val result: VerificationResult,
-    val report: Path,
-)
-
 suspend fun SuspendingCliktCommand.verifyCase(
     output: VerifyOutput,
     caseName: String,
-    verify: suspend () -> CaseOutcome,
+    verify: suspend () -> VerificationOutcome,
 ): ExitCode {
     if (output == VerifyOutput.Text) {
         echo("Verifying $caseName ...")
@@ -49,21 +42,6 @@ suspend fun SuspendingCliktCommand.verifyCase(
         verify()
     } catch (exception: CancellationException) {
         throw exception
-    } catch (exception: BackAnnotationException) {
-        val message = exception.message ?: exception::class.simpleName
-        when (output) {
-            VerifyOutput.Text -> {
-                echo("  BACK_ANNOTATION_ERROR")
-            }
-            VerifyOutput.Quiet -> {
-                echo("BACK_ANNOTATION_ERROR")
-            }
-            VerifyOutput.Json -> {
-                echo(jsonLineFormat.encodeToString(CaseFailureLine(caseName, ExitCode.BackAnnotation.code, CasePhase.BackAnnotation, message)))
-            }
-        }
-        echo("error: Back-annotating the witness of $caseName failed: $message", err = true)
-        return ExitCode.BackAnnotation
     } catch (exception: Exception) {
         val message = exception.message ?: exception::class.simpleName
         when (output) {
@@ -80,9 +58,9 @@ suspend fun SuspendingCliktCommand.verifyCase(
         echo("error: Compiling $caseName failed: $message", err = true)
         return ExitCode.Compilation
     }
-    val result = outcome.result
+    val report = outcome.reportPath.toAbsolutePath().normalize()
+    val result = outcome.report.result
     val exitCode = ExitCode.of(result.verdict)
-    val report = outcome.report.toAbsolutePath().normalize()
     when (output) {
         VerifyOutput.Text -> {
             val message = result.message?.let {

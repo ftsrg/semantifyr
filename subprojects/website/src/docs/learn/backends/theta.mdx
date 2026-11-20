@@ -2,12 +2,12 @@
 title: Theta
 sidebar_position: 3
 backend: true
-description: The Theta backend, its exact verdicts, its Horn solving configuration that is trusted only for a proof, and the constructs it refuses before it runs.
+description: The Theta backend, its exact verdicts, its Horn solving configuration that is trusted only for a proof, how it realizes time and the constructs it refuses before it runs.
 ---
 
 # Theta
 
-[Theta](https://github.com/ftsrg/theta) verifies the XSTS translation of a case with unbounded integers, and the verdicts of its configurations are exact, so a portfolio trusts every one of them, except those of `chc`. That configuration is Horn solving: Theta encodes the case as constrained Horn clauses and solves them with its bundled Z3. It reports a violation without a trace, so a portfolio trusts it only for a verdict that needs no witness, an invariant that holds or a state that is unreachable; a violation it reports is not trusted and carries no witness. It needs `theta-xsts-cli` on `PATH`, or Docker. It treats a `@Clock` variable as an ordinary variable. Before it runs, it reports a case Not supported when the case holds a construct listed below, naming each construct and its source line.
+[Theta](https://github.com/ftsrg/theta) verifies the XSTS translation of a case with unbounded integers, and on a model whose clock tests are all closed the verdicts of its configurations are exact, so a portfolio trusts every one of them there, except those of `chc`. That configuration is Horn solving: Theta encodes the case as constrained Horn clauses and solves them with its bundled Z3. It reports a violation without a trace, so a portfolio trusts it only for a verdict that needs no witness, an invariant that holds or a state that is unreachable; a violation it reports is not trusted and carries no witness. It needs `theta-xsts-cli` on `PATH`, or Docker. It realizes the [wait before every main step](../language/specification/classes-and-behaviour/time.md#the-wait-before-a-step) as a whole delay, a whole amount of time that every clock advances by. When every clock test of the model is [closed](../language/specification/classes-and-behaviour/time.md#closed-clock-tests), a run with whole delays reaches every state dense time does, up to the values of the clocks: a step waits a whole amount of at most one more than the largest clock bound, and a clock past its largest bound is held one above it, where every test of it reads the same, and its trace gives its true value. When one is not, a step that waits a fraction can reach a state no whole delay does, so the run declares itself under-approximating: a portfolio trusts a trace it finds, which is a run of the model, and not a proof. Before it runs, it reports a case Not supported when the case holds a construct listed below, naming each construct and its source line.
 
 ## What the backend refuses
 
@@ -16,3 +16,5 @@ description: The Theta backend, its exact verdicts, its Horn solving configurati
 - String literals: XSTS has no strings.
 - Array literals: the backend receives arrays split into one variable per slot and has no form for an array value.
 - For-operations over anything but a range: an XSTS loop runs over an integer range.
+- Clock tests that are not closed, in `chc` alone: whole delays under-approximate such a model, and Horn solving gives its verdicts without a trace.
+- Clocks bounded at the largest 32-bit integer: a whole delay saturates a clock one above its largest bound, and an XSTS integer literal holds no value above 2<sup>31</sup> - 1.

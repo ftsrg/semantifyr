@@ -6,47 +6,29 @@
 
 package hu.bme.mit.semantifyr.lang.ide.server.wire;
 
-import hu.bme.mit.semantifyr.verifier.WitnessValidationResultDto;
+import hu.bme.mit.semantifyr.verifier.VerificationOutcome;
+import hu.bme.mit.semantifyr.verifier.VerificationReport;
 
-public record WitnessValidationResult(
-        String status,
-        String verdict,
-        String message,
-        String backendId,
-        String portfolioId,
-        VerificationMetrics metrics) {
+public record WitnessValidationResult(String status, String message, String portfolioId, VerificationReport report) {
 
-    public static WitnessValidationResult fromDto(WitnessValidationResultDto dto, String portfolioId) {
-        var verification = dto.getVerification();
+    public static WitnessValidationResult fromOutcome(VerificationOutcome outcome, String portfolioId) {
+        var report = outcome.getReport();
         return new WitnessValidationResult(
-                statusOf(dto),
-                VerificationStatus.of(verification.getVerdict()),
-                verification.getMessage(),
-                verification.getMetadata().getBackendId(),
+                WitnessValidationStatus.of(report.getResult().getVerdict()),
+                report.getResult().getMessage(),
                 portfolioId,
-                VerificationMetrics.fromDto(verification.getMetrics()));
+                report);
     }
 
     public static WitnessValidationResult errored(String message, String portfolioId) {
-        return new WitnessValidationResult(WitnessValidationStatus.ERRORED, null, message, null, portfolioId, null);
+        return new WitnessValidationResult(WitnessValidationStatus.ERRORED, message, portfolioId, null);
     }
 
     public static WitnessValidationResult timedOut(String message, String portfolioId) {
-        return new WitnessValidationResult(
-                WitnessValidationStatus.TIMEOUT, VerificationStatus.TIMEOUT, message, null, portfolioId, null);
+        return new WitnessValidationResult(WitnessValidationStatus.TIMEOUT, message, portfolioId, null);
     }
 
     public static WitnessValidationResult cancelled(String message, String portfolioId) {
-        return new WitnessValidationResult(
-                WitnessValidationStatus.CANCELLED, VerificationStatus.CANCELLED, message, null, portfolioId, null);
-    }
-
-    private static String statusOf(WitnessValidationResultDto dto) {
-        return switch (dto.getKind()) {
-            case VALID -> WitnessValidationStatus.VALID;
-            case INVALID -> WitnessValidationStatus.INVALID;
-            case INCONCLUSIVE -> WitnessValidationStatus.INCONCLUSIVE;
-            case ERRORED -> WitnessValidationStatus.ERRORED;
-        };
+        return new WitnessValidationResult(WitnessValidationStatus.CANCELLED, message, portfolioId, null);
     }
 }

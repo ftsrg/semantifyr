@@ -172,6 +172,12 @@ describe.each(manifests)('the manifest %s', (manifest) => {
 });
 
 describe('the registry', () => {
+  test('names each example by an address name, lower case with hyphens', () => {
+    for (const example of servedExamples) {
+      expect(example.id).toMatch(/^[a-z0-9]+(-[a-z0-9]+)*$/);
+    }
+  });
+
   test('gives each example one address', () => {
     const addresses = servedExamples.map(address);
     expect(new Set(addresses).size).toBe(addresses.length);

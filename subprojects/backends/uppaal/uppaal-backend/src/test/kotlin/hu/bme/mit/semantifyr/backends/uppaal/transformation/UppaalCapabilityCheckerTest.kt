@@ -6,10 +6,20 @@
 
 package hu.bme.mit.semantifyr.backends.uppaal.transformation
 
+import com.google.inject.Inject
+import com.google.inject.Injector
+import hu.bme.mit.semantifyr.backend.BackendCapabilityChecker
+import hu.bme.mit.semantifyr.backend.scopes.withVerificationScopeBlocking
+import hu.bme.mit.semantifyr.backends.uppaal.verification.UppaalBackend
+import hu.bme.mit.semantifyr.backends.uppaal.verification.UppaalConfig
+import hu.bme.mit.semantifyr.compiler.pipeline.context.TransitionCallTraceMap
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 class UppaalCapabilityCheckerTest : UppaalTransformationTestBase() {
+
+    @Inject
+    private lateinit var oxstsInjector: Injector
 
     private val colors = """
         package test::colors
@@ -25,7 +35,7 @@ class UppaalCapabilityCheckerTest : UppaalTransformationTestBase() {
     ): List<String> {
         val inlinedOxsts = parse("inlined oxsts of semantifyr::Anything\n${body.trimIndent()}", colors)
         return withCapabilityChecker(checkerClass) {
-            it.check(inlinedOxsts)
+            it.check(inlinedOxsts, TransitionCallTraceMap(emptyMap()))
         }.map {
             it.description
         }
@@ -137,17 +147,12 @@ class UppaalCapabilityCheckerTest : UppaalTransformationTestBase() {
             """
                 var ratio : real := 0.5
                 var anything : any := 0
-                @semantifyr::Clock
-                var elapsed : int := 0
-                @semantifyr::Clock
-                var clockColor : test::colors::Color := test::colors::Color::Red
+                var elapsed : clock := 0
                 var counter : int := 0
                 init {
                 }
                 tran {
                     elapsed := 0
-                    elapsed := 5
-                    havoc(elapsed)
                     for (index in 0..2) {
                         counter := counter + index
                     }
@@ -161,11 +166,108 @@ class UppaalCapabilityCheckerTest : UppaalTransformationTestBase() {
         assertThat(unsupported).containsExactlyInAnyOrder(
             "variables of type real",
             "variables of type any",
-            "@Clock on variables that are not data-typed",
-            "clock resets to values other than 0",
-            "havoc on clocks",
             "for-operations",
         )
+    }
+
+    private fun clockModel(tran: String): String {
+        return """
+            var elapsed : clock := 0
+            var flag : bool := false
+            var late : bool := false
+            var count : int := 0
+            init {
+            }
+            tran {
+            ${tran.trimIndent().replace("\n", "\n            ")}
+            }
+            prop {
+                AG !late
+            }
+        """
+    }
+
+    @Test
+    fun `a clock read outside the condition of an assumption or an if is reported`() {
+        val stored = clockModel(
+            """
+                assume(elapsed <= 1)
+                late := elapsed >= 2
+            """,
+        )
+        val conditionalValue = clockModel(
+            """
+                assume(elapsed <= 1)
+                count := if (elapsed >= 1) then 1 else 0
+            """,
+        )
+        val localInitializer = clockModel(
+            """
+                var early : bool := elapsed <= 1
+                late := !early
+            """,
+        )
+        val comparedWithBoolean = clockModel(
+            """
+                assume((elapsed >= 2) == flag)
+                late := true
+            """,
+        )
+        val conditionalValueInAssumption = clockModel(
+            """
+                assume(count == (if (elapsed >= 1) then 1 else 0))
+                late := true
+            """,
+        )
+
+        val description = "clocks read outside the conditions of assumptions and ifs"
+        assertThat(unsupported(stored)).containsExactly(description)
+        assertThat(unsupported(conditionalValue)).containsExactly(description)
+        assertThat(unsupported(localInitializer)).containsExactly(description)
+        assertThat(unsupported(comparedWithBoolean)).containsExactly(description)
+        assertThat(unsupported(conditionalValueInAssumption)).containsExactly(description)
+    }
+
+    @Test
+    fun `clock tests in the conditions of assumptions and ifs pass`() {
+        val unsupported = unsupported(
+            clockModel(
+                """
+                    assume(elapsed <= 5 && !(elapsed < 2))
+                    assume(if (flag) then elapsed <= 3 else elapsed >= 4)
+                    if (elapsed >= 4 || flag) {
+                        late := true
+                    }
+                    elapsed := 0
+                """,
+            ),
+        )
+
+        assertThat(unsupported).isEmpty()
+    }
+
+    @Test
+    fun `a clock bound beyond the magnitude verifyta takes is reported`() {
+        val atLimit = clockModel(
+            """
+                assume(elapsed <= 1073741822)
+                assume(elapsed >= -1073741822)
+            """,
+        )
+        val aboveLimit = clockModel(
+            """
+                assume(elapsed >= 1073741823)
+            """,
+        )
+        val belowLimit = clockModel(
+            """
+                assume(elapsed >= -1073741823)
+            """,
+        )
+
+        assertThat(unsupported(atLimit)).isEmpty()
+        assertThat(unsupported(aboveLimit)).containsExactly("clock bounds beyond 1073741822")
+        assertThat(unsupported(belowLimit)).containsExactly("clock bounds beyond 1073741822")
     }
 
     @Test
@@ -256,5 +358,17 @@ class UppaalCapabilityCheckerTest : UppaalTransformationTestBase() {
         )
 
         assertThat(unsupported).containsExactly("arithmetic that may leave the 32-bit range")
+    }
+
+    @Test
+    fun `the over-approximating configuration gets the over-approximation checker and the others the plain one`() {
+        assertThat(checkerOf(UppaalConfig.OverApproximation)).isInstanceOf(UppaalOverApproximationCapabilityChecker::class.java)
+        assertThat(checkerOf(UppaalConfig.Default)).isExactlyInstanceOf(UppaalCapabilityChecker::class.java)
+    }
+
+    private fun checkerOf(config: UppaalConfig): BackendCapabilityChecker {
+        return withVerificationScopeBlocking {
+            UppaalBackend().capabilityChecker(oxstsInjector, config)
+        }
     }
 }

@@ -10,8 +10,7 @@ import hu.bme.mit.semantifyr.gradle.conventions.semantifyrArtifact
 plugins {
     id("hu.bme.mit.semantifyr.gradle.conventions.jvm")
     id("hu.bme.mit.semantifyr.gradle.conventions.theta")
-    id("hu.bme.mit.semantifyr.gradle.conventions.integration")
-    id("hu.bme.mit.semantifyr.gradle.conventions.nightly")
+    id("hu.bme.mit.semantifyr.gradle.conventions.suites")
     kotlin("jvm")
     kotlin("plugin.serialization")
 }
@@ -56,13 +55,8 @@ tasks.processResources {
     from(syncSysmlLibrary)
 }
 
-listOf("test", "integrationTest", "nightlyTest").forEach {
-    tasks.named<Test>(it) {
-        readsServedExamples()
-    }
-}
-
 tasks.withType<Test>().configureEach {
+    readsServedExamples()
     inputs.files(syncSysmlTestModels)
     inputs.dir(layout.projectDirectory.dir("../models/etc")).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.dir(layout.projectDirectory.dir("../models/tutorial")).withPathSensitivity(PathSensitivity.RELATIVE)

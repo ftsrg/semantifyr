@@ -25,12 +25,6 @@ public class BuiltinAnnotationHandler {
         return OxstsUtils.isAnnotatedWith(variableDeclaration, controlAnnotation);
     }
 
-    public boolean isClockVariable(VariableDeclaration variableDeclaration) {
-        var clockAnnotation = builtinSymbolResolver.clockAnnotation(variableDeclaration);
-
-        return OxstsUtils.isAnnotatedWith(variableDeclaration, clockAnnotation);
-    }
-
     public boolean isNonOptimizable(VariableDeclaration variableDeclaration) {
         var nonOptimizableAnnotation = builtinSymbolResolver.nonOptimizableAnnotation(variableDeclaration);
 

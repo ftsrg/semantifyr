@@ -7,6 +7,7 @@
 plugins {
     id("hu.bme.mit.semantifyr.gradle.conventions.application")
     id("hu.bme.mit.semantifyr.gradle.xtext-ide")
+    id("hu.bme.mit.semantifyr.gradle.conventions.suites")
 }
 
 dependencies {
@@ -36,4 +37,10 @@ tasks.named("test") {
             .withPropertyName(it)
             .withPathSensitivity(PathSensitivity.RELATIVE)
     }
+}
+
+tasks.named("integrationTest") {
+    inputs.dir(rootProject.layout.projectDirectory.dir("oxsts-test-models/smoke"))
+        .withPropertyName("oxstsSmokeModels")
+        .withPathSensitivity(PathSensitivity.RELATIVE)
 }

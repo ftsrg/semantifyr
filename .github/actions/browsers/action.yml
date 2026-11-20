@@ -1,0 +1,40 @@
+# SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+#
+# SPDX-License-Identifier: EPL-2.0
+
+name: install-browsers
+description: Installs the browsers
+inputs:
+  browsers:
+    description: The browsers, separated by spaces.
+    required: true
+runs:
+  using: composite
+  steps:
+    - name: Cache
+      id: cache-key
+      shell: sh
+      env:
+        BROWSERS: ${{ inputs.browsers }}
+      run: |
+        version=$(jq -r '.packages["node_modules/playwright"].version' package-lock.json)
+        echo "version=$version" >> "$GITHUB_OUTPUT"
+        echo "key=browsers-$ImageOS-$version-$(echo "$BROWSERS" | tr ' ' '-')" >> "$GITHUB_OUTPUT"
+        mkdir -p "$HOME/.cache/apt-archives/partial"
+        printf 'Dir::Cache::Archives "%s";\nAPT::Keep-Downloaded-Packages "true";\n' "$HOME/.cache/apt-archives" | sudo tee /etc/apt/apt.conf.d/90-cached-archives > /dev/null
+    - name: Restore the browser cache
+      uses: actions/cache@v6
+      with:
+        path: |
+          ~/.cache/ms-playwright
+          ~/.cache/apt-archives
+        key: ${{ steps.cache-key.outputs.key }}
+    - name: Install the browsers
+      shell: sh
+      env:
+        BROWSERS: ${{ inputs.browsers }}
+        VERSION: ${{ steps.cache-key.outputs.version }}
+      run: |
+        npm install --prefix "$RUNNER_TEMP/playwright" --no-save --ignore-scripts "playwright@$VERSION"
+        "$RUNNER_TEMP/playwright/node_modules/.bin/playwright" install --with-deps $BROWSERS
+        sudo chmod -R a+rX "$HOME/.cache/apt-archives"

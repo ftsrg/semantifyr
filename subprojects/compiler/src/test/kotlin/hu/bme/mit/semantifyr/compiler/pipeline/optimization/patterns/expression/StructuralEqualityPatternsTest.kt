@@ -90,4 +90,112 @@ class StructuralEqualityPatternsTest : PatternTestBase() {
             }
         """,
     )
+
+    @Test
+    fun `not-equal of identical operands collapses to false`() = assertPatternTransforms(
+        pattern = SelfComparisonPattern(),
+        input = """
+            inlined oxsts of semantifyr::Anything
+            var operand: int := 0
+            init {
+            }
+            tran {
+            }
+            prop {
+                AG (operand != operand)
+            }
+        """,
+        expected = """
+            inlined oxsts of semantifyr::Anything
+            var operand: int := 0
+            init {
+            }
+            tran {
+            }
+            prop {
+                AG false
+            }
+        """,
+    )
+
+    @Test
+    fun `less-or-equal of identical operands collapses to true`() = assertPatternTransforms(
+        pattern = SelfComparisonPattern(),
+        input = """
+            inlined oxsts of semantifyr::Anything
+            var operand: int := 0
+            init {
+            }
+            tran {
+            }
+            prop {
+                AG (operand <= operand)
+            }
+        """,
+        expected = """
+            inlined oxsts of semantifyr::Anything
+            var operand: int := 0
+            init {
+            }
+            tran {
+            }
+            prop {
+                AG true
+            }
+        """,
+    )
+
+    @Test
+    fun `greater of identical operands collapses to false`() = assertPatternTransforms(
+        pattern = SelfComparisonPattern(),
+        input = """
+            inlined oxsts of semantifyr::Anything
+            var operand: int := 0
+            init {
+            }
+            tran {
+            }
+            prop {
+                AG (operand > operand)
+            }
+        """,
+        expected = """
+            inlined oxsts of semantifyr::Anything
+            var operand: int := 0
+            init {
+            }
+            tran {
+            }
+            prop {
+                AG false
+            }
+        """,
+    )
+
+    @Test
+    fun `greater-or-equal of identical operands collapses to true`() = assertPatternTransforms(
+        pattern = SelfComparisonPattern(),
+        input = """
+            inlined oxsts of semantifyr::Anything
+            var operand: int := 0
+            init {
+            }
+            tran {
+            }
+            prop {
+                AG (operand >= operand)
+            }
+        """,
+        expected = """
+            inlined oxsts of semantifyr::Anything
+            var operand: int := 0
+            init {
+            }
+            tran {
+            }
+            prop {
+                AG true
+            }
+        """,
+    )
 }

@@ -9,7 +9,7 @@ package hu.bme.mit.semantifyr.gradle.conventions
 import com.github.gradle.node.npm.proxy.ProxySettings
 
 plugins {
-    base
+    id("hu.bme.mit.semantifyr.gradle.conventions.pack")
     id("com.github.node-gradle.node")
 }
 

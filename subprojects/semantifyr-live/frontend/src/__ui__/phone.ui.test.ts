@@ -35,6 +35,16 @@ function penDigitizer(): void {
   }
 }
 
+async function drawn(page: Page): Promise<void> {
+  await page.evaluate(async () => {
+    for (let frame = 0; frame < 2; frame++) {
+      await new Promise((resolve) => {
+        requestAnimationFrame(resolve)
+      })
+    }
+  })
+}
+
 async function ready(page: Page): Promise<void> {
   await expect.poll(async () => {
     return phone(page).lines.innerText()
@@ -50,7 +60,7 @@ describe('the phone', () => {
     await phone(page).verify.click()
     await phone(page).tab('Results').click()
     await expect.poll(async () => {
-      return page.locator('.case-row.status-failed, .phone-case.status-failed, [class*="status-failed"]').count()
+      return page.locator('.phone-case.status-failed').count()
     }).toBeGreaterThan(0)
     expect(await phone(page).shell.getAttribute('data-pane')).toBe('results')
     await expect.poll(async () => {
@@ -97,7 +107,7 @@ describe('touch input', () => {
 
       await phone(page).lines.tap()
       await page.keyboard.insertText('locked ')
-      await page.waitForTimeout(300)
+      await drawn(page)
       expect(await phone(page).lines.innerText()).not.toContain('locked')
       await page.getByRole('button', { name: 'Edit' }).first().tap()
       await phone(page).lines.tap()
@@ -108,7 +118,7 @@ describe('touch input', () => {
       }).toContain('unlocked')
       await page.getByRole('button', { name: 'Done' }).first().tap()
       await page.keyboard.insertText('again ')
-      await page.waitForTimeout(300)
+      await drawn(page)
       expect(await phone(page).lines.innerText()).not.toContain('again')
     })
   }

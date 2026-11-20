@@ -6,9 +6,13 @@
 
 package hu.bme.mit.semantifyr.frontends.gamma.testing
 
+import hu.bme.mit.semantifyr.backend.BackendConfig
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
+import hu.bme.mit.semantifyr.backend.scopes.withVerificationScope
+import hu.bme.mit.semantifyr.compiler.SemantifyrCompiler
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.ArtifactConfig
+import hu.bme.mit.semantifyr.compiler.pipeline.context.FlattenedCompilationContext
 import hu.bme.mit.semantifyr.frontends.gamma.GammaFrontend
 import hu.bme.mit.semantifyr.frontends.gamma.GammaVariant
 import hu.bme.mit.semantifyr.frontends.gamma.GammaVerificationCase
@@ -19,10 +23,13 @@ import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.EF
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.GammaModelPackage
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.GammaRoot
 import hu.bme.mit.semantifyr.frontends.gamma.reader.GammaReader
+import hu.bme.mit.semantifyr.logging.info
+import hu.bme.mit.semantifyr.logging.loggerFactory
 import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup
 import hu.bme.mit.semantifyr.portfolios.Portfolios
 import hu.bme.mit.semantifyr.verifier.assertVerdict
 import hu.bme.mit.semantifyr.verifier.assumePortfolioAvailable
+import hu.bme.mit.semantifyr.verifier.portfolio.PortfolioLeg
 import hu.bme.mit.semantifyr.verifier.portfolio.VerificationPortfolio
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Named
@@ -44,6 +51,8 @@ enum class GammaTestEngine(
 }
 
 class GammaFrontendTestHelper {
+
+    private val logger by loggerFactory()
 
     private val gammaInjector = GammaStandaloneSetup().createInjectorAndDoEMFRegistration()
     private val oxstsInjector = OxstsStandaloneSetup().createInjectorAndDoEMFRegistration()
@@ -85,12 +94,6 @@ class GammaFrontendTestHelper {
         }.asStream()
     }
 
-    fun discoverAsArguments(sourcePath: Path): Stream<Arguments> {
-        return discover(sourcePath).asSequence().map {
-            Arguments.of(Named.of(it.qualifiedName, it))
-        }.asStream()
-    }
-
     fun buildFrontend(
         portfolio: VerificationPortfolio,
         outputDirectory: Path,
@@ -117,8 +120,52 @@ class GammaFrontendTestHelper {
         expectedVerdict: VerificationVerdict,
     ): GammaVerificationResult {
         val result = frontend.verify(gammaVerificationCase)
-        assertVerdict(gammaVerificationCase.qualifiedName, expectedVerdict, result.verification)
+        assertVerdict(gammaVerificationCase.qualifiedName, expectedVerdict, result.outcome.report.result)
         return result
+    }
+
+    suspend fun checkTrustedVerdictOrNone(
+        portfolio: VerificationPortfolio,
+        environment: ExecutionEnvironment,
+        outputDirectory: Path,
+        gammaVerificationCase: GammaVerificationCase,
+        expectedVerdict: VerificationVerdict,
+        noTrustedVerdictTimeout: Duration,
+    ) {
+        val trustDirectory = outputDirectory.resolve("trust")
+        val compiledCase = buildFrontend(portfolio, trustDirectory.resolve("gamma"), environment = environment).compile(gammaVerificationCase)
+        val compiledOxsts = SemantifyrCompiler(oxstsInjector, ArtifactConfig.NONE).compile(
+            compiledCase.verificationCase.classDeclaration,
+            trustDirectory.resolve("oxsts").resolve(gammaVerificationCase.qualifiedName),
+        )
+        val givesTrustedVerdict = portfolio.legs.any {
+            it.isAvailable(environment) && isTrustedOn(it, compiledOxsts, expectedVerdict)
+        }
+        if (givesTrustedVerdict) {
+            checkVerificationCase(buildFrontend(portfolio, outputDirectory, environment = environment), gammaVerificationCase, expectedVerdict)
+            return
+        }
+        val frontend = buildFrontend(portfolio, outputDirectory, timeout = noTrustedVerdictTimeout, environment = environment)
+        val result = frontend.verify(gammaVerificationCase).outcome.report.result
+        assertThat(result.verdict)
+            .describedAs("${gammaVerificationCase.qualifiedName} has no trusted verdict on these backends (${result.message ?: "no message"})")
+            .isIn(VerificationVerdict.Inconclusive, VerificationVerdict.Timeout)
+    }
+
+    private suspend fun <T : BackendConfig> isTrustedOn(
+        leg: PortfolioLeg<T>,
+        compiledOxsts: FlattenedCompilationContext,
+        verdict: VerificationVerdict,
+    ): Boolean {
+        val inlinedOxsts = compiledOxsts.inlinedOxsts
+        return withVerificationScope {
+            val checker = leg.backend.capabilityChecker(oxstsInjector, leg.config)
+            if (checker.check(inlinedOxsts, compiledOxsts.transitionCallTraces).isNotEmpty()) {
+                return@withVerificationScope false
+            }
+            val soundness = checker.soundness(leg.config.soundness, inlinedOxsts)
+            soundness.trusts(verdict, inlinedOxsts.property.expression)
+        }
     }
 
     suspend fun checkVerificationCaseOn(
@@ -136,16 +183,12 @@ class GammaFrontendTestHelper {
         }
         val frontend = buildFrontend(portfolio, outputDirectory.resolve(engine.name.lowercase()), timeout = timeout)
         val result = frontend.verify(gammaVerificationCase)
-        assertVerdict(gammaVerificationCase.qualifiedName, entry.case.expectedVerdict, result.verification)
+        assertVerdict(gammaVerificationCase.qualifiedName, entry.case.expectedVerdict, result.outcome.report.result)
 
-        val witness = result.witness
-        if (validationPortfolio != null && witness != null) {
-            val outcome = frontend.validateWitness(gammaVerificationCase, witness.witnessPath, validationPortfolio)
-            assertThat(outcome.isValid)
-                .describedAs(
-                    "Witness of ${portfolio.id} for ${gammaVerificationCase.qualifiedName} must re-verify Passed via ${validationPortfolio.id} but got ${outcome.verification.verdict} (${outcome.verification.message ?: "no message"})",
-                )
-                .isTrue()
+        val witnessPath = result.outcome.witness?.path
+        if (validationPortfolio != null && witnessPath != null) {
+            val validation = frontend.validateWitness(gammaVerificationCase, witnessPath, validationPortfolio).report.result
+            assertVerdict("witness of ${portfolio.id} for ${gammaVerificationCase.qualifiedName} on ${validationPortfolio.id}", VerificationVerdict.Passed, validation)
         }
         return result
     }

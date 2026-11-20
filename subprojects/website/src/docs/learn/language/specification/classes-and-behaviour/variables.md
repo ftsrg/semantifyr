@@ -7,7 +7,7 @@ description: The variables of the Semantifyr Language, the mutable state of a mo
 
 # Variables
 
-Variables hold the **mutable state** of the system. Unlike [features](features.md), which define structure and are eliminated during flattening, variables persist across [transitions](transitions.md) and are tracked by the model checker.
+Variables hold the **mutable state** of the system. Unlike [features](features.md), which define structure and are eliminated during flattening, variables persist across [transitions](transitions.md) and are tracked by the model checker; a variable of type `clock` also advances with the time that passes before each main step ([Time](time.md)).
 
 ## Variable Declaration 
 

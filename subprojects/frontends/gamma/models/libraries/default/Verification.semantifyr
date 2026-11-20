@@ -8,20 +8,13 @@ class GammaVerificationCase {
     contains propertyExpression: Expression
 
     redefine init {
-        inline component.startTimeouts()
         inline component.init()
     }
 
     redefine tran {
         inline component.resetOutputEvents()
         inline component.havocInputEvents()
-        inline passTime()
         inline component.main()
-    }
-
-    @Trace
-    tran passTime() {
-        inline component.passTime()
     }
 
     prop {

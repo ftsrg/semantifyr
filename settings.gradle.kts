@@ -71,6 +71,7 @@ include(
     "backend",
     "lang-ide-common",
     "cli-common",
+    "corpus-check",
     "semantifyr-cli",
     "semantifyr-editor-common",
     "oxsts.model",

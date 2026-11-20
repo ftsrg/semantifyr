@@ -25,6 +25,7 @@ dependencies {
     implementation(libs.kotlinx.serialization.json)
 
     testImplementation(testFixtures(project(":backend")))
+    testImplementation(testFixtures(project(":verifier")))
 
     "benchmarkImplementation"(project(":verifier"))
     "benchmarkImplementation"(project(":compiler")) {
@@ -33,10 +34,6 @@ dependencies {
         }
     }
     "benchmarkImplementation"(libs.kotlinx.coroutines.core)
-}
-
-tasks.named("test") {
-    inputs.files(tasks.named("cloneOxstsTestModels"))
 }
 
 val benchmarkSysmlCorpus = configurations.dependencyScope("benchmarkSysmlCorpus")
@@ -72,7 +69,7 @@ val syncBenchmarkModels = tasks.register<Sync>("syncBenchmarkModels") {
         into("gamma/library")
     }
     from(rootProject.layout.projectDirectory.dir("oxsts-test-models/tutorial")) {
-        include("hierarchy.$oxstsFileExtension")
+        include("extending-the-library-nested-states.$oxstsFileExtension")
         into("tutorial")
     }
     into(layout.buildDirectory.dir("benchmark-models"))

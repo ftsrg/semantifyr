@@ -20,6 +20,7 @@ dependencies {
     api(project(":oxsts.model"))
     implementation(project(":utils"))
 
+    testImplementation(libs.log4j.core)
     testRuntimeOnly(libs.slf4j.log4j)
 
     metamodel(project(":oxsts.model"))

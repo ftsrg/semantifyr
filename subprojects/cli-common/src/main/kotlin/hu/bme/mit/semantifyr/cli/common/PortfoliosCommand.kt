@@ -32,7 +32,7 @@ class PortfoliosCommand : SuspendingCliktCommand("portfolios") {
             echo("${portfolio.id}  ${portfolio.displayName}  $state")
             echo("    ${portfolio.description}")
             for (leg in portfolio.legs) {
-                echo("    ${leg.id.replace(':', ' ')}, ${soundnessWords(leg.soundness)}")
+                echo("    ${leg.id.replace(':', ' ')}, ${soundnessWords(leg.config.soundness)}")
             }
             if (availability is AvailabilityReport.Unavailable) {
                 for (hint in availability.hints) {

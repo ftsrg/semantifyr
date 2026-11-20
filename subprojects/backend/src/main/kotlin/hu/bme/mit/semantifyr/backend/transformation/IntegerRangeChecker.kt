@@ -9,6 +9,7 @@ package hu.bme.mit.semantifyr.backend.transformation
 import com.google.inject.Inject
 import hu.bme.mit.semantifyr.backend.UnsupportedConstruct
 import hu.bme.mit.semantifyr.backend.scopes.VerificationScoped
+import hu.bme.mit.semantifyr.compiler.pipeline.context.TransitionCallTraceMap
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.analyses.ConeOfInfluenceComputation
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.analyses.ConeOfInfluenceInfo
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.analyses.IntegerRange
@@ -43,9 +44,9 @@ class IntegerRangeChecker @Inject constructor(
         }
     }
 
-    fun check(inlinedOxsts: InlinedOxsts): List<UnsupportedConstruct> {
+    fun check(inlinedOxsts: InlinedOxsts, transitionCallTraces: TransitionCallTraceMap): List<UnsupportedConstruct> {
         val bounds = boundsOf(inlinedOxsts)
-        val cone = coneOf(inlinedOxsts)
+        val cone = coneOf(inlinedOxsts, transitionCallTraces)
 
         val outOfRange = bounds.variableRanges.filter { (variable, range) ->
             cone.isRelevant(variable) && !range.fitsInt()
@@ -62,9 +63,13 @@ class IntegerRangeChecker @Inject constructor(
     }
 
     // Uppaal stops on an assignment outside a variable's declared range, so only its arithmetic can wrap
-    fun checkArithmetic(inlinedOxsts: InlinedOxsts, declaredRange: (VariableDeclaration) -> IntegerRange): List<UnsupportedConstruct> {
+    fun checkArithmetic(
+        inlinedOxsts: InlinedOxsts,
+        transitionCallTraces: TransitionCallTraceMap,
+        declaredRange: (VariableDeclaration) -> IntegerRange,
+    ): List<UnsupportedConstruct> {
         val bounds = computeBounds(inlinedOxsts, declaredRange)
-        return leavingArithmetic(bounds, coneOf(inlinedOxsts), emptySet())
+        return leavingArithmetic(bounds, coneOf(inlinedOxsts, transitionCallTraces), emptySet())
     }
 
     // the engines choose a havoced integer among HavocValueCollector's candidates, so the ranges hold for the engine's model
@@ -81,8 +86,8 @@ class IntegerRangeChecker @Inject constructor(
         ).compute()
     }
 
-    private fun coneOf(inlinedOxsts: InlinedOxsts): ConeOfInfluenceInfo {
-        return ConeOfInfluenceComputation(inlinedOxsts, MetaConstantExpressionEvaluator()).compute()
+    private fun coneOf(inlinedOxsts: InlinedOxsts, transitionCallTraces: TransitionCallTraceMap): ConeOfInfluenceInfo {
+        return ConeOfInfluenceComputation(inlinedOxsts, MetaConstantExpressionEvaluator(), transitionCallTraces.observedVariables).compute()
     }
 
     private fun leavingArithmetic(

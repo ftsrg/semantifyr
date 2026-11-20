@@ -15,18 +15,16 @@ import org.apache.tools.ant.taskdefs.condition.Os
 plugins {
     id("hu.bme.mit.semantifyr.gradle.conventions.jvm")
     id("hu.bme.mit.semantifyr.gradle.conventions.nodejs")
+    id("hu.bme.mit.semantifyr.gradle.conventions.suites")
     kotlin("jvm")
 }
 
 dependencies {
     implementation(project(":utils"))
     implementation(project(":logging"))
-
-    testImplementation(project(":compiler"))
-    testImplementation(testFixtures(project(":compiler")))
 }
 
-val sysmlCommit = "83977a1411597b10571b15488eb63d8b8b85f79f" // fix: the details of the untyped flow and of accept when say what happens, without the retired kind words
+val sysmlCommit = "7fb52bf2146d9dbbd69102cb9be1d1faa7ce75a5" // feat: the SysML trace names the root instance root by convention instead of reading it from the report
 val sysmlUrl = "https://github.com/arminzavada/sysml-2ls.git"
 val sysmlDir = layout.projectDirectory.dir("sysml-2ls")
 
@@ -311,12 +309,11 @@ configurations.consumable("compiledCorpusElements") {
     }
 }
 
-tasks.test {
+tasks.named("integrationTest") {
     inputs.files(appendFurtherCases).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(
         layout.projectDirectory.file("../models/etc/crossroads-green.trace.sysml"),
-        layout.projectDirectory.file("../models/etc/crossroads-green.trace.json"),
-        layout.projectDirectory.file("../models/etc/crossroads-green.witness.json"),
+        layout.projectDirectory.file("../models/etc/crossroads-green.report.json"),
         layout.projectDirectory.file("../models/etc/crossroads-green.witness.semantifyr"),
     ).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.dir(layout.projectDirectory.dir("../models/libraries/default")).withPathSensitivity(PathSensitivity.RELATIVE)

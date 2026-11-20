@@ -1,0 +1,238 @@
+{
+    "kind": "run",
+    "verificationCase": "example::blinker::BlinkerSwitchesBetweenTwoAndThree",
+    "portfolioId": "nuxmv-ic3-invar",
+    "optimization": {
+        "enabled": [
+            "ExpressionSimplification",
+            "OperationFlattening",
+            "RedundantOperationRemoval",
+            "AssumeFalsePropagation",
+            "ConstantVariableSubstitution",
+            "CopyPropagation",
+            "DeadStoreElimination",
+            "DeadCodeRemoval",
+            "VariableLiveness"
+        ]
+    },
+    "timeout": "PT5M",
+    "result": {
+        "metadata": {
+            "backendId": "nuxmv:ic3-invar",
+            "startedAt": "2026-11-20T07:27:26.456384817Z"
+        },
+        "verdict": "Passed",
+        "soundness": "Exact",
+        "isTrusted": true,
+        "metrics": {
+            "totalDuration": "PT0.130883057S",
+            "backend": {
+                "preparationDuration": "PT0.009856940S",
+                "verificationDuration": "PT0.038594186S",
+                "backAnnotationDuration": "PT0.018679105S"
+            },
+            "verifier": {
+                "compilationDuration": "PT0.290488614S",
+                "compilation": {
+                    "createDuration": "PT0.087576956S",
+                    "instantiationDuration": "PT0.063936715S",
+                    "inliningDuration": "PT0.078942294S",
+                    "flatteningDuration": "PT0.060032649S",
+                    "inliningOptimization": {
+                        "duration": "PT0.003392512S",
+                        "passes": [
+                            {
+                                "name": "OperationCallInlining",
+                                "duration": "PT0.001585946S",
+                                "runs": 3,
+                                "firings": 0
+                            },
+                            {
+                                "name": "ExpressionSimplificationPass",
+                                "duration": "PT0.000640331S",
+                                "runs": 1,
+                                "firings": 0
+                            },
+                            {
+                                "name": "OperationFlatteningPass",
+                                "duration": "PT0.000276466S",
+                                "runs": 1,
+                                "firings": 0
+                            },
+                            {
+                                "name": "RedundantOperationRemovalPass",
+                                "duration": "PT0.000239492S",
+                                "runs": 1,
+                                "firings": 0
+                            },
+                            {
+                                "name": "AssumeFalsePropagationPass",
+                                "duration": "PT0.000201125S",
+                                "runs": 1,
+                                "firings": 0
+                            },
+                            {
+                                "name": "PropertyExpressionNormalization",
+                                "duration": "PT0.000050589S",
+                                "runs": 1,
+                                "firings": 0
+                            }
+                        ],
+                        "analyses": []
+                    },
+                    "flatteningOptimization": {
+                        "duration": "PT0.025375333S",
+                        "passes": [
+                            {
+                                "name": "ExpressionSimplificationPass",
+                                "duration": "PT0.000578636S",
+                                "runs": 2,
+                                "firings": 0
+                            },
+                            {
+                                "name": "OperationFlatteningPass",
+                                "duration": "PT0.000228389S",
+                                "runs": 2,
+                                "firings": 0
+                            },
+                            {
+                                "name": "RedundantOperationRemovalPass",
+                                "duration": "PT0.000245946S",
+                                "runs": 2,
+                                "firings": 0
+                            },
+                            {
+                                "name": "AssumeFalsePropagationPass",
+                                "duration": "PT0.000232836S",
+                                "runs": 2,
+                                "firings": 0
+                            },
+                            {
+                                "name": "ConstantVariableSubstitutionPass",
+                                "duration": "PT0.006506746S",
+                                "runs": 2,
+                                "firings": 0
+                            },
+                            {
+                                "name": "CopyPropagationPass",
+                                "duration": "PT0.007685605S",
+                                "runs": 2,
+                                "firings": 0
+                            },
+                            {
+                                "name": "DeadStoreEliminationPass",
+                                "duration": "PT0.001162742S",
+                                "runs": 2,
+                                "firings": 0
+                            },
+                            {
+                                "name": "DeadCodeRemovalPass",
+                                "duration": "PT0.004777586S",
+                                "runs": 2,
+                                "firings": 1
+                            },
+                            {
+                                "name": "VariableLivenessPass",
+                                "duration": "PT0.003540775S",
+                                "runs": 2,
+                                "firings": 1
+                            }
+                        ],
+                        "analyses": [
+                            {
+                                "name": "ConstantValueAnalysis",
+                                "duration": "PT0.005694773S",
+                                "computations": 2
+                            },
+                            {
+                                "name": "ReachingDefinitionsAnalysis",
+                                "duration": "PT0.007089597S",
+                                "computations": 2
+                            },
+                            {
+                                "name": "ConeOfInfluenceAnalysis",
+                                "duration": "PT0.003644321S",
+                                "computations": 2
+                            }
+                        ]
+                    },
+                    "inputSize": {
+                        "variables": 4,
+                        "operations": 10,
+                        "expressions": 29
+                    },
+                    "inlinedSize": {
+                        "variables": 4,
+                        "operations": 9,
+                        "expressions": 36
+                    },
+                    "flattenedSize": {
+                        "variables": 3,
+                        "operations": 8,
+                        "expressions": 22
+                    }
+                },
+                "backAnnotationDuration": "PT0.014078176S",
+                "portfolioDuration": "PT0.119615158S"
+            }
+        },
+        "message": null
+    },
+    "trace": {
+        "transitions": [],
+        "variables": [
+            {
+                "variable": "root.switchedBetween",
+                "type": {
+                    "kind": "datatype",
+                    "name": "semantifyr::bool"
+                },
+                "slot": null
+            },
+            {
+                "variable": "root.running",
+                "type": {
+                    "kind": "datatype",
+                    "name": "semantifyr::clock"
+                },
+                "slot": null
+            },
+            {
+                "variable": "root.blinker.since",
+                "type": {
+                    "kind": "datatype",
+                    "name": "semantifyr::clock"
+                },
+                "slot": null
+            }
+        ],
+        "initial": {
+            "state": 0,
+            "calls": []
+        },
+        "states": [
+            {
+                "values": {
+                    "root.switchedBetween": false,
+                    "root.running": 0,
+                    "root.blinker.since": 0
+                }
+            },
+            {
+                "values": {
+                    "root.switchedBetween": true,
+                    "root.running": "5/2",
+                    "root.blinker.since": 0
+                }
+            }
+        ],
+        "steps": [
+            {
+                "source": 0,
+                "target": 1,
+                "elapsed": "5/2",
+                "calls": []
+            }
+        ]
+    }
+}

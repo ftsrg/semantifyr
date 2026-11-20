@@ -158,6 +158,7 @@ class InlineOperationExpander @Inject constructor(
         }
 
         val arguments = bindArguments(actualTransition, callExpression)
+        transitionCallTraceTransformer.registerArgumentTemporaries(arguments.runtimeArguments.values)
 
         val inlined = OxstsFactory.createChoiceOperation().also {
             for (currentOperation in actualTransition.branches) {
@@ -176,37 +177,50 @@ class InlineOperationExpander @Inject constructor(
             inlined
         }
 
-        val body = if (arguments.temporaries.isEmpty()) {
+        val tracedCall = if (builtinAnnotationHandler.isTransitionTraced(actualTransition)) {
+            transitionCallTraceTransformer.traceTransitionCall(
+                instance,
+                containerInstance,
+                actualTransition,
+                callExpression,
+                inlinedBranches,
+                arguments.runtimeArguments,
+            )
+        } else {
+            null
+        }
+
+        val steps = buildList {
+            tracedCall?.let {
+                add(it.tracerAssignment)
+            }
+            addAll(arguments.runtimeArguments.values)
+            tracedCall?.let {
+                addAll(it.argumentRecords)
+            }
+        }
+        val body = if (steps.isEmpty()) {
             inlinedBranches
         } else {
             OxstsFactory.createSequenceOperation().also {
-                it.steps += arguments.temporaries
+                it.steps += steps
                 it.steps += inlinedBranches
             }
         }
 
         rewriteLocalVariables(body, containerInstance)
 
-        if (!builtinAnnotationHandler.isTransitionTraced(actualTransition)) {
-            return body
-        }
-
-        val tracerAssignment = transitionCallTraceTransformer.traceTransitionCall(
-            instance,
-            containerInstance,
-            actualTransition,
-            callExpression,
-            body,
-        )
-
-        return OxstsFactory.createSequenceOperation().also {
-            it.steps += tracerAssignment
-            it.steps += body
-        }
+        return body
     }
 
+    private class RuntimeArgument(
+        val position: Int,
+        val parameter: ParameterDeclaration,
+        val temporary: LocalVarDeclarationOperation,
+    )
+
     private class ArgumentBinding(
-        val temporaries: List<LocalVarDeclarationOperation>,
+        val runtimeArguments: Map<ParameterDeclaration, LocalVarDeclarationOperation>,
         val bindings: Map<ParameterDeclaration, Expression>,
     )
 
@@ -215,7 +229,7 @@ class InlineOperationExpander @Inject constructor(
         transitionDeclaration: TransitionDeclaration,
         callExpression: CallSuffixExpression,
     ): ArgumentBinding {
-        val temporaries = sortedMapOf<Int, LocalVarDeclarationOperation>()
+        val runtimeArguments = mutableListOf<RuntimeArgument>()
         val bindings = mutableMapOf<ParameterDeclaration, Expression>()
 
         for ((index, parameter) in transitionDeclaration.parameters.withIndex()) {
@@ -234,13 +248,20 @@ class InlineOperationExpander @Inject constructor(
                 it.expression = argument.expression.copy()
             }
             SourceLocation.recordOrigin(argument.expression, temporary)
-            temporaries[callExpression.arguments.indexOf(argument)] = temporary
+            runtimeArguments += RuntimeArgument(callExpression.arguments.indexOf(argument), parameter, temporary)
             bindings[parameter] = OxstsFactory.createElementReference(temporary).also {
                 SourceLocation.recordOrigin(argument.expression, it)
             }
         }
 
-        return ArgumentBinding(temporaries.values.toList(), bindings)
+        return ArgumentBinding(
+            runtimeArguments.sortedBy {
+                it.position
+            }.associate {
+                it.parameter to it.temporary
+            },
+            bindings,
+        )
     }
 
     private fun rewriteLocalVariables(operation: Operation, containerInstance: Instance) {

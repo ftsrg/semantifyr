@@ -22,7 +22,6 @@ enum class CorpusVerdict {
 
 @Serializable
 enum class CorpusTier {
-    Smoke,
     Integration,
     Nightly,
 }

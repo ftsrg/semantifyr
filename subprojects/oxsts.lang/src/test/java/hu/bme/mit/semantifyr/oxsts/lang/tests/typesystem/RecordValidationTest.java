@@ -14,6 +14,7 @@ import hu.bme.mit.semantifyr.oxsts.lang.tests.utils.OxstsPackageParseHelper;
 import hu.bme.mit.semantifyr.oxsts.lang.tests.utils.WrappedOxstsPackage;
 import hu.bme.mit.semantifyr.oxsts.lang.validation.OxstsValidator;
 import org.eclipse.xtext.diagnostics.Severity;
+import org.eclipse.xtext.linking.impl.XtextLinkingDiagnostic;
 import org.eclipse.xtext.validation.CheckMode;
 import org.eclipse.xtext.validation.Issue;
 import org.junit.jupiter.api.Test;
@@ -377,7 +378,9 @@ public class RecordValidationTest {
             }
             """, CheckMode.ALL);
 
-        assertThat(parsedPackage.getResourceErrors()).isNotEmpty();
+        assertThat(parsedPackage.getResourceErrors())
+                .allSatisfy(error -> assertThat(error).isInstanceOf(XtextLinkingDiagnostic.class))
+                .anySatisfy(error -> assertThat(error.getMessage()).contains("RecordDeclaration 'Worker'"));
     }
 
     @Test
@@ -456,6 +459,48 @@ public class RecordValidationTest {
                 .extracting(Issue::getMessage)
                 .anySatisfy(message -> assertThat(message).contains("a feature binding"))
                 .anySatisfy(message -> assertThat(message).contains("an `inline if` guard"));
+    }
+
+    @Test
+    void literalInARangeAMultiplicityOrAnAnnotationArgumentIsRejected() {
+        var parsedPackage = parseHelper.parse(RECORDS + """
+            annotation Flag(value: bool)
+            class Item {
+            }
+            class Holder {
+                contains items: Item[if Point { x = 1 } == Point { x = 1 } then 1 else 2]
+                @Flag(Point { x = 1 } == Point { x = 1 })
+                var count: int := 0
+                redefine tran {
+                    inline for (index in 0..(if Point { x = 1 } == Point { x = 1 } then 1 else 2)) {
+                        count := index
+                    }
+                }
+            }
+            """, CheckMode.ALL);
+
+        parsedPackage.assertNoResourceErrors();
+        assertOnlyErrorsAre(parsedPackage, OxstsValidator.UNSUPPORTED_FEATURE, "not yet evaluated at compile time");
+        assertThat(parsedPackage.getIssues())
+                .filteredOn(issue -> issue.getSeverity() == Severity.ERROR)
+                .extracting(Issue::getMessage)
+                .anySatisfy(message -> assertThat(message).contains("an `inline for` range"))
+                .anySatisfy(message -> assertThat(message).contains("a multiplicity"))
+                .anySatisfy(message -> assertThat(message).contains("an annotation argument"));
+    }
+
+    @Test
+    void recordWithTwoFieldsOfOneNameIsRejected() {
+        var parsedPackage = parseHelper.parse("""
+            package test
+            record Pair {
+                var first: int := 0
+                var first: int := 1
+            }
+            """, CheckMode.ALL);
+
+        parsedPackage.assertNoResourceErrors();
+        parsedPackage.assertHasValidationIssue(OxstsValidator.DUPLICATE_NAME_ISSUE, "'first'");
     }
 
     @Test

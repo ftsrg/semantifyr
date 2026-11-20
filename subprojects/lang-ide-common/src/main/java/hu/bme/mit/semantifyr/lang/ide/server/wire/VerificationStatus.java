@@ -18,6 +18,8 @@ public final class VerificationStatus {
     public static final String ERRORED = "errored";
     public static final String CANCELLED = "cancelled";
 
+    public static final String CANCELLED_MESSAGE = "Verification cancelled";
+
     private VerificationStatus() {}
 
     public static String of(VerificationVerdict verdict) {

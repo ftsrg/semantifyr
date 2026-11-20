@@ -6,11 +6,10 @@
 
 import hu.bme.mit.semantifyr.gradle.conventions.corpusModels
 import hu.bme.mit.semantifyr.gradle.conventions.semantifyrArtifact
-import org.apache.tools.ant.taskdefs.condition.Os
 
 plugins {
-    base
     id("hu.bme.mit.semantifyr.gradle.conventions.formatting")
+    id("hu.bme.mit.semantifyr.gradle.conventions.pack")
 }
 
 val vscodeExtensions = configurations.dependencyScope("vscodeExtensions")
@@ -99,21 +98,20 @@ val prepareDockerBuild = tasks.register("prepareDockerBuild") {
     dependsOn(cloneTestModels)
 }
 
-tasks.assemble {
+val vscodeServerImageContext = tasks.register<Tar>("vscodeServerImageContext") {
+    archiveFileName = "vscode-server-image-context.tar.gz"
+    compression = Compression.GZIP
+    useFileSystemPermissions()
     dependsOn(prepareDockerBuild)
-}
-
-val imageTest = tasks.register<Exec>("imageTest") {
-    group = "verification"
-    dependsOn(prepareDockerBuild)
-    onlyIf("the image test needs a POSIX shell") {
-        !Os.isFamily(Os.FAMILY_WINDOWS)
+    from(layout.projectDirectory) {
+        include("Dockerfile")
+        include("jupyter_server_config.py")
+        include("examples/**")
+        include("extensions/**")
+        include("theta-xsts-cli/**")
     }
-
-    commandLine("./image-test.sh", "semantifyr-vscode-server:test")
 }
 
-tasks.register("integrationTest") {
-    group = "verification"
-    dependsOn(imageTest)
+tasks.pack {
+    dependsOn(vscodeServerImageContext)
 }

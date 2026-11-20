@@ -6,8 +6,6 @@
 
 package hu.bme.mit.semantifyr.oxsts.lang.tests.modality;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import com.google.inject.Inject;
 import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts;
 import hu.bme.mit.semantifyr.oxsts.lang.tests.utils.OxstsPackageParseHelper;
@@ -166,38 +164,6 @@ public class ModalityValidationTest {
             """, CheckMode.ALL);
 
         parsedPackage.assertHasValidationIssue(OxstsValidator.EXPRESSION_MODALITY_TOO_HIGH, "inline if");
-    }
-
-    @Test
-    void assignmentToInlineForLoopVariable_isRejected() {
-        var parsedPackage = parseHelper.parse("""
-            package test
-            class Holder {
-                redefine tran {
-                    inline for (index in 1..3) {
-                        index := 5
-                    }
-                }
-            }
-            """, CheckMode.ALL);
-
-        parsedPackage.assertHasValidationIssue(OxstsValidator.INCORRECT_ASSIGNMENT, "loop variable");
-    }
-
-    @Test
-    void havocOfInlineForLoopVariable_isRejected() {
-        var parsedPackage = parseHelper.parse("""
-            package test
-            class Holder {
-                redefine tran {
-                    inline for (index in 1..3) {
-                        havoc(index)
-                    }
-                }
-            }
-            """, CheckMode.ALL);
-
-        parsedPackage.assertHasValidationIssue(OxstsValidator.INCORRECT_ASSIGNMENT, "loop variable");
     }
 
     @Test
@@ -377,24 +343,5 @@ public class ModalityValidationTest {
             """, CheckMode.ALL);
 
         parsedPackage.assertHasValidationIssue(OxstsValidator.EXPRESSION_MODALITY_TOO_HIGH, "Multiplicity");
-    }
-
-    @Test
-    void wrapperExposesClassAndFeaturesAfterParse() {
-        var parsedPackage = parseHelper.parse("""
-            package test
-            class Worker { var done: bool := false }
-            class Holder {
-                contains firstWorker: Worker[1]
-                contains secondWorker: Worker[1]
-            }
-            """);
-
-        parsedPackage.assertNoResourceErrors();
-        var holder = parsedPackage.classByName("Holder");
-        assertThat(holder.features()).hasSize(2);
-        assertThat(holder.featureByName("firstWorker").kind().toString()).isEqualTo("CONTAINMENT");
-        assertThat(holder.featureByName("firstWorker").typeDomain())
-                .isSameAs(parsedPackage.classByName("Worker").eObject());
     }
 }

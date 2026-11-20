@@ -7,15 +7,11 @@
 package hu.bme.mit.semantifyr.portfolios
 
 import com.google.inject.Injector
-import hu.bme.mit.semantifyr.backend.BackendMetrics
 import hu.bme.mit.semantifyr.backend.BackendVerificationRequest
 import hu.bme.mit.semantifyr.backend.BackendVerificationResult
 import hu.bme.mit.semantifyr.backend.VerificationBackend
-import hu.bme.mit.semantifyr.backend.VerificationMetadata
-import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.backend.execution.AvailabilityReport
 import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
-import hu.bme.mit.semantifyr.backend.execution.ExecutorKey
 import hu.bme.mit.semantifyr.backends.nuxmv.verification.NuxmvBackend
 import hu.bme.mit.semantifyr.backends.nuxmv.verification.NuxmvConfig
 import hu.bme.mit.semantifyr.backends.spin.verification.SpinBackend
@@ -27,6 +23,7 @@ import hu.bme.mit.semantifyr.backends.uppaal.verification.UppaalConfig
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.verifier.ProgressContext
 import hu.bme.mit.semantifyr.verifier.portfolio.ConcurrencyGate
+import hu.bme.mit.semantifyr.verifier.portfolio.PortfolioOutcome
 import hu.bme.mit.semantifyr.verifier.portfolio.PortfolioTask
 import hu.bme.mit.semantifyr.verifier.portfolio.VerificationPortfolio
 import kotlin.time.Clock
@@ -48,23 +45,8 @@ class AllAgreeFullPortfolio(
         PortfolioTask(spin, SpinConfig.SafeDfs, "spin-safe-dfs"),
     )
 
-    override val executorKeys: Set<ExecutorKey<*>> = tasks.map { it.executorKey }.toSet()
-    override val legs = tasks.map { it.leg }
-
-    override fun availability(environment: ExecutionEnvironment): AvailabilityReport {
-        val anyAvailable = tasks.any {
-            it.isAvailable(environment)
-        }
-        return if (anyAvailable) {
-            AvailabilityReport.Available
-        } else {
-            AvailabilityReport.Unavailable(
-                reason = "No backend is installed.",
-                hints = listOf(
-                    "Install at least one of Theta (theta-xsts-cli), nuXmv, Spin or Uppaal (verifyta).",
-                ),
-            )
-        }
+    override val legs = tasks.map {
+        it.leg
     }
 
     override suspend fun verify(
@@ -73,22 +55,16 @@ class AllAgreeFullPortfolio(
         gate: ConcurrencyGate,
         environment: ExecutionEnvironment,
         progress: ProgressContext,
+        readBack: suspend (BackendVerificationResult) -> BackendVerificationResult,
     ): BackendVerificationResult {
         val startedAt = Clock.System.now()
-        val available = tasks.filter {
-            it.isAvailable(environment)
-        }
-        if (available.isEmpty()) {
+        val availability = availability(environment)
+        if (availability is AvailabilityReport.Unavailable) {
             logger.info { "$id: no available backends on this host" }
-            return BackendVerificationResult(
-                metadata = VerificationMetadata(
-                    backendId = null,
-                    startedAt = startedAt,
-                ),
-                verdict = VerificationVerdict.Inconclusive,
-                metrics = BackendMetrics(),
-                message = "No backend is installed.",
-            )
+            return PortfolioOutcome.NoDecision(availability.reason, emptyList()).toBackendVerificationResult(startedAt)
+        }
+        val available = tasks.filter {
+            it.leg.isAvailable(environment)
         }
         logger.info {
             val subPaths = available.joinToString {
@@ -98,7 +74,7 @@ class AllAgreeFullPortfolio(
         }
         progress.reportProgress("running ${available.size} backend(s)")
 
-        val outcome = all(startCase(parentInjector, request, gate, environment, progress)) {
+        val outcome = all(startCase(parentInjector, request, gate, environment, progress, readBack)) {
             legs(available)
         }
 

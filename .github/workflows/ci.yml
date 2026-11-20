@@ -24,144 +24,63 @@ on:
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
-permissions: {}
 env:
   CI: true
   THETA_JAVA_OPTS: -Xss512M -Xms256M -Xmx1500M
 jobs:
   build:
-    name: Build
+    name: Build and Test (${{ matrix.os }})
     permissions:
       contents: read
     strategy:
       fail-fast: false
       matrix:
         os:
-          - ubuntu-latest
           - windows-latest
           - macos-latest
+          - ubuntu-latest
     runs-on: ${{ matrix.os }}
-    env:
-      # only the ubuntu leg uploads the website
-      WEBSITE_API_DOCS: ${{ matrix.os == 'ubuntu-latest' }}
-      # the published website names its commit; every other build of it describes the development branch and stays cacheable
-      SEMANTIFYR_SITE_COMMIT: ${{ inputs.publish && matrix.os == 'ubuntu-latest' && github.sha || '' }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v7
         with:
           fetch-depth: 0
-      - name: Set up JDK
-        uses: actions/setup-java@v6
+      - name: Set up the toolchain
+        uses: ./.github/actions/toolchain
         with:
-          java-version: 25
-          distribution: temurin
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
-        with:
-          cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
-      - name: Set up Node
-        uses: actions/setup-node@v7
-        with:
-          node-version-file: .nvmrc
-          cache: npm
-          cache-dependency-path: package-lock.json
-      - name: Install Spin
-        if: ${{ matrix.os == 'ubuntu-latest' }}
-        run: sudo apt-get update && sudo apt-get install -y spin
-      - name: Check the engines
-        if: ${{ matrix.os == 'ubuntu-latest' }}
-        run: .github/scripts/check-engines.sh spin docker
-      - name: Gradle build
-        shell: bash
-        run: ./gradlew build --continue -Pwebsite.apiDocs=$WEBSITE_API_DOCS
-      - name: Install the browsers for the live screen and UI tests
-        if: ${{ matrix.os == 'ubuntu-latest' }}
-        run: npx playwright install --with-deps chromium firefox webkit
-      - name: Run the live screen tests on Chromium
-        if: ${{ matrix.os == 'ubuntu-latest' && !cancelled() }}
-        run: ./gradlew :semantifyr-live-frontend:screenTest -PtestBrowser=chromium
-      - name: Run the live UI tests on Chromium
-        if: ${{ matrix.os == 'ubuntu-latest' && !cancelled() }}
-        run: ./gradlew :semantifyr-live-frontend:uiTest -PtestBrowser=chromium
-      - name: Run the website's keyboard walk
-        if: ${{ matrix.os == 'ubuntu-latest' && !cancelled() }}
-        run: ./gradlew :website:walkTest
-      - name: Run the live screen tests on Firefox
-        if: ${{ matrix.os == 'ubuntu-latest' && !cancelled() }}
-        run: ./gradlew :semantifyr-live-frontend:screenTest -PtestBrowser=firefox
-      - name: Run the live UI tests on Firefox
-        if: ${{ matrix.os == 'ubuntu-latest' && !cancelled() }}
-        run: ./gradlew :semantifyr-live-frontend:uiTest -PtestBrowser=firefox
-      - name: Run the live screen tests on WebKit
-        if: ${{ matrix.os == 'ubuntu-latest' && !cancelled() }}
-        run: ./gradlew :semantifyr-live-frontend:screenTest -PtestBrowser=webkit
-      - name: Run the live UI tests on WebKit
-        if: ${{ matrix.os == 'ubuntu-latest' && !cancelled() }}
-        run: ./gradlew :semantifyr-live-frontend:uiTest -PtestBrowser=webkit
-      - name: Upload the live screens
-        if: ${{ matrix.os == 'ubuntu-latest' && !cancelled() }}
-        uses: actions/upload-artifact@v7
-        with:
-          name: live-screens
-          path: subprojects/semantifyr-live/frontend/build/screens/
-          if-no-files-found: warn
-      - name: Upload the evidence of failed live UI tests
-        if: ${{ matrix.os == 'ubuntu-latest' && failure() }}
-        uses: actions/upload-artifact@v7
-        with:
-          name: live-ui-evidence
-          path: subprojects/semantifyr-live/frontend/build/evidence/
-          if-no-files-found: ignore
-      - name: Upload the evidence of a failed keyboard walk
-        if: ${{ matrix.os == 'ubuntu-latest' && failure() }}
-        uses: actions/upload-artifact@v7
-        with:
-          name: website-walk-evidence
-          path: subprojects/website/build/evidence/
-          if-no-files-found: ignore
-      - name: Read the VS Code version of the integration test
-        id: vscode
-        if: ${{ matrix.os == 'ubuntu-latest' }}
-        run: echo "version=$(jq -r '.engines.vscode | ltrimstr("^")' subprojects/semantifyr-vscode/package.json)" >> "$GITHUB_OUTPUT"
+          gradle-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
+      - name: Install the backends
+        if: ${{ runner.os == 'Linux' }}
+        uses: ./.github/actions/backends
       - name: Cache the VS Code download
-        if: ${{ matrix.os == 'ubuntu-latest' }}
         uses: actions/cache@v6
         with:
           path: subprojects/semantifyr-vscode/.vscode-test/vscode-*
-          key: vscode-${{ runner.os }}-${{ steps.vscode.outputs.version }}
-      - name: Run integration tests
-        if: ${{ matrix.os == 'ubuntu-latest' }}
-        run: ./gradlew integrationTest --continue
-      - name: Merge coverage reports
-        if: ${{ matrix.os == 'ubuntu-latest' }}
-        shell: bash
-        run: ./gradlew mergedJacocoReport
-      - name: Upload coverage reports
-        if: ${{ matrix.os == 'ubuntu-latest' }}
-        uses: actions/upload-artifact@v7
-        with:
-          name: jacoco-coverage-reports
-          path: build/reports/jacoco/mergedJacocoReport/html/
-          if-no-files-found: warn
-          retention-days: 30
+          key: vscode-${{ runner.os }}-${{ hashFiles('subprojects/semantifyr-vscode/package.json') }}
+      - name: Run Build
+        run: ./gradlew build semanticTest integrationTest endToEndTest --continue
       - name: Publish to SonarCloud
-        if: ${{ matrix.os == 'ubuntu-latest' }}
-        shell: bash
+        if: ${{ runner.os == 'Linux' }}
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: .github/scripts/sonar.sh
+      - name: Install the browser for the screenshots
+        if: ${{ runner.os == 'Linux' }}
+        timeout-minutes: 15
+        uses: ./.github/actions/browsers
+        with:
+          browsers: chromium
+      - name: Pack Distribution
+        if: ${{ runner.os == 'Linux' }}
+        run: ./gradlew pack -Pwebsite.apiDocs=true
       - name: Upload GitHub Pages artifact
-        if: ${{ matrix.os == 'ubuntu-latest' }}
+        if: ${{ runner.os == 'Linux' }}
         uses: actions/upload-pages-artifact@v5
         with:
           path: subprojects/website/build/docusaurus
           retention-days: 90
-      - name: Pack the live image context
-        if: ${{ matrix.os == 'ubuntu-latest' }}
-        run: ./gradlew :semantifyr-live-backend:liveImageContext
       - name: Upload semantifyr-cli
-        if: ${{ matrix.os == 'ubuntu-latest' }}
+        if: ${{ runner.os == 'Linux' }}
         uses: actions/upload-artifact@v7
         with:
           name: semantifyr-cli
@@ -170,7 +89,7 @@ jobs:
           compression-level: 0
           retention-days: 90
       - name: Upload sysml-cli
-        if: ${{ matrix.os == 'ubuntu-latest' }}
+        if: ${{ runner.os == 'Linux' }}
         uses: actions/upload-artifact@v7
         with:
           name: sysml-cli
@@ -179,7 +98,7 @@ jobs:
           compression-level: 0
           retention-days: 90
       - name: Upload gamma-cli
-        if: ${{ matrix.os == 'ubuntu-latest' }}
+        if: ${{ runner.os == 'Linux' }}
         uses: actions/upload-artifact@v7
         with:
           name: gamma-cli
@@ -187,8 +106,23 @@ jobs:
           if-no-files-found: error
           compression-level: 0
           retention-days: 90
+      - name: Pack the frontend test harness and the SysML v2 corpus
+        if: ${{ runner.os == 'Linux' }}
+        run: >-
+          tar -czf "$RUNNER_TEMP/frontend-tests.tar.gz" -C subprojects
+          corpus-check/build/distributions
+          frontends/sysml/sysml-wrapper/build/corpus
+      - name: Upload the frontend test harness
+        if: ${{ runner.os == 'Linux' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: frontend-tests
+          path: ${{ runner.temp }}/frontend-tests.tar.gz
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
       - name: Upload semantifyr-vscode
-        if: ${{ matrix.os == 'ubuntu-latest' }}
+        if: ${{ runner.os == 'Linux' }}
         uses: actions/upload-artifact@v7
         with:
           name: semantifyr-vscode
@@ -197,14 +131,159 @@ jobs:
           compression-level: 0
           retention-days: 90
       - name: Upload the live image context
-        if: ${{ matrix.os == 'ubuntu-latest' }}
+        if: ${{ runner.os == 'Linux' }}
         uses: actions/upload-artifact@v7
-        # a tarball, because upload-artifact drops the execute bits the image needs
         with:
           name: live-image-context
           path: subprojects/semantifyr-live/backend/build/distributions/live-image-context.tar.gz
           compression-level: 0
           retention-days: 1
+      - name: Upload the vscode-server image context
+        if: ${{ runner.os == 'Linux' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: vscode-server-image-context
+          path: subprojects/semantifyr-vscode-server/build/distributions/vscode-server-image-context.tar.gz
+          compression-level: 0
+          retention-days: 1
+
+  frontend-tests-gamma:
+    name: Frontend Tests (Gamma)
+    needs: build
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+      - name: Set up JDK
+        uses: actions/setup-java@v6
+        with:
+          java-version: 25
+          distribution: temurin
+      - name: Install the backends
+        uses: ./.github/actions/backends
+      - name: Download gamma-cli
+        uses: actions/download-artifact@v8
+        with:
+          name: gamma-cli
+          path: ${{ runner.temp }}/downloads
+      - name: Download the frontend test harness
+        uses: actions/download-artifact@v8
+        with:
+          name: frontend-tests
+          path: ${{ runner.temp }}/downloads
+      - name: Unpack them
+        run: |
+          cd "$RUNNER_TEMP"
+          mkdir frontend-tests
+          tar -xzf downloads/frontend-tests.tar.gz -C frontend-tests
+          unzip -q frontend-tests/corpus-check/build/distributions/corpus-check-*.zip -d harness
+          unzip -q downloads/semantifyr-gamma-*.zip -d launcher
+      - name: Run the frontend tests of the semantic library
+        run: >-
+          "$RUNNER_TEMP"/harness/corpus-check-*/bin/corpus-check
+          --launcher "$(echo "$RUNNER_TEMP"/launcher/semantifyr-gamma-*/bin/semantifyr-gamma)"
+          --corpus subprojects/frontends/gamma/models/semantics
+          --timeout-seconds 120
+      - name: Run the frontend tests of the examples
+        if: ${{ !cancelled() }}
+        run: >-
+          "$RUNNER_TEMP"/harness/corpus-check-*/bin/corpus-check
+          --launcher "$(echo "$RUNNER_TEMP"/launcher/semantifyr-gamma-*/bin/semantifyr-gamma)"
+          --corpus subprojects/frontends/gamma/models/examples
+          --timeout-seconds 1800
+
+  frontend-tests-sysml:
+    name: Frontend Tests (SysML)
+    needs: build
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+      - name: Set up JDK
+        uses: actions/setup-java@v6
+        with:
+          java-version: 25
+          distribution: temurin
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+      - name: Install the backends
+        uses: ./.github/actions/backends
+      - name: Download sysml-cli
+        uses: actions/download-artifact@v8
+        with:
+          name: sysml-cli
+          path: ${{ runner.temp }}/downloads
+      - name: Download the frontend test harness
+        uses: actions/download-artifact@v8
+        with:
+          name: frontend-tests
+          path: ${{ runner.temp }}/downloads
+      - name: Unpack them
+        run: |
+          cd "$RUNNER_TEMP"
+          mkdir frontend-tests
+          tar -xzf downloads/frontend-tests.tar.gz -C frontend-tests
+          unzip -q frontend-tests/corpus-check/build/distributions/corpus-check-*.zip -d harness
+          unzip -q downloads/semantifyr-sysml-*.zip -d launcher
+      - name: Run the frontend tests
+        run: >-
+          "$RUNNER_TEMP"/harness/corpus-check-*/bin/corpus-check
+          --launcher "$(echo "$RUNNER_TEMP"/launcher/semantifyr-sysml-*/bin/semantifyr-sysml)"
+          --corpus "$RUNNER_TEMP/frontend-tests/frontends/sysml/sysml-wrapper/build/corpus"
+          --case-namespace semantifyr::sysml::model::
+          --timeout-seconds 120
+
+  ui-tests:
+    name: UI Tests (${{ matrix.browser }})
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        browser:
+          - chromium
+          - firefox
+          - webkit
+    runs-on: ubuntu-latest
+    env:
+      TEST_BROWSER: ${{ matrix.browser }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Set up the toolchain
+        uses: ./.github/actions/toolchain
+        with:
+          gradle-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
+      - name: Install the browser
+        timeout-minutes: 15
+        uses: ./.github/actions/browsers
+        with:
+          browsers: ${{ matrix.browser }}
+      - name: Run the UI suite
+        run: ./gradlew uiTest --continue -PtestBrowser="$TEST_BROWSER"
+      - name: Upload the live screens
+        uses: actions/upload-artifact@v7
+        with:
+          name: live-screens-${{ matrix.browser }}
+          path: subprojects/semantifyr-live/frontend/build/screens/
+          if-no-files-found: warn
+      - name: Upload the evidence of failed UI tests
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: ui-evidence-${{ matrix.browser }}
+          path: |
+            subprojects/semantifyr-live/frontend/build/evidence/
+            subprojects/website/build/evidence/
+          if-no-files-found: ignore
 
   reuse-check:
     name: REUSE Compliance Check
@@ -217,12 +296,71 @@ jobs:
       - name: REUSE Compliance Check
         uses: fsfe/reuse-action@676e2d560c9a403aa252096d99fcab3e1132b0f5 # v6.0.0
         with:
-          # reuse skips every directory under one named subprojects, taking it for Meson's
           args: --include-meson-subprojects lint
 
-  live-image:
-    name: Live Image
+  vscode-server-image:
+    name: Build the semantifyr-vscode-server Image
     needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      tag: ${{ steps.tag.outputs.tag }}
+    env:
+      IMAGE: docker.io/ftsrgbot/semantifyr-vscode-server
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      - name: Download the vscode-server image context
+        uses: actions/download-artifact@v8
+        with:
+          name: vscode-server-image-context
+      - name: Unpack the vscode-server image context
+        run: mkdir context && tar -xzf vscode-server-image-context.tar.gz -C context
+      - name: Compute the tag
+        id: tag
+        run: echo "tag=$(sed -n 's/^version=//p' gradle.properties)-dev.${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+      - name: Build
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: context
+          load: true
+          provenance: false
+          tags: |
+            ${{ env.IMAGE }}:${{ steps.tag.outputs.tag }}
+            ${{ env.IMAGE }}:snapshot
+          labels: |
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.version=${{ steps.tag.outputs.tag }}
+          cache-from: type=gha,scope=vscode-server-image
+          cache-to: type=gha,mode=max,scope=vscode-server-image
+      - name: Smoke test
+        timeout-minutes: 5
+        env:
+          TAG: ${{ steps.tag.outputs.tag }}
+        run: .github/scripts/smoke-test-vscode-server-image.sh "$IMAGE:$TAG"
+      - name: Save the image
+        if: ${{ inputs.publish }}
+        env:
+          TAG: ${{ steps.tag.outputs.tag }}
+        run: docker save "$IMAGE:$TAG" "$IMAGE:snapshot" | gzip > "$RUNNER_TEMP/vscode-server-image.tar.gz"
+      - name: Upload the image
+        if: ${{ inputs.publish }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: vscode-server-image
+          path: ${{ runner.temp }}/vscode-server-image.tar.gz
+          compression-level: 0
+          retention-days: 1
+
+  live-image:
+    name: Build Live Image
+    needs:
+      - build
+      - ui-tests
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -233,6 +371,22 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v7
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+      - name: Install the browsers for the live flows
+        id: browsers
+        timeout-minutes: 15
+        uses: ./.github/actions/browsers
+        with:
+          browsers: chromium firefox webkit
       - name: Download the live image context
         uses: actions/download-artifact@v8
         with:
@@ -242,8 +396,6 @@ jobs:
       - name: Compute the tag
         id: tag
         run: echo "tag=$(sed -n 's/^version=//p' gradle.properties)-dev.${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
-      - name: Set up Buildx
-        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
       - name: Build
         uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
@@ -259,26 +411,15 @@ jobs:
             org.opencontainers.image.version=${{ steps.tag.outputs.tag }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-      - name: Smoke test
+      - name: Start the container
         env:
           TAG: ${{ steps.tag.outputs.tag }}
-        run: .github/scripts/smoke-test-live-image.sh live "$IMAGE:$TAG"
-      - name: Set up Node
-        uses: actions/setup-node@v7
-        with:
-          node-version-file: .nvmrc
-          cache: npm
-          cache-dependency-path: package-lock.json
-      - name: Install dependencies
-        run: npm ci --ignore-scripts
-      - name: Verify on the image
+        run: docker run -d --name live -p 8080:8080 --cap-drop ALL --security-opt no-new-privileges:true "$IMAGE:$TAG"
+      - name: Smoke test
         timeout-minutes: 5
         env:
           SEMANTIFYR_LIVE_URL: http://localhost:8080
         run: npm run smoke -w @ftsrg/semantifyr-live-frontend
-      - name: Install the browsers for the live flows
-        id: browsers
-        run: npx playwright install --with-deps chromium firefox webkit
       - name: Run the live flows on the image on Chromium
         if: ${{ !cancelled() && steps.browsers.outcome == 'success' }}
         timeout-minutes: 15
@@ -310,14 +451,68 @@ jobs:
       - name: Show the container log
         if: ${{ failure() }}
         run: docker logs live
-      - name: Log in to Docker Hub
+      - name: Save the image
         if: ${{ inputs.publish }}
+        env:
+          TAG: ${{ steps.tag.outputs.tag }}
+        run: docker save "$IMAGE:$TAG" "$IMAGE:snapshot" | gzip > "$RUNNER_TEMP/live-image.tar.gz"
+      - name: Upload the image
+        if: ${{ inputs.publish }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: live-image
+          path: ${{ runner.temp }}/live-image.tar.gz
+          compression-level: 0
+          retention-days: 1
+
+  push-image:
+    name: Push Live Image
+    if: ${{ inputs.publish }}
+    needs: live-image
+    runs-on: ubuntu-latest
+    permissions: {}
+    env:
+      IMAGE: docker.io/ftsrgbot/semantifyr-live
+    steps:
+      - name: Download the image
+        uses: actions/download-artifact@v8
+        with:
+          name: live-image
+          path: ${{ runner.temp }}
+      - name: Load the image
+        run: docker load < "$RUNNER_TEMP/live-image.tar.gz"
+      - name: Log in to Docker Hub
         uses: docker/login-action@81c6f93d4bc991e510b342a00b419b3bb4efc5c6 # v4.7.0
         with:
           username: ftsrgbot
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       - name: Push
-        if: ${{ inputs.publish }}
         env:
-          TAG: ${{ steps.tag.outputs.tag }}
+          TAG: ${{ needs.live-image.outputs.tag }}
+        run: docker push "$IMAGE:$TAG" && docker push "$IMAGE:snapshot"
+
+  push-vscode-server-image:
+    name: Push the semantifyr-vscode-server Image
+    if: ${{ inputs.publish }}
+    needs: vscode-server-image
+    runs-on: ubuntu-latest
+    permissions: {}
+    env:
+      IMAGE: docker.io/ftsrgbot/semantifyr-vscode-server
+    steps:
+      - name: Download the image
+        uses: actions/download-artifact@v8
+        with:
+          name: vscode-server-image
+          path: ${{ runner.temp }}
+      - name: Load the image
+        run: docker load < "$RUNNER_TEMP/vscode-server-image.tar.gz"
+      - name: Log in to Docker Hub
+        uses: docker/login-action@81c6f93d4bc991e510b342a00b419b3bb4efc5c6 # v4.7.0
+        with:
+          username: ftsrgbot
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Push
+        env:
+          TAG: ${{ needs.vscode-server-image.outputs.tag }}
         run: docker push "$IMAGE:$TAG" && docker push "$IMAGE:snapshot"

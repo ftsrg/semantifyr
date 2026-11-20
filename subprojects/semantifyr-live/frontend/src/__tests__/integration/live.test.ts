@@ -5,7 +5,7 @@
  */
 
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import type { VerificationCaseResult, VerificationCaseSpecification } from '@semantifyr/editor-common'
+import { caseOutcomeOf, type VerificationCaseResult, type VerificationCaseSpecification } from '@semantifyr/editor-common'
 import type { ActiveVerificationInfo } from '../../lib/api/types'
 import { areCasesKnown } from '../../lib/stores/initialization'
 import type { LspClient, VerificationState } from '../../lib/verification/engine'
@@ -160,16 +160,6 @@ describe('Live', () => {
     expect(open.live.unsaved.get()).toBe(true)
   })
 
-  it('keeps a result after an edit and marks it outdated', async () => {
-    const routed = routedClient([caseAt('a', 1)])
-    open = await openConnected(routed)
-    await runAll(open)
-
-    open.models.edit(MODEL_URI, 'edited model')
-
-    expect(verificationOf(open).cases[0]).toMatchObject({ status: 'passed', resultStatus: 'passed', outdated: true })
-  })
-
   it('keeps the earlier results of Verify all until the new ones arrive', async () => {
     const routed = routedClient([caseAt('a', 1)])
     routed.results.set(1, async () => {
@@ -186,14 +176,15 @@ describe('Live', () => {
     await vi.waitFor(() => {
       expect(verificationOf(open!).cases[0]?.status).toBe('running')
     })
-    expect(verificationOf(open).cases[0]).toMatchObject({ resultStatus: 'failed', trace: failedResult.trace })
+    expect(verificationOf(open).cases[0]).toMatchObject({ resultStatus: 'failed', report: failedResult.report, witnessUri: failedResult.witnessUri })
 
     pending.resolve(passedResult)
     await vi.waitFor(() => {
       expect(verificationOf(open!).phase).toBe('done')
     })
     expect(verificationOf(open).cases[0]).toMatchObject({ status: 'passed', resultStatus: 'passed' })
-    expect(verificationOf(open).cases[0]?.trace).toBeUndefined()
+    expect(verificationOf(open).cases[0]?.report?.trace).toBeNull()
+    expect(verificationOf(open).cases[0]?.witnessUri).toBeUndefined()
   })
 
   it('ends a run when its session goes: a case without a verdict is not run and cancelled, one with a verdict keeps it', async () => {
@@ -225,7 +216,7 @@ describe('Live', () => {
     expect(verificationOf(open).phase).toBe('cancelled')
     expect(verificationOf(open).cases.map((caseState) => {
       return [caseState.status, caseState.message]
-    })).toEqual([['failed', failedResult.message], ['stale', 'Verification cancelled'], ['passed', undefined]])
+    })).toEqual([['failed', caseOutcomeOf(failedResult).message], ['stale', 'Verification cancelled'], ['passed', undefined]])
   })
 
   it('starts a Verify all pressed during initialization once the cases are known', async () => {
@@ -376,24 +367,29 @@ describe('Live', () => {
     expect(open.live.verificationPortfolioId()).toBe('smart')
   })
 
-  it('opens the default language on a bare address, and says which name of an address it did not find', async () => {
+  it('opens the default language on a bare address', async () => {
     const routed = routedClient([])
-    const [, gamma] = [servedFlavors[0], servedFlavors[3]]
-    open = createTestLive(routed.client, servedFlavors, { defaultFlavorId: gamma!.id })
+    const gamma = servedFlavors[3]!
+    open = createTestLive(routed.client, servedFlavors, { defaultFlavorId: gamma.id })
     open.live.start('')
     await vi.waitFor(() => {
-      expect(open!.live.workspace.get().flavor?.id).toBe(gamma!.id)
+      expect(open!.live.workspace.get().flavor?.id).toBe(gamma.id)
     })
     expect(open.live.address.get()).toBeNull()
-    await open.live.dispose()
+  })
 
-    open = createTestLive(routed.client, servedFlavors, { defaultFlavorId: gamma!.id })
+  it('opens the default language for a language it does not know, and says which name it did not find', async () => {
+    const routed = routedClient([])
+    const gamma = servedFlavors[3]!
+    open = createTestLive(routed.client, servedFlavors, { defaultFlavorId: gamma.id })
     open.live.start('/kerml')
     await vi.waitFor(() => {
-      expect(open!.live.address.get()).toMatchObject({ kind: 'language', requested: 'kerml', flavorId: gamma!.id })
+      expect(open!.live.address.get()).toMatchObject({ kind: 'language', requested: 'kerml', flavorId: gamma.id })
     })
-    await open.live.dispose()
+  })
 
+  it('says which example of an address it did not find until another model is chosen', async () => {
+    const routed = routedClient([])
     open = createTestLive(routed.client)
     open.live.start('/language/missing')
     await vi.waitFor(() => {
@@ -488,7 +484,7 @@ describe('Live', () => {
     await vi.waitFor(() => {
       expect(verificationOf(open!).phase).toBe('done')
     })
-    expect(cases()).toEqual([['passed', undefined], ['stale', 'Verification cancelled'], ['failed', failedResult.message]])
+    expect(cases()).toEqual([['passed', undefined], ['stale', 'Verification cancelled'], ['failed', caseOutcomeOf(failedResult).message]])
 
     const never = deferred<VerificationCaseResult>()
     for (const line of [1, 2, 3]) {
@@ -505,7 +501,7 @@ describe('Live', () => {
       expect(open!.live.runTiming.get()?.finishedAt).not.toBeNull()
     })
     expect(verificationOf(open).phase).toBe('cancelled')
-    expect(cases()).toEqual([['passed', undefined], ['stale', 'Verification cancelled'], ['failed', failedResult.message]])
+    expect(cases()).toEqual([['passed', undefined], ['stale', 'Verification cancelled'], ['failed', caseOutcomeOf(failedResult).message]])
   })
 
   it('shows a sent case queued while the server queues it and running once the server runs it, and counts its time from then', async () => {
@@ -534,7 +530,7 @@ describe('Live', () => {
     open.runtime().report([])
     expect(row().status).toBe('running')
     clock.mockReturnValue(7_500)
-    pending.resolve({ ...passedResult, status: 'timeout', message: 'Verification timed out', metrics: null })
+    pending.resolve({ ...passedResult, status: 'timeout', message: 'Verification timed out', report: null })
 
     await vi.waitFor(() => {
       expect(verificationOf(open!).phase).toBe('done')

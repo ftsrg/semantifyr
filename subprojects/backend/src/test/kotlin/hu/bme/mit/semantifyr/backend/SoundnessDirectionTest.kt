@@ -9,6 +9,7 @@ package hu.bme.mit.semantifyr.backend
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 
 class SoundnessDirectionTest {
 
@@ -40,16 +41,21 @@ class SoundnessDirectionTest {
     }
 
     @Test
-    fun `an over-approximating and an under-approximating engine never trust the same verdict`() {
-        val decisive = VerificationVerdict.entries.filter {
-            it.isDecisive
+    fun `a lowering decides the direction of an exact run and keeps that of a run in its own direction`() {
+        for (direction in SoundnessDirection.entries) {
+            assertThat(direction.throughLowering(SoundnessDirection.Exact)).isEqualTo(direction)
+            assertThat(SoundnessDirection.Exact.throughLowering(direction)).isEqualTo(direction)
+            assertThat(direction.throughLowering(direction)).isEqualTo(direction)
         }
-        for (property in listOf(invariant, reachability)) {
-            for (verdict in decisive) {
-                val over = SoundnessDirection.OverApproximating.trusts(verdict, property)
-                val under = SoundnessDirection.UnderApproximating.trusts(verdict, property)
-                assertThat(over != under).describedAs("$verdict on ${property::class.simpleName}").isTrue
-            }
+    }
+
+    @Test
+    fun `a lowering against the direction of the run is refused`() {
+        assertThrows<IllegalStateException> {
+            SoundnessDirection.OverApproximating.throughLowering(SoundnessDirection.UnderApproximating)
+        }
+        assertThrows<IllegalStateException> {
+            SoundnessDirection.UnderApproximating.throughLowering(SoundnessDirection.OverApproximating)
         }
     }
 

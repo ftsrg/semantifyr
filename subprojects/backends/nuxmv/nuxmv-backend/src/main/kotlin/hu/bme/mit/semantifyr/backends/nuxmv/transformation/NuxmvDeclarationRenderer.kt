@@ -56,6 +56,7 @@ class NuxmvDeclarationRenderer @Inject constructor(
 
     private fun renderType(variable: NuxmvVariable): String {
         return when (variable.kind) {
+            NuxmvVariableKind.Clock -> "real"
             NuxmvVariableKind.Integer -> "integer"
             NuxmvVariableKind.Boolean -> "boolean"
             NuxmvVariableKind.Enum -> renderEnumType(variable)

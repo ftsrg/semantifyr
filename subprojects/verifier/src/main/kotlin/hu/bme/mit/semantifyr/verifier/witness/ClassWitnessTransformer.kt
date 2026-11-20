@@ -12,7 +12,6 @@ import hu.bme.mit.semantifyr.backend.witness.WitnessState
 import hu.bme.mit.semantifyr.backend.witness.WitnessStateValue
 import hu.bme.mit.semantifyr.compiler.pipeline.context.FlattenedCompilationContext
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.InstanceReferenceProvider
-import hu.bme.mit.semantifyr.compiler.pipeline.inlining.TransitionTracerNames
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.checkInterrupted
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ArithmeticUnaryOperator
@@ -29,18 +28,21 @@ class ClassWitnessTransformer @Inject constructor(
     private inner class TransformerContext(
         private val compilation: FlattenedCompilationContext,
     ) {
-        val mappings = mutableMapOf<WitnessState, ClassWitnessState>()
-
-        fun transform(witnessState: WitnessState) = mappings.getOrPut(witnessState) {
+        fun transform(witnessState: WitnessState): ClassWitnessState {
             checkInterrupted()
             val (tracerVariableValues, nonTracerValues) = witnessState.values.partition {
-                TransitionTracerNames.isTracerName(it.variable.name)
+                it.variable in compilation.transitionCallTraces.tracerVariables
             }
             val realVariableValues = nonTracerValues.filter {
                 it.variable in compilation.flatteningInfo.variableHolders
             }
+            val recordedArguments = nonTracerValues.filter {
+                it.variable in compilation.transitionCallTraces.argumentVariables
+            }.associate {
+                it.variable to backAnnotateInstancePointers(it.variable, it.value)
+            }
 
-            ClassWitnessState(
+            return ClassWitnessState(
                 realVariableValues.map {
                     transform(it)
                 },
@@ -48,39 +50,19 @@ class ClassWitnessTransformer @Inject constructor(
                     val value = it.value
                     value is LiteralBoolean && value.isValue
                 },
+                witnessState.clockValues.filter {
+                    it.variable in compilation.flatteningInfo.variableHolders
+                }.map {
+                    ClassWitnessClockValue(locate(it.variable, compilation), it.value)
+                },
+                witnessState.elapsed,
+                recordedArguments,
             )
         }
 
         private fun transform(variableValue: WitnessStateValue): ClassWitnessStateValue {
-            val holder = compilation.flatteningInfo.variableHolders[variableValue.variable]
-                ?: error("Witness value references variable '${variableValue.variable.name}' with no holder instance in flatteningInfo.variableHolders. Synthetic root-level variables should be filtered out before reaching transform(WitnessStateValue).")
-            val arraySlot = compilation.flatteningInfo.arraySlots[variableValue.variable]
-            val recordField = compilation.flatteningInfo.recordFields[variableValue.variable]
-            val originalVariable = arraySlot?.arrayVariable
-                ?: recordField?.recordVariable
-                ?: compilation.flatteningInfo.resolveOriginalVariable(holder, variableValue.variable)
-            val holderReference = instanceReferenceProvider.getReference(holder)
-            val memberReference = OxstsFactory.createNavigationSuffixExpression().also {
-                it.primary = holderReference
-                it.member = originalVariable
-            }
-            val slotReference = if (arraySlot != null) {
-                OxstsFactory.createIndexingSuffixExpression().also {
-                    it.primary = memberReference
-                    it.index = OxstsFactory.createLiteralInteger(arraySlot.index)
-                }
-            } else {
-                memberReference
-            }
-            val variableReference = recordField?.fields?.fold<VariableDeclaration, Expression>(slotReference) { primary, field ->
-                OxstsFactory.createNavigationSuffixExpression().also {
-                    it.primary = primary
-                    it.member = field
-                }
-            } ?: slotReference
-
             return ClassWitnessStateValue(
-                variableReference,
+                locate(variableValue.variable, compilation),
                 backAnnotateInstancePointers(variableValue.variable, variableValue.value),
             )
         }
@@ -100,13 +82,46 @@ class ClassWitnessTransformer @Inject constructor(
                 }
             }
 
-            require(expression is LiteralInteger)
+            require(expression is LiteralInteger) {
+                "the instance variable ${variableDeclaration.name} holds no instance id"
+            }
 
             val instance = compilation.flatteningInfo.instanceIdMapping.instanceOfId(expression.value)
 
             return instanceReferenceProvider.getReference(instance)
         }
 
+    }
+
+    fun locate(variable: VariableDeclaration, compilation: FlattenedCompilationContext): ClassWitnessVariable {
+        val holder = compilation.flatteningInfo.variableHolders[variable]
+            ?: error("Witness value references variable '${variable.name}' with no holder instance in flatteningInfo.variableHolders. Synthetic root-level variables should be filtered out before reaching locate(VariableDeclaration).")
+        val arraySlot = compilation.flatteningInfo.arraySlots[variable]
+        val recordField = compilation.flatteningInfo.recordFields[variable]
+        val originalVariable = arraySlot?.arrayVariable
+            ?: recordField?.recordVariable
+            ?: compilation.flatteningInfo.resolveOriginalVariable(holder, variable)
+        val holderReference = instanceReferenceProvider.getReference(holder)
+        val memberReference = OxstsFactory.createNavigationSuffixExpression().also {
+            it.primary = holderReference
+            it.member = originalVariable
+        }
+        val reference = if (arraySlot != null) {
+            OxstsFactory.createIndexingSuffixExpression().also {
+                it.primary = memberReference
+                it.index = OxstsFactory.createLiteralInteger(arraySlot.index)
+            }
+        } else {
+            memberReference
+        }
+
+        return ClassWitnessVariable(
+            reference,
+            memberReference,
+            originalVariable,
+            arraySlot,
+            recordField,
+        )
     }
 
     fun transform(
@@ -119,15 +134,9 @@ class ClassWitnessTransformer @Inject constructor(
         val transitionStates = inlinedWitness.transitionStates.map {
             context.transform(it)
         }
-        val nextStateMap = inlinedWitness.nextStateMap.map {
-            context.transform(it.key) to it.value.map { context.transform(it) }
-        }.toMap()
-
         return ClassWitness(
             initializedState,
             transitionStates,
-            nextStateMap,
-            inlinedWitness.inlinedOxsts,
         )
     }
 

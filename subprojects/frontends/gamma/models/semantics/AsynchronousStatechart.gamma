@@ -33,7 +33,7 @@ statechart Receiver [
     transition from GotFirst to Both when signals.second
 }
 
-verification case TheDefaultAdapterServesOneMessagePerCycleUnreachable of Receiver {
+verification case TheDefaultAdapterServesTheNextMessageBeforeTheTimeoutIsUp of Receiver {
     EF state Main.Both
 }
 

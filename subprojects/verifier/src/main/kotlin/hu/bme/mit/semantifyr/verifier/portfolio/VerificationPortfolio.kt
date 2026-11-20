@@ -7,10 +7,11 @@
 package hu.bme.mit.semantifyr.verifier.portfolio
 
 import com.google.inject.Injector
+import hu.bme.mit.semantifyr.backend.BackendConfig
 import hu.bme.mit.semantifyr.backend.BackendMetrics
 import hu.bme.mit.semantifyr.backend.BackendVerificationRequest
 import hu.bme.mit.semantifyr.backend.BackendVerificationResult
-import hu.bme.mit.semantifyr.backend.SoundnessDirection
+import hu.bme.mit.semantifyr.backend.VerificationBackend
 import hu.bme.mit.semantifyr.backend.VerificationMetadata
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.backend.execution.AvailabilityReport
@@ -44,6 +45,7 @@ class PortfolioCase internal constructor(
     val gate: ConcurrencyGate,
     internal val environment: ExecutionEnvironment,
     val progress: ProgressContext,
+    internal val readBack: suspend (BackendVerificationResult) -> BackendVerificationResult,
     private val start: TimeMark,
 ) {
     val time: Duration = request.timeout
@@ -76,7 +78,7 @@ class PortfolioScope internal constructor(
 
     internal fun leg(task: PortfolioTask<*>, subPath: String) {
         leg(task.leg.id) {
-            task.run(case.parentInjector, case.request.withSubPath(subPath), case.environment)
+            task.leg.run(case.parentInjector, case.request.withSubPath(subPath), case.environment, case.readBack)
         }
     }
 }
@@ -107,15 +109,31 @@ sealed interface LegEnd {
 }
 
 data class LegRun(
-    val leg: String,
+    val legId: String,
     val stage: String?,
     val end: LegEnd,
 )
 
-data class PortfolioLeg(
-    val id: String,
-    val soundness: SoundnessDirection,
-)
+class PortfolioLeg<T : BackendConfig>(
+    val backend: VerificationBackend<T>,
+    val config: T,
+) {
+    val id = "${backend.id}:${config.id}"
+
+    fun isAvailable(environment: ExecutionEnvironment): Boolean {
+        return environment.availability(backend.executorKey).isUsable
+    }
+
+    // a run whose witness cannot be read back fails, so the portfolio carries on with its other runs
+    suspend fun run(
+        parentInjector: Injector,
+        request: BackendVerificationRequest,
+        environment: ExecutionEnvironment,
+        readBack: suspend (BackendVerificationResult) -> BackendVerificationResult,
+    ): BackendVerificationResult {
+        return readBack(backend.verify(parentInjector, config, request, environment))
+    }
+}
 
 fun BackendVerificationRequest.withSubPath(subpath: String): BackendVerificationRequest {
     return this.copy(artifactOutputPath = artifactOutputPath.resolve(subpath))
@@ -203,7 +221,7 @@ private class GateRace(
 )
 
 private class LegResult(
-    val leg: String,
+    val legId: String,
     val result: BackendVerificationResult,
 )
 
@@ -222,10 +240,31 @@ abstract class VerificationPortfolio(
     abstract val id: String
     abstract val displayName: String
     abstract val description: String
-    abstract val executorKeys: Set<ExecutorKey<*>>
-    abstract val legs: List<PortfolioLeg>
+    abstract val legs: List<PortfolioLeg<*>>
 
-    abstract fun availability(environment: ExecutionEnvironment = ExecutionEnvironment.Empty): AvailabilityReport
+    val executorKeys: Set<ExecutorKey<*>>
+        get() = legs.map {
+            it.backend.executorKey
+        }.toSet()
+
+    open fun availability(environment: ExecutionEnvironment = ExecutionEnvironment.Empty): AvailabilityReport {
+        val reports = executorKeys.map {
+            environment.availability(it)
+        }
+        if (reports.any { it is AvailabilityReport.Available }) {
+            return AvailabilityReport.Available
+        }
+        val unavailable = reports.filterIsInstance<AvailabilityReport.Unavailable>()
+        if (unavailable.size == 1) {
+            return unavailable.single()
+        }
+        return AvailabilityReport.Unavailable(
+            reason = "No backend is installed.",
+            hints = unavailable.flatMap {
+                it.hints
+            }.distinct(),
+        )
+    }
 
     abstract suspend fun verify(
         parentInjector: Injector,
@@ -233,6 +272,7 @@ abstract class VerificationPortfolio(
         gate: ConcurrencyGate,
         environment: ExecutionEnvironment,
         progress: ProgressContext,
+        readBack: suspend (BackendVerificationResult) -> BackendVerificationResult,
     ): BackendVerificationResult
 
     protected fun startCase(
@@ -241,8 +281,9 @@ abstract class VerificationPortfolio(
         gate: ConcurrencyGate,
         environment: ExecutionEnvironment,
         progress: ProgressContext,
+        readBack: suspend (BackendVerificationResult) -> BackendVerificationResult,
     ): PortfolioCase {
-        return PortfolioCase(parentInjector, request, gate, environment, progress, timeSource.markNow())
+        return PortfolioCase(parentInjector, request, gate, environment, progress, readBack, timeSource.markNow())
     }
 
     protected suspend fun firstDecisive(
@@ -259,7 +300,7 @@ abstract class VerificationPortfolio(
 
         val race = race(case, window, stage, scope) {
             if (it.result.isTrusted) {
-                logger.info { "$id: ${it.leg} produced trusted ${it.result.verdict}" }
+                logger.info { "$id: ${it.legId} produced trusted ${it.result.verdict}" }
                 it.result
             } else {
                 null
@@ -332,7 +373,7 @@ abstract class VerificationPortfolio(
         val decisive = race.runs.mapNotNull {
             val end = it.end
             if (end is LegEnd.Finished && end.result.isDecisive) {
-                LegResult(it.leg, end.result)
+                LegResult(it.legId, end.result)
             } else {
                 null
             }
@@ -344,7 +385,7 @@ abstract class VerificationPortfolio(
             trusted.isEmpty() -> classify(race.runs, describedBound(case, window))
             trusted.map { it.result.verdict }.distinct().size > 1 -> {
                 val breakdown = trusted.joinToString(", ") {
-                    "${it.leg}=${it.result.verdict} (${it.result.soundness})"
+                    "${it.legId}=${it.result.verdict} (${it.result.soundness})"
                 }
                 logger.warn { "$id: trusted verdicts disagree ($breakdown), one of these legs is unsound" }
                 PortfolioOutcome.Decided(
@@ -368,10 +409,10 @@ abstract class VerificationPortfolio(
                     PortfolioOutcome.Decided(agreed.result, race.runs)
                 } else {
                     val breakdown = overruled.joinToString(", ") {
-                        "${it.leg}=${it.result.verdict} (not trusted, ${it.result.soundness})"
+                        "${it.legId}=${it.result.verdict} (not trusted, ${it.result.soundness})"
                     }
                     logger.info { "$id: resolved to ${agreed.result.verdict} over $breakdown" }
-                    PortfolioOutcome.Decided(agreed.result.copy(message = "Portfolio '$id' resolved to ${agreed.result.verdict} from ${agreed.leg} over $breakdown"), race.runs)
+                    PortfolioOutcome.Decided(agreed.result.copy(message = "Portfolio '$id' resolved to ${agreed.result.verdict} from ${agreed.legId} over $breakdown"), race.runs)
                 }
             }
         }
@@ -384,7 +425,7 @@ abstract class VerificationPortfolio(
             return PortfolioOutcome.NoDecision(availability.reason, emptyList())
         }
         val available = stages.tasks.filter {
-            it.isAvailable(case.environment)
+            it.leg.isAvailable(case.environment)
         }
         if (available.size <= case.slots) {
             logger.info { "$id: racing ${available.size} configurations on ${case.slots} slots (timeout ${case.time})" }
@@ -415,7 +456,7 @@ abstract class VerificationPortfolio(
 
         fun endedOnItsOwn(task: PortfolioTask<*>): Boolean {
             return runs.any {
-                it.leg == task.leg.id && it.end.endedOnItsOwn
+                it.legId == task.leg.id && it.end.endedOnItsOwn
             }
         }
 
@@ -585,13 +626,13 @@ abstract class VerificationPortfolio(
             return PortfolioOutcome.NoDecision("$id: no leg ran", runs)
         }
         val lastRuns = runs.groupBy {
-            it.leg
+            it.legId
         }.values.map {
             it.last()
         }
         val lastResults = lastRuns.mapNotNull {
             (it.end as? LegEnd.Finished)?.let { finished ->
-                LegResult(it.leg, finished.result)
+                LegResult(it.legId, finished.result)
             }
         }
         val observed = describeObserved(runs)
@@ -609,15 +650,15 @@ abstract class VerificationPortfolio(
             }
             lastResults.size == lastRuns.size && lastResults.all { it.result.verdict == VerificationVerdict.NotSupported } -> {
                 val legs = lastResults.joinToString(", ") {
-                    "${it.leg} (${it.result.message ?: "no construct reported"})"
+                    "${it.legId} (${it.result.message ?: "no construct reported"})"
                 }
                 PortfolioOutcome.AllNotSupported("$id: every leg reported NotSupported: $legs", runs)
             }
             lastRuns.all { it.end is LegEnd.Threw || (it.end as? LegEnd.Finished)?.result?.verdict == VerificationVerdict.Errored } -> {
                 val failures = lastRuns.map {
                     when (val end = it.end) {
-                        is LegEnd.Threw -> "${it.leg}: ${end.failure::class.simpleName}: ${end.failure.message ?: ""}"
-                        is LegEnd.Finished -> "${it.leg}: ${end.result.message ?: ""}"
+                        is LegEnd.Threw -> "${it.legId}: ${end.failure::class.simpleName}: ${end.failure.message ?: ""}"
+                        is LegEnd.Finished -> "${it.legId}: ${end.result.message ?: ""}"
                         else -> error("only failed legs reach here")
                     }
                 }
@@ -625,7 +666,7 @@ abstract class VerificationPortfolio(
             }
             timedOutLegs.isNotEmpty() -> {
                 val legs = timedOutLegs.joinToString(", ") {
-                    it.leg
+                    it.legId
                 }
                 PortfolioOutcome.TimedOut("$id: no trusted verdict, timed out: $legs$observed", runs)
             }
@@ -635,7 +676,7 @@ abstract class VerificationPortfolio(
 
     private fun describeVerdicts(results: List<LegResult>): String {
         return results.joinToString(", ") {
-            "${it.leg}=${it.result.verdict}"
+            "${it.legId}=${it.result.verdict}"
         }
     }
 
@@ -663,14 +704,14 @@ abstract class VerificationPortfolio(
             is LegEnd.Finished -> {
                 val result = end.result
                 if (result.isDecisive && !result.isTrusted) {
-                    "${run.leg}=${result.verdict} (not trusted, ${result.soundness})"
+                    "${run.legId}=${result.verdict} (not trusted, ${result.soundness})"
                 } else {
-                    "${run.leg}=${result.verdict}"
+                    "${run.legId}=${result.verdict}"
                 }
             }
-            is LegEnd.Threw -> "${run.leg} threw ${end.failure::class.simpleName}"
-            LegEnd.Cut -> "${run.leg} cut"
-            LegEnd.NeverStarted -> "${run.leg} never started"
+            is LegEnd.Threw -> "${run.legId} threw ${end.failure::class.simpleName}"
+            LegEnd.Cut -> "${run.legId} cut"
+            LegEnd.NeverStarted -> "${run.legId} never started"
         }
     }
 

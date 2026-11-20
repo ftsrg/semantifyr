@@ -500,6 +500,9 @@ code, .mono { font-family: var(--font-mono); font-feature-settings: "calt" 0; }
 .call-arrow .arrowhead { fill: var(--text-secondary); stroke: none; }
 .call-arrow.from-environment path { stroke: var(--text-tertiary); }
 .call-arrow.from-environment .arrowhead { fill: var(--text-tertiary); stroke: none; }
+.band-time-clock { fill: var(--surface-panel); stroke: var(--text-tertiary); stroke-width: 1.2; }
+.band-time-hands { fill: none; stroke: var(--text-tertiary); stroke-width: 1.2; stroke-linecap: round; stroke-linejoin: round; }
+.band-time-amount { fill: var(--text-secondary); font-family: var(--font-mono); font-size: 11px; paint-order: stroke; stroke: var(--surface-panel); stroke-width: 4px; stroke-linejoin: round; }
 .calls-empty { display: flex; gap: var(--space-4); align-items: flex-start; }
 .calls-empty .icon { margin-top: 2px; }
 .views-divider { align-self: center; width: 1px; height: 14px; margin: 0 var(--space-2); background: var(--border-strong); }

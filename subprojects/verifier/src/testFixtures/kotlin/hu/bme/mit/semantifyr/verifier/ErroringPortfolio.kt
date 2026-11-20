@@ -11,7 +11,6 @@ import hu.bme.mit.semantifyr.backend.BackendVerificationRequest
 import hu.bme.mit.semantifyr.backend.BackendVerificationResult
 import hu.bme.mit.semantifyr.backend.execution.AvailabilityReport
 import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
-import hu.bme.mit.semantifyr.backend.execution.ExecutorKey
 import hu.bme.mit.semantifyr.verifier.portfolio.ConcurrencyGate
 import hu.bme.mit.semantifyr.verifier.portfolio.PortfolioLeg
 import hu.bme.mit.semantifyr.verifier.portfolio.VerificationPortfolio
@@ -22,8 +21,7 @@ class ErroringPortfolio(
 ) : VerificationPortfolio() {
     override val displayName: String = id
     override val description: String = "test-only"
-    override val executorKeys: Set<ExecutorKey<*>> = emptySet()
-    override val legs: List<PortfolioLeg> = emptyList()
+    override val legs: List<PortfolioLeg<*>> = emptyList()
 
     val invocations = AtomicInteger(0)
 
@@ -37,6 +35,7 @@ class ErroringPortfolio(
         gate: ConcurrencyGate,
         environment: ExecutionEnvironment,
         progress: ProgressContext,
+        readBack: suspend (BackendVerificationResult) -> BackendVerificationResult,
     ): BackendVerificationResult {
         invocations.incrementAndGet()
         error("ErroringPortfolio.verify was called but should not have been")

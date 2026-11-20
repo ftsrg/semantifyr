@@ -7,19 +7,26 @@
 package hu.bme.mit.semantifyr.backends.spin.transformation
 
 import com.google.inject.Inject
+import hu.bme.mit.semantifyr.backend.transformation.WHOLE_DELAY_VARIABLE_NAME
+import hu.bme.mit.semantifyr.backend.transformation.WholeDelay
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.SequenceOperation
 import hu.bme.mit.semantifyr.utils.text.IndentingStringBuilder
 
 class SpinProctypeRenderer @Inject constructor(
     private val spinOperationTransformer: SpinOperationTransformer,
+    private val spinVariableTransformer: SpinVariableTransformer,
 ) {
 
-    fun renderInitProctype(builder: IndentingStringBuilder, inlinedOxsts: InlinedOxsts) {
+    fun renderInitProctype(
+        builder: IndentingStringBuilder,
+        inlinedOxsts: InlinedOxsts,
+        wholeDelay: WholeDelay?,
+    ) {
         builder.appendLine("init {")
         builder.indented {
             renderInitBody(this, inlinedOxsts.initTransition.branches)
-            renderTranLoop(this, inlinedOxsts.mainTransition.branches)
+            renderTranLoop(this, inlinedOxsts.mainTransition.branches, wholeDelay)
         }
         builder.appendLine("}")
     }
@@ -39,15 +46,19 @@ class SpinProctypeRenderer @Inject constructor(
     private fun renderInitChoice(builder: IndentingStringBuilder, branches: List<SequenceOperation>) {
         builder.appendLine("if")
         for (branch in branches) {
-            renderChoiceArm(builder, branch)
+            renderChoiceArm(builder, branch, null)
         }
         builder.appendLine("fi;")
     }
 
-    private fun renderChoiceArm(builder: IndentingStringBuilder, branch: SequenceOperation) {
+    private fun renderChoiceArm(
+        builder: IndentingStringBuilder,
+        branch: SequenceOperation,
+        wholeDelay: WholeDelay?,
+    ) {
         builder.appendLine(":: atomic {")
         builder.indented {
-            renderAtomicBody(this, branch)
+            renderAtomicBody(this, branch, wholeDelay)
         }
         builder.appendLine("}")
     }
@@ -55,13 +66,20 @@ class SpinProctypeRenderer @Inject constructor(
     private fun renderAtomicBranch(builder: IndentingStringBuilder, branch: SequenceOperation) {
         builder.appendLine("atomic {")
         builder.indented {
-            renderAtomicBody(this, branch)
+            renderAtomicBody(this, branch, null)
         }
         builder.appendLine("}")
     }
 
-    private fun renderAtomicBody(builder: IndentingStringBuilder, branch: SequenceOperation) {
+    private fun renderAtomicBody(
+        builder: IndentingStringBuilder,
+        branch: SequenceOperation,
+        wholeDelay: WholeDelay?,
+    ) {
         builder.appendLine("$SPIN_STABLE_FLAG = false;")
+        if (wholeDelay != null) {
+            renderWait(builder, wholeDelay)
+        }
         if (branch.steps.isEmpty()) {
             builder.appendLine("skip;")
         } else {
@@ -70,14 +88,27 @@ class SpinProctypeRenderer @Inject constructor(
         builder.appendLine("$SPIN_STABLE_FLAG = true;")
     }
 
-    private fun renderTranLoop(builder: IndentingStringBuilder, branches: List<SequenceOperation>) {
+    private fun renderTranLoop(
+        builder: IndentingStringBuilder,
+        branches: List<SequenceOperation>,
+        wholeDelay: WholeDelay?,
+    ) {
         if (branches.isEmpty()) {
             return
         }
         builder.appendLine("do")
         for (branch in branches) {
-            renderChoiceArm(builder, branch)
+            renderChoiceArm(builder, branch, wholeDelay)
         }
         builder.appendLine("od;")
+    }
+
+    private fun renderWait(builder: IndentingStringBuilder, wholeDelay: WholeDelay) {
+        builder.appendLine("select ($WHOLE_DELAY_VARIABLE_NAME : 0 .. ${wholeDelay.longestDelay});")
+        for (clock in wholeDelay.clocks) {
+            val name = spinVariableTransformer.nameOf(clock.variable)
+            val advanced = "$name + $WHOLE_DELAY_VARIABLE_NAME"
+            builder.appendLine("$name = ($advanced >= ${clock.saturation} -> ${clock.saturation} : $advanced);")
+        }
     }
 }

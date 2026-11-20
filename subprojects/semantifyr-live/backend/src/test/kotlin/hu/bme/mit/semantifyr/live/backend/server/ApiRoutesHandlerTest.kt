@@ -37,27 +37,29 @@ import java.nio.file.Path
 
 class ApiRoutesHandlerTest {
 
-    private fun createHandler(
-        activeSessions: Int = 3,
-        maxSessions: Int = 64,
-        config: BackendConfig = BackendConfig(),
-    ): ApiRoutesHandler {
-        val sessionManager = mock<SessionManager>()
-        whenever(sessionManager.activeSessionsCount).thenReturn(activeSessions)
-        whenever(sessionManager.maxSessions).thenReturn(maxSessions)
-        val serverStatus = ServerStatus().also {
-            it.markStartNow()
+    private companion object {
+        val defaultHandler by lazy {
+            createHandler()
         }
 
-        return testInjector(config) {
-            bind(SessionManager::class.java).toInstance(sessionManager)
-            bind(ServerStatus::class.java).toInstance(serverStatus)
-        }.handler<ApiRoutesHandler>()
+        fun createHandler(config: BackendConfig = BackendConfig()): ApiRoutesHandler {
+            val sessionManager = mock<SessionManager>()
+            whenever(sessionManager.activeSessionsCount).thenReturn(3)
+            whenever(sessionManager.maxSessions).thenReturn(64)
+            val serverStatus = ServerStatus().also {
+                it.markStartNow()
+            }
+
+            return testInjector(config) {
+                bind(SessionManager::class.java).toInstance(sessionManager)
+                bind(ServerStatus::class.java).toInstance(serverStatus)
+            }.handler<ApiRoutesHandler>()
+        }
     }
 
     @Test
     fun `health endpoint returns 200 with status`() = testApplication {
-        val handler = createHandler()
+        val handler = defaultHandler
         installSemantifyrApp {
             with(handler) {
                 configure()
@@ -71,7 +73,7 @@ class ApiRoutesHandlerTest {
 
     @Test
     fun `info endpoint returns server info`() = testApplication {
-        val handler = createHandler(activeSessions = 3, maxSessions = 64)
+        val handler = defaultHandler
         installSemantifyrApp {
             with(handler) {
                 configure()
@@ -90,7 +92,7 @@ class ApiRoutesHandlerTest {
 
     @Test
     fun `health endpoint returns JSON content type`() = testApplication {
-        val handler = createHandler()
+        val handler = defaultHandler
         installSemantifyrApp {
             with(handler) {
                 configure()
@@ -104,7 +106,7 @@ class ApiRoutesHandlerTest {
 
     @Test
     fun `flavors endpoint lists all registered flavors`() = testApplication {
-        val handler = createHandler()
+        val handler = defaultHandler
         installSemantifyrApp {
             with(handler) {
                 configure()
@@ -119,7 +121,7 @@ class ApiRoutesHandlerTest {
 
     @Test
     fun `flavors endpoint reports verification capability per flavor`() = testApplication {
-        val handler = createHandler()
+        val handler = defaultHandler
         installSemantifyrApp {
             with(handler) {
                 configure()
@@ -142,7 +144,7 @@ class ApiRoutesHandlerTest {
 
     @Test
     fun `flavors endpoint names a new document in the extension its language writes`() = testApplication {
-        val handler = createHandler()
+        val handler = defaultHandler
         installSemantifyrApp {
             with(handler) {
                 configure()
@@ -167,7 +169,7 @@ class ApiRoutesHandlerTest {
 
     @Test
     fun `portfolios endpoint exposes the demo portfolio set`() = testApplication {
-        val handler = createHandler()
+        val handler = defaultHandler
         installSemantifyrApp {
             with(handler) {
                 configure()
@@ -194,7 +196,7 @@ class ApiRoutesHandlerTest {
 
     @Test
     fun `the website can read health, flavors and portfolios from another origin`() = testApplication {
-        val handler = createHandler()
+        val handler = defaultHandler
         installSemantifyrApp {
             with(handler) {
                 configure()

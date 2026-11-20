@@ -4,7 +4,7 @@
  },
  "config": {
   "server": {
-   "port": 18350,
+   "port": 28431,
    "pingPeriod": "PT30S",
    "pingTimeout": "PT15S",
    "webRootDirectory": "/opt/semantifyr/staging/web",
@@ -69,69 +69,76 @@
  "status": {
   "sessions": [
    {
-    "sessionId": "4df0caed-4651-452f-9d75-ca2fd107d467",
+    "sessionId": "0d574c9e-2a9e-4666-9e9d-41db11362577",
     "remoteIp": "127.0.0.1",
     "flavorId": "gamma",
     "kind": "embed",
     "languageId": "gamma",
-    "uptime": "PT5.024819271S",
+    "uptime": "PT4.000448956S",
     "runningCount": 0,
     "queuedCount": 0,
-    "workingDirectory": "/tmp/semantifyr/sessions/4df0caed-4651-452f-9d75-ca2fd107d467",
+    "workingDirectory": "/tmp/semantifyr/sessions/0d574c9e-2a9e-4666-9e9d-41db11362577",
     "activeVerifications": []
    },
    {
-    "sessionId": "adf90e7e-3898-42d8-a6fd-4109c98672d6",
+    "sessionId": "7f2fe3c6-5180-4b86-a551-aedaf3b585ba",
     "remoteIp": "127.0.0.1",
     "flavorId": "oxsts",
     "kind": "full",
     "languageId": "oxsts",
-    "uptime": "PT4.854305740S",
+    "uptime": "PT3.854360923S",
     "runningCount": 4,
-    "queuedCount": 2,
-    "workingDirectory": "/tmp/semantifyr/sessions/adf90e7e-3898-42d8-a6fd-4109c98672d6",
+    "queuedCount": 3,
+    "workingDirectory": "/tmp/semantifyr/sessions/7f2fe3c6-5180-4b86-a551-aedaf3b585ba",
     "activeVerifications": [
      {
-      "verificationId": "f43814f7-0ed9-409f-9562-6bbac850992d",
+      "verificationId": "f612af6e-0785-413b-8d3e-86423cb054af",
       "portfolioId": "smart",
       "kind": "Verify",
       "state": "Running",
-      "elapsed": "PT0.086065738S"
+      "elapsed": "PT0.033405295S"
      },
      {
-      "verificationId": "4c9ed21f-c2d4-42ae-b0c6-0b7e7fd59590",
+      "verificationId": "83fc81b3-5596-497f-ba2f-a6c97d2243d6",
       "portfolioId": "smart",
       "kind": "Verify",
       "state": "Running",
-      "elapsed": "PT0.084329573S"
+      "elapsed": "PT0.032754200S"
      },
      {
-      "verificationId": "aa90a3b5-fa19-44d8-88fa-ec2e061bc2f3",
+      "verificationId": "19615428-60b6-4335-a766-9db708d57b91",
       "portfolioId": "smart",
       "kind": "Verify",
       "state": "Running",
-      "elapsed": "PT0.083518427S"
+      "elapsed": "PT0.032321904S"
      },
      {
-      "verificationId": "c2a11f7e-bc81-47c9-afcc-20dd3edaf0ec",
+      "verificationId": "eb244463-b8fe-41c1-b658-1410f166893e",
       "portfolioId": "smart",
       "kind": "Verify",
       "state": "Running",
-      "elapsed": "PT0.082210706S"
+      "elapsed": "PT0.032012395S"
      },
      {
-      "verificationId": "1b171c64-ccd0-429e-b6d7-db40d0b890da",
+      "verificationId": "8a8c5b8f-7e0d-4250-9a60-336c9e206c37",
       "portfolioId": "smart",
       "kind": "Verify",
       "state": "Queued",
-      "elapsed": "PT0.081262320S"
+      "elapsed": "PT0.031716907S"
      },
      {
-      "verificationId": "f251cfa7-07d6-4948-8725-2dee9ab189d8",
+      "verificationId": "db9df421-f2bf-44a3-8de5-727110d3520a",
       "portfolioId": "smart",
       "kind": "Verify",
       "state": "Queued",
-      "elapsed": "PT0.080194844S"
+      "elapsed": "PT0.031411997S"
+     },
+     {
+      "verificationId": "81156c5d-d4c5-4f6b-8a76-1ce104ab66b7",
+      "portfolioId": "smart",
+      "kind": "Verify",
+      "state": "Queued",
+      "elapsed": "PT0.030912693S"
      }
     ]
    }
@@ -140,9 +147,9 @@
    "activeSessions": 2,
    "maxSessions": 256,
    "runningVerifications": 4,
-   "queuedVerifications": 2,
+   "queuedVerifications": 3,
    "verificationPermits": 4,
-   "uptime": "PT2M10.839485449S"
+   "uptime": "PT2M54.769234767S"
   }
  }
 }

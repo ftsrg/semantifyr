@@ -49,10 +49,15 @@ class ThetaDomainTransformer @Inject constructor(
     }
 
     fun transform(dataTypeDeclaration: DataTypeDeclaration): XstsType {
+        return typeOf(dataTypeDeclaration) ?: throw BackendUnsupportedException("Theta does not support variables of type ${dataTypeDeclaration.name}")
+    }
+
+    fun typeOf(dataTypeDeclaration: DataTypeDeclaration): XstsType? {
         return when (dataTypeDeclaration) {
             builtinSymbolResolver.intDatatype(dataTypeDeclaration) -> XstsFactory.createIntegerType()
             builtinSymbolResolver.boolDatatype(dataTypeDeclaration) -> XstsFactory.createBooleanType()
-            else -> throw BackendUnsupportedException("Theta does not support variables of type ${dataTypeDeclaration.name}")
+            builtinSymbolResolver.clockDatatype(dataTypeDeclaration) -> XstsFactory.createIntegerType()
+            else -> null
         }
     }
 

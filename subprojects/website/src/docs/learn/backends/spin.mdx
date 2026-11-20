@@ -2,12 +2,12 @@
 title: Spin
 sidebar_position: 5
 backend: true
-description: The Spin backend, why its proofs are not trusted, and the constructs it refuses before it runs.
+description: The Spin backend, why its proofs are not trusted, how it realizes time and the constructs it refuses before it runs.
 ---
 
 # Spin
 
-[Spin](https://spinroot.com/) verifies the Promela translation of a case. It computes with 32-bit integers and havocs an integer only among candidate values, so it is under-approximating: a trace it finds is trusted, a proof is not, and a Spin portfolio reports a proof as Inconclusive. It needs `spin` and `gcc` on `PATH`, since Spin compiles every search with `gcc`. It treats a `@Clock` variable as an ordinary variable. Before it runs, it reports a case Not supported when the case holds a construct listed below, naming each construct, or the variable it concerns, and its source line. Since it refuses integers and arithmetic that may leave 32 bits, a trace it finds never passes through a wrapped value.
+[Spin](https://spinroot.com/) verifies the Promela translation of a case. It computes with 32-bit integers and havocs an integer only among candidate values, so it is under-approximating: a trace it finds is trusted, a proof is not, and a Spin portfolio reports a proof as Inconclusive. It needs `spin` and `gcc` on `PATH`, since Spin compiles every search with `gcc`. It realizes the [wait before every main step](../language/specification/classes-and-behaviour/time.md#the-wait-before-a-step) as a whole delay, as [Theta](theta.mdx) does, so a trace it finds is a run of the model whether or not every clock test is [closed](../language/specification/classes-and-behaviour/time.md#closed-clock-tests). Before it runs, it reports a case Not supported when the case holds a construct listed below, naming each construct, or the variable it concerns, and its source line. Since it refuses integers and arithmetic that may leave 32 bits, a trace it finds never passes through a wrapped value.
 
 ## What the backend refuses
 
@@ -21,3 +21,4 @@ description: The Spin backend, why its proofs are not trusted, and the construct
 - Unbounded integer variables: Spin computes with 32-bit integers that wrap without notice, so a value beyond them would make a trace wrong; the property depends on a variable without a static bound, such as a counter without a guard like `if (counter < 10) { counter := counter + 1 }`.
 - Integer variables beyond the 32-bit range: Spin computes with 32-bit integers that wrap without notice, so a value beyond them would make a trace wrong; the property depends on a variable whose static bound exceeds them.
 - Arithmetic that may leave the 32-bit range: Spin computes with 32-bit integers that wrap without notice, so a value beyond them would make a trace wrong; the property depends on the arithmetic.
+- Clocks that a whole delay may carry beyond the 32-bit range: a step adds a whole delay of up to one more than the largest clock bound to every clock, and Spin computes with 32-bit integers that wrap without notice, so every clock bound must stay below 2<sup>30</sup> - 1.

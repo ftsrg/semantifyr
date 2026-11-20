@@ -17,7 +17,9 @@ import type { VerificationCaseState, VerificationState } from '../lib/verificati
 import { modelOxstsTabOf } from '../lib/workspace/libraryTabs'
 import { ShellRoot } from '../shells/ShellRoot'
 import { ABOUT, CASE_MESSAGES, DOCUMENTATION, noCases, PRIVACY_URL, SOURCE_CODE_URL, TRACE_HINTS, VALIDATION, WEBSITE_URL } from '../texts'
+import { reportOf } from '../__tests__/fixtures/reports'
 import { caseOf, CONNECTED, finished, seedLive, type Seed } from './seededLive'
+import { settledOn } from './settled'
 
 // Goal: every desktop state the mockup draws lays out inside the viewport in both themes, with the real editor;
 // the proof is the layout itself, measured in a browser, never the pixels
@@ -112,7 +114,6 @@ const STATES: Readonly<Record<string, ScreenState>> = {
     expectState: () => {
       expect(text('.initialization-pressed')).toContain('Verify all is pressed')
       expect(count('.results-header .button-cancel')).toBe(1)
-      expect(text('[data-testid=status-message]')).toBe('Verify all waits: finding the verification cases')
     },
   },
   'cases-while-initializing': {
@@ -120,7 +121,6 @@ const STATES: Readonly<Record<string, ScreenState>> = {
     expectState: () => {
       expect(count('.case-row.status-not-run')).toBe(2)
       expect(count('.initialization')).toBe(0)
-      expect(text('[data-testid=status-message]')).toBe('Initializing the SysML v2 language server')
       expect(count('.connection.is-busy')).toBe(1)
     },
   },
@@ -130,7 +130,6 @@ const STATES: Readonly<Record<string, ScreenState>> = {
       expect(count(`.case-row.status-queued[data-case="${BARRIER.id}"]`)).toBe(1)
       expect(count('.case-row.status-not-run')).toBe(1)
       expect(count('.results-header .button-cancel')).toBe(1)
-      expect(text('[data-testid=status-message]')).toBe(`Verify ${BARRIER.id} waits: initializing the SysML v2 language server`)
     },
   },
   'initialization-timed-out': {
@@ -146,7 +145,6 @@ const STATES: Readonly<Record<string, ScreenState>> = {
       expect(count('.results-header .button-cancel')).toBe(1)
       expect(count(`.case-row.status-running[data-case="${BARRIER.id}"]`)).toBe(1)
       expect(count(`.case-row.status-queued[data-case="${TWO_TRAINS.id}"]`)).toBe(1)
-      expect(text('[data-testid=status-message]')).toBe(`Verifying ${BARRIER.id}, 0 of 2 done`)
     },
   },
   'server-busy': {
@@ -154,7 +152,6 @@ const STATES: Readonly<Record<string, ScreenState>> = {
     expectState: () => {
       expect(count('.case-row.status-queued')).toBe(2)
       expect(count('.case-row.status-running')).toBe(0)
-      expect(text('[data-testid=status-message]')).toBe(`The server is busy with other verifications: ${BARRIER.id} waits`)
     },
   },
   'results': {
@@ -166,7 +163,6 @@ const STATES: Readonly<Record<string, ScreenState>> = {
       expect(count('.case-row.status-failed')).toBe(1)
       expect(count('.case-row.status-passed')).toBe(1)
       expect(text('.trace-title')).toContain(BARRIER.id)
-      expect(text('[data-testid=status-message]')).toBe('Done in 2.9 s, waited 31 s: 1 failed, 1 passed')
     },
   },
   'outdated': {
@@ -244,14 +240,13 @@ const STATES: Readonly<Record<string, ScreenState>> = {
       await expect.poll(() => {
         return text('.problem-counts')
       }).toContain('1')
-      document.querySelector<HTMLElement>('.problem-counts')?.click()
+      await userEvent.click(document.querySelector<HTMLElement>('.problem-counts')!)
       await expect.poll(() => {
         return count('.problems-popover .problem-item')
       }).toBe(2)
     },
     expectState: () => {
       expect(text('.problem-counts').replace(/\s+/g, ' ')).toBe('1 1')
-      expect(text('[data-testid=status-message]')).toContain('Verify all did not run: the model has 1 error')
       expect(count('.case-row.status-running, .case-row.status-queued')).toBe(0)
     },
   },
@@ -261,7 +256,7 @@ const STATES: Readonly<Record<string, ScreenState>> = {
       const about = [...document.querySelectorAll<HTMLElement>('.toolbar .button')].find((button) => {
         return button.innerText.trim() === 'About'
       })
-      about!.click()
+      await userEvent.click(about!)
       await expect.poll(() => {
         return count('.dialog')
       }).toBe(1)
@@ -278,7 +273,7 @@ const STATES: Readonly<Record<string, ScreenState>> = {
   'settings': {
     seed: { verification: discovered([notRun(BARRIER), notRun(TWO_TRAINS)]), portfolios: PORTFOLIOS },
     act: async () => {
-      document.querySelector<HTMLElement>('[aria-label="Portfolios and validation"]')!.click()
+      await userEvent.click(document.querySelector<HTMLElement>('[aria-label="Portfolios and validation"]')!)
       await expect.poll(() => {
         return count('.portfolio-item')
       }).toBe(4)
@@ -289,7 +284,7 @@ const STATES: Readonly<Record<string, ScreenState>> = {
     },
   },
   'inconclusive-without-message': {
-    seed: { verification: discovered([{ caseInfo: BARRIER, status: 'inconclusive', resultStatus: 'inconclusive', metrics: { totalDuration: 'PT2.9S', preparationDuration: 'PT0S', verificationDuration: 'PT2.9S', backAnnotationDuration: 'PT0S' }, backendId: 'theta', portfolioId: 'smart' }, finished(TWO_TRAINS, 'passed', 0.8)], 'done'), selection: BARRIER.id },
+    seed: { verification: discovered([{ caseInfo: BARRIER, status: 'inconclusive', resultStatus: 'inconclusive', report: reportOf({ verdict: 'Inconclusive', backendId: 'theta', seconds: 2.9 }), portfolioId: 'smart' }, finished(TWO_TRAINS, 'passed', 0.8)], 'done'), selection: BARRIER.id },
     expectState: () => {
       expect(text(`.case-row[data-case="${BARRIER.id}"]`)).toContain(CASE_MESSAGES.inconclusive)
       expect(text('.empty-hint')).toBe(TRACE_HINTS.inconclusive)
@@ -372,10 +367,7 @@ describe('the desktop shell', () => {
           diagnostics.set(vscode.Uri.parse('file:///workspace/snippet.sysml'), toVscodeDiagnostics(screen.problems))
         }
         await screen.act?.()
-        await new Promise((resolve) => {
-          setTimeout(resolve, 600)
-        })
-        screen.expectState()
+        await settledOn(screen.expectState)
         expectLayout(colorMode, waiting)
         await page.screenshot({ path: `../../build/screens/${server.browser}/desktop-${state}-${colorMode}.png` })
       })

@@ -48,16 +48,21 @@ class SpinVariableTransformer @Inject constructor(
         }
     }
 
-    private fun resolveKind(variableDeclaration: VariableDeclaration): SpinVariableKind {
+    fun kindOf(variableDeclaration: VariableDeclaration): SpinVariableKind? {
         val domain = variableDeclaration.typeSpecification?.domain
-            ?: error("Variable ${variableDeclaration.name} has no type specification")
-
         return when {
             domain is EnumDeclaration -> SpinVariableKind.Enum
             domain === builtinSymbolResolver.intDatatype(variableDeclaration) -> SpinVariableKind.Integer
+            domain === builtinSymbolResolver.clockDatatype(variableDeclaration) -> SpinVariableKind.Integer
             domain === builtinSymbolResolver.boolDatatype(variableDeclaration) -> SpinVariableKind.Boolean
-            else -> throw BackendUnsupportedException("Spin does not support variables of type ${domain.name} (${variableDeclaration.name})")
+            else -> null
         }
+    }
+
+    private fun resolveKind(variableDeclaration: VariableDeclaration): SpinVariableKind {
+        val domain = variableDeclaration.typeSpecification?.domain
+            ?: error("Variable ${variableDeclaration.name} has no type specification")
+        return kindOf(variableDeclaration) ?: throw BackendUnsupportedException("Spin does not support variables of type ${domain.name} (${variableDeclaration.name})")
     }
 
     fun nameOf(enumDeclaration: EnumDeclaration): String {

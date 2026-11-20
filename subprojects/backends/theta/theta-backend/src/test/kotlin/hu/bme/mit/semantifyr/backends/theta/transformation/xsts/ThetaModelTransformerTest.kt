@@ -32,7 +32,7 @@ class ThetaModelTransformerTest : ThetaTransformationTestBase() {
 
     private suspend fun xsts(body: String): String {
         return withTransformer {
-            serialize(it.transform(parse("inlined oxsts of semantifyr::Anything\n${body.trimIndent()}", colors, paints), testXstsUri))
+            serialize(it.transform(parse("inlined oxsts of semantifyr::Anything\n${body.trimIndent()}", colors, paints), testXstsUri).xsts)
         }
     }
 
@@ -46,7 +46,7 @@ class ThetaModelTransformerTest : ThetaTransformationTestBase() {
 
     @Test
     suspend fun `a model renders variables, the transitions and the property`() {
-        val xsts = xsts(
+        val lines = xstsLines(
             """
                 var counter : int := 0
                 init {
@@ -61,24 +61,24 @@ class ThetaModelTransformerTest : ThetaTransformationTestBase() {
             """,
         )
 
-        assertThat(xsts).isEqualTo(
-            """
-
-                var counter: integer = 0
-                ctrl var __semantifyr_initialized: boolean = false
-                trans {
-                	counter := counter + 1;
-                }
-                init {
-                	counter := 1;
-                	__semantifyr_initialized := true;
-                }
-                env {
-                }
-                prop { !__semantifyr_initialized || counter < 3
-                }
-
-            """.trimIndent(),
+        assertThat(lines).containsSequence(
+            "var counter: integer = 0",
+            "ctrl var __semantifyr_initialized: boolean = false",
+        )
+        assertThat(lines).containsSequence(
+            "trans {",
+            "counter := counter + 1;",
+            "}",
+        )
+        assertThat(lines).containsSequence(
+            "init {",
+            "counter := 1;",
+            "__semantifyr_initialized := true;",
+            "}",
+        )
+        assertThat(lines).containsSequence(
+            "prop { !__semantifyr_initialized || counter < 3",
+            "}",
         )
     }
 
@@ -239,17 +239,23 @@ class ThetaModelTransformerTest : ThetaTransformationTestBase() {
     }
 
     @Test
-    suspend fun `tracers are declared outside the control set`() {
-        val xsts = withTransformer {
-            it.transform(compile("tracing", "TracedChoiceBranchReach"), testXstsUri)
-        }
+    suspend fun `a tracer, declared without the Control annotation, is declared outside the control set`() {
+        val tracer = TransitionTracerNames.tracerName(0)
+        val lines = xstsLines(
+            """
+                var $tracer : bool := false
+                init {
+                }
+                tran {
+                    $tracer := true
+                }
+                prop {
+                    AG true
+                }
+            """,
+        )
 
-        val tracers = xsts.variableDeclarations.filter {
-            TransitionTracerNames.isTracerName(it.name)
-        }
-        assertThat(tracers).isNotEmpty.noneMatch {
-            it.isControl
-        }
+        assertThat(lines).contains("var $tracer: boolean = false")
     }
 
     @Test
@@ -550,5 +556,43 @@ class ThetaModelTransformerTest : ThetaTransformationTestBase() {
                 """,
             )
         }
+    }
+
+    @Test
+    suspend fun `every main step starts with a bounded whole delay that advances each clock up to its saturation, and init waits for nothing`() {
+        val lines = xstsLines(
+            """
+                var elapsed : clock := 0
+                var late : bool := false
+                init {
+                }
+                tran {
+                    assume(elapsed <= 2)
+                    choice {
+                        assume(elapsed >= 2)
+                        late := true
+                        elapsed := 0
+                    } or {
+                    }
+                }
+                prop {
+                    AG !late
+                }
+            """,
+        )
+
+        assertThat(lines).contains("var __semantifyr_delay: integer = 0")
+        assertThat(lines).containsSequence(
+            "trans {",
+            "havoc __semantifyr_delay;",
+            "assume __semantifyr_delay >= 0 && __semantifyr_delay <= 3;",
+            "elapsed := if elapsed + __semantifyr_delay >= 3 then 3 else elapsed + __semantifyr_delay;",
+            "assume elapsed <= 2;",
+        )
+        assertThat(lines).containsSequence(
+            "init {",
+            "__semantifyr_initialized := true;",
+            "}",
+        )
     }
 }

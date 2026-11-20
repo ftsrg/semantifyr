@@ -56,8 +56,24 @@ abstract class InliningTestBase {
         source: String,
         block: (Prepared) -> T,
     ): T {
-        val inlined = parseHelper.parse(source.normalizedFixtureSource())
-        val compilationInjector = newCompilationInjector(OptimizationConfig.ALL)
+        return prepare(parseHelper.parse(source.normalizedFixtureSource()), OptimizationConfig.ALL, block)
+    }
+
+    protected fun <T> prepareWitness(
+        packageSource: String,
+        witnessSource: String,
+        block: (Prepared) -> T,
+    ): T {
+        val resourceSet = packageParseHelper.parse(packageSource.normalizedFixtureSource()).oxstsPackage.eResource().resourceSet
+        return prepare(parseHelper.parse(witnessSource.normalizedFixtureSource(), resourceSet), OptimizationConfig.NONE, block)
+    }
+
+    private fun <T> prepare(
+        inlined: InlinedOxsts,
+        optimization: OptimizationConfig,
+        block: (Prepared) -> T,
+    ): T {
+        val compilationInjector = newCompilationInjector(optimization)
         val request = CompilationRequest(
             inlinedOxsts = inlined,
             outputDirectory = Files.createTempDirectory("inlining-test-"),
@@ -139,7 +155,9 @@ abstract class InliningTestBase {
         }
         return EcoreUtil2
             .eAllOfType(parsed.oxstsPackage, ClassDeclaration::class.java)
-            .singleOrNull { it.name == className }
+            .singleOrNull {
+                it.name == className
+            }
             ?: error("Class '$className' not found in the test model")
     }
 

@@ -13,15 +13,14 @@ import hu.bme.mit.semantifyr.backend.SoundnessDirection
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.backend.execution.AvailabilityReport
 import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
-import hu.bme.mit.semantifyr.backend.execution.ExecutorKey
 import hu.bme.mit.semantifyr.verifier.FakeBackend
 import hu.bme.mit.semantifyr.verifier.FakeConfig
 import hu.bme.mit.semantifyr.verifier.ProgressContext
 import hu.bme.mit.semantifyr.verifier.fakeMetadata
 import hu.bme.mit.semantifyr.verifier.fakeRequest
+import hu.bme.mit.semantifyr.verifier.noReadBack
 import hu.bme.mit.semantifyr.verifier.noopGate
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.async
@@ -37,8 +36,8 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import org.mockito.kotlin.mock
-import java.util.Collections
 import kotlin.time.Clock
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
@@ -51,8 +50,7 @@ private class TestPortfolio(
 ) : VerificationPortfolio(timeSource) {
     override val displayName = id
     override val description = "test portfolio"
-    override val executorKeys: Set<ExecutorKey<*>> = emptySet()
-    override val legs: List<PortfolioLeg> = emptyList()
+    override val legs: List<PortfolioLeg<*>> = emptyList()
 
     override fun availability(environment: ExecutionEnvironment): AvailabilityReport {
         return AvailabilityReport.Available
@@ -64,6 +62,7 @@ private class TestPortfolio(
         gate: ConcurrencyGate,
         environment: ExecutionEnvironment,
         progress: ProgressContext,
+        readBack: suspend (BackendVerificationResult) -> BackendVerificationResult,
     ): BackendVerificationResult {
         error("TestPortfolio.verify is unused; tests call runFirstDecisive / runFirstNDecisive / runAll directly")
     }
@@ -73,7 +72,7 @@ private class TestPortfolio(
         timeout: Duration = Duration.INFINITE,
         progress: ProgressContext = ProgressContext.Silent,
     ): PortfolioCase {
-        return startCase(mock(), fakeRequest().copy(timeout = timeout), gate, ExecutionEnvironment.Empty, progress)
+        return startCase(mock(), fakeRequest().copy(timeout = timeout), gate, ExecutionEnvironment.Empty, progress, noReadBack)
     }
 
     suspend fun runFirstDecisive(
@@ -501,10 +500,12 @@ class VerificationPortfolioTest {
 
     @Test
     suspend fun `empty combinator block is rejected`() {
-        val exception = runCatching {
-            portfolio.runFirstDecisive(noopGate) {}
-        }.exceptionOrNull()
-        assertThat(exception).isNotNull.hasMessageContaining("at least one job")
+        val exception = assertThrows<IllegalArgumentException> {
+            portfolio.runFirstDecisive(noopGate) {
+            }
+        }
+
+        assertThat(exception).hasMessageContaining("at least one job")
     }
 
     @Test
@@ -636,7 +637,9 @@ class VerificationPortfolioTest {
         val progress = object : ProgressContext {
             override fun checkIsCancelled() {}
             override fun reportProgress(message: String) {
-                synchronized(messages) { messages += message }
+                synchronized(messages) {
+                    messages += message
+                }
             }
         }
 
@@ -647,7 +650,9 @@ class VerificationPortfolioTest {
 
         val result = outcome.orFail("expected decisive")
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Passed)
-        assertThat(messages).anyMatch { it.startsWith("result 1/2: ") }
+        assertThat(messages).anyMatch {
+            it.startsWith("result 1/2: ")
+        }
     }
 
     @Test
@@ -713,7 +718,7 @@ class VerificationPortfolioTest {
         assertThat(outcome).isInstanceOf(PortfolioOutcome.Decided::class.java)
         assertThat(
             outcome.runs.map {
-                it.leg
+                it.legId
             },
         ).containsExactly("winner", "laggard")
         assertThat((outcome.runs[0].end as LegEnd.Finished).result.verdict).isEqualTo(VerificationVerdict.Passed)
@@ -743,38 +748,38 @@ class VerificationPortfolioTest {
     fun `the case's result is Timeout when a leg was last cut or never started`() {
         val outcome = portfolio.runUndecided(
             listOf(
-                LegRun("a", "first stage", LegEnd.Cut),
-                LegRun("a", "last stage", finished("a", VerificationVerdict.Inconclusive)),
-                LegRun("b", "last stage", LegEnd.NeverStarted),
+                LegRun("explicit", "first stage", LegEnd.Cut),
+                LegRun("explicit", "last stage", finished("explicit", VerificationVerdict.Inconclusive)),
+                LegRun("bounded", "last stage", LegEnd.NeverStarted),
             ),
         )
 
         val result = outcome.toBackendVerificationResult(Clock.System.now())
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Timeout)
-        assertThat(result.message).contains("first stage: a cut; last stage: a=Inconclusive, b never started")
+        assertThat(result.message).contains("first stage: explicit cut; last stage: explicit=Inconclusive, bounded never started")
     }
 
     @Test
     fun `the case's result is classified over how every leg last ended`() {
         val outcome = portfolio.runUndecided(
             listOf(
-                LegRun("a", "first stage", LegEnd.Cut),
-                LegRun("b", "first stage", finished("b", VerificationVerdict.NotSupported)),
-                LegRun("a", "last stage", finished("a", VerificationVerdict.Inconclusive)),
+                LegRun("explicit", "first stage", LegEnd.Cut),
+                LegRun("bounded", "first stage", finished("bounded", VerificationVerdict.NotSupported)),
+                LegRun("explicit", "last stage", finished("explicit", VerificationVerdict.Inconclusive)),
             ),
         )
 
         val result = outcome.toBackendVerificationResult(Clock.System.now())
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Inconclusive)
-        assertThat(result.message).contains("first stage: a cut, b=NotSupported; last stage: a=Inconclusive")
+        assertThat(result.message).contains("first stage: explicit cut, bounded=NotSupported; last stage: explicit=Inconclusive")
     }
 
     @Test
     fun `the case's result is NotSupported when every leg refused`() {
         val outcome = portfolio.runUndecided(
             listOf(
-                LegRun("a", "first stage", finished("a", VerificationVerdict.NotSupported)),
-                LegRun("b", "last stage", finished("b", VerificationVerdict.NotSupported)),
+                LegRun("explicit", "first stage", finished("explicit", VerificationVerdict.NotSupported)),
+                LegRun("bounded", "last stage", finished("bounded", VerificationVerdict.NotSupported)),
             ),
         )
 
@@ -785,8 +790,8 @@ class VerificationPortfolioTest {
     fun `the case's result is Errored when every leg failed`() {
         val outcome = portfolio.runUndecided(
             listOf(
-                LegRun("a", "first stage", LegEnd.Threw(IllegalStateException("broken"))),
-                LegRun("b", "last stage", finished("b", VerificationVerdict.Errored)),
+                LegRun("explicit", "first stage", LegEnd.Threw(IllegalStateException("broken"))),
+                LegRun("bounded", "last stage", finished("bounded", VerificationVerdict.Errored)),
             ),
         )
 
@@ -807,36 +812,33 @@ class VerificationPortfolioTest {
     }
 
     @Test
-    suspend fun `after a window's close no waiting leg starts and every leg that ran is reported as run`() {
-        repeat(20) {
-            val invoked = Collections.synchronizedSet(mutableSetOf<String>())
-            val outcome = withContext(Dispatchers.Default) {
-                portfolio.runFirstDecisive(portfolio.case(LimitedConcurrencyGate(1)), window = 100.milliseconds) {
-                    for (name in listOf("a", "b")) {
-                        leg(name) {
-                            invoked += name
-                            try {
-                                awaitCancellation()
-                            } catch (cancellation: CancellationException) {
-                                withContext(NonCancellable) {
-                                    delay(30)
-                                }
-                                fakeResult(name, VerificationVerdict.Inconclusive)
-                            }
+    fun `after a window's close no waiting leg starts and every leg that ran is reported as run`() = runTest {
+        val portfolio = TestPortfolio(timeSource = testScheduler.timeSource)
+        val invoked = mutableListOf<String>()
+
+        val outcome = portfolio.runFirstDecisive(portfolio.case(LimitedConcurrencyGate(1)), window = 100.milliseconds) {
+            for (name in listOf("running", "waiting")) {
+                leg(name) {
+                    invoked += name
+                    try {
+                        awaitCancellation()
+                    } catch (cancellation: CancellationException) {
+                        withContext(NonCancellable) {
+                            delay(30)
                         }
+                        fakeResult(name, VerificationVerdict.Inconclusive)
                     }
                 }
             }
-
-            assertThat(invoked).hasSize(1)
-            for (run in outcome.runs) {
-                if (run.leg in invoked) {
-                    assertThat(run.end).isInstanceOf(LegEnd.Finished::class.java)
-                } else {
-                    assertThat(run.end).isEqualTo(LegEnd.NeverStarted)
-                }
-            }
         }
+
+        val ends = outcome.runs.associate {
+            it.legId to it.end
+        }
+        assertThat(invoked).containsExactly("running")
+        assertThat(ends).containsOnlyKeys("running", "waiting")
+        assertThat(ends["running"]).isInstanceOf(LegEnd.Finished::class.java)
+        assertThat(ends["waiting"]).isEqualTo(LegEnd.NeverStarted)
     }
 
     @Test

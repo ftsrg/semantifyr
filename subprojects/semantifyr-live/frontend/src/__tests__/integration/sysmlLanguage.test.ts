@@ -10,11 +10,27 @@ import { fakeModelDocuments } from '../helpers/live'
 import { servedFlavors } from '../fixtures/flavors'
 
 const workers = vi.hoisted(() => {
-  return { started: 0, connecting: Promise.resolve(), sockets: [] as string[] }
+  return { started: 0, connecting: Promise.resolve(), sockets: [] as string[], mappingRequests: [] as unknown[] }
 })
 
+const MAPPED_OXSTS = 'package Mapped'
+
 vi.mock('vscode', () => {
-  return {}
+  return {
+    languages: {
+      createDiagnosticCollection: () => {
+        return {
+          set: () => {},
+          dispose: () => {},
+        }
+      },
+    },
+    Uri: {
+      parse: (uri: string) => {
+        return uri
+      },
+    },
+  }
 })
 
 vi.mock('../../lib/session/monaco', () => {
@@ -35,7 +51,15 @@ vi.mock('../../lib/session/monaco', () => {
       workers.started++
       return {
         isStarted: () => true,
-        getLanguageClient: () => undefined,
+        getLanguageClient: () => {
+          return {
+            sendRequest: async (_method: string, params: { arguments: unknown[] }) => {
+              workers.mappingRequests.push(params.arguments[0])
+              return { oxsts: MAPPED_OXSTS, diagnostics: [] }
+            },
+            sendNotification: async () => {},
+          }
+        },
         dispose: async () => {},
       }
     },
@@ -68,7 +92,8 @@ describe('the SysML language', () => {
     workers.connecting = new Promise((resolve) => {
       connect = resolve
     })
-    const warn = vi.spyOn(console, 'warn')
+    const socketsBefore = workers.sockets.length
+    const mappingsBefore = workers.mappingRequests.length
     const unit = createLanguageRegistry(liveFlavors([])).unitOf('sysml')!
     const models = fakeModelDocuments()
     const runtime = unit.start(unit.flavors[0]!, {
@@ -79,18 +104,17 @@ describe('the SysML language', () => {
     })
 
     models.open('file:///workspace/snippet.sysml', 'part def Train;')
-    await new Promise((resolve) => {
-      setTimeout(resolve, 400)
+    await vi.waitFor(() => {
+      expect(workers.sockets.length).toBe(socketsBefore + 1)
     })
+    expect(workers.mappingRequests.length).toBe(mappingsBefore)
+    expect(runtime.modelOxsts.get()).toBeNull()
+
     connect()
     await vi.waitFor(() => {
-      expect(runtime.connection.get().status).toBe('connected')
+      expect(runtime.modelOxsts.get()?.text).toBe(MAPPED_OXSTS)
     })
-
-    expect(warn.mock.calls.filter(([message]) => {
-      return String(message).includes('SysML mapping failed')
-    })).toEqual([])
-    warn.mockRestore()
+    expect(workers.mappingRequests.slice(mappingsBefore)).toEqual(['file:///workspace/snippet.sysml'])
     workers.connecting = Promise.resolve()
     await runtime.dispose()
   })

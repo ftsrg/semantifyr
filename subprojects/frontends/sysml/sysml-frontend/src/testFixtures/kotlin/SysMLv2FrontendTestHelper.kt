@@ -6,7 +6,6 @@
 
 package hu.bme.mit.semantifyr.frontends.sysml.testing
 
-import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.ArtifactConfig
 import hu.bme.mit.semantifyr.compiler.reader.SemantifyrLoader
@@ -22,7 +21,6 @@ import hu.bme.mit.semantifyr.verifier.VerificationCase
 import hu.bme.mit.semantifyr.verifier.assertVerdict
 import hu.bme.mit.semantifyr.verifier.portfolio.VerificationPortfolio
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.Assertions
 import java.nio.file.Path
 import kotlin.io.path.Path
 import kotlin.io.path.copyTo
@@ -81,7 +79,7 @@ class SysMLv2FrontendTestHelper {
         entry: CorpusEntry,
     ) {
         val case = verificationCase(frontend, entry)
-        val result = frontend.verify(case)
+        val result = frontend.verify(case).outcome.report.result
         assertVerdict(case.qualifiedName, entry.case.expectedVerdict, result)
     }
 
@@ -92,25 +90,21 @@ class SysMLv2FrontendTestHelper {
     ): Path? {
         val case = verificationCase(frontend, entry)
         val result = frontend.verify(case)
-        assertVerdict(case.qualifiedName, entry.case.expectedVerdict, result)
-        val tracePath = frontend.sysmlTracePath(case)
-        if (result.trace == null) {
-            assertThat(tracePath).describedAs("SysML trace of $entry, which has no witness").doesNotExist()
+        assertVerdict(case.qualifiedName, entry.case.expectedVerdict, result.outcome.report.result)
+        if (result.outcome.report.trace == null) {
+            assertThat(result.tracePath).describedAs("SysML trace of $entry, which has no witness").isNull()
             return null
         }
-        assertThat(tracePath).describedAs("SysML trace of $entry").isRegularFile()
+        val tracePath = result.tracePath
+        assertThat(tracePath).describedAs("SysML trace of $entry").isNotNull().isRegularFile()
         return tracePath
     }
 
-    suspend fun recordVerificationCase(
+    fun expectsWitness(
         frontend: SysMLv2Frontend,
         entry: CorpusEntry,
-    ) {
-        val result = frontend.verify(verificationCase(frontend, entry))
-        logger.info { "$entry: ${result.verdict} after ${result.metrics.totalDuration} (${result.message ?: "no message"})" }
-        Assertions.assertNotEquals(VerificationVerdict.Errored, result.verdict) {
-            "$entry errored: ${result.message ?: "no message"}"
-        }
+    ): Boolean {
+        return verifierTestHelper.expectsWitness(verificationCase(frontend, entry), entry.case.expectedVerdict)
     }
 
     suspend fun checkConformance(

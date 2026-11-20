@@ -224,6 +224,19 @@ public class ArrayTypeTest {
     }
 
     @Test
+    void variableWithAnArrayOfNoSizeIsRejected() {
+        var parsedPackage = parseHelper.parse("""
+            package test
+            class Buffer {
+                var buffer: int[] := [0]
+            }
+            """, CheckMode.ALL);
+
+        parsedPackage.assertNoResourceErrors();
+        parsedPackage.assertHasValidationIssue(OxstsValidator.TYPE_MISMATCH, "unbounded multiplicity `[]`");
+    }
+
+    @Test
     void classAndFeatureTypedArraysPass() {
         var parsedPackage = parseHelper.parse("""
             package test

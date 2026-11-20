@@ -154,7 +154,11 @@ class GammaValidatorTest {
         validationTestHelper.assertError(model, GammaPackage.Literals.GAMMA_MODEL_PACKAGE, GammaValidator.INVALID_FILE_CONTENT)
     }
 
-    private fun adapter(queues: String, composite: String = ""): GammaRoot {
+    private fun adapter(
+        queues: String,
+        composite: String = "",
+        clockRate: String = "1 s",
+    ): GammaRoot {
         return parseHelper.parse(
             """
                 package test
@@ -167,7 +171,7 @@ class GammaValidatorTest {
                 ] {
                 }
                 adapter Buffered of component receiver : Receiver {
-                    clock ticker (rate = 1 s)
+                    clock ticker (rate = $clockRate)
                     when any / run
                     $queues
                 }
@@ -190,6 +194,20 @@ class GammaValidatorTest {
         )
 
         validationTestHelper.assertError(model, GammaPackage.Literals.MESSAGE_QUEUE, GammaValidator.MESSAGE_IN_SEVERAL_QUEUES)
+    }
+
+    @Test
+    fun `a clock's rate is positive`() {
+        val model = adapter(
+            """
+                queue messages (priority = 1, capacity = 1) {
+                    ticker
+                }
+            """,
+            clockRate = "0 s",
+        )
+
+        validationTestHelper.assertError(model, GammaPackage.Literals.CLOCK_DECLARATION, GammaValidator.NON_POSITIVE_TIME)
     }
 
     @Test

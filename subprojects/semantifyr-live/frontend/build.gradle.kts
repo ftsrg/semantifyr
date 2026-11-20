@@ -11,6 +11,7 @@ import hu.bme.mit.semantifyr.gradle.conventions.registerRenderPictures
 import hu.bme.mit.semantifyr.gradle.conventions.semantifyrArtifact
 import hu.bme.mit.semantifyr.gradle.conventions.servedExamples
 import hu.bme.mit.semantifyr.gradle.conventions.stampOnSuccess
+import hu.bme.mit.semantifyr.gradle.conventions.testBrowser
 import hu.bme.mit.semantifyr.gradle.conventions.testChromium
 import org.gradle.api.file.RegularFile
 
@@ -217,7 +218,17 @@ val npmCheck = tasks.register<NpmTask>("npmCheck") {
     stampOnSuccess()
 }
 
-val testBrowser = providers.gradleProperty("testBrowser").orElse("chromium")
+tasks.register<NpmTask>("integrationTest") {
+    group = "verification"
+
+    configureSharedInputs()
+
+    npmCommand.set(listOf("run", "test:integration"))
+
+    stampOnSuccess()
+}
+
+val testBrowser = testBrowser()
 
 fun NpmTask.runInTestBrowser(script: String, configuration: String) {
     group = "verification"
@@ -240,7 +251,7 @@ fun NpmTask.runInTestBrowser(script: String, configuration: String) {
     }
 }
 
-tasks.register<NpmTask>("screenTest") {
+val screenTest = tasks.register<NpmTask>("screenTest") {
     runInTestBrowser("screens", "vitest.screen.config.ts")
     val buildDirectory = project.layout.buildDirectory
     outputs.dir(
@@ -250,10 +261,20 @@ tasks.register<NpmTask>("screenTest") {
     )
 }
 
-tasks.register<NpmTask>("uiTest") {
+val applicationTest = tasks.register<NpmTask>("applicationTest") {
     runInTestBrowser("ui", "vitest.ui.config.ts")
     inputs.files(npmAssemble)
     inputs.files(cloneSysmlWorker)
+}
+
+val uiTest = tasks.register("uiTest") {
+    group = "verification"
+    dependsOn(screenTest, applicationTest)
+}
+
+tasks.register("continuousIntegration") {
+    group = "verification"
+    dependsOn(uiTest)
 }
 
 // a picture holds the fonts and the rendering of the browser and the system it is taken on
@@ -313,7 +334,7 @@ tasks.register<NpmTask>("loadTest") {
 }
 
 tasks {
-    assemble {
+    pack {
         dependsOn(npmAssemble, cloneSysmlWorker)
     }
 

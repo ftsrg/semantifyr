@@ -188,4 +188,58 @@ class RedundantBooleanPatternsTest : PatternTestBase() {
             }
         """,
     )
+
+    @Test
+    fun `and with literal false on the right collapses to false`() = assertPatternTransforms(
+        pattern = ConstantFalseAndPattern(),
+        input = """
+            inlined oxsts of semantifyr::Anything
+            var operand: bool := false
+            init {
+            }
+            tran {
+            }
+            prop {
+                AG (operand && false)
+            }
+        """,
+        expected = """
+            inlined oxsts of semantifyr::Anything
+            var operand: bool := false
+            init {
+            }
+            tran {
+            }
+            prop {
+                AG false
+            }
+        """,
+    )
+
+    @Test
+    fun `or with literal true on the right collapses to true`() = assertPatternTransforms(
+        pattern = ConstantTrueOrPattern(),
+        input = """
+            inlined oxsts of semantifyr::Anything
+            var operand: bool := false
+            init {
+            }
+            tran {
+            }
+            prop {
+                AG (operand || true)
+            }
+        """,
+        expected = """
+            inlined oxsts of semantifyr::Anything
+            var operand: bool := false
+            init {
+            }
+            tran {
+            }
+            prop {
+                AG true
+            }
+        """,
+    )
 }

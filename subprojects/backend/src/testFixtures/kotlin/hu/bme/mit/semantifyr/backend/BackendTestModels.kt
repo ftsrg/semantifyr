@@ -30,19 +30,6 @@ class BackendTestModels @Inject constructor(
     private val packageParser: ParseHelper<OxstsModelPackage>,
 ) {
     companion object {
-        const val COUNTER_EXCEEDS_BOUND = """
-            inlined oxsts of semantifyr::Anything
-            var counter : int := 0
-            init {
-            }
-            tran {
-                counter := counter + 1
-            }
-            prop {
-                AG counter < 2
-            }
-        """
-
         const val SATURATING_COUNTER_EXCEEDS_BOUND = """
             inlined oxsts of semantifyr::Anything
             var counter : int := 0
@@ -113,14 +100,6 @@ class BackendTestModels @Inject constructor(
         val inlinedOxsts = inlinedParser.parse(source.trimIndent(), resourceSet)
         EcoreUtil.resolveAll(inlinedOxsts)
         return inlinedOxsts
-    }
-
-    fun compile(
-        file: String,
-        className: String,
-        outputDirectory: Path,
-    ): InlinedOxsts {
-        return compileFlattened(file, className, outputDirectory).inlinedOxsts
     }
 
     fun compileFlattened(

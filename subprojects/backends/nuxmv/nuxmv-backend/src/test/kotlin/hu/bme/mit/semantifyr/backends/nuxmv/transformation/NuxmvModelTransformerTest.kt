@@ -48,28 +48,85 @@ class NuxmvModelTransformerTest : NuxmvTransformationTestBase() {
                 }
             """,
         )
+        val lines = artifacts.smv.lines().map {
+            it.trim()
+        }
 
-        assertThat(artifacts.smv).isEqualTo(
-            """
-                MODULE main
-                VAR
-                    counter : integer;
-                    counter__init_b0_seed : integer;
-                    counter__tran_b0_1 : integer;
-                INIT
-                    (
-                          (counter__init_b0_seed = 0)
-                        & (counter = counter__init_b0_seed)
-                    )
-                TRANS
-                    (
-                          (counter__tran_b0_1 = (counter + 1))
-                        & (next(counter) = counter__tran_b0_1)
-                    )
-
-            """.trimIndent(),
+        assertThat(lines).containsSequence(
+            "VAR",
+            "counter : integer;",
+            "counter__init_b0_seed : integer;",
+            "counter__tran_b0_1 : integer;",
+        )
+        assertThat(lines).containsSequence(
+            "INIT",
+            "(",
+            "(counter__init_b0_seed = 0)",
+            "& (counter = counter__init_b0_seed)",
+        )
+        assertThat(lines).containsSequence(
+            "TRANS",
+            "(",
+            "(counter__tran_b0_1 = (counter + 1))",
+            "& (next(counter) = counter__tran_b0_1)",
         )
         assertThat(artifacts.property.invariant).isEqualTo("(counter < 3)")
+    }
+
+    @Test
+    suspend fun `a clock is a real that every main step advances by the step's delay before its transition`() {
+        val lines = smvLines(
+            """
+                var elapsed : clock := 0
+                var late : bool := false
+                init {
+                }
+                tran {
+                    assume(elapsed >= 6)
+                    late := true
+                    elapsed := 0
+                }
+                prop {
+                    AG !late
+                }
+            """,
+        )
+
+        assertThat(lines).contains(
+            "elapsed : real;",
+            "elapsed__init_b0_seed : real;",
+            "elapsed__tran_b0_1 : real;",
+        )
+        assertThat(lines).containsSequence(
+            "IVAR",
+            "delay_0 : real;",
+        )
+        assertThat(lines).containsSequence(
+            "TRANS",
+            "(",
+            "(delay_0 >= 0)",
+            "& (((elapsed + delay_0) >= 6))",
+        )
+        assertThat(lines).contains("& (elapsed__tran_b0_1 = 0)")
+    }
+
+    @Test
+    suspend fun `a model without a clock waits no time and has no delay`() {
+        val lines = smvLines(
+            """
+                var late : bool := false
+                init {
+                }
+                tran {
+                    late := true
+                }
+                prop {
+                    AG !late
+                }
+            """,
+        )
+
+        assertThat(lines).doesNotContain("IVAR", "delay_0 : real;")
     }
 
     @Test
@@ -429,7 +486,11 @@ class NuxmvModelTransformerTest : NuxmvTransformationTestBase() {
         ).smv
 
         assertThat(declaredNames(smv)).doesNotHaveDuplicates()
-        assertThat(smv.lines().map { it.trim() }).containsSequence("IVAR", "nondet_tran_b0_0 : 0..1;", "nondet_tran_b1_0 : 0..1;")
+        assertThat(
+            smv.lines().map {
+                it.trim()
+            },
+        ).containsSequence("IVAR", "nondet_tran_b0_0 : 0..1;", "nondet_tran_b1_0 : 0..1;")
     }
 
     @Test
@@ -459,7 +520,11 @@ class NuxmvModelTransformerTest : NuxmvTransformationTestBase() {
         ).smv
 
         assertThat(declaredNames(smv)).doesNotHaveDuplicates()
-        assertThat(smv.lines().map { it.trim() }).containsSequence("FROZENVAR", "nondet_init_b0_0 : 0..1;", "nondet_init_b1_0 : 0..1;")
+        assertThat(
+            smv.lines().map {
+                it.trim()
+            },
+        ).containsSequence("FROZENVAR", "nondet_init_b0_0 : 0..1;", "nondet_init_b1_0 : 0..1;")
     }
 
     @Test

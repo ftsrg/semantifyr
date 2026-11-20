@@ -47,6 +47,8 @@ export interface FlavorFixture {
   documents: Record<string, RecordedDocument>
   results: Record<string, VerificationCaseResult>
   validations: Record<string, WitnessValidationResult>
+  // what the server answers a validation the client cancelled
+  cancelledValidation: WitnessValidationResult | null
   reads: Record<string, string | null>
   verifyProgress: ProgressValue[]
   validateProgress: ProgressValue[]

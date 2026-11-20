@@ -8,10 +8,21 @@ import type { Page } from 'playwright'
 import { describe, expect } from 'vitest'
 
 import { editorKeysOf } from '../testBrowser'
-import { casesListed, editor, test } from './harness'
+import { casesListed, editor, results, statesOf, test } from './harness'
+import { flavorFixture } from './mock/fixtures'
 
 const BUILTIN = 'file:///workspace/.semantifyr/builtin/standard.semantifyr'
-const TRACE_ANNOTATION_LINE = 80
+
+function recordedLine(flavorId: string, uri: string, text: string): number {
+  const line = flavorFixture(flavorId).reads[uri]?.split('\n').indexOf(text) ?? -1
+  if (line < 0) {
+    throw new Error(`the ${flavorId} recording reads no line '${text}' in ${uri}`)
+  }
+  return line
+}
+
+const TRACE_ANNOTATION_LINE = recordedLine('oxsts', BUILTIN, 'annotation Trace')
+const BARRIER = '_BarrierDownWhileTrainInCrossing'
 
 // the text of the line the cursor is on in the document shown
 async function currentLine(page: Page): Promise<string> {
@@ -72,7 +83,7 @@ function opened(session: { received: unknown[] }): string[] {
 
 describe('going to a definition from inside a read-only document', () => {
   test('of a library names the library file by its server address, sends no copy of it, and lands at the answer', async ({ ui }) => {
-    const STRING_LINE = 34
+    const STRING_LINE = recordedLine('oxsts', BUILTIN, 'extern datatype string')
     ui.backend.answer('feature', (request, recorded) => {
       if (request.method !== 'textDocument/definition') {
         return recorded()
@@ -107,7 +118,7 @@ describe('going to a definition from inside a read-only document', () => {
       if (request.method !== 'textDocument/definition') {
         return recorded()
       }
-      const position = { line: 48, character: 6 }
+      const position = { line: recordedLine('gamma', STATECHARTS, 'class Statechart : Component {'), character: 6 }
       return [{ uri: STATECHARTS, range: { start: position, end: position } }]
     })
     const page = await ui.open('/gamma/level-crossing', { height: 1600 })
@@ -164,5 +175,58 @@ describe('the OXSTS of the model', () => {
       await page.keyboard.press((await editorKeysOf(page)).endOfDocument)
       return (await editor(page).lines.innerText()).replace(/\u00a0/g, ' ')
     }).toContain('// recompiled')
+  })
+})
+
+describe('the margin', () => {
+  test('shows the marks of the shown document\'s cases alone, one state each, after another shell\'s editor showed the same model', async ({ ui }) => {
+    const page = await ui.open('/language/level-crossing?library=gamma', { height: 5800 })
+    await casesListed(page)
+    await results(page).row(BARRIER).getByRole('button', { name: `Run ${BARRIER}` }).click()
+    await expect.poll(async () => {
+      return statesOf(editor(page).marks, 'verdict-glyph-')
+    }).toEqual(['failed', 'not-run'])
+
+    await page.setViewportSize({ width: 390, height: 844 })
+    await expect.poll(async () => {
+      return page.getByTestId('phone-shell').count()
+    }).toBe(1)
+    await page.setViewportSize({ width: 1440, height: 5800 })
+    await expect.poll(async () => {
+      return page.getByTestId('desktop-shell').count()
+    }).toBe(1)
+
+    await expect.poll(async () => {
+      return statesOf(editor(page).marks, 'verdict-glyph-')
+    }).toEqual(['failed', 'not-run'])
+  })
+})
+
+describe('the starting editor', () => {
+  test('leaves the focus in a menu opened before it started, and the menu open', async ({ ui }) => {
+    let release = (): void => {}
+    const loaded = new Promise<void>((resolve) => {
+      release = resolve
+    })
+    const page = await ui.open('/language/modeling-and-verification', { held: { url: '**/assets/monaco-vscode-editor-service-override*', until: loaded } })
+    const trigger = page.locator('.example-button')
+    const inMenu = async (): Promise<boolean> => {
+      return page.evaluate(() => {
+        return (document.activeElement?.closest('[role="menu"]') ?? null) !== null
+      })
+    }
+    await trigger.click()
+    await expect.poll(inMenu).toBe(true)
+    expect(await page.locator('section.editor .view-line').count(), 'the editor has not started').toBe(0)
+    release()
+
+    // the status bar shows the cursor only once the editor has started, after it would have taken the focus
+    await expect.poll(async () => {
+      return {
+        started: (await page.locator('.statusbar').innerText()).includes('Ln 1, Col 1'),
+        expanded: await trigger.getAttribute('aria-expanded'),
+        inMenu: await inMenu(),
+      }
+    }).toEqual({ started: true, expanded: 'true', inMenu: true })
   })
 })

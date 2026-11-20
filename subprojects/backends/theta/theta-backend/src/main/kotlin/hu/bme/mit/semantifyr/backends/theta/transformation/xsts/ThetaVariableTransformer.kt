@@ -38,6 +38,10 @@ class ThetaVariableTransformer @Inject constructor(
     private val localVariableMap = mutableMapOf<LocalVarDeclarationOperation, XstsLocalVarDeclarationOperation>()
     private val loopVariableMap = mutableMapOf<VariableDeclaration, XstsVariableDeclaration>()
 
+    fun nameOf(variableDeclaration: VariableDeclaration): String {
+        return variableDeclaration.name
+    }
+
     fun transform(variableDeclaration: VariableDeclaration): XstsVariableDeclaration {
         if (variableDeclaration is LocalVarDeclarationOperation) {
             return transformLocalVar(variableDeclaration)
@@ -88,7 +92,7 @@ class ThetaVariableTransformer @Inject constructor(
         variableDeclaration: VariableDeclaration,
         initializer: Expression,
     ) {
-        variable.name = variableDeclaration.name
+        variable.name = nameOf(variableDeclaration)
 
         val type = variableDeclaration.typeSpecification.domain
         variable.type = thetaTypeReferenceTransformer.transform(type, variableDeclaration.typeSpecification?.multiplicity)

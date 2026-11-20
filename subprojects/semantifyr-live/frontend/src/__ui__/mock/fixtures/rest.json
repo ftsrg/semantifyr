@@ -1,10 +1,10 @@
 {
  "info": {
-  "uptime": "PT12M25.144267050S",
-  "startedAt": "2026-11-16T00:41:38.556788214Z",
+  "uptime": "PT17M1.531491428S",
+  "startedAt": "2026-11-20T11:21:01.420435358Z",
   "version": "0.1.0",
-  "commit": "42687bf32",
-  "buildTime": "2026-11-16T00:19:16.351509545Z",
+  "commit": "23ce8cf36",
+  "buildTime": "2026-11-20T11:20:46.821777207Z",
   "activeSessions": 0,
   "maxSessions": 256
  },
@@ -65,7 +65,7 @@
    {
     "id": "smart",
     "displayName": "Smart",
-    "description": "Runs the installed backends side by side and takes the first trusted answer.",
+    "description": "Runs the installed backends in stages, the quick configurations briefly first and the strong ones longer after, and takes the first trusted answer.",
     "available": true
    },
    {

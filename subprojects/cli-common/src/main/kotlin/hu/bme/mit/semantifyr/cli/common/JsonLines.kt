@@ -29,9 +29,6 @@ data class VerifyOutcomeLine(
 enum class CasePhase {
     @SerialName("compilation")
     Compilation,
-
-    @SerialName("back-annotation")
-    BackAnnotation,
 }
 
 @Serializable

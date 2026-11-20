@@ -51,6 +51,7 @@ class MeasuredTheta(
             inlinedOxsts = compiled.inlinedOxsts,
             artifactOutputPath = processes.directory,
             flatteningInfo = compiled.flatteningInfo,
+            transitionCallTraces = compiled.transitionCallTraces,
         )
         val result = runBlocking {
             ThetaBackend().verify(oxstsInjector, thetaConfig, request, environment)

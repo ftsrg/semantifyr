@@ -53,10 +53,13 @@ describe('the portfolio settings', () => {
     await expect.poll(async () => {
       return statesOf(results(page).rows, 'status-')
     }).toEqual(['failed', 'passed'])
-    await page.waitForTimeout(500)
+    const validate = results(page).row(BARRIER).getByRole('button', { name: `Validate ${BARRIER}` })
+    await expect.poll(async () => {
+      return validate.count()
+    }).toBe(1)
     expect(ui.backend.session().commands('oxsts.case.validateWitness')).toEqual([])
 
-    await results(page).row(BARRIER).getByRole('button', { name: `Validate ${BARRIER}` }).click()
+    await validate.click()
 
     await expect.poll(async () => {
       return results(page).row(BARRIER).locator('.validation-mark').getAttribute('class')
@@ -66,7 +69,7 @@ describe('the portfolio settings', () => {
 
   test('show a validation that fails on its row, which validates again when asked', async ({ ui }) => {
     ui.backend.answer('validate', (_request, recorded) => {
-      return { ...recorded(), status: 'invalid', verdict: 'passed', message: 'The witness does not reproduce the violation' }
+      return { ...recorded(), status: 'invalid', message: 'The witness does not reproduce the violation' }
     })
     const page = await ui.open(LEVEL_CROSSING)
     await casesListed(page)

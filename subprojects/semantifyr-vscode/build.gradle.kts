@@ -100,28 +100,6 @@ val cloneTheta = tasks.register<Sync>("cloneTheta") {
     into(thetaDirectory)
 }
 
-val npmIntegrationTest = tasks.register<NpmTask>("npmIntegrationTest") {
-    group = "verification"
-
-    configureSharedInputs()
-    inputs.files(cloneDistribution)
-    inputs.files(npmAssemble)
-    inputs.files(cloneTheta)
-    inputs.file(rootProject.layout.projectDirectory.file("oxsts-test-models/smoke/smoke.semantifyr"))
-
-    npmCommand.set(listOf("run", "test:integration"))
-    environment.put("PATH", thetaDirectory.zip(providers.environmentVariable("PATH")) { directory, path ->
-        "${directory.asFile.absolutePath}${File.pathSeparator}$path"
-    })
-
-    stampOnSuccess()
-}
-
-tasks.register("integrationTest") {
-    group = "verification"
-    dependsOn(npmIntegrationTest)
-}
-
 val vsixFile = project.layout.buildDirectory.file("semantifyr-${project.version}.vsix")
 
 val bundleExtension = tasks.register<NpmTask>("bundleExtension") {
@@ -146,14 +124,34 @@ val bundleExtension = tasks.register<NpmTask>("bundleExtension") {
     inputs.files(editorCommonFiles)
 
     npmCommand.set(listOf("run", "bundle", "--", version, "--no-git-tag-version", "--no-update-package-json"))
+    // both write dist, and the package must not take a development build written beside it
+    mustRunAfter(npmAssemble)
 
     outputs.file(vsixFile)
 }
 
+tasks.register<NpmTask>("endToEndTest") {
+    group = "verification"
+
+    configureSharedInputs()
+    inputs.files(bundleExtension)
+    inputs.files(cloneTheta)
+    inputs.file(rootProject.layout.projectDirectory.file("oxsts-test-models/smoke/smoke.semantifyr"))
+
+    npmCommand.set(listOf("run", "test:end-to-end"))
+    environment.put("SEMANTIFYR_VSIX", vsixFile.map {
+        it.asFile.absolutePath
+    })
+    environment.put("PATH", thetaDirectory.zip(providers.environmentVariable("PATH")) { directory, path ->
+        "${directory.asFile.absolutePath}${File.pathSeparator}$path"
+    })
+
+    stampOnSuccess()
+}
+
 tasks {
-    assemble {
-        inputs.files(cloneDistribution)
-        inputs.files(npmAssemble)
+    pack {
+        dependsOn(cloneDistribution, npmAssemble, bundleExtension)
     }
 
     check {

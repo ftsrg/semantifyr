@@ -15,20 +15,22 @@ class WitnessStateValue(
     val value: Expression,
 )
 
+class WitnessClockValue(
+    val variable: VariableDeclaration,
+    val value: Fraction,
+)
+
 class WitnessState(
     val values: List<WitnessStateValue>,
+    val clockValues: List<WitnessClockValue>,
+    val elapsed: Fraction,
 )
 
 class InlinedWitness(
     val initializedState: WitnessState,
     val transitionStates: List<WitnessState>,
-    val nextStateMap: Map<WitnessState, List<WitnessState>>,
     val inlinedOxsts: InlinedOxsts,
-) {
-    fun getNextStates(state: WitnessState): List<WitnessState> {
-        return nextStateMap[state] ?: emptyList()
-    }
-}
+)
 
 fun linearInlinedWitness(
     inlinedOxsts: InlinedOxsts,
@@ -36,21 +38,9 @@ fun linearInlinedWitness(
 ): InlinedWitness {
     require(states.isNotEmpty()) { "Cannot build witness from empty state list" }
 
-    val initializedState = states.first()
-    val transitionStates = states.drop(1)
-
-    val nextStateMap = mutableMapOf<WitnessState, List<WitnessState>>()
-    if (transitionStates.isNotEmpty()) {
-        nextStateMap[initializedState] = listOf(transitionStates.first())
-    }
-    for (i in 1 until transitionStates.size) {
-        nextStateMap[transitionStates[i - 1]] = listOf(transitionStates[i])
-    }
-
     return InlinedWitness(
-        initializedState = initializedState,
-        transitionStates = transitionStates,
-        nextStateMap = nextStateMap,
+        initializedState = states.first(),
+        transitionStates = states.drop(1),
         inlinedOxsts = inlinedOxsts,
     )
 }

@@ -37,42 +37,20 @@ public class TraceArgumentValidationTest {
     private OxstsPackageParseHelper parseHelper;
 
     @Test
-    void runtimeArgumentOfATracedCallIsRejected() {
+    void runtimeArgumentsOfATracedCallPass() {
         var parsedPackage = parseHelper.parse(PORT + """
             class Host {
                 var count: int := 0
                 contains port: Port
                 redefine tran {
                     inline port.send(count)
-                }
-            }
-            """, CheckMode.ALL);
-
-        parsedPackage.assertNoResourceErrors();
-        assertThat(parsedPackage.getIssues())
-                .filteredOn(issue -> issue.getSeverity() == Severity.ERROR)
-                .singleElement()
-                .satisfies(issue -> {
-                    assertThat(issue.getCode()).isEqualTo(OxstsValidator.EXPRESSION_MODALITY_TOO_HIGH);
-                    assertThat(issue.getLineNumber()).isEqualTo(16);
-                    assertThat(issue.getMessage()).contains("'send'");
-                });
-    }
-
-    @Test
-    void namedRuntimeArgumentOfATracedCallIsRejected() {
-        var parsedPackage = parseHelper.parse(PORT + """
-            class Host {
-                var count: int := 0
-                contains port: Port
-                redefine tran {
                     inline port.send(value = count + 1)
                 }
             }
             """, CheckMode.ALL);
 
         parsedPackage.assertNoResourceErrors();
-        parsedPackage.assertHasValidationIssue(OxstsValidator.EXPRESSION_MODALITY_TOO_HIGH, "'send'");
+        parsedPackage.assertNoValidationIssues();
     }
 
     @Test
@@ -142,11 +120,80 @@ public class TraceArgumentValidationTest {
 
         parsedPackage.assertNoResourceErrors();
         assertThat(parsedPackage.getIssues())
-                .filteredOn(issue -> issue.getSeverity() == Severity.ERROR)
+                .filteredOn(issue -> {
+                    return issue.getSeverity() == Severity.ERROR;
+                })
                 .hasSize(3)
                 .allSatisfy(issue -> {
                     assertThat(issue.getCode()).isEqualTo(OxstsValidator.UNSUPPORTED_FEATURE);
                     assertThat(issue.getMessage()).contains("Record arguments of the traced transition 'send'");
                 });
+    }
+
+    @Test
+    void anArrayCannotReachATracedParameter() {
+        var parsedPackage = parseHelper.parse("""
+            package test
+            class Display {
+                var seen: bool := false
+                @Trace
+                tran note(value: any) {
+                    seen := true
+                }
+                @Trace
+                tran show(values: int[2]) {
+                    seen := true
+                }
+            }
+            class Host {
+                var readings: int[2] := [0, 0]
+                contains display: Display
+                tran relay(value: any) {
+                    inline display.note(value)
+                }
+                redefine tran {
+                    inline display.note(readings)
+                    inline relay(readings)
+                }
+            }
+            """, CheckMode.ALL);
+
+        parsedPackage.assertNoResourceErrors();
+        assertThat(parsedPackage.getIssues())
+                .filteredOn(issue -> {
+                    return issue.getSeverity() == Severity.ERROR;
+                })
+                .extracting(issue -> {
+                    return issue.getCode();
+                })
+                .containsExactlyInAnyOrder(
+                        OxstsValidator.UNSUPPORTED_FEATURE, OxstsValidator.TYPE_MISMATCH, OxstsValidator.TYPE_MISMATCH);
+    }
+
+    @Test
+    void runtimeRealAndStringArgumentsOfATracedCallPass() {
+        var parsedPackage = parseHelper.parse("""
+            package test
+            class Display {
+                var reading: real := 0.0
+                var label: string := ""
+                @Trace
+                tran show(value: real, text: string) {
+                    reading := value
+                    label := text
+                }
+            }
+            class Host {
+                var level: real := 0.5
+                var name: string := "a"
+                contains display: Display
+                redefine tran {
+                    inline display.show(level, name)
+                }
+            }
+            """, CheckMode.ALL);
+
+        parsedPackage.assertNoResourceErrors();
+        parsedPackage.assertNoValidationIssues();
     }
 }

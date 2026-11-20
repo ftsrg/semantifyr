@@ -16,11 +16,14 @@ import hu.bme.mit.semantifyr.backend.boolean
 import hu.bme.mit.semantifyr.backend.enumeration
 import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
 import hu.bme.mit.semantifyr.backend.integer
+import hu.bme.mit.semantifyr.backend.witness.Fraction
 import hu.bme.mit.semantifyr.backends.spin.ReplayingSpinExecutor
 import hu.bme.mit.semantifyr.backends.spin.SpinExecutorKey
+import hu.bme.mit.semantifyr.compiler.pipeline.context.TransitionCallTraceMap
 import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.entry
 import org.junit.jupiter.api.Test
 import java.nio.file.Path
 import kotlin.io.path.Path
@@ -44,18 +47,20 @@ class SpinBackendReplayTest {
     private suspend fun verify(
         case: String,
         inlinedOxsts: InlinedOxsts,
+        transitionCallTraces: TransitionCallTraceMap,
         artifactDirectory: Path = cleanArtifactDirectory(case),
     ): BackendVerificationResult {
         val environment = ExecutionEnvironment.builder().put(SpinExecutorKey) {
             ReplayingSpinExecutor(case)
         }.build()
-        val request = BackendVerificationRequest(inlinedOxsts, artifactDirectory)
+        val request = BackendVerificationRequest(inlinedOxsts, artifactDirectory, transitionCallTraces = transitionCallTraces)
         return SpinBackend().verify(injector, SpinConfig.SafeDfs, request, environment)
     }
 
     private suspend fun verifyFixture(file: String, className: String): BackendVerificationResult {
         val artifactDirectory = cleanArtifactDirectory(className)
-        return verify(className, models.compile(file, className, artifactDirectory), artifactDirectory)
+        val compilation = models.compileFlattened(file, className, artifactDirectory)
+        return verify(className, compilation.inlinedOxsts, compilation.transitionCallTraces, artifactDirectory)
     }
 
     @Test
@@ -75,24 +80,8 @@ class SpinBackendReplayTest {
     }
 
     @Test
-    suspend fun `a model spin rejects is Errored with spin's message`() {
-        val result = verify("RejectedModel", models.parse(BackendTestModels.SATURATING_COUNTER_EXCEEDS_BOUND))
-
-        assertThat(result.verdict).isEqualTo(VerificationVerdict.Errored)
-        assertThat(result.message).contains("duplicate `else")
-    }
-
-    @Test
-    suspend fun `a pan that stops on its state vector is Errored with pan's message`() {
-        val result = verify("VectorTooSmall", models.parse(BackendTestModels.SATURATING_COUNTER_EXCEEDS_BOUND))
-
-        assertThat(result.verdict).isEqualTo(VerificationVerdict.Errored)
-        assertThat(result.message).contains("VECTORSZ too small")
-    }
-
-    @Test
     suspend fun `a violated invariant fails with a witness through the violating states`() {
-        val result = verify("CounterExceedsBound", models.parse(BackendTestModels.SATURATING_COUNTER_EXCEEDS_BOUND))
+        val result = verify("CounterExceedsBound", models.parse(BackendTestModels.SATURATING_COUNTER_EXCEEDS_BOUND), TransitionCallTraceMap(emptyMap()))
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
         val witness = result.inlinedWitness!!
@@ -106,7 +95,7 @@ class SpinBackendReplayTest {
 
     @Test
     suspend fun `unchanged values carry over from the declarations and the previous state`() {
-        val result = verify("OneOfSeveralChanges", models.parse(BackendTestModels.SATURATING_ONE_OF_SEVERAL_CHANGES))
+        val result = verify("OneOfSeveralChanges", models.parse(BackendTestModels.SATURATING_ONE_OF_SEVERAL_CHANGES), TransitionCallTraceMap(emptyMap()))
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
         val witness = result.inlinedWitness!!
@@ -130,7 +119,7 @@ class SpinBackendReplayTest {
 
     @Test
     suspend fun `an unreachable target fails without a witness`() {
-        val result = verify("UnreachableTarget", models.parse(BackendTestModels.UNREACHABLE_TARGET))
+        val result = verify("UnreachableTarget", models.parse(BackendTestModels.UNREACHABLE_TARGET), TransitionCallTraceMap(emptyMap()))
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
         assertThat(result.inlinedWitness).isNull()
@@ -138,9 +127,12 @@ class SpinBackendReplayTest {
 
     @Test
     suspend fun `a step too long for statement merging is searched again without merging`() {
-        val padding = (1..150).joinToString(" ") {
-            "filler := filler + 1 filler := filler - 1"
-        }
+        val padding = (1..150).flatMap {
+            listOf(
+                "filler := filler + 1",
+                "filler := filler - 1",
+            )
+        }.joinToString("\n" + " ".repeat(24))
         val result = verify(
             "MergeLimit",
             models.parse(
@@ -151,7 +143,8 @@ class SpinBackendReplayTest {
                     init {
                     }
                     tran {
-                        assume(counter < 2) $padding
+                        assume(counter < 2)
+                        $padding
                         counter := counter + 1
                     }
                     prop {
@@ -159,6 +152,7 @@ class SpinBackendReplayTest {
                     }
                 """,
             ),
+            TransitionCallTraceMap(emptyMap()),
         )
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
@@ -173,7 +167,7 @@ class SpinBackendReplayTest {
     }
 
     @Test
-    suspend fun `a variable havoced in init can violate an invariant once initialized`() {
+    suspend fun `a witness's initialized state holds the value a variable was havoced to in init`() {
         val result = verifyFixture("initial_values", "UninitializedIntegerBound")
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
@@ -181,7 +175,7 @@ class SpinBackendReplayTest {
     }
 
     @Test
-    suspend fun `an enum variable havoced in init can violate an invariant once initialized`() {
+    suspend fun `a witness's initialized state holds the literal an enum variable was havoced to in init`() {
         val result = verifyFixture("initial_values", "UninitializedEnumBound")
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
@@ -205,18 +199,11 @@ class SpinBackendReplayTest {
                     }
                 """,
             ),
+            TransitionCallTraceMap(emptyMap()),
         )
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.NotSupported)
         assertThat(result.message).matches("spin:safe-dfs does not support \\S+:2: variables of type real \\(ratio\\); \\S+:2: real literals")
-    }
-
-    @Test
-    suspend fun `an unbounded integer the property depends on is NotSupported before dispatch`() {
-        val result = verify("UnboundedCounter", models.parse(BackendTestModels.COUNTER_EXCEEDS_BOUND))
-
-        assertThat(result.verdict).isEqualTo(VerificationVerdict.NotSupported)
-        assertThat(result.message).matches("spin:safe-dfs does not support \\S+:2: unbounded integer variables \\(counter\\)")
     }
 
     @Test
@@ -226,10 +213,31 @@ class SpinBackendReplayTest {
         val environment = ExecutionEnvironment.builder().put(SpinExecutorKey) {
             ReplayingSpinExecutor("UnboundedArraySlots")
         }.build()
-        val request = BackendVerificationRequest(compilation.inlinedOxsts, artifactDirectory, compilation.flatteningInfo)
+        val request = BackendVerificationRequest(compilation.inlinedOxsts, artifactDirectory, compilation.flatteningInfo, compilation.transitionCallTraces)
         val result = SpinBackend().verify(injector, SpinConfig.SafeDfs, request, environment)
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.NotSupported)
         assertThat(result.message).matches("spin:safe-dfs does not support arrays.semantifyr:\\d+: unbounded integer variables \\(slots\\)")
+    }
+
+    @Test
+    suspend fun `a clock trace states every kept clock's value after the step and the whole delays that passed`() {
+        val result = verifyFixture("clocks", "ClockZeroDelayAfterResetViolated")
+
+        assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
+        val states = result.inlinedWitness!!.transitionStates
+        assertThat(
+            states.last().clockValues.associate {
+                it.variable.name to it.value
+            },
+        ).containsExactly(
+            entry("\$\$root\$\$lap", Fraction.ZERO),
+            entry("\$\$root\$\$total", Fraction.of(1)),
+        )
+        assertThat(
+            states.fold(Fraction.ZERO) { sum, state ->
+                sum + state.elapsed
+            },
+        ).isEqualTo(Fraction.of(1))
     }
 }

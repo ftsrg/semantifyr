@@ -44,31 +44,16 @@ step {
 step {
     act {
         raise control.toggle
-        elapse 1000
-        schedule component
-    }
-    assert {
-        transition trafficLightA from Yellow to Red;
-        raise trafficLightA.lightControl.red;
-        transition trafficLightB from Yellow to Red;
-        raise trafficLightB.lightControl.red;
-        state controller.Main.Operating;
-        state controller.OperatingRegion.BothRed;
-        state trafficLightA.Main.Normal;
-        state trafficLightA.NormalRegion.Red;
-        state trafficLightB.Main.Normal;
-        state trafficLightB.NormalRegion.Red;
-    }
-}
-step {
-    act {
-        raise control.toggle
-        elapse 1000
+        elapse 2000
         schedule component
     }
     assert {
         transition controller from BothRed to TrafficOnA;
         raise controller.controlA.toggle;
+        transition trafficLightA from Yellow to Red;
+        raise trafficLightA.lightControl.red;
+        transition trafficLightB from Yellow to Red;
+        raise trafficLightB.lightControl.red;
         state controller.Main.Operating;
         state controller.OperatingRegion.TrafficOnA;
         state trafficLightA.Main.Normal;
@@ -79,15 +64,17 @@ step {
 }
 step {
     act {
+        raise control.police
         raise control.toggle
-        elapse 1000
         schedule component
     }
     assert {
+        transition controller from Operating to Interrupted;
+        raise controller.controlA.police;
+        raise controller.controlB.police;
         transition trafficLightA from Red to Green;
         raise trafficLightA.lightControl.green;
-        state controller.Main.Operating;
-        state controller.OperatingRegion.TrafficOnA;
+        state controller.Main.Interrupted;
         state trafficLightA.Main.Normal;
         state trafficLightA.NormalRegion.Green;
         state trafficLightB.Main.Normal;

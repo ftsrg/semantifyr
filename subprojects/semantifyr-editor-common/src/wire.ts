@@ -35,6 +35,10 @@ export interface VerificationCaseRequest {
     portfolio?: string;
 }
 
+export interface WitnessValidationRequest extends VerificationCaseRequest {
+    witnessUri?: string;
+}
+
 export const VerificationStatus = {
     Passed: "passed",
     Failed: "failed",
@@ -84,62 +88,149 @@ export interface CompilationMetrics {
     flattenedSize: ModelSize;
 }
 
-export interface VerificationMetrics {
-    totalDuration: string;
+export type ReportKind =
+    | "run"
+    | "re-check";
+
+export type ReportVerdict =
+    | "Passed"
+    | "Failed"
+    | "Inconclusive"
+    | "Timeout"
+    | "Errored"
+    | "NotSupported";
+
+export type SoundnessDirection =
+    | "Exact"
+    | "OverApproximating"
+    | "UnderApproximating";
+
+export type ReportValue =
+    | boolean
+    | number
+    | string
+    | null
+    | ReportValue[]
+    | { [field: string]: ReportValue };
+
+export type Fraction = number | string;
+
+export type ReportTypeKind =
+    | "datatype"
+    | "enum"
+    | "class"
+    | "record"
+    | "feature";
+
+export interface ReportType {
+    kind: ReportTypeKind;
+    name: string;
+}
+
+export interface ObservedParameter {
+    parameter: string;
+    type: ReportType;
+}
+
+export interface ObservedTransition {
+    transition: string;
+    parameters: ObservedParameter[];
+}
+
+export interface ObservedSlot {
+    array: string;
+    index: number;
+    size: number;
+}
+
+export interface ObservedVariable {
+    variable: string;
+    type: ReportType;
+    slot: ObservedSlot | null;
+}
+
+export interface ReportCall {
+    self: string;
+    transition: string;
+    arguments: Record<string, ReportValue>;
+    calls: ReportCall[];
+}
+
+export interface ReportInitialEntry {
+    state: number;
+    calls: ReportCall[];
+}
+
+export interface ReportState {
+    values: Record<string, ReportValue>;
+}
+
+export interface ReportStep {
+    source: number;
+    target: number;
+    elapsed: Fraction;
+    calls: ReportCall[];
+}
+
+export interface ReportTrace {
+    transitions: ObservedTransition[];
+    variables: ObservedVariable[];
+    initial: ReportInitialEntry;
+    states: ReportState[];
+    steps: ReportStep[];
+}
+
+export interface ReportBackendMetrics {
     preparationDuration: string;
     verificationDuration: string;
     backAnnotationDuration: string;
-    compilation?: CompilationMetrics;
 }
 
-export interface TraceArgument {
-    parameter: string;
-    value: string;
+export interface ReportVerifierMetrics {
+    compilationDuration: string;
+    compilation: CompilationMetrics;
+    backAnnotationDuration: string;
+    portfolioDuration: string;
 }
 
-export interface TraceEntry {
-    self: string;
-    calledTransition: string;
-    arguments: TraceArgument[];
-    innerTraces: TraceEntry[] | null;
+export interface ReportMetrics {
+    totalDuration: string;
+    backend: ReportBackendMetrics | null;
+    verifier: ReportVerifierMetrics;
 }
 
-export interface CallTraceStep {
-    traces: TraceEntry[];
-}
-
-export interface CallTrace {
-    initializedStep: CallTraceStep;
-    steps: CallTraceStep[];
-}
-
-export interface WitnessStateValue {
-    variable: string;
-    value: string;
-}
-
-export interface WitnessStateStep {
-    values: WitnessStateValue[];
-}
-
-export interface WitnessState {
-    initializedStep: WitnessStateStep;
-    steps: WitnessStateStep[];
-}
-
-export interface VerificationTrace {
-    callTrace: CallTrace;
-    witnessState: WitnessState;
-    witnessUri: string | null;
-}
-
-export interface VerificationCaseResult {
-    status: VerificationStatus;
+export interface ReportResult {
+    metadata: {
+        backendId: string | null;
+        startedAt: string;
+    };
+    verdict: ReportVerdict;
+    soundness: SoundnessDirection;
+    isTrusted: boolean;
+    metrics: ReportMetrics;
     message: string | null;
-    backendId: string | null;
+}
+
+export interface VerificationReport {
+    kind: ReportKind;
+    verificationCase: string;
+    portfolioId: string;
+    optimization: {
+        enabled: string[];
+    };
+    timeout: string;
+    result: ReportResult;
+    trace: ReportTrace | null;
+}
+
+// the server sets status, message and portfolioId only on a result without a report; a client may add a message of its own beside a report
+export interface VerificationCaseResult {
+    status: VerificationStatus | null;
+    message: string | null;
     portfolioId: string | null;
-    metrics: VerificationMetrics | null;
-    trace: VerificationTrace | null;
+    report: VerificationReport | null;
+    witnessUri: string | null;
+    traceUri: string | null;
 }
 
 export const WitnessValidationStatus = {
@@ -155,11 +246,9 @@ export type WitnessValidationStatus = (typeof WitnessValidationStatus)[keyof typ
 
 export interface WitnessValidationResult {
     status: WitnessValidationStatus;
-    verdict: VerificationStatus | null;
     message: string | null;
-    backendId: string | null;
     portfolioId: string | null;
-    metrics: VerificationMetrics | null;
+    report: VerificationReport | null;
 }
 
 export const CompiledOxstsStatus = {

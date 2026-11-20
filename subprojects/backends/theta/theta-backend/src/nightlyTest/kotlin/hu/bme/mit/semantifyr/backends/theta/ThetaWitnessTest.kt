@@ -40,7 +40,13 @@ class ThetaWitnessTest {
 
         @JvmStatic
         fun `Witnesses Re-verify Through All Backends`(): List<Arguments> {
-            return helper.collectVerificationCasesAsArguments(context)
+            return helper.collectAcceptedCasesAsArguments(
+                context,
+                ThetaBackend(),
+                ThetaConfig.CegarExplPredCombined,
+                SemantifyrVerifierTestHelper.testArtifactRoot(ThetaWitnessTest::class.java).resolve("capability-check"),
+                helper.casesExpectingWitness,
+            )
         }
     }
 

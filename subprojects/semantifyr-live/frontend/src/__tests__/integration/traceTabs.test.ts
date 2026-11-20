@@ -10,7 +10,7 @@ import type { LspClient } from '../../lib/verification/engine'
 import { followTraceTabs } from '../../trace/traceTabs'
 import { traceTabOf } from '../../trace/TextView'
 import { createTestLive, type TestLive } from '../helpers/live'
-import { failedResult, passedResult, sampleTrace } from '../fixtures/verification-results'
+import { failedResult, passedResult } from '../fixtures/verification-results'
 
 // Goal: an open trace text shows the last trace of its case and nothing older
 
@@ -97,11 +97,11 @@ describe('an open trace text', () => {
       expect(open!.live.verification.get().get(documentKey!)?.discovery).toBe('discovered')
     })
     await verified(open)
-    const firstTrace = open.live.verification.get().get(documentKey!)!.cases[0]!.trace!
+    const firstTrace = open.live.verification.get().get(documentKey!)!.cases[0]!.report!.trace!
     const stop = followTraceTabs(open.live, open.runtime(), 'oxsts')
     open.live.tabs.open(traceTabOf({ tabId: 'trace-witness', fileUri: 'file:///workspace/first/witness.semantifyr', label: 'a.witness.semantifyr', languageId: 'oxsts', banner: '' }, 'first witness', { documentKey: documentKey!, caseId: 'a', view: 'witness', shown: firstTrace }))
 
-    session.answer({ ...failedResult, trace: { ...sampleTrace, witnessUri: 'file:///workspace/second/witness.semantifyr' } })
+    session.answer({ ...failedResult, report: structuredClone(failedResult.report), witnessUri: 'file:///workspace/second/witness.semantifyr' })
     await verified(open)
     await vi.waitFor(() => {
       expect(witnessTab(open!)?.text).toBe('witness at file:///workspace/second/witness.semantifyr')
@@ -116,7 +116,7 @@ describe('an open trace text', () => {
 
     session.answer(failedResult)
     await verified(open)
-    const trace = open.live.verification.get().get(documentKey!)!.cases[0]!.trace!
+    const trace = open.live.verification.get().get(documentKey!)!.cases[0]!.report!.trace!
     open.live.tabs.open(traceTabOf({ tabId: 'trace-witness', fileUri: 'file:///workspace/third/witness.semantifyr', label: 'a.witness.semantifyr', languageId: 'oxsts', banner: '' }, 'third witness', { documentKey: documentKey!, caseId: 'a', view: 'witness', shown: trace }))
     const other = open.live.catalog.get().registry!.flavorOf('oxsts')!.examples[1]!
     open.live.selectModel('oxsts', other.id)

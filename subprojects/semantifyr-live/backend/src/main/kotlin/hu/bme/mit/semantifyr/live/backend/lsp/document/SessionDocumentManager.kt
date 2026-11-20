@@ -248,6 +248,10 @@ class SessionDocumentManager @Inject constructor(
         return clientUri.replace(CLIENT_PREFIX, serverPrefix)
     }
 
+    fun workspaceUriOf(clientUri: String): String {
+        return resolveWithinWorkspace(clientToServer(clientUri)).toUri().toString()
+    }
+
     private fun diskPathOrNull(clientUri: String): Path? {
         return try {
             resolveWithinWorkspace(clientToServer(clientUri))

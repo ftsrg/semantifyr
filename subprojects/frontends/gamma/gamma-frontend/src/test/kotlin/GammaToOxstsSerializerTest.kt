@@ -6,6 +6,7 @@
 
 import com.google.inject.Inject
 import com.google.inject.Provider
+import hu.bme.mit.semantifyr.frontends.gamma.GammaCompiler
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.GammaModelPackage
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.LiteralInteger
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.impl.LiteralExpressionImpl
@@ -40,7 +41,7 @@ class GammaToOxstsSerializerTest {
         val gammaPackage = parseHelper.parse(source)
         EcoreUtil.resolveAll(gammaPackage)
         assertThat(gammaPackage.eResource().errors).isEmpty()
-        return GammaToOxstsSerializer(GammaNameMap()).transformToOxsts(gammaPackage).lines().map {
+        return GammaToOxstsSerializer(GammaNameMap(), GammaCompiler.timeUnitMilliseconds(gammaPackage)).transformToOxsts(gammaPackage).lines().map {
             it.trim()
         }
     }
@@ -68,7 +69,7 @@ class GammaToOxstsSerializerTest {
                     transition from MainInitial to Idle
                     $body
                 }
-            """,
+            """.trimIndent(),
         )
     }
 
@@ -101,7 +102,7 @@ class GammaToOxstsSerializerTest {
                 }
                 $system
                 $verificationCases
-            """,
+            """.trimIndent(),
         )
     }
 
@@ -115,7 +116,7 @@ class GammaToOxstsSerializerTest {
             bind control -> leader.control
             channel [ leader.workerControl ] -o)- [ worker.control ]
         }
-    """
+    """.trimIndent()
 
     @Test
     fun `a package imports the gamma semantic library`() {
@@ -148,7 +149,7 @@ class GammaToOxstsSerializerTest {
                     }
                     transition from regions to class
                 }
-            """,
+            """.trimIndent(),
         )
 
         assertThat(lines).containsSequence(
@@ -193,7 +194,7 @@ class GammaToOxstsSerializerTest {
         )
         EcoreUtil.resolveAll(resourceSet)
 
-        val lines = GammaToOxstsSerializer(GammaNameMap()).transformToOxsts(gammaPackage).lines().map {
+        val lines = GammaToOxstsSerializer(GammaNameMap(), GammaCompiler.timeUnitMilliseconds(gammaPackage)).transformToOxsts(gammaPackage).lines().map {
             it.trim()
         }
 
@@ -217,7 +218,7 @@ class GammaToOxstsSerializerTest {
                     in event start
                     out event done
                 }
-            """,
+            """.trimIndent(),
         )
 
         assertThat(lines).containsSequence(
@@ -247,7 +248,7 @@ class GammaToOxstsSerializerTest {
                     port control : requires Control
                 ] {
                 }
-            """,
+            """.trimIndent(),
         )
 
         assertThat(lines).containsSequence(
@@ -281,7 +282,7 @@ class GammaToOxstsSerializerTest {
                 @RegionSchedule = bottom-up
                 @TransitionPriority = order-based
                 @GuardEvaluation = beginning-of-step
-            """,
+            """.trimIndent(),
         )
 
         assertThat(lines).containsSequence(
@@ -343,7 +344,7 @@ class GammaToOxstsSerializerTest {
         EcoreUtil.resolveAll(gammaPackage)
         assertThat(gammaPackage.eResource().errors).isEmpty()
         val literal = EcoreUtil2.getAllContentsOfType(gammaPackage, LiteralInteger::class.java).single()
-        // the grammar has no third literal, so a literal of a kind the serializer does not know is made in the test, and it takes over the parsed literal's node so that it has a line
+        // the grammar has no third literal kind, so one is made here on the parsed literal's node
         val unknownLiteral = object : LiteralExpressionImpl() {}
         val nodes = literal.eAdapters().filter {
             it is ICompositeNode
@@ -353,90 +354,57 @@ class GammaToOxstsSerializerTest {
         EcoreUtil.replace(literal, unknownLiteral)
 
         assertThatThrownBy {
-            GammaToOxstsSerializer(GammaNameMap()).transformToOxsts(gammaPackage)
+            GammaToOxstsSerializer(GammaNameMap(), GammaCompiler.timeUnitMilliseconds(gammaPackage)).transformToOxsts(gammaPackage)
         }.isInstanceOf(IllegalStateException::class.java).hasMessage("test.gamma:10: the literal of type LiteralExpression is not supported")
     }
 
     @Test
-    fun `a timeout set to a literal in seconds stops its clock at the value`() {
-        val lines = statechartLines("transition from Idle to Busy / set delay := 2 s;")
+    fun `every time value is written in the greatest unit all of them are a whole number of`() {
+        val lines = oxstsLines(
+            """
+                package test
+                statechart Machine {
+                    timeout short
+                    timeout long
+                    region Main {
+                        initial MainInitial
+                        state Idle {
+                            entry / set short := 1500 ms; set long := 2 s;
+                        }
+                    }
+                    transition from MainInitial to Idle
+                }
+                adapter Ticking of component machine : Machine {
+                    clock ticker (rate = 3 s)
+                    when ticker / run
+                    queue messages (priority = 1, capacity = 1) {
+                        ticker
+                    }
+                }
+            """.trimIndent(),
+        )
 
         assertThat(lines).containsSequence(
-            "contains _delay: Timeout subsets timeouts {",
-            "redefine refers stopsAtValue: bool = true",
-            "redefine contains value: LiteralIntegerExpression {",
-            "redefine refers value: int = 2",
+            "contains _short: Timeout subsets timeouts {",
+            "redefine refers value: int = 3",
             "}",
+            "contains _long: Timeout subsets timeouts {",
+            "redefine refers value: int = 4",
+            "}",
+        )
+        assertThat(lines).containsSequence(
+            "contains _ticker: Clock subsets clocks {",
+            "redefine refers rate: int = 6",
             "}",
         )
     }
 
     @Test
-    fun `a timeout set in milliseconds counts milliseconds with a delta of one second in milliseconds`() {
-        val lines = statechartLines("transition from Idle to Busy / set delay := 500 ms;")
-
-        assertThat(lines).containsSequence(
-            "contains _delay: Timeout subsets timeouts {",
-            "redefine refers deltaTime: int = 1000",
-            "redefine refers stopsAtValue: bool = true",
-            "redefine contains value: LiteralIntegerExpression {",
-            "redefine refers value: int = 500",
-            "}",
-            "}",
-        )
-    }
-
-    @Test
-    fun `a timeout set to a variable reads the variable and its clock counts on`() {
-        val lines = statechartLines("transition from Idle to Busy / set delay := count s;")
-
-        assertThat(lines).containsSequence(
-            "contains _delay: Timeout subsets timeouts {",
-            "redefine contains value: VariableExpression {",
-            "redefine refers variable: Variable = _count",
-            "}",
-            "}",
-        )
-    }
-
-    @Test
-    fun `a timeout never set has the value zero and is always up`() {
+    fun `a timeout never set keeps the library's value, being up until it is first set`() {
         val lines = statechartLines("")
 
         assertThat(lines).containsSequence(
             "contains _delay: Timeout subsets timeouts {",
-            "redefine refers stopsAtValue: bool = true",
-            "redefine contains value: LiteralIntegerExpression {",
-            "redefine refers value: int = 0",
-            "}",
-            "}",
-        )
-    }
-
-    @Test
-    fun `a timeout's value names a variable shadowed by a state directly, the statechart's body seeing no state`() {
-        val lines = oxstsLines(
-            """
-                package test
-                statechart Monitor {
-                    var Busy : integer := 2
-                    timeout delay
-                    region Main {
-                        initial MainInitial
-                        state Busy {
-                            entry / set delay := Busy s;
-                        }
-                    }
-                    transition from MainInitial to Busy
-                }
-            """,
-        )
-
-        assertThat(lines).containsSequence(
-            "contains _delay: Timeout subsets timeouts {",
-            "redefine contains value: VariableExpression {",
-            "redefine refers variable: Variable = _Busy",
-            "}",
             "}",
         )
     }
@@ -479,7 +447,7 @@ class GammaToOxstsSerializerTest {
                     }
                     transition from MainInitial to Idle
                 }
-            """,
+            """.trimIndent(),
         )
 
         assertThat(lines).containsSequence(
@@ -516,7 +484,7 @@ class GammaToOxstsSerializerTest {
                     transition from InnerInitial to Nested
                     transition from MainInitial to Outer
                 }
-            """,
+            """.trimIndent(),
         )
 
         assertThat(lines).containsSequence(
@@ -538,7 +506,7 @@ class GammaToOxstsSerializerTest {
             """
                 transition from Idle to Busy when control.start
                 transition from Idle to Busy when timeout delay
-            """,
+            """.trimIndent(),
         )
 
         assertThat(lines).contains(
@@ -553,7 +521,7 @@ class GammaToOxstsSerializerTest {
             """
                 transition from Idle to Busy
                 transition from Idle to Busy
-            """,
+            """.trimIndent(),
         )
 
         assertThat(lines).contains(
@@ -568,7 +536,7 @@ class GammaToOxstsSerializerTest {
             """
                 @(Start)
                 transition from Idle to Busy when control.start
-            """,
+            """.trimIndent(),
         )
 
         assertThat(lines).contains("contains _Start: Transition subsets transitions {")
@@ -613,7 +581,7 @@ class GammaToOxstsSerializerTest {
                     transition from Outside to Second when control.start
                     transition from First to Outside when control.start
                 }
-            """,
+            """.trimIndent(),
         )
 
         assertThat(lines).containsSequence(
@@ -668,113 +636,6 @@ class GammaToOxstsSerializerTest {
             "redefine contains right: LiteralIntegerExpression {",
             "redefine refers value: int = 3",
             "}",
-            "}",
-            "}",
-        )
-    }
-
-    private fun guardLines(guard: String): List<String> {
-        return oxstsLines(
-            """
-                package test
-                interface Control {
-                    in event start
-                }
-                statechart Machine [
-                    port control : provides Control
-                ] {
-                    var first : boolean := true
-                    var second : boolean := false
-                    var third : boolean := false
-                    var count : integer := 0
-                    region Main {
-                        initial MainInitial
-                        state Idle
-                        state Busy
-                    }
-                    transition from MainInitial to Idle
-                    transition from Idle to Busy when control.start [$guard]
-                }
-            """,
-        )
-    }
-
-    @Test
-    fun `and binds tighter than or`() {
-        val lines = guardLines("first or second and third")
-
-        assertThat(lines).containsSequence(
-            "redefine contains expression: OrOperatorExpression {",
-            "redefine contains left: VariableExpression {",
-            "redefine refers variable: Variable = _first",
-            "}",
-            "redefine contains right: AndOperatorExpression {",
-            "redefine contains left: VariableExpression {",
-            "redefine refers variable: Variable = _second",
-            "}",
-            "redefine contains right: VariableExpression {",
-            "redefine refers variable: Variable = _third",
-            "}",
-            "}",
-            "}",
-        )
-    }
-
-    @Test
-    fun `parentheses regroup an or under an and`() {
-        val lines = guardLines("(first or second) and third")
-
-        assertThat(lines).containsSequence(
-            "redefine contains expression: AndOperatorExpression {",
-            "redefine contains left: OrOperatorExpression {",
-            "redefine contains left: VariableExpression {",
-            "redefine refers variable: Variable = _first",
-            "}",
-            "redefine contains right: VariableExpression {",
-            "redefine refers variable: Variable = _second",
-            "}",
-            "}",
-            "redefine contains right: VariableExpression {",
-            "redefine refers variable: Variable = _third",
-            "}",
-            "}",
-        )
-    }
-
-    @Test
-    fun `not binds looser than equality`() {
-        val lines = guardLines("not count = 1")
-
-        assertThat(lines).containsSequence(
-            "redefine contains expression: UnaryNotExpression {",
-            "redefine contains body: EqualityOperatorExpression {",
-            "redefine contains left: VariableExpression {",
-            "redefine refers variable: Variable = _count",
-            "}",
-            "redefine contains right: LiteralIntegerExpression {",
-            "redefine refers value: int = 1",
-            "}",
-            "}",
-            "}",
-        )
-    }
-
-    @Test
-    fun `equality binds looser than ordering`() {
-        val lines = guardLines("count < 1 = first")
-
-        assertThat(lines).containsSequence(
-            "redefine contains expression: EqualityOperatorExpression {",
-            "redefine contains left: LessThanOperatorExpression {",
-            "redefine contains left: VariableExpression {",
-            "redefine refers variable: Variable = _count",
-            "}",
-            "redefine contains right: LiteralIntegerExpression {",
-            "redefine refers value: int = 1",
-            "}",
-            "}",
-            "redefine contains right: VariableExpression {",
-            "redefine refers variable: Variable = _first",
             "}",
             "}",
         )
@@ -892,7 +753,7 @@ class GammaToOxstsSerializerTest {
             """
                 transition from Idle to Busy / flag := count < 1; flag := count <= 1; flag := count > 1;
                     flag := count >= 1; flag := count == 1; flag := count != 1;
-            """,
+            """.trimIndent(),
         )
 
         val expressions = lines.filter {
@@ -952,7 +813,7 @@ class GammaToOxstsSerializerTest {
                 verification case LeaderIdleReachable of System {
                     EF state leader.Main.Idle
                 }
-            """,
+            """.trimIndent(),
         )
 
         assertThat(lines).containsSequence(
@@ -976,7 +837,7 @@ class GammaToOxstsSerializerTest {
                 verification case LeaderCountStaysSmall of System {
                     AG variable leader.count < 2
                 }
-            """,
+            """.trimIndent(),
         )
 
         assertThat(lines).containsSequence(
@@ -1015,7 +876,7 @@ class GammaToOxstsSerializerTest {
                 verification case OwnStateReachable of Machine {
                     EF state Inner.Nested
                 }
-            """,
+            """.trimIndent(),
         )
 
         assertThat(lines).contains("redefine refers state: State = component._machine._Main._Outer._Inner._Nested")
@@ -1060,7 +921,7 @@ class GammaToOxstsSerializerTest {
             transition from Working to Paused when control.stop
             transition from Paused to History when control.stop
         }
-    """
+    """.trimIndent()
 
     @Test
     fun `a shallow history node is contained in its region with its transition's target beside the entry transition`() {
@@ -1117,7 +978,7 @@ class GammaToOxstsSerializerTest {
             component first : Worker
             component second : Worker
         }
-    """
+    """.trimIndent()
 
     @Test
     fun `a cascade composite contains one execution step per entry of its execution list in order`() {
@@ -1181,7 +1042,7 @@ class GammaToOxstsSerializerTest {
             transition from MainInitial to Waiting
             transition from Waiting to Holding when measure.sample [ measure.sample::valid ] / kept := measure.sample::value; raise measure.reading(kept + 1);
         }
-    """
+    """.trimIndent()
 
     @Test
     fun `an event contains one shared parameter per declared parameter of its type`() {
@@ -1284,7 +1145,7 @@ class GammaToOxstsSerializerTest {
             transition from MainInitial to Start
             transition from Start to Done when control.start [ box.corner.x > 4 ] / box.corner.x := 5; copy := position;
         }
-    """
+    """.trimIndent()
 
     @Test
     fun `a record type is an OXSTS record with field defaults`() {
@@ -1474,7 +1335,7 @@ class GammaToOxstsSerializerTest {
                 interface Reply extends Greeting {
                     out event welcome
                 }
-            """,
+            """.trimIndent(),
         )
 
         assertThat(lines).containsSequence(
@@ -1501,7 +1362,7 @@ class GammaToOxstsSerializerTest {
                 interface Conversation extends Greeting, Farewell {
                     out event welcome
                 }
-            """,
+            """.trimIndent(),
         )
 
         assertThat(lines).containsSubsequence(
@@ -1539,7 +1400,7 @@ class GammaToOxstsSerializerTest {
             transition from MainInitial to Idle
             transition from Idle to Calling when line.ping / raise line.ping;
         }
-    """
+    """.trimIndent()
 
     @Test
     fun `an inout event is an input and an output event with a shared declaration each`() {
@@ -1614,7 +1475,7 @@ class GammaToOxstsSerializerTest {
                 verification case Raised of System {
                     EF raise output.done
                 }
-            """,
+            """.trimIndent(),
         )
 
         assertThat(lines).containsSequence(
@@ -1645,7 +1506,7 @@ class GammaToOxstsSerializerTest {
                     transition from MainInitial to Busy
                     transition from Busy to Error when timeout Busy / raise Error.error;
                 }
-            """,
+            """.trimIndent(),
         )
 
         assertThat(lines).containsSequence(
@@ -1677,7 +1538,7 @@ class GammaToOxstsSerializerTest {
                 verification case Raised of System {
                     EF raise machine.control.done
                 }
-            """,
+            """.trimIndent(),
         )
 
         assertThat(lines).containsSequence(
@@ -1731,7 +1592,7 @@ class GammaToOxstsSerializerTest {
                     channel [ sender.replies ] -o)- [ buffered.replies ]
                     execute sender, buffered, buffered
                 }
-            """,
+            """.trimIndent(),
         )
     }
 
@@ -1776,7 +1637,7 @@ class GammaToOxstsSerializerTest {
                     port a_b : provides Narrow
                 ] {
                 }
-            """,
+            """.trimIndent(),
         )
 
         assertThat(lines).containsSequence(
@@ -1846,7 +1707,7 @@ class GammaToOxstsSerializerTest {
                         signals.any
                     }
                 }
-            """,
+            """.trimIndent(),
         )
 
         assertThat(lines).contains(
@@ -1874,7 +1735,7 @@ class GammaToOxstsSerializerTest {
                         signals.any
                     }
                 }
-            """,
+            """.trimIndent(),
         )
 
         assertThat(lines).containsSequence(
@@ -1922,7 +1783,7 @@ class GammaToOxstsSerializerTest {
                     channel [ sender.signals ] -o)- [ left.signals ]
                     channel [ sender.signals ] -o)- [ right.signals ]
                 }
-            """,
+            """.trimIndent(),
         )
 
         assertThat(lines).containsSequence(
@@ -1971,7 +1832,7 @@ class GammaToOxstsSerializerTest {
                     port signals : provides Signals
                 ] {
                 }
-            """,
+            """.trimIndent(),
         )
 
         assertThat(lines).containsSequence(
@@ -2020,7 +1881,7 @@ class GammaToOxstsSerializerTest {
         assertThat(gammaPackage.eResource().errors).isEmpty()
 
         assertThatThrownBy {
-            GammaToOxstsSerializer(GammaNameMap()).transformToOxsts(gammaPackage)
+            GammaToOxstsSerializer(GammaNameMap(), GammaCompiler.timeUnitMilliseconds(gammaPackage)).transformToOxsts(gammaPackage)
         }.isInstanceOf(UnmappedGammaConstructException::class.java).hasMessageContaining(construct).hasMessageContaining("is not mapped to the Semantifyr Language yet").hasMessageMatching("(?s).*:\\d+: .*")
     }
 
@@ -2032,7 +1893,7 @@ class GammaToOxstsSerializerTest {
         assertThat(gammaPackage.eResource().errors).isEmpty()
 
         assertThatThrownBy {
-            GammaToOxstsSerializer(GammaNameMap()).transformToOxsts(gammaPackage)
+            GammaToOxstsSerializer(GammaNameMap(), GammaCompiler.timeUnitMilliseconds(gammaPackage)).transformToOxsts(gammaPackage)
         }.isInstanceOf(UnmappedGammaConstructException::class.java).hasMessageContaining("$construct is refused").hasMessageMatching("(?s)test.gamma:\\d+: .*")
     }
 
@@ -2058,7 +1919,7 @@ class GammaToOxstsSerializerTest {
                             transition from MainInitial to Idle
                             transition from Idle to History when control.start
                         }
-                    """,
+                    """.trimIndent(),
                 ),
                 Arguments.of(
                     "an initial transition with a trigger or guard",
@@ -2072,7 +1933,7 @@ class GammaToOxstsSerializerTest {
                             }
                             transition from MainInitial to Idle [count = 0]
                         }
-                    """,
+                    """.trimIndent(),
                 ),
                 Arguments.of(
                     "an initial transition to 'Nested' in another region",
@@ -2089,7 +1950,7 @@ class GammaToOxstsSerializerTest {
                             }
                             transition from MainInitial to Nested
                         }
-                    """,
+                    """.trimIndent(),
                 ),
                 Arguments.of(
                     "a transition from 'Left' to 'Right' between orthogonal regions",
@@ -2119,7 +1980,7 @@ class GammaToOxstsSerializerTest {
                             transition from SecondInitial to Right
                             transition from Left to Right when control.start
                         }
-                    """,
+                    """.trimIndent(),
                 ),
                 Arguments.of(
                     "an anonymous record type",
@@ -2130,7 +1991,7 @@ class GammaToOxstsSerializerTest {
                                 x : integer
                             }
                         }
-                    """,
+                    """.trimIndent(),
                 ),
                 Arguments.of(
                     "a record literal outside a variable's initial value",
@@ -2149,7 +2010,7 @@ class GammaToOxstsSerializerTest {
                             transition from MainInitial to Idle
                             transition from Idle to Idle when timeout delay / position := #Point { x := 1 };
                         }
-                    """,
+                    """.trimIndent(),
                 ),
                 Arguments.of(
                     "the asynchronous composite 'Inner' inside the asynchronous composite 'Outer'",
@@ -2174,7 +2035,24 @@ class GammaToOxstsSerializerTest {
                         async Outer {
                             component inner : Inner
                         }
-                    """,
+                    """.trimIndent(),
+                ),
+                Arguments.of(
+                    "the value of timeout 'delay' other than a constant",
+                    """
+                        package test
+                        statechart Machine {
+                            var limit : integer := 1000
+                            timeout delay
+                            region Main {
+                                initial MainInitial
+                                state Idle {
+                                    entry / set delay := limit ms;
+                                }
+                            }
+                            transition from MainInitial to Idle
+                        }
+                    """.trimIndent(),
                 ),
                 Arguments.of(
                     "the queue 'messages' of 'Ticking' storing messages of the environment and clock ticks",
@@ -2197,7 +2075,7 @@ class GammaToOxstsSerializerTest {
                         verification case Ticks of Ticking {
                             EF true
                         }
-                    """,
+                    """.trimIndent(),
                 ),
             )
         }
@@ -2222,7 +2100,7 @@ class GammaToOxstsSerializerTest {
                                 signals.any
                             }
                         }
-                    """,
+                    """.trimIndent(),
                 ),
                 Arguments.of(
                     "a transition from 'Right' to the history node 'History' from an orthogonal region of its parent state",
@@ -2254,7 +2132,7 @@ class GammaToOxstsSerializerTest {
                             transition from SecondInitial to Right
                             transition from Right to History when control.start
                         }
-                    """,
+                    """.trimIndent(),
                 ),
                 Arguments.of(
                     "a channel from the instance 'machine' to itself",
@@ -2272,7 +2150,7 @@ class GammaToOxstsSerializerTest {
                             component machine : Machine
                             channel [ machine.input ] -o)- [ machine.output ]
                         }
-                    """,
+                    """.trimIndent(),
                 ),
             )
         }

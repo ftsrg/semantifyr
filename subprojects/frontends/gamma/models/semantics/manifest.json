@@ -3,7 +3,7 @@
         {
             "file": "AsynchronousStatechart.gamma",
             "cases": [
-                { "name": "TheDefaultAdapterServesOneMessagePerCycleUnreachable", "verdict": "Failed", "tier": "Integration" },
+                { "name": "TheDefaultAdapterServesTheNextMessageBeforeTheTimeoutIsUp", "verdict": "Passed", "tier": "Integration" },
                 { "name": "TheDefaultAdapterServesTheNextMessageInALaterCycle", "verdict": "Passed", "tier": "Integration" }
             ]
         },
@@ -216,7 +216,7 @@
             "file": "ScheduledAsynchronous.gamma",
             "cases": [
                 { "name": "TwoTurnsInACycleServeTwoMessages", "verdict": "Passed", "tier": "Integration" },
-                { "name": "OneTurnInACycleServesTwoMessagesUnreachable", "verdict": "Failed", "tier": "Integration" },
+                { "name": "ALaterTurnMayComeBeforeTheTimeoutIsUp", "verdict": "Passed", "tier": "Integration" },
                 { "name": "ALaterTurnSeesTheTimeoutUp", "verdict": "Passed", "tier": "Integration" }
             ]
         },
@@ -242,11 +242,10 @@
                 { "name": "TheShorterTimeoutIsUpFirst", "verdict": "Passed", "tier": "Integration" },
                 { "name": "TheLongerTimeoutUpFirstUnreachable", "verdict": "Failed", "tier": "Integration" },
                 { "name": "TimeoutIsUpAfterItsValue", "verdict": "Passed", "tier": "Integration" },
+                { "name": "OneStepPassesTheValuesOfBothTimeouts", "verdict": "Passed", "tier": "Integration" },
                 { "name": "TimeoutUpBeforeItsValueUnreachable", "verdict": "Failed", "tier": "Integration" },
                 { "name": "TimeoutStaysUpOnceUp", "verdict": "Passed", "tier": "Integration" },
-                { "name": "TimeoutResetOnceItFiredUnreachable", "verdict": "Failed", "tier": "Integration" },
-                { "name": "TheValueIsReadAtTheTrigger", "verdict": "Passed", "tier": "Integration" },
-                { "name": "TheValueReadAtTheSettingUnreachable", "verdict": "Failed", "tier": "Integration" }
+                { "name": "TimeoutResetOnceItFiredUnreachable", "verdict": "Failed", "tier": "Integration" }
             ]
         },
         {

@@ -1,0 +1,21 @@
+Iteration 1
+| Checking abstraction...
+|  |  (Re)initializing ARG...done
+|  |  Building ARG...done
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Checking trace...done, result: (ExprTraceStatus Infeasible)
+|  |  Pruning from index 0...done
+Refining abstraction done, result: (RefinerResult Spurious)
+! Precision DID change in this iteration
+Iteration 2
+| Checking abstraction...
+|  |  (Re)initializing ARG...done
+|  |  Building ARG...done
+| Checking abstraction done, result: (AbstractorResult Unsafe)
+| Refining abstraction...
+|  |  Checking trace...done, result: (ExprTraceStatus Feasible)
+Refining abstraction done, result: (RefinerResult Unsafe)
+! Precision did NOT change in this iteration
+(SafetyResult Unsafe Trace length: 3)
+(SafetyResult Unsafe Trace length: 3)

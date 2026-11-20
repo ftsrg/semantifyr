@@ -1,0 +1,143 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns
+
+import org.junit.jupiter.api.Test
+
+class AssumeFalsePropagationPatternsTest : PatternTestBase() {
+    @Test
+    fun `sequence with a constant-false assumption collapses to just the assumption`() = assertPatternTransforms(
+        pattern = PropagateConstantFalseInSequencePattern(),
+        input = """
+            inlined oxsts of semantifyr::Anything
+            var value: int := 0
+            init {
+            }
+            tran {
+                value := 1
+                assume(false)
+                value := 2
+            }
+            prop {
+                AG true
+            }
+        """,
+        expected = """
+            inlined oxsts of semantifyr::Anything
+            var value: int := 0
+            init {
+            }
+            tran {
+                assume(false)
+            }
+            prop {
+                AG true
+            }
+        """,
+    )
+
+    @Test
+    fun `if with both branches constant-false assumes is replaced by the body`() = assertPatternTransforms(
+        pattern = PropagateBothBranchesConstantFalsePattern(),
+        input = """
+            inlined oxsts of semantifyr::Anything
+            var value: int := 0
+            init {
+            }
+            tran {
+                if (value == 0) {
+                    assume(false)
+                } else {
+                    assume(false)
+                }
+            }
+            prop {
+                AG true
+            }
+        """,
+        expected = """
+            inlined oxsts of semantifyr::Anything
+            var value: int := 0
+            init {
+            }
+            tran {
+                {
+                    assume(false)
+                }
+            }
+            prop {
+                AG true
+            }
+        """,
+    )
+
+    @Test
+    fun `single-branch choice with only constant-false assume collapses to assume`() = assertPatternTransforms(
+        pattern = PropagateSingleBranchConstantFalsePattern(),
+        input = """
+            inlined oxsts of semantifyr::Anything
+            var value: int := 0
+            init {
+            }
+            tran {
+                choice {
+                    assume(false)
+                }
+            }
+            prop {
+                AG true
+            }
+        """,
+        expected = """
+            inlined oxsts of semantifyr::Anything
+            var value: int := 0
+            init {
+            }
+            tran {
+                assume(false)
+            }
+            prop {
+                AG true
+            }
+        """,
+    )
+
+    @Test
+    fun `constant-false branch in multi-branch choice is removed`() = assertPatternTransforms(
+        pattern = RemoveConstantFalseChoiceBranchPattern(),
+        input = """
+            inlined oxsts of semantifyr::Anything
+            var value: int := 0
+            init {
+            }
+            tran {
+                choice {
+                    assume(false)
+                } or {
+                    value := 1
+                }
+            }
+            prop {
+                AG true
+            }
+        """,
+        expected = """
+            inlined oxsts of semantifyr::Anything
+            var value: int := 0
+            init {
+            }
+            tran {
+                choice {
+                    value := 1
+                }
+            }
+            prop {
+                AG true
+            }
+        """,
+    )
+}

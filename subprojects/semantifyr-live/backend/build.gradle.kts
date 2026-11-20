@@ -4,13 +4,13 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
+import hu.bme.mit.semantifyr.gradle.conventions.commitHash
 import hu.bme.mit.semantifyr.gradle.conventions.semantifyrArtifact
 import java.time.Instant
 
 plugins {
     id("hu.bme.mit.semantifyr.gradle.conventions.application")
-    id("hu.bme.mit.semantifyr.gradle.conventions.verification")
-    id("hu.bme.mit.semantifyr.gradle.conventions.integration")
+    id("hu.bme.mit.semantifyr.gradle.conventions.suites")
     id("hu.bme.mit.semantifyr.gradle.conventions.theta")
     kotlin("jvm")
     kotlin("plugin.serialization")
@@ -64,6 +64,7 @@ dependencies {
     testFixturesApi(libs.bundles.ktor.server)
     testFixturesApi(libs.bundles.ktor.client.test)
     testFixturesImplementation(libs.guice)
+    testFixturesApi(testFixtures(project(":verifier")))
 
     frontendDistribution(project(":semantifyr-live-frontend"))
 
@@ -80,10 +81,7 @@ application {
 val generateBuildInfo = tasks.register("generateBuildInfo") {
     val outputDir = layout.buildDirectory.dir("generated/buildinfo")
     val version = project.version.toString()
-    val commitHash = providers.exec {
-        commandLine("git", "rev-parse", "--short", "HEAD")
-        isIgnoreExitValue = true
-    }.standardOutput.asText.map { it.trim() }
+    val commitHash = commitHash()
     inputs.property("version", version)
     inputs.property("commitHash", commitHash)
     outputs.dir(outputDir)
@@ -209,30 +207,37 @@ tasks.register<JavaExec>("runDev") {
     }
 }
 
+val stagingDirectory = "build/staging"
+
+tasks.test {
+    inputs.files(cloneSemanticLibraries)
+    inputs.files(cloneGammaTestModels)
+
+    systemProperty("semantifyr.live.semanticLibraries", "$stagingDirectory/semantic-libraries")
+    systemProperty("semantifyr.live.gammaTestModels", "$stagingDirectory/gamma-test-models")
+}
+
 testing {
     suites {
-        listOf("verificationTest", "integrationTest").forEach { suite ->
-            named<JvmTestSuite>(suite) {
-                dependencies {
-                    implementation(project(":logging"))
-                }
+        named<JvmTestSuite>("integrationTest") {
+            dependencies {
+                implementation(project(":logging"))
+                implementation(project(":oxsts.lang.ide"))
+            }
 
-                targets.all {
-                    testTask.configure {
-                        inputs.files(cloneSemanticLibraries)
-                        inputs.files(cloneGammaTestModels)
-                        inputs.files(cloneOxstsTestModels)
-                        inputs.files(cloneGammaLibraryModels)
-                        inputs.files(cloneSysmlLibraryModels)
+            targets.all {
+                testTask.configure {
+                    inputs.files(cloneSemanticLibraries)
+                    inputs.files(cloneGammaTestModels)
+                    inputs.files(cloneOxstsTestModels)
+                    inputs.files(cloneGammaLibraryModels)
+                    inputs.files(cloneSysmlLibraryModels)
 
-                        val stagingDir = layout.buildDirectory.dir("staging").get().asFile
-
-                        systemProperty("semantifyr.live.semanticLibraries", stagingDir.resolve("semantic-libraries").absolutePath)
-                        systemProperty("semantifyr.live.gammaTestModels", stagingDir.resolve("gamma-test-models").absolutePath)
-                        systemProperty("semantifyr.live.oxstsTestModels", stagingDir.resolve("oxsts-test-models").absolutePath)
-                        systemProperty("semantifyr.live.gammaLibraryModels", stagingDir.resolve("gamma-library-models").absolutePath)
-                        systemProperty("semantifyr.live.sysmlLibraryModels", stagingDir.resolve("sysml-library-models").absolutePath)
-                    }
+                    systemProperty("semantifyr.live.semanticLibraries", "$stagingDirectory/semantic-libraries")
+                    systemProperty("semantifyr.live.gammaTestModels", "$stagingDirectory/gamma-test-models")
+                    systemProperty("semantifyr.live.oxstsTestModels", "$stagingDirectory/oxsts-test-models")
+                    systemProperty("semantifyr.live.gammaLibraryModels", "$stagingDirectory/gamma-library-models")
+                    systemProperty("semantifyr.live.sysmlLibraryModels", "$stagingDirectory/sysml-library-models")
                 }
             }
         }
@@ -246,7 +251,7 @@ tasks.register("prepareDockerBuild") {
     inputs.files(tasks.installDist)
 }
 
-tasks.register<Tar>("liveImageContext") {
+val liveImageContext = tasks.register<Tar>("liveImageContext") {
     archiveFileName = "live-image-context.tar.gz"
     compression = Compression.GZIP
     // the image runs the start script and theta-xsts-cli, whose execute bits Gradle's archives drop by default
@@ -264,4 +269,8 @@ tasks.register<Tar>("liveImageContext") {
     from(cloneShippedTheta) {
         into("build/shipped-theta-xsts-cli")
     }
+}
+
+tasks.pack {
+    dependsOn(liveImageContext)
 }

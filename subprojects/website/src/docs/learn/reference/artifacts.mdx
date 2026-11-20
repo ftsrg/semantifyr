@@ -1,63 +1,57 @@
 ---
 title: Artifacts
 sidebar_position: 4
-description: What a verification writes for each case, its directory, the compiled models, the report and the files of the witness.
+description: What a verification writes for each case, its directory, the compiled models, the report with its trace, and the witness model.
 ---
 
 import CodeBlock from '@theme/CodeBlock';
 import reportFields from '@generated-reference/report-fields.json';
-import traceFields from '@generated-reference/trace-fields.json';
-import witnessFields from '@generated-reference/witness-fields.json';
 import ReportFields from '@site/src/components/ReportFields';
-import witnessState from '@sysml-reference-trace/crossroads-green.witness.json?raw';
-import callTrace from '@sysml-reference-trace/crossroads-green.trace.json?raw';
+import report from '@sysml-reference-trace/crossroads-green.report.json?raw';
 
 # Artifacts
 
-A verification writes the artifacts of each case into a directory of its own: what the compiler made of the model, what each backend was given and printed, the report, and for a verdict with a witness the witness and its trace. The launchers write the case directories into `--artifact-directory`, the VS Code extension where `semantifyr.artifacts.location` says, and Live into the working folder of the session, which it deletes when the session ends ([What Live's server keeps](../start/live/privacy.md)).
+A verification writes the artifacts of each case into a directory of its own: what the compiler made of the model, what each backend was given and printed, and the report, which holds the verdict and, for a verdict with a trace, the run the backend found, with the witness model derived from it. The launchers write the case directories into `--artifact-directory`, the VS Code extension where `semantifyr.artifacts.location` says, and Live into the working folder of the session, which it deletes when the session ends ([What Live's server keeps](../start/live/privacy.md)).
 
 ## The case directory
 
 A case directory is named after the model file without its extension and the qualified name of the case, joined by `.`, with `::` written as `.` and every character other than a letter, a digit, `.`, `_` and `-` as `_`. A name longer than 64 characters keeps its first 55 and ends in `-` and an eight-digit hexadecimal hash of the whole. A verification empties the directory before it writes. The case `semantifyr::verification::smoke::CounterReachesThree` of `smoke.semantifyr` is in `smoke.semantifyr.verification.smoke.CounterReachesThree`.
 
-`--artifacts` chooses which of the compiler's artifacts, those with a name in parentheses below, are written: `none`, `all`, the default, which is every one but `compilation-step`, or `debug`, every one; `--enable-artifact` and `--disable-artifact` add and remove one by that name. The VS Code extension's `semantifyr.artifacts.preset` setting chooses the same. The report, the backends' files and the witness files are written under every preset.
+`--artifacts` chooses which of the compiler's artifacts, those with a name in parentheses below, are written: `none`, `all`, the default, which is every one but `compilation-step`, or `debug`, every one; `--enable-artifact` and `--disable-artifact` add and remove one by that name. The VS Code extension's `semantifyr.artifacts.preset` setting chooses the same. The report, the backends' files and the witness model are written under every preset.
 
-- `report.json`, for every case that compiles or whose compilation runs out of time: the verdict, the backend that answered and the times and sizes of the run, in the fields listed under [`verify`](command-line.mdx#verify).
+- `report.json`, for every case that compiles or whose compilation runs out of time: the verdict, the backend that answered, the times and sizes of the run and, for a verdict with a trace, the trace ([The report](#the-report)).
 - `pipeline/instantiated.semantifyr` (`instantiated-model`), `pipeline/inlined.semantifyr` (`inlined-model`) and `pipeline/flattened.semantifyr` (`flattened-model`): the model after each [phase of the compilation](../language/compilation/index.mdx), each an [inlined model](../language/specification/library-and-output/inlined-models.md).
 - `mapping.json` (`mapping`): the number that stands for each instance in the flattened model, the instance named by its path from the root instance, as `{"instances": [{"name": ..., "id": ...}]}`.
 - `pipeline/steps/` (`compilation-step`): the model after every pass of the compiler, numbered in the order they ran and named after the pass, such as `000000_expressioncallinlining.semantifyr`.
 - The files of each backend run: the model the backend was given (`inlined.xsts` for Theta, `model.smv` for nuXmv, `model.pml` for Spin, `model.xml` and `model.q` for Uppaal) and what the backend printed. A portfolio that runs several backend configurations gives each a subdirectory of its own, and a portfolio in [stages](../backends/portfolios-and-verdicts.mdx#stages) puts them under a directory per stage, `first/theta-bmc` for one, so a configuration run in two stages keeps the files of both runs.
-- `witness.semantifyr`, `witness.json` and `trace.json`, for a verdict with a [witness](../language/specification/library-and-output/inlined-models.md#witnesses). `semantifyr-sysml` writes `trace.sysml` beside them ([SysML v2 traces](../frontends/sysml-v2/traces.mdx)), `semantifyr-gamma` `trace.get` ([Gamma traces](../frontends/gamma/traces.mdx)).
-- `validation/`: the case directory of the last [witness validation](../backends/portfolios-and-verdicts.mdx#validation), with the same files.
+- `witness.semantifyr`, for a verdict with a trace: the [witness](../language/specification/library-and-output/inlined-models.md#witnesses), derived from the report. `semantifyr-sysml` writes `trace.sysml` beside it ([SysML v2 traces](../frontends/sysml-v2/traces.mdx)), `semantifyr-gamma` `trace.get` ([Gamma traces](../frontends/gamma/traces.mdx)).
+- `validation/`: the case directory of the last [witness validation](../backends/portfolios-and-verdicts.mdx#validation), with the same files, its `report.json` the validation's own.
 
 `semantifyr-sysml` writes the translation of the model into `compiled/default/<model>.semantifyr` at the top of the artifact directory, with its [name map](../frontends/sysml-v2/traces.mdx#the-name-map), `<model>.names.json`, beside it, and the case directories next to `compiled/`. `semantifyr-gamma` gives every case a directory named after its Gamma qualified name, holding the compiled model, `model.semantifyr`, one package of the Semantifyr Language per imported Gamma package under `imports/`, and the case directory under `verification/`.
+
+## The report
+
+`report.json` is one document per case.
+
+<ReportFields fields={reportFields} />
+
+`result.soundness` is the [soundness direction](../backends/portfolios-and-verdicts.mdx#soundness-directions) of the answering configuration's run on this model, and `result.isTrusted` says whether that direction backs the verdict; [Verdicts](command-line.mdx#verdicts) says what a portfolio does with an answer it does not back.
+
+`trace.initial` names the first state, the one `init` produces, and holds the calls of `init`. Each entry of `trace.steps` is one step from its `source` state to its `target` state, both indices into `trace.states`, and `elapsed` is the time that passed before the step's transition ([Time](../language/specification/classes-and-behaviour/time.md)), 0 in a model without clocks. A state holds a value for every variable and clock the verified model kept, named by its path from the root instance, which is named `root`, an array slot by slot under a key of its own; a variable a state does not hold claims nothing. `trace.variables` lists each variable the states hold once with its type, and `trace.transitions` each observed transition with the types of its parameters.
+
+The calls of a step are the calls of the transitions annotated [`@Trace`](../language/specification/library-and-output/standard-library.md#trace) that ran in it, in the order they ran: each with its receiver, `self`, the qualified name of its `transition`, the value of each argument by parameter, run-time values included, and in `calls` the annotated calls made in its body. A call site is listed once in a step, with the arguments of its last run there. `self` is one instance's path.
+
+A `value` is a JSON value: a boolean as JSON writes it, an integer a JSON number within 32 bits, as the language's integers are, a real a JSON number, an array as a JSON array, a record as an object, a string for an enum literal, and an instance reference as the instance's path from the root instance, `null` for no instance and a JSON array of paths for several, the type in `trace.variables` or `trace.transitions` saying which. A report whose integer value lies outside 32 bits is not read. An elapsed time is a `fraction`, as is a clock's value in a state: exact and in lowest terms, a whole amount within 32 bits a JSON number and any other a string such as `"3/2"` or `"4294967296"`. Every key of a state is a variable `trace.variables` lists.
+
+`kind` is `run` for the report of a verification and `re-check` for the report a [validation](../backends/portfolios-and-verdicts.mdx#validation) writes into `validation/` when it verifies the witness again.
+
+<details>
+<summary><code>report.json</code> of a run of a SysML v2 case that fails, from which the SysML v2 reference trace is generated</summary>
+
+<CodeBlock language="json">{report}</CodeBlock>
+
+</details>
 
 ## Inlined models
 
 The models under `pipeline/`, `semantifyr compile`'s output and the witness are [inlined models](../language/specification/library-and-output/inlined-models.md), the form the language specifies; the pages on [how a Semantifyr model compiles](../language/compilation/index.mdx) show those files for one model.
-
-## `witness.json`
-
-The state of every step of the witness, named as in [`witness.semantifyr`](../language/specification/library-and-output/inlined-models.md#witnesses): `initializedStep` is the initial state, the one `init` produces, and `steps` holds one state for each step after it. Each value is text in the Semantifyr Language: a literal, `nothing`, or an instance by its path, a global one by its qualified name.
-
-<ReportFields fields={witnessFields} />
-
-<details>
-<summary><code>witness.json</code> of the reference witness</summary>
-
-<CodeBlock language="json">{witnessState}</CodeBlock>
-
-</details>
-
-## `trace.json`
-
-The calls of transitions annotated [`@Trace`](../language/specification/library-and-output/standard-library.md#trace) in each step of the witness, aligned step for step with `witness.json`. A call is listed in the step it fired in with its receiver, `self`, the qualified name of the transition, the value of each argument by parameter, and in `innerTraces` the traced calls made in its body.
-
-<ReportFields fields={traceFields} />
-
-<details>
-<summary><code>trace.json</code> of the reference witness</summary>
-
-<CodeBlock language="json">{callTrace}</CodeBlock>
-
-</details>

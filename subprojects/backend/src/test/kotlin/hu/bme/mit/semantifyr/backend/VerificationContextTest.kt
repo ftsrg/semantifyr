@@ -7,19 +7,31 @@
 package hu.bme.mit.semantifyr.backend
 
 import hu.bme.mit.semantifyr.backend.execution.BackendExecutor
+import hu.bme.mit.semantifyr.backend.witness.Fraction
 import hu.bme.mit.semantifyr.backend.witness.InlinedWitness
+import hu.bme.mit.semantifyr.backend.witness.WitnessFailedException
+import hu.bme.mit.semantifyr.backend.witness.WitnessState
+import hu.bme.mit.semantifyr.backend.witness.WitnessStateValue
+import hu.bme.mit.semantifyr.backend.witness.linearInlinedWitness
+import hu.bme.mit.semantifyr.compiler.pipeline.context.FlatteningInfo
+import hu.bme.mit.semantifyr.compiler.pipeline.context.InstanceIdMapping
+import hu.bme.mit.semantifyr.compiler.pipeline.context.RecordField
+import hu.bme.mit.semantifyr.compiler.pipeline.context.TransitionCallTraceMap
+import hu.bme.mit.semantifyr.compiler.pipeline.expression.InstanceEvaluation
+import hu.bme.mit.semantifyr.compiler.pipeline.inlining.ArgumentTrace
+import hu.bme.mit.semantifyr.compiler.pipeline.inlining.TransitionCallTrace
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.withTimeout
 import org.assertj.core.api.Assertions.assertThat
 import org.eclipse.emf.ecore.EObject
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
-import org.mockito.kotlin.mock
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.io.path.Path
 import kotlin.time.Duration
@@ -54,25 +66,43 @@ class VerificationContextTest {
         }
     }
 
+    private class UnderApproximatedModels : BackendCapabilityChecker() {
+        override fun describeUnsupported(element: EObject): String? {
+            return null
+        }
+
+        override fun loweringSoundness(inlinedOxsts: InlinedOxsts): SoundnessDirection {
+            return SoundnessDirection.UnderApproximating
+        }
+    }
+
     private class ScriptedContext(
         override val executor: CountingExecutor = CountingExecutor(),
-        private val prepareStep: () -> String = { "artifacts" },
-        private val runStep: suspend () -> String? = { "pass" },
+        private val preparationFailure: Exception? = null,
+        private val runStep: suspend () -> String? = {
+            "pass"
+        },
         private val witness: InlinedWitness? = null,
+        private val witnessFailure: WitnessFailedException? = null,
         inlinedOxsts: InlinedOxsts = modelChecking(OxstsFactory.createAG()),
+        transitionCallTraces: TransitionCallTraceMap = TransitionCallTraceMap(emptyMap()),
         soundness: SoundnessDirection = SoundnessDirection.Exact,
+        capabilityChecker: BackendCapabilityChecker = RejectingVariables(),
+        flatteningInfo: FlatteningInfo? = null,
     ) : VerificationContext<String, String>(
         backendId = "scripted",
-        soundness = soundness,
-        request = BackendVerificationRequest(inlinedOxsts, Path("build")),
+        configuredSoundness = soundness,
+        request = BackendVerificationRequest(inlinedOxsts, Path("build"), flatteningInfo, transitionCallTraces),
+        capabilityChecker = capabilityChecker,
     ) {
-        override val capabilityChecker = RejectingVariables()
-
         val phases = mutableListOf<String>()
 
         override suspend fun prepare(): String {
             phases += "prepare"
-            return prepareStep()
+            if (preparationFailure != null) {
+                throw preparationFailure
+            }
+            return "artifacts"
         }
 
         override suspend fun run(artifacts: String): String? {
@@ -91,6 +121,9 @@ class VerificationContextTest {
 
         override suspend fun buildWitness(rawVerdict: String?, artifacts: String): InlinedWitness? {
             phases += "witness $rawVerdict"
+            if (witnessFailure != null) {
+                throw witnessFailure
+            }
             return witness
         }
     }
@@ -121,9 +154,21 @@ class VerificationContextTest {
     }
 
     @Test
+    suspend fun `the result carries the direction the capability checker answers on the model`() {
+        val context = ScriptedContext(capabilityChecker = UnderApproximatedModels())
+
+        val result = context.execute()
+
+        assertThat(result.soundness).isEqualTo(SoundnessDirection.UnderApproximating)
+        assertThat(result.isTrusted).isFalse
+    }
+
+    @Test
     suspend fun `an under-approximating context trusts a reached target`() {
+        val inlinedOxsts = modelChecking(OxstsFactory.createEF())
         val context = ScriptedContext(
-            inlinedOxsts = modelChecking(OxstsFactory.createEF()),
+            witness = linearInlinedWitness(inlinedOxsts, listOf(WitnessState(emptyList(), emptyList(), Fraction.ZERO))),
+            inlinedOxsts = inlinedOxsts,
             soundness = SoundnessDirection.UnderApproximating,
         )
 
@@ -135,20 +180,179 @@ class VerificationContextTest {
 
     @Test
     suspend fun `a run without a raw verdict is interpreted by the backend`() {
-        val result = ScriptedContext(runStep = { null }).execute()
+        val context = ScriptedContext(
+            runStep = {
+                null
+            },
+        )
+
+        val result = context.execute()
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Inconclusive)
+        assertThat(context.phases).contains("interpret null")
     }
 
     @Test
     suspend fun `the witness is passed through and its back-annotation is timed`() {
-        val witness = mock<InlinedWitness>()
+        val inlinedOxsts = modelChecking(OxstsFactory.createAG())
+        val witness = linearInlinedWitness(inlinedOxsts, listOf(WitnessState(emptyList(), emptyList(), Fraction.ZERO)))
 
-        val result = ScriptedContext(runStep = { "fail" }, witness = witness).execute()
+        val result = ScriptedContext(
+            runStep = {
+                "fail"
+            },
+            witness = witness,
+            inlinedOxsts = inlinedOxsts,
+        ).execute()
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
         assertThat(result.inlinedWitness).isSameAs(witness)
         assertThat(result.metrics.backAnnotationDuration).isGreaterThan(Duration.ZERO)
+    }
+
+    @Test
+    suspend fun `a trusted verdict that has a trace fails the run when it comes without one`() {
+        val result = ScriptedContext(
+            runStep = {
+                "fail"
+            },
+        ).execute()
+
+        assertThat(result.verdict).isEqualTo(VerificationVerdict.Errored)
+        assertThat(result.message).isEqualTo("scripted's trace could not be read back: scripted gave a Failed verdict without its trace")
+    }
+
+    @Test
+    suspend fun `a trace value that cannot be read fails the run and keeps no verdict`() {
+        val result = ScriptedContext(
+            runStep = {
+                "fail"
+            },
+            witnessFailure = WitnessFailedException("the trace holds 1.5 for counter, which is no value of its type"),
+        ).execute()
+
+        assertThat(result.verdict).isEqualTo(VerificationVerdict.Errored)
+        assertThat(result.isTrusted).isFalse
+        assertThat(result.inlinedWitness).isNull()
+        assertThat(result.message).isEqualTo("scripted's trace could not be read back: the trace holds 1.5 for counter, which is no value of its type")
+    }
+
+    @Test
+    suspend fun `an untrusted verdict stands without a trace`() {
+        val result = ScriptedContext(
+            runStep = {
+                "fail"
+            },
+            soundness = SoundnessDirection.OverApproximating,
+        ).execute()
+
+        assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
+        assertThat(result.isTrusted).isFalse
+    }
+
+    @Test
+    suspend fun `a trace variable without a value in a state fails the run`() {
+        val tracer = OxstsFactory.createVariableDeclaration().also {
+            it.name = "tracer"
+        }
+        val inlinedOxsts = modelChecking(OxstsFactory.createAG()).also {
+            it.variables += tracer
+        }
+        val witness = linearInlinedWitness(
+            inlinedOxsts,
+            listOf(
+                WitnessState(listOf(WitnessStateValue(tracer, OxstsFactory.createLiteralBoolean(false))), emptyList(), Fraction.ZERO),
+                WitnessState(emptyList(), emptyList(), Fraction.ZERO),
+            ),
+        )
+
+        val result = ScriptedContext(
+            runStep = {
+                "fail"
+            },
+            witness = witness,
+            inlinedOxsts = inlinedOxsts,
+            transitionCallTraces = TransitionCallTraceMap(
+                mapOf(
+                    tracer to transitionCallTrace(emptyList()),
+                ),
+            ),
+            capabilityChecker = BackendCapabilityChecker.Unlimited,
+        ).execute()
+
+        assertThat(result.verdict).isEqualTo(VerificationVerdict.Errored)
+        assertThat(result.message).endsWith("the trace variable ${tracer.name} has no value in state 1")
+    }
+
+    @Test
+    suspend fun `a trace variable holding no boolean fails the run`() {
+        val tracer = OxstsFactory.createVariableDeclaration().also {
+            it.name = "tracer"
+        }
+        val inlinedOxsts = modelChecking(OxstsFactory.createAG()).also {
+            it.variables += tracer
+        }
+        val witness = linearInlinedWitness(
+            inlinedOxsts,
+            listOf(
+                WitnessState(listOf(WitnessStateValue(tracer, OxstsFactory.createLiteralInteger(1))), emptyList(), Fraction.ZERO),
+            ),
+        )
+
+        val result = ScriptedContext(
+            runStep = {
+                "fail"
+            },
+            witness = witness,
+            inlinedOxsts = inlinedOxsts,
+            transitionCallTraces = TransitionCallTraceMap(
+                mapOf(
+                    tracer to transitionCallTrace(emptyList()),
+                ),
+            ),
+            capabilityChecker = BackendCapabilityChecker.Unlimited,
+        ).execute()
+
+        assertThat(result.verdict).isEqualTo(VerificationVerdict.Errored)
+        assertThat(result.message).endsWith("the trace variable ${tracer.name} has no value in state 0")
+    }
+
+    @Test
+    suspend fun `a recorded argument without a value in a state fails the run`() {
+        val argument = OxstsFactory.createVariableDeclaration().also {
+            it.name = "argument"
+        }
+        val inlinedOxsts = modelChecking(OxstsFactory.createAG()).also {
+            it.variables += argument
+        }
+        val witness = linearInlinedWitness(
+            inlinedOxsts,
+            listOf(
+                WitnessState(listOf(WitnessStateValue(argument, OxstsFactory.createLiteralInteger(0))), emptyList(), Fraction.ZERO),
+                WitnessState(emptyList(), emptyList(), Fraction.ZERO),
+            ),
+        )
+
+        val result = ScriptedContext(
+            runStep = {
+                "fail"
+            },
+            witness = witness,
+            inlinedOxsts = inlinedOxsts,
+            transitionCallTraces = TransitionCallTraceMap(
+                mapOf(
+                    OxstsFactory.createVariableDeclaration() to transitionCallTrace(
+                        listOf(
+                            ArgumentTrace.Recorded(OxstsFactory.createParameterDeclaration(), argument),
+                        ),
+                    ),
+                ),
+            ),
+            capabilityChecker = BackendCapabilityChecker.Unlimited,
+        ).execute()
+
+        assertThat(result.verdict).isEqualTo(VerificationVerdict.Errored)
+        assertThat(result.message).endsWith("the recorded argument ${argument.name} has no value in state 1")
     }
 
     @Test
@@ -161,7 +365,7 @@ class VerificationContextTest {
 
     @Test
     suspend fun `an unsupported construct during preparation is NotSupported with its message`() {
-        val context = ScriptedContext(prepareStep = { throw BackendUnsupportedException("Spin does not support for-operations") })
+        val context = ScriptedContext(preparationFailure = BackendUnsupportedException("Spin does not support for-operations"))
 
         val result = context.execute()
 
@@ -172,7 +376,11 @@ class VerificationContextTest {
 
     @Test
     suspend fun `an unsupported construct found by the run is NotSupported`() {
-        val result = ScriptedContext(runStep = { throw BackendUnsupportedException("value out of range") }).execute()
+        val result = ScriptedContext(
+            runStep = {
+                throw BackendUnsupportedException("value out of range")
+            },
+        ).execute()
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.NotSupported)
         assertThat(result.message).isEqualTo("value out of range")
@@ -180,7 +388,11 @@ class VerificationContextTest {
 
     @Test
     suspend fun `any other failure is Errored with its message`() {
-        val result = ScriptedContext(runStep = { error("spin execution failed with exit code 2") }).execute()
+        val result = ScriptedContext(
+            runStep = {
+                error("spin execution failed with exit code 2")
+            },
+        ).execute()
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Errored)
         assertThat(result.message).isEqualTo("spin execution failed with exit code 2")
@@ -219,8 +431,39 @@ class VerificationContextTest {
     }
 
     @Test
+    suspend fun `an unsupported record field is named by its record`() {
+        val record = OxstsFactory.createVariableDeclaration().also {
+            it.name = "position"
+        }
+        val field = OxstsFactory.createVariableDeclaration().also {
+            it.name = "position__x"
+        }
+        val inlinedOxsts = modelChecking(OxstsFactory.createAG()).also {
+            it.variables += field
+        }
+        val flatteningInfo = FlatteningInfo(
+            variableHolders = emptyMap(),
+            variableInstanceDomains = emptyMap(),
+            variableMappings = emptyMap(),
+            instanceIdMapping = InstanceIdMapping(emptyMap(), emptyMap()),
+            recordFields = mapOf(
+                field to RecordField(record, listOf(field)),
+            ),
+        )
+
+        val result = ScriptedContext(inlinedOxsts = inlinedOxsts, flatteningInfo = flatteningInfo).execute()
+
+        assertThat(result.verdict).isEqualTo(VerificationVerdict.NotSupported)
+        assertThat(result.message).isEqualTo("scripted does not support variables of type real (position)")
+    }
+
+    @Test
     suspend fun `cancellation propagates`() {
-        val context = ScriptedContext(runStep = { throw CancellationException("cancelled") })
+        val context = ScriptedContext(
+            runStep = {
+                throw CancellationException("cancelled")
+            },
+        )
 
         assertThrows<CancellationException> {
             context.execute()
@@ -228,8 +471,8 @@ class VerificationContextTest {
     }
 
     @Test
-    suspend fun `a timeout around the run propagates instead of becoming Errored`() {
-        val thrown = runCatching {
+    fun `a timeout around the run propagates instead of becoming Errored`() = runTest {
+        assertThrows<TimeoutCancellationException> {
             withTimeout(50.milliseconds) {
                 ScriptedContext(
                     runStep = {
@@ -238,14 +481,7 @@ class VerificationContextTest {
                     },
                 ).execute()
             }
-        }.exceptionOrNull()
-
-        assertThat(thrown).isInstanceOf(TimeoutCancellationException::class.java)
-    }
-
-    @Test
-    fun `Timeout is not decisive`() {
-        assertThat(VerificationVerdict.Timeout.isDecisive).isFalse
+        }
     }
 }
 
@@ -255,4 +491,13 @@ private fun modelChecking(property: Expression): InlinedOxsts {
             declaration.expression = property
         }
     }
+}
+
+private fun transitionCallTrace(arguments: List<ArgumentTrace>): TransitionCallTrace {
+    return TransitionCallTrace(
+        self = InstanceEvaluation(emptySet()),
+        transitionDeclaration = OxstsFactory.createTransitionDeclaration(),
+        arguments = arguments,
+        parent = null,
+    )
 }

@@ -14,6 +14,21 @@ class TransitionCallTraceMap(
     private val traceMap: Map<VariableDeclaration, TransitionCallTrace>,
 ) {
 
+    val tracerVariables: Set<VariableDeclaration>
+        get() = traceMap.keys
+
+    val argumentVariables = traceMap.values.flatMap { trace ->
+        trace.recordedArguments.map {
+            it.variable
+        }
+    }.toSet()
+
+    val observedVariables = traceMap.flatMap { (tracer, trace) ->
+        listOf(tracer) + trace.recordedArguments.map {
+            it.variable
+        }
+    }.toSet()
+
     fun getTransitionCallTrace(variable: VariableDeclaration): TransitionCallTrace {
         return traceMap[variable] ?: error("No transition call trace was found for '${variable.name}'")
     }

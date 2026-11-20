@@ -6,15 +6,13 @@
 
 package hu.bme.mit.semantifyr.backends.theta
 
-import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationConfig
 import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup
 import hu.bme.mit.semantifyr.verifier.SemantifyrVerifierTestHelper
 import hu.bme.mit.semantifyr.verifier.VerificationCase
-import hu.bme.mit.semantifyr.verifier.VerificationResult
+import hu.bme.mit.semantifyr.verifier.assertVerdict
 import hu.bme.mit.semantifyr.verifier.assumeBackendAvailable
 import hu.bme.mit.semantifyr.verifier.portfolio.SingleBackendPortfolio
-import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
@@ -45,41 +43,27 @@ class ThetaSemanticOptimizationParityTest {
         }
 
         @JvmStatic
-        fun `Every Optimization Keeps The Verdict Of No Optimization`(): List<Arguments> {
-            return helper.collectVerificationCasesAsArguments(context)
+        fun `Without Optimization Every Case Has Its Expected Verdict`(): List<Arguments> {
+            return helper.collectAcceptedCasesAsArguments(
+                context,
+                ThetaBackend(),
+                ThetaConfig.CegarExplPredCombined,
+                outputDirectory.resolve("capability-check"),
+            )
         }
     }
 
     @ParameterizedTest
     @MethodSource
-    suspend fun `Every Optimization Keeps The Verdict Of No Optimization`(verificationCase: VerificationCase) {
-        val unoptimized = verify(verificationCase, OptimizationConfig.NONE, "none")
-        val optimized = verify(verificationCase, OptimizationConfig.ALL, "all")
-
-        val verdicts = "${verificationCase.qualifiedName}: ${describe(unoptimized)} at optimization none, ${describe(optimized)} at optimization all"
-        Assertions.assertNotEquals(VerificationVerdict.Errored, unoptimized.verdict, verdicts)
-        Assertions.assertNotEquals(VerificationVerdict.Errored, optimized.verdict, verdicts)
-        Assertions.assertNotEquals(VerificationVerdict.Timeout, unoptimized.verdict, verdicts)
-        Assertions.assertNotEquals(VerificationVerdict.Timeout, optimized.verdict, verdicts)
-        Assertions.assertEquals(unoptimized.verdict, optimized.verdict, verdicts)
-    }
-
-    private suspend fun verify(
-        verificationCase: VerificationCase,
-        optimization: OptimizationConfig,
-        name: String,
-    ): VerificationResult {
-        return helper.runVerificationCase(
+    suspend fun `Without Optimization Every Case Has Its Expected Verdict`(verificationCase: VerificationCase) {
+        val outcome = helper.runVerificationCase(
             context = context,
             case = verificationCase,
             verificationPortfolio = portfolio,
-            outputDirectory = outputDirectory.resolve(name),
+            outputDirectory = outputDirectory,
             timeout = 1.minutes,
-            optimization = optimization,
+            optimization = OptimizationConfig.NONE,
         )
-    }
-
-    private fun describe(result: VerificationResult): String {
-        return "${result.verdict} (${result.message ?: "no message"})"
+        assertVerdict(verificationCase.qualifiedName, helper.expectedVerdictFromTags(verificationCase), outcome.report.result)
     }
 }

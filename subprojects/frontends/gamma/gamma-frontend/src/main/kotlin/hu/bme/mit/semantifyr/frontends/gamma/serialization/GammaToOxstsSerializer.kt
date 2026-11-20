@@ -67,7 +67,6 @@ import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.StateReferenceExpression
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.StatechartDeclaration
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.SyncComponentDeclaration
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.TemporalOperator
-import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.TimeUnit
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.TimeoutDeclaration
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.TimeoutTrigger
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.Transition
@@ -87,6 +86,7 @@ import org.eclipse.xtext.nodemodel.util.NodeModelUtils
 
 class GammaToOxstsSerializer(
     private val nameMap: GammaNameMap,
+    private val timeUnitMilliseconds: Int,
 ) {
 
     fun transformToOxsts(gammaPackage: GammaModelPackage) = buildIndented {
@@ -328,9 +328,6 @@ class GammaToOxstsSerializer(
 
     private val accessClassNamesByPackage = mutableMapOf<GammaModelPackage, Map<FieldDeclaration, String>>()
 
-    // a timeout's value is written in the statechart's body, where no region shadows a member
-    private var statechartScope = false
-
     private fun oxstsType(type: Type): String {
         return when (val resolved = GammaUtils.resolveType(type)) {
             is IntegerType -> "int"
@@ -526,10 +523,7 @@ class GammaToOxstsSerializer(
             for (clock in mapping.clocks) {
                 val name = nameMap.declare(component, clock.clock, markName(clock.clock.name))
                 appendIndent("contains $name: Clock subsets clocks") {
-                    appendLine("redefine refers rate: int = ${clock.rate}")
-                    if (clock.deltaTime != 1) {
-                        appendLine("redefine refers deltaTime: int = ${clock.deltaTime}")
-                    }
+                    appendLine("redefine refers rate: int = ${GammaTime.inUnit(clock.rate, clock.unit, timeUnitMilliseconds)}")
                 }
             }
 
@@ -898,27 +892,10 @@ class GammaToOxstsSerializer(
             it.timeout == timeout
         }
         appendIndent("contains $name: Timeout subsets timeouts") {
-            if (setting?.unit == TimeUnit.MILLISECOND) {
-                appendLine("redefine refers deltaTime: int = $MILLISECONDS_PER_STEP")
+            if (setting != null) {
+                val value = GammaUtils.evaluateInteger(setting.value) ?: error("The value of timeout '${timeout.name}' is not a constant")
+                appendLine("redefine refers value: int = ${GammaTime.inUnit(value, setting.unit, timeUnitMilliseconds)}")
             }
-            if (setting == null || readsNoState(setting.value)) {
-                appendLine("redefine refers stopsAtValue: bool = true")
-            }
-            if (setting == null) {
-                appendIndent("redefine contains value: LiteralIntegerExpression") {
-                    appendLine("redefine refers value: int = 0")
-                }
-            } else {
-                statechartScope = true
-                serialize(setting.value, "value")
-                statechartScope = false
-            }
-        }
-    }
-
-    private fun readsNoState(expression: Expression): Boolean {
-        return (sequenceOf(expression) + expression.eAllContents().asSequence()).none {
-            it is DirectReferenceExpression || it is EventParameterReferenceExpression
         }
     }
 
@@ -1483,7 +1460,7 @@ class GammaToOxstsSerializer(
 
     private fun memberReference(member: NamedElement): String {
         val statechart = member.eContainer() as? StatechartDeclaration ?: return markName(member.name)
-        val shadowed = !statechartScope && EcoreUtil2.eAllContents(statechart).asSequence().any {
+        val shadowed = EcoreUtil2.eAllContents(statechart).asSequence().any {
             (it is Region || it is StateNode) && (it as NamedElement).name == member.name
         }
         if (!shadowed) {
@@ -1527,7 +1504,6 @@ class GammaToOxstsSerializer(
 
     companion object {
         private const val CASE_COMPONENT = "component"
-        private const val MILLISECONDS_PER_STEP = 1000
         private const val PARAMETER_CLASS = "parameter"
         private const val VARIABLE_CLASS = "variable"
         private const val ACCESS_CLASS = "access"

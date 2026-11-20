@@ -17,7 +17,6 @@ import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.path
 import com.google.inject.Inject
 import com.google.inject.Injector
-import hu.bme.mit.semantifyr.cli.common.CaseOutcome
 import hu.bme.mit.semantifyr.cli.common.CommandExit
 import hu.bme.mit.semantifyr.cli.common.ExitCode
 import hu.bme.mit.semantifyr.cli.common.checkInputFile
@@ -32,7 +31,6 @@ import hu.bme.mit.semantifyr.frontends.sysml.SysMLv2Frontend
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
 import hu.bme.mit.semantifyr.portfolios.Portfolios
-import hu.bme.mit.semantifyr.verifier.caseReportPath
 import hu.bme.mit.semantifyr.verifier.discovery.VerificationCaseDiscoverer
 import hu.bme.mit.semantifyr.verifier.portfolio.VerificationPortfolio
 import org.eclipse.xtext.resource.FileExtensionProvider
@@ -102,7 +100,7 @@ class SysMLVerifyCommand @Inject constructor(
 
         val exitCode = cases.maxOf { case ->
             verifyCase(output, case.qualifiedName) {
-                CaseOutcome(frontend.verify(case), caseReportPath(artifactOptions.resolvedOutputDirectory, case))
+                frontend.verify(case).outcome
             }
         }
         if (exitCode != ExitCode.Success) {

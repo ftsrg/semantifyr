@@ -4,25 +4,45 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import { type TraceEntry, type WitnessState, type WitnessValidationResult, WitnessValidationStatus } from "./wire.ts";
+import { formatReportValue, lastNameSegment } from "./trace.ts";
+import {
+    type ReportCall,
+    type ReportVerdict,
+    type SoundnessDirection,
+    type VerificationCaseResult,
+    VerificationStatus,
+    type WitnessValidationResult,
+    WitnessValidationStatus,
+} from "./wire.ts";
 
-export interface WitnessStateChange {
-    variable: string;
-    value: string;
-    previous: string | undefined;
+export const STATUS_OF_VERDICT: Readonly<Record<ReportVerdict, VerificationStatus>> = {
+    Passed: VerificationStatus.Passed,
+    Failed: VerificationStatus.Failed,
+    Inconclusive: VerificationStatus.Inconclusive,
+    Timeout: VerificationStatus.Timeout,
+    Errored: VerificationStatus.Errored,
+    NotSupported: VerificationStatus.NotSupported,
+};
+
+export interface CaseOutcome {
+    status: VerificationStatus;
+    message: string | null;
+    portfolioId: string | null;
 }
 
-export function witnessStateChanges(state: WitnessState): WitnessStateChange[][] {
-    const current = new Map<string, string>();
-    return [state.initializedStep, ...state.steps].map((step) => {
-        const changes = step.values.map((value) => {
-            return { variable: value.variable, value: value.value, previous: current.get(value.variable) };
-        }).filter((change) => change.value !== change.previous);
-        for (const change of changes) {
-            current.set(change.variable, change.value);
-        }
-        return changes;
-    });
+export function caseOutcomeOf(result: VerificationCaseResult): CaseOutcome {
+    if (result.report !== null) {
+        return {
+            status: STATUS_OF_VERDICT[result.report.result.verdict],
+            message: result.message ?? result.report.result.message,
+            portfolioId: result.report.portfolioId,
+        };
+    }
+    return {
+        status: result.status ?? VerificationStatus.Errored,
+        message: result.message,
+        portfolioId: result.portfolioId,
+    };
 }
 
 export function traceStepLabel(index: number): string {
@@ -32,11 +52,22 @@ export function traceStepLabel(index: number): string {
     return `Step ${String(index)}`;
 }
 
-export function formatTraceCall(entry: TraceEntry): string {
-    const argumentList = entry.arguments.map((argument) => {
-        return `${argument.parameter}=${argument.value}`;
+export function formatTraceCall(call: ReportCall): string {
+    const argumentList = Object.entries(call.arguments).map(([parameter, value]) => {
+        return `${parameter}=${formatReportValue(value)}`;
     }).join(", ");
-    return `${entry.self}.${entry.calledTransition}(${argumentList})`;
+    return `${call.self}.${lastNameSegment(call.transition)}(${argumentList})`;
+}
+
+export function soundnessLabel(soundness: SoundnessDirection): string {
+    switch (soundness) {
+        case "Exact":
+            return "exact";
+        case "OverApproximating":
+            return "over-approximating";
+        case "UnderApproximating":
+            return "under-approximating";
+    }
 }
 
 export function noWitnessMessage(caseLabel: string): string {

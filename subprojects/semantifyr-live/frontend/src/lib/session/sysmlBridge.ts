@@ -5,6 +5,7 @@
  */
 
 import {
+  caseOutcomeOf,
   discoverVerificationCases,
   VerificationStatus,
   type FlavorInfo,
@@ -96,10 +97,10 @@ function errored(message: string): VerificationCaseResult {
   return {
     status: VerificationStatus.Errored,
     message,
-    backendId: null,
     portfolioId: null,
-    metrics: null,
-    trace: null,
+    report: null,
+    witnessUri: null,
+    traceUri: null,
   }
 }
 
@@ -132,15 +133,13 @@ export interface SysmlBridgeOptions {
 export interface SysmlBridge {
   client: LspClient
   readMapping: () => Promise<SysmlMapping>
-  // keeps the OXSTS of the model open in the session, where its read-only document navigates
   showOxsts: (text: string) => void
   translateNotification: (method: string, params: unknown) => unknown
-  witnessUriOf: (traceUri: string) => string | undefined
 }
 
 export function createSysmlBridge(options: SysmlBridgeOptions): SysmlBridge {
-  const traceModels = new Map<string, string>()
-  const witnessUris = new Map<string, string>()
+  // null for a trace the worker could not generate
+  const traceModels = new Map<string, string | null>()
   const verifiedCaseLocations = new Map<string, Location>()
 
   let openedOn: LspClient | null = null
@@ -193,23 +192,18 @@ export function createSysmlBridge(options: SysmlBridgeOptions): SysmlBridge {
     result: VerificationCaseResult,
     nameMap: unknown,
   ): Promise<VerificationCaseResult> => {
-    if (!result.trace) {
+    if (!result.report?.trace) {
       return result
     }
     const traceUri = `file:///workspace/traces/${caseName}.trace.sysml`
-    if (result.trace.witnessUri) {
-      witnessUris.set(traceUri, result.trace.witnessUri)
-    }
-    traceModels.delete(traceUri)
-    let message = result.message
+    traceModels.set(traceUri, null)
+    let message = caseOutcomeOf(result).message
     try {
       traceModels.set(
         traceUri,
         (await executeCommand(workerClient(), 'syside.semantifyr.sysml.trace', {
           uri: options.fileUri,
-          caseName,
-          witness: result.trace.witnessState,
-          trace: result.trace.callTrace,
+          report: result.report,
           nameMap,
         })) as string,
       )
@@ -217,7 +211,7 @@ export function createSysmlBridge(options: SysmlBridgeOptions): SysmlBridge {
       const reason = error instanceof Error ? error.message : String(error)
       message = [message, `The SysML trace could not be generated: ${reason}`].filter(Boolean).join('\n')
     }
-    return { ...result, message, trace: { ...result.trace, witnessUri: traceUri } }
+    return { ...result, message, traceUri }
   }
 
   const verify = async (request: WorkerCaseRequest, token?: CancellationToken): Promise<VerificationCaseResult> => {
@@ -258,16 +252,7 @@ export function createSysmlBridge(options: SysmlBridgeOptions): SysmlBridge {
     request: WorkerCaseRequest,
     token?: CancellationToken,
   ): Promise<WitnessValidationResult> => {
-    const witnessUri = witnessUris.get(request.uri)
-    if (!witnessUri) {
-      return { status: 'errored', verdict: null, message: 'No witness to validate', backendId: null, portfolioId: null, metrics: null }
-    }
-    return (await executeCommand(
-      oxstsClient(),
-      'oxsts.case.validateWitness',
-      { ...request, uri: witnessUri },
-      token,
-    )) as WitnessValidationResult
+    return (await executeCommand(oxstsClient(), 'oxsts.case.validateWitness', request, token)) as WitnessValidationResult
   }
 
   const discover = async (): Promise<VerificationCaseSpecification[]> => {
@@ -285,19 +270,11 @@ export function createSysmlBridge(options: SysmlBridgeOptions): SysmlBridge {
     })
   }
 
-  const traceUriOf = (witnessUri: string): string | undefined => {
-    return [...witnessUris].find(([, candidate]) => {
-      return candidate === witnessUri
-    })?.[0]
-  }
-
-  // a validation names the OXSTS witness, which the page knows by the case's trace
   const translateLocation = (location: Location): Location | undefined => {
     if (location.uri === SYSML_OXSTS_URI) {
       return verifiedCaseLocations.get(rangeKey(location.range))
     }
-    const traceUri = traceUriOf(location.uri)
-    return traceUri === undefined ? undefined : { ...location, uri: traceUri }
+    return undefined
   }
 
   const translateActive = (params: VerificationsChangedParams | null): VerificationsChangedParams => {
@@ -347,9 +324,6 @@ export function createSysmlBridge(options: SysmlBridgeOptions): SysmlBridge {
     if (traceModel !== undefined) {
       return { text: traceModel }
     }
-    if (witnessUris.has(uri)) {
-      return { text: null }
-    }
     return (await oxstsClient().sendRequest(SemantifyrLiveMethods.READ_DOCUMENT, { uri })) as ReadDocumentResult | null
   }
 
@@ -371,9 +345,6 @@ export function createSysmlBridge(options: SysmlBridgeOptions): SysmlBridge {
       return method === SemantifyrLiveMethods.VERIFICATIONS_CHANGED
         ? translateActive(params as VerificationsChangedParams | null)
         : params
-    },
-    witnessUriOf: (traceUri) => {
-      return witnessUris.get(traceUri)
     },
   }
 }

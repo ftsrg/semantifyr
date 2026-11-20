@@ -52,12 +52,14 @@ function TraceOfCase({ caseState, flavor, readOnlyTabs, growing, wrapping }: Tra
     return views.get(flavor.languageId)
   })
   const [expandedStep, setExpandedStep] = useState<number | null>(null)
-  const { trace } = caseState
+  const trace = caseState.report?.trace
   if (!trace) {
     return null
   }
+  const witnessUri = caseState.witnessUri ?? null
+  const traceUri = caseState.traceUri ?? null
   const row = caseRowOf(caseState)
-  const view = shownView(language, chosen, { trace, caseName: row.name, runtime })
+  const view = shownView(language, chosen, { witnessUri, traceUri, caseName: row.name })
   const { View } = view
   return (
     <div className={`case-trace status-${row.status}`} data-view={view.id}>
@@ -85,6 +87,8 @@ function TraceOfCase({ caseState, flavor, readOnlyTabs, growing, wrapping }: Tra
           : null}
         <View
           trace={trace}
+          witnessUri={witnessUri}
+          traceUri={traceUri}
           caseName={row.name}
           verdict={row.status}
           expandedStep={expandedStep}

@@ -8,6 +8,7 @@ package hu.bme.mit.semantifyr.compiler.pipeline.optimization.analyses
 
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.eAllOfType
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.LocalVarDeclarationOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -103,6 +104,56 @@ class LivenessAnalysisTest : AnalysisTestBase() {
         assertThat(result.isRead(guard))
             .`as`("'guard' is read inside the assume guard - must be marked read")
             .isTrue
+    }
+
+    @Test
+    fun `a local variable read by an assumption is marked read`() {
+        val (inlined, result) = runLiveness(
+            """
+                inlined oxsts of semantifyr::Anything
+                init {
+                }
+                tran {
+                    var local: int := 5
+                    assume(local == 5)
+                }
+                prop {
+                    AG true
+                }
+            """,
+        )
+        val local = inlined.eAllOfType<LocalVarDeclarationOperation>().single()
+        assertThat(result.isRead(local)).isTrue
+    }
+
+    @Test
+    fun `two local variables of the same name in sibling branches are each read`() {
+        val (inlined, result) = runLiveness(
+            """
+                inlined oxsts of semantifyr::Anything
+                init {
+                }
+                tran {
+                    choice {
+                        var local: int := 1
+                        assume(local == 1)
+                    } or {
+                        var local: int := 2
+                        assume(local == 2)
+                    }
+                }
+                prop {
+                    AG true
+                }
+            """,
+        )
+        val locals = inlined.eAllOfType<LocalVarDeclarationOperation>().toList()
+        assertThat(locals).hasSize(2)
+        for (local in locals) {
+            assertThat(result.isRead(local))
+                .`as`("each local $local is read by its own assume guard")
+                .isTrue
+        }
     }
 
     private fun InlinedOxsts.varNamed(name: String): VariableDeclaration {

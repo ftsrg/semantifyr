@@ -15,6 +15,7 @@ import hu.bme.mit.semantifyr.compiler.pipeline.optimization.Analysis
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.initMustWrite
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.variableReadExpressions
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.variableWrites
+import hu.bme.mit.semantifyr.oxsts.lang.semantics.clock.ClockTestAnalysis
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssignmentOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssumptionOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ChoiceOperation
@@ -37,11 +38,12 @@ data class ReachingDefinitionsInfo(
 
 class ReachingDefinitionsAnalysis @Inject constructor(
     private val metaCompileTimeExpressionEvaluatorProvider: MetaCompileTimeExpressionEvaluatorProvider,
+    private val clockTestAnalysis: ClockTestAnalysis,
 ) : Analysis<ReachingDefinitionsInfo> {
 
     override fun compute(input: EvaluableCompilationContext): ReachingDefinitionsInfo {
         val evaluator = metaCompileTimeExpressionEvaluatorProvider.getEvaluator(input.rootInstance)
-        return ReachingDefinitionsComputation(input.inlinedOxsts, evaluator).compute()
+        return ReachingDefinitionsComputation(input.inlinedOxsts, evaluator, clockTestAnalysis).compute()
     }
 
 }
@@ -49,6 +51,7 @@ class ReachingDefinitionsAnalysis @Inject constructor(
 class ReachingDefinitionsComputation(
     private val inlinedOxsts: InlinedOxsts,
     private val evaluator: MetaCompileTimeExpressionEvaluator,
+    private val clockTestAnalysis: ClockTestAnalysis,
 ) {
 
     private val definitionsOf = mutableMapOf<Expression, Set<EObject>>()
@@ -83,7 +86,8 @@ class ReachingDefinitionsComputation(
 
         val initial = LinkedHashMap<VariableDeclaration, Set<EObject>>()
         for ((variable, defs) in writesByVariable) {
-            initial[variable] = if (inlinedOxsts.initMustWrite(variable, evaluator)) {
+            // a clock has waited since its last write when a step starts, so that write is not its value
+            initial[variable] = if (inlinedOxsts.initMustWrite(variable, evaluator) && !clockTestAnalysis.isClock(variable)) {
                 defs
             } else {
                 defs + variable

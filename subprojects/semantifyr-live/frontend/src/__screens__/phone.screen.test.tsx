@@ -9,13 +9,14 @@ import { beforeAll, describe, expect, it, onTestFinished } from 'vitest'
 import { page, server } from 'vitest/browser'
 
 import type { PortfolioInfo } from '@semantifyr/editor-common'
-import type { ResolvedColorMode } from '../lib/util/colorMode'
 import type { VerificationCaseState, VerificationState } from '../lib/verification/engine'
 import { ShellRoot } from '../shells/ShellRoot'
 import { CaseTrace } from '../trace/CaseTrace'
 import { caseOf, finished, seedLive, type Seed, type Seeded } from './seededLive'
 import { caseState, LANGUAGES, seedWithTrace } from './traces'
 import { noCases } from '../texts'
+import { settledOn } from './settled'
+import { colorModes } from './themes'
 
 // Goal: every phone state the mockup draws lays out in the phone's viewport in both themes, one pane at a time,
 // with the real editor; the states that a tap opens are reached by the tap
@@ -213,7 +214,7 @@ const STATES: Readonly<Record<string, ScreenState>> = {
       // the trace's editor wraps its lines once it has measured its pane, which a slower engine does after the settling time
       await expect.poll(() => {
         return wrapped('.pane-trace .trace-frame')
-      }).toBe(true)
+      }, { timeout: 10_000 }).toBe(true)
     },
     expectState: () => {
       expect(visiblePanes()).toEqual(['Trace'])
@@ -316,8 +317,8 @@ describe('the phone shell', () => {
     await page.viewport(WIDTH, HEIGHT)
   })
 
-  for (const colorMode of ['light', 'dark'] as const satisfies readonly ResolvedColorMode[]) {
-    for (const [state, screen] of Object.entries(STATES)) {
+  for (const [index, [state, screen]] of Object.entries(STATES).entries()) {
+    for (const colorMode of colorModes(index === 0)) {
       it(`lays out ${state} in the ${colorMode} theme`, async () => {
         const { live, shell } = typeof screen.seed === 'function' ? screen.seed() : seedLive(screen.seed)
         const container = document.createElement('div')
@@ -332,10 +333,7 @@ describe('the phone shell', () => {
           return document.querySelector('.monaco-editor .view-line')
         }, { timeout: 60_000 }).toBeTruthy()
         await screen.act?.()
-        await new Promise((resolve) => {
-          setTimeout(resolve, 600)
-        })
-        screen.expectState()
+        await settledOn(screen.expectState)
         expectLayout()
         await page.screenshot({ path: `../../build/screens/${server.browser}/phone-${state}-${colorMode}.png` })
       })

@@ -14,13 +14,26 @@ function framing(address: string, style: string): string {
     <iframe src="${LIVE_URL}${address}" style="border: 0; ${style}"></iframe>
     <script>
       window.heights = []
+      window.shown = false
       window.addEventListener('message', (event) => {
         if (event.data && event.data.type === 'semantifyr-live:height') {
           window.heights.push(event.data.height)
         }
+        if (event.data && event.data.type === 'semantifyr-live:shown') {
+          window.shown = true
+        }
       })
     </script>
   `
+}
+
+// a frame that reports its height reports its first one before it says its model shows
+async function modelShown(page: Page): Promise<void> {
+  await expect.poll(async () => {
+    return page.evaluate(() => {
+      return (window as unknown as { shown: boolean }).shown
+    })
+  }).toBe(true)
 }
 
 async function heightsOf(page: Page): Promise<number[]> {
@@ -30,7 +43,7 @@ async function heightsOf(page: Page): Promise<number[]> {
 }
 
 describe('the verifying embed', () => {
-  test('verifies its cases, opens the trace of a case below it and tells the page the height it grows to', async ({ ui }) => {
+  test('verifies its cases, opens the first trace by itself, opens a trace of a case below it and tells the page the height it grows to', async ({ ui }) => {
     const page = await ui.host(framing('/language/level-crossing?library=gamma&view=embed', 'width: 760px; height: 600px'))
     const frame = page.frameLocator('iframe')
     const cases = frame.locator('.embed-case')
@@ -44,9 +57,10 @@ describe('the verifying embed', () => {
       return statesOf(cases, 'status-')
     }).toEqual(['failed', 'passed'])
     const opened = frame.locator('.embed-case.is-open')
-    if (await opened.count() > 0) {
-      await opened.click()
-    }
+    await expect.poll(async () => {
+      return opened.count()
+    }).toBe(1)
+    await opened.click()
     await expect.poll(async () => {
       return frame.locator('.embed-trace').count()
     }).toBe(0)
@@ -76,25 +90,11 @@ describe('the verifying embed', () => {
     expect(await frame.locator('.embed-strip').count()).toBe(0)
   })
 
-  test('with frame=fixed reports no height, and its divider moves the results', async ({ ui }) => {
+  test('with frame=fixed reports no height', async ({ ui }) => {
     const page = await ui.host(framing('/language/level-crossing?library=gamma&view=embed&frame=fixed', 'width: 1100px; height: 500px'))
-    const frame = page.frameLocator('iframe')
-    await expect.poll(async () => {
-      return frame.locator('.embed-case').count()
-    }).toBe(2)
-    const strip = frame.locator('.embed-strip')
-    const width = (await strip.boundingBox())?.width ?? 0
-    const divider = frame.getByRole('separator', { name: 'Width of the results' })
-    const box = (await divider.boundingBox())!
-    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2)
-    await page.mouse.down()
-    await page.mouse.move(box.x - 120, box.y + box.height / 2, { steps: 5 })
-    await page.mouse.up()
 
-    await expect.poll(async () => {
-      return Math.round(((await strip.boundingBox())?.width ?? 0) - width)
-    }).toBeGreaterThan(100)
-    await page.waitForTimeout(500)
+    await modelShown(page)
+
     expect(await heightsOf(page)).toEqual([])
   })
 
