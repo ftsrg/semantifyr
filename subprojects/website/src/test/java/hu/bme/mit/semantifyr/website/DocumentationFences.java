@@ -44,8 +44,7 @@ final class DocumentationFences {
     private static final Pattern LESSON_STAGE_IMPORT =
             Pattern.compile("^import\\s+\\w+\\s+from\\s+'@lesson-stages/([\\w-]+)';?$");
 
-    // the page-models plugin of docusaurus.config.ts imports a lesson's stage from here
-    private static final String LESSON_STAGES = "oxsts-test-models/tutorial";
+    private static final String LESSON_STAGES = "@oxsts-lesson-stages";
 
     private static final Pattern PAGE_COMMENT = Pattern.compile("<!--[\\s\\S]*?-->|\\{/\\*[\\s\\S]*?\\*/}");
 
@@ -133,8 +132,7 @@ final class DocumentationFences {
                 }
                 var stage = LESSON_STAGE_IMPORT.matcher(line.strip());
                 if (stage.matches()) {
-                    var model = repository
-                            .resolve(LESSON_STAGES)
+                    var model = Path.of(aliases.get(LESSON_STAGES))
                             .resolve(stage.group(1) + ".semantifyr")
                             .normalize();
                     if (!models.contains(model)) {

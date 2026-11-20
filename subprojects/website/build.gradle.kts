@@ -276,9 +276,6 @@ val cloneApiDocs = tasks.register<Sync>("cloneApiDocs") {
     into(layout.buildDirectory.dir("api-static/api"))
 }
 
-// the lessons' stages, which the pages import beside the served examples
-val lessonStagesDir = rootProject.layout.projectDirectory.dir("oxsts-test-models/tutorial")
-
 fun NpmTask.configureSharedInputs() {
     inputs.dir(project.layout.projectDirectory.dir("src")).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.file(project.layout.projectDirectory.file("docusaurus.config.ts")).withPathSensitivity(PathSensitivity.RELATIVE)
@@ -300,7 +297,6 @@ fun NpmTask.configureSharedInputs() {
     inputs.files(generatedWitness).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(sourceAliasDirectories).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(servedExampleSources()).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.dir(lessonStagesDir).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(cloneGrammars).withPathSensitivity(PathSensitivity.RELATIVE)
     // the builds keep their own caches under node_modules/.cache, which say nothing of the result
     dependsOn(tasks.npmInstall)
@@ -503,9 +499,6 @@ tasks {
         readsServedExamples()
         inputs.files(servedExampleSources())
             .withPropertyName("servedExamples")
-            .withPathSensitivity(PathSensitivity.RELATIVE)
-        inputs.dir(lessonStagesDir)
-            .withPropertyName("lessonStages")
             .withPathSensitivity(PathSensitivity.RELATIVE)
     }
 

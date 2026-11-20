@@ -32,7 +32,7 @@ const liveBackendUrl = process.env.SEMANTIFYR_LIVE_URL ?? 'https://live.semantif
 const REPOSITORY = path.resolve(__dirname, '../..');
 
 // the lessons' stages, which no registry serves: their pages link into live with the text in the address
-const LESSON_STAGES = 'oxsts-test-models/tutorial';
+const LESSON_STAGES = path.relative(REPOSITORY, path.resolve(__dirname, sourceAliases['@oxsts-lesson-stages']));
 
 interface PageModelSource {
   language: ExampleLanguage;
