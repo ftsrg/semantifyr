@@ -91,7 +91,9 @@ describe('servedModels', () => {
 
 describe('distribution', () => {
   it('takes nearest-rank percentiles and skips missing values', () => {
-    const values = [...Array.from({ length: 20 }, (_, index) => index + 1), null]
+    const values = [...Array.from({ length: 20 }, (_, index) => {
+      return index + 1
+    }), null]
     expect(distribution(values)).toEqual({ count: 20, median: 10, p95: 19, max: 20 })
   })
 

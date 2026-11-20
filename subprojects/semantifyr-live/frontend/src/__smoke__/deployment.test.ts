@@ -29,7 +29,9 @@ async function connect(flavorId: string) {
   // vscode-ws-jsonrpc's createWebSocketConnection uses a vscode-jsonrpc copy with no Node runtime installed, so it never dispatches a response
   const connection = createMessageConnection(new WebSocketMessageReader(socket), new WebSocketMessageWriter(socket), new ConsoleLogger());
   // the server blocks on its own requests, such as window/workDoneProgress/create, until answered
-  connection.onRequest(() => null);
+  connection.onRequest(() => {
+    return null;
+  });
   connection.listen();
   return connection;
 }

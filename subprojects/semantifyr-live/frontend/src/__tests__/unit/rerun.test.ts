@@ -20,7 +20,9 @@ function holder(initial: VerificationState): {
 } {
   let state = initial
   return {
-    state: () => state,
+    state: () => {
+      return state
+    },
     setState: (next) => {
       state = typeof next === 'function' ? next(state) : next
     },

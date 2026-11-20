@@ -222,7 +222,9 @@ describe('WitnessView', () => {
 
     it('keeps one trace document per case and refreshes it on a rerun', async () => {
         const changes: string[] = [];
-        view.onDidChange((uri) => changes.push(String(uri)));
+        view.onDidChange((uri) => {
+            return changes.push(String(uri));
+        });
         const other = new TestItem('lamp::Reachable', 'Reachable', modelUri);
 
         view.record(item as never, result('failed', counterexample));
@@ -265,7 +267,9 @@ describe('WitnessView validation', () => {
     }
 
     it('validates under a cancellable progress and adds the result to the trace', async () => {
-        view.record(item as never, result('failed', counterexample), async () => validation('valid'));
+        view.record(item as never, result('failed', counterexample), async () => {
+            return validation('valid');
+        });
 
         await validateWitness({ test: item });
 
@@ -280,7 +284,9 @@ describe('WitnessView validation', () => {
         ['inconclusive', 'showWarningMessage', 'ACanBeGreen: Validation inconclusive (portfolio smart) - spurious'],
         ['timeout', 'showWarningMessage', 'ACanBeGreen: Validation timed out (portfolio smart) - spurious'],
     ] as const)('reports a %s witness through %s', async (status, method, text) => {
-        view.record(item as never, result('failed', counterexample), async () => validation(status, 'spurious'));
+        view.record(item as never, result('failed', counterexample), async () => {
+            return validation(status, 'spurious');
+        });
 
         await validateWitness(item);
 

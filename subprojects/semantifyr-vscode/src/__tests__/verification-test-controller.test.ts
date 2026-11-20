@@ -65,7 +65,9 @@ function caseItem(id: string): TestItem {
 }
 
 function discoverRequests() {
-    return requests.filter((request) => (request.parameters as ExecuteCommandParams).command === 'oxsts.case.discover');
+    return requests.filter((request) => {
+        return (request.parameters as ExecuteCommandParams).command === 'oxsts.case.discover';
+    });
 }
 
 function edit(uri: string) {
@@ -81,8 +83,12 @@ beforeEach(() => {
     resetVscode();
     state.files = [Uri.parse(modelUri)];
     cases = [safeCase, reachableCase];
-    verify = () => result('passed');
-    validate = () => null;
+    verify = () => {
+        return result('passed');
+    };
+    validate = () => {
+        return null;
+    };
     requests = [];
 });
 
@@ -98,7 +104,9 @@ describe('discovery', () => {
         expect(requests).toEqual([{ method: 'workspace/executeCommand', parameters: { command: 'oxsts.case.discover', arguments: [modelUri] } }]);
         const fileItem = controller.items.get(modelUri)!;
         expect(fileItem.label).toBe('lamp.semantifyr');
-        expect([...fileItem.children].map(([id]) => id)).toEqual(['lamp::Safe', 'lamp::Reachable']);
+        expect([...fileItem.children].map(([id]) => {
+            return id;
+        })).toEqual(['lamp::Safe', 'lamp::Reachable']);
         expect(caseItem('lamp::Reachable').range).toEqual({ start: { line: 9, character: 0 }, end: { line: 12, character: 1 } });
     });
 
@@ -107,7 +115,9 @@ describe('discovery', () => {
 
         cases = [reachableCase];
         await controller.refreshHandler!();
-        expect([...controller.items.get(modelUri)!.children].map(([id]) => id)).toEqual(['lamp::Reachable']);
+        expect([...controller.items.get(modelUri)!.children].map(([id]) => {
+            return id;
+        })).toEqual(['lamp::Reachable']);
 
         cases = null;
         await controller.refreshHandler!();
@@ -118,8 +128,12 @@ describe('discovery', () => {
         await setUp();
 
         cases = [safeCase];
-        state.watchers.find((watcher) => watcher.glob === '**/*.semantifyr')!.changed.fire(Uri.parse(modelUri));
-        await expect.poll(() => controller.items.get(modelUri)?.children.size).toBe(1);
+        state.watchers.find((watcher) => {
+            return watcher.glob === '**/*.semantifyr';
+        })!.changed.fire(Uri.parse(modelUri));
+        await expect.poll(() => {
+            return controller.items.get(modelUri)?.children.size;
+        }).toBe(1);
     });
 });
 
@@ -137,7 +151,9 @@ describe('rediscovery on edits', () => {
         await vi.advanceTimersByTimeAsync(1000);
         vi.useRealTimers();
 
-        await expect.poll(() => caseItem('lamp::Safe').range).toEqual(movedSafeCase.location.range);
+        await expect.poll(() => {
+            return caseItem('lamp::Safe').range;
+        }).toEqual(movedSafeCase.location.range);
         expect(discoverRequests()).toHaveLength(2);
     });
 
@@ -174,7 +190,9 @@ describe('rediscovery on edits', () => {
         const testRun = await run([removed]);
 
         expect(testRun.outcome(removed)).toBe('skipped');
-        expect(requests.filter((request) => (request.parameters as ExecuteCommandParams).command === 'oxsts.case.verify')).toEqual([]);
+        expect(requests.filter((request) => {
+            return (request.parameters as ExecuteCommandParams).command === 'oxsts.case.verify';
+        })).toEqual([]);
     });
 });
 
@@ -186,14 +204,18 @@ describe('generated artifacts', () => {
 
         await setUp();
 
-        expect(discoverRequests().map((request) => (request.parameters as ExecuteCommandParams).arguments)).toEqual([[modelUri]]);
+        expect(discoverRequests().map((request) => {
+            return (request.parameters as ExecuteCommandParams).arguments;
+        })).toEqual([[modelUri]]);
         expect(controller.items.get(artifactUri)).toBeUndefined();
     });
 
     it('are not discovered when they are written, opened or edited', async () => {
         await setUp();
 
-        const watcher = state.watchers.find((it) => it.glob === '**/*.semantifyr')!;
+        const watcher = state.watchers.find((it) => {
+            return it.glob === '**/*.semantifyr';
+        })!;
         watcher.created.fire(Uri.parse(artifactUri));
         watcher.changed.fire(Uri.parse(artifactUri));
         state.documentOpened.fire(openDocument(Uri.parse(artifactUri)));
@@ -236,7 +258,9 @@ describe('verification', () => {
         ['cancelled', 'skipped', undefined],
     ] as const)('reports a %s verdict as %s', async (status, outcome, message) => {
         await setUp();
-        verify = () => result(status, null, 'bound reached');
+        verify = () => {
+            return result(status, null, 'bound reached');
+        };
 
         const testRun = await run([caseItem('lamp::Safe')]);
 
@@ -247,7 +271,9 @@ describe('verification', () => {
 
     it('shows the message of a passed verdict at the case and still passes it', async () => {
         await setUp();
-        verify = () => result('passed', null, resolutionNote);
+        verify = () => {
+            return result('passed', null, resolutionNote);
+        };
 
         const testRun = await run([caseItem('lamp::Safe')]);
 
@@ -262,7 +288,9 @@ describe('verification', () => {
 
     it.each([null, ''])('shows nothing extra for a passed verdict with the message %j', async (message) => {
         await setUp();
-        verify = () => result('passed', null, message);
+        verify = () => {
+            return result('passed', null, message);
+        };
 
         const testRun = await run([caseItem('lamp::Safe')]);
 
@@ -272,7 +300,9 @@ describe('verification', () => {
 
     it('reports a failed verdict at the case with a witness action', async () => {
         await setUp();
-        verify = () => result('failed', counterexample, 'property violated');
+        verify = () => {
+            return result('failed', counterexample, 'property violated');
+        };
 
         const testRun = await run([caseItem('lamp::Safe')]);
 
@@ -287,7 +317,9 @@ describe('verification', () => {
 
     it('offers no witness action on a failed verdict without a trace', async () => {
         await setUp();
-        verify = () => result('failed');
+        verify = () => {
+            return result('failed');
+        };
 
         const testRun = await run([caseItem('lamp::Safe')]);
 
@@ -298,7 +330,9 @@ describe('verification', () => {
 
     it('reports an error when the server returns no result', async () => {
         await setUp();
-        verify = () => null;
+        verify = () => {
+            return null;
+        };
 
         const testRun = await run([caseItem('lamp::Safe')]);
 
@@ -307,7 +341,9 @@ describe('verification', () => {
 
     it('reports the server error of a failed request', async () => {
         await setUp();
-        verify = () => new ResponseError(-32603, 'compilation failed');
+        verify = () => {
+            return new ResponseError(-32603, 'compilation failed');
+        };
 
         const testRun = await run([caseItem('lamp::Safe')]);
 
@@ -318,12 +354,16 @@ describe('verification', () => {
         await setUp();
         const showWitness = state.commands.get('semantifyr.witness.show')!;
 
-        verify = () => result('passed', counterexample);
+        verify = () => {
+            return result('passed', counterexample);
+        };
         await run([caseItem('lamp::Reachable')]);
         await showWitness(caseItem('lamp::Reachable'));
         expect((window.showTextDocument.mock.calls[0]![0] as Uri).toString()).toBe('file:///tmp/semantifyr/lamp.Safe/witness.semantifyr');
 
-        verify = () => result('passed');
+        verify = () => {
+            return result('passed');
+        };
         await run([caseItem('lamp::Reachable')]);
         await showWitness(caseItem('lamp::Reachable'));
         expect(window.showInformationMessage).toHaveBeenLastCalledWith('No witness for Reachable.');
@@ -350,7 +390,9 @@ describe('witness validation', () => {
 
     it('offers a validation on a failed verdict when the language validates witnesses', async () => {
         await setUp(byCase);
-        verify = () => result('failed', counterexample, 'property violated');
+        verify = () => {
+            return result('failed', counterexample, 'property violated');
+        };
 
         const testRun = await run([caseItem('lamp::Safe')]);
 
@@ -360,8 +402,12 @@ describe('witness validation', () => {
 
     it('sends the case location and the witness for a validation by case', async () => {
         await setUp(byCase);
-        verify = () => result('failed', counterexample);
-        validate = () => valid;
+        verify = () => {
+            return result('failed', counterexample);
+        };
+        validate = () => {
+            return valid;
+        };
         await run([caseItem('lamp::Safe')]);
 
         await validateWitnessOf(caseItem('lamp::Safe'));
@@ -375,8 +421,12 @@ describe('witness validation', () => {
 
     it('sends the witness location for a validation by witness', async () => {
         await setUp({ validateWitnessCommand: 'oxsts.case.validateWitness' });
-        verify = () => result('failed', counterexample);
-        validate = () => valid;
+        verify = () => {
+            return result('failed', counterexample);
+        };
+        validate = () => {
+            return valid;
+        };
         await run([caseItem('lamp::Safe')]);
 
         await validateWitnessOf(caseItem('lamp::Safe'));
@@ -388,15 +438,19 @@ describe('witness validation', () => {
 
     it('cancels the validation on the server when the progress is cancelled and reports nothing', async () => {
         await setUp(byCase);
-        verify = () => result('failed', counterexample);
+        verify = () => {
+            return result('failed', counterexample);
+        };
         let serverCancelled = false;
-        validate = (_parameters, token) => new Promise((resolve) => {
-            token.onCancellationRequested(() => {
-                serverCancelled = true;
-                resolve(new ResponseError(LSPErrorCodes.RequestCancelled, 'cancelled') as never);
+        validate = (_parameters, token) => {
+            return new Promise((resolve) => {
+                token.onCancellationRequested(() => {
+                    serverCancelled = true;
+                    resolve(new ResponseError(LSPErrorCodes.RequestCancelled, 'cancelled') as never);
+                });
+                window.progressTokens.at(-1)!.cancel();
             });
-            window.progressTokens.at(-1)!.cancel();
-        });
+        };
         await run([caseItem('lamp::Safe')]);
 
         await validateWitnessOf(caseItem('lamp::Safe'));
@@ -409,8 +463,12 @@ describe('witness validation', () => {
     it('validates the witness after the verdict and adds the result to the failure message', async () => {
         state.configuration.set('semantifyr.verification.autoValidate', true);
         await setUp(byCase);
-        verify = () => result('failed', counterexample, 'property violated');
-        validate = () => valid;
+        verify = () => {
+            return result('failed', counterexample, 'property violated');
+        };
+        validate = () => {
+            return valid;
+        };
 
         const testRun = await run([caseItem('lamp::Safe')]);
 
@@ -423,12 +481,18 @@ describe('witness validation', () => {
     it('validates the witness of an OXSTS case at the witness model, which may lie outside the workspace', async () => {
         state.configuration.set('semantifyr.verification.autoValidate', true);
         await setUp({ validateWitnessCommand: 'oxsts.case.validateWitness' });
-        verify = () => result('failed', counterexample);
-        validate = () => valid;
+        verify = () => {
+            return result('failed', counterexample);
+        };
+        validate = () => {
+            return valid;
+        };
 
         await run([caseItem('lamp::Safe')]);
 
-        expect(validations().map((request) => request.parameters)).toEqual([{
+        expect(validations().map((request) => {
+            return request.parameters;
+        })).toEqual([{
             command: 'oxsts.case.validateWitness',
             arguments: [{ uri: 'file:/tmp/semantifyr/lamp.Safe/witness.semantifyr', range: { start: { line: 0, character: 0 }, end: { line: 0, character: 0 } } }],
         }]);
@@ -438,8 +502,12 @@ describe('witness validation', () => {
         state.configuration.set('semantifyr.verification.autoValidate', true);
         state.configuration.set('semantifyr.verification.validationPortfolio', 'all-agree');
         await setUp(byCase);
-        verify = () => result('failed', counterexample);
-        validate = () => valid;
+        verify = () => {
+            return result('failed', counterexample);
+        };
+        validate = () => {
+            return valid;
+        };
 
         await run([caseItem('lamp::Safe')]);
 
@@ -449,21 +517,31 @@ describe('witness validation', () => {
     it('adds the validation of a passed verdict with a witness to the output at the case', async () => {
         state.configuration.set('semantifyr.verification.autoValidate', true);
         await setUp(byCase);
-        verify = () => result('passed', counterexample);
-        validate = () => ({ ...valid, status: 'invalid', message: 'spurious' });
+        verify = () => {
+            return result('passed', counterexample);
+        };
+        validate = () => {
+            return { ...valid, status: 'invalid', message: 'spurious' };
+        };
 
         const testRun = await run([caseItem('lamp::Reachable')]);
 
         expect(testRun.outcome(caseItem('lamp::Reachable'))).toBe('passed');
-        expect(testRun.output.map((output) => output.text)).toEqual(['Validation: Witness invalid (portfolio smart) - spurious\r\n']);
+        expect(testRun.output.map((output) => {
+            return output.text;
+        })).toEqual(['Validation: Witness invalid (portfolio smart) - spurious\r\n']);
     });
 
     it('validates nothing when auto-validation is off or the result has no witness', async () => {
         await setUp(byCase);
-        verify = () => result('failed', counterexample);
+        verify = () => {
+            return result('failed', counterexample);
+        };
         await run([caseItem('lamp::Safe')]);
         state.configuration.set('semantifyr.verification.autoValidate', true);
-        verify = () => result('failed');
+        verify = () => {
+            return result('failed');
+        };
         await run([caseItem('lamp::Safe')]);
 
         expect(validations()).toEqual([]);
@@ -471,12 +549,16 @@ describe('witness validation', () => {
 
     it('offers no validation without a validation command', async () => {
         await setUp();
-        verify = () => result('failed', counterexample);
+        verify = () => {
+            return result('failed', counterexample);
+        };
         await run([caseItem('lamp::Safe')]);
 
         await validateWitnessOf(caseItem('lamp::Safe'));
 
-        expect(requests.map((request) => (request.parameters as ExecuteCommandParams).command)).not.toContain('gamma.witness.validate');
+        expect(requests.map((request) => {
+            return (request.parameters as ExecuteCommandParams).command;
+        })).not.toContain('gamma.witness.validate');
         expect(window.showInformationMessage).toHaveBeenLastCalledWith('No witness for Safe.');
     });
 });
@@ -491,7 +573,9 @@ describe('cancellation', () => {
 
         expect(testRun.outcome(caseItem('lamp::Safe'))).toBe('skipped');
         expect(testRun.outcome(caseItem('lamp::Reachable'))).toBe('skipped');
-        expect(requests.filter((request) => (request.parameters as ExecuteCommandParams).command === 'oxsts.case.verify')).toEqual([]);
+        expect(requests.filter((request) => {
+            return (request.parameters as ExecuteCommandParams).command === 'oxsts.case.verify';
+        })).toEqual([]);
         expect(testRun.ended).toBe(true);
     });
 
@@ -499,20 +583,24 @@ describe('cancellation', () => {
         await setUp();
         const source = new CancellationTokenSource();
         let serverCancelled = false;
-        verify = (_parameters, token) => new Promise((resolve) => {
-            token.onCancellationRequested(() => {
-                serverCancelled = true;
-                resolve(new ResponseError(LSPErrorCodes.RequestCancelled, 'cancelled'));
+        verify = (_parameters, token) => {
+            return new Promise((resolve) => {
+                token.onCancellationRequested(() => {
+                    serverCancelled = true;
+                    resolve(new ResponseError(LSPErrorCodes.RequestCancelled, 'cancelled'));
+                });
+                source.cancel();
             });
-            source.cancel();
-        });
+        };
 
         const testRun = await run([caseItem('lamp::Safe'), caseItem('lamp::Reachable')], source.token);
 
         expect(serverCancelled).toBe(true);
         expect(testRun.outcome(caseItem('lamp::Safe'))).toBe('skipped');
         expect(testRun.outcome(caseItem('lamp::Reachable'))).toBe('skipped');
-        expect(requests.filter((request) => (request.parameters as ExecuteCommandParams).command === 'oxsts.case.verify')).toHaveLength(1);
+        expect(requests.filter((request) => {
+            return (request.parameters as ExecuteCommandParams).command === 'oxsts.case.verify';
+        })).toHaveLength(1);
         expect(testRun.ended).toBe(true);
     });
 });

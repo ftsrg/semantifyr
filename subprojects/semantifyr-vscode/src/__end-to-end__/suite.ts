@@ -24,7 +24,9 @@ export async function run() {
     const cases = await commands.executeCommand<VerificationCaseSpecification[]>("oxsts.case.discover", model);
     const [smokeCase] = cases;
     assert.ok(smokeCase, "the server discovered no case");
-    assert.deepEqual(cases.map((verificationCase) => verificationCase.label), ["semantifyr::verification::smoke::CounterReachesThree"]);
+    assert.deepEqual(cases.map((verificationCase) => {
+        return verificationCase.label;
+    }), ["semantifyr::verification::smoke::CounterReachesThree"]);
 
     const result = await commands.executeCommand<VerificationCaseResult>("oxsts.case.verify", { uri: model, range: smokeCase.location.range, portfolio: "theta-cegar-expl" });
     const outcome = caseOutcomeOf(result);

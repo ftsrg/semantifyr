@@ -86,17 +86,27 @@ function stubOxsts(result = failedResult()) {
 }
 
 function verifyRequest(worker: LspClient, oxsts: LspClient) {
-  const bridge = createSysmlBridge({ fileUri, getWorkerClient: () => worker, getOxstsClient: () => oxsts })
+  const bridge = createSysmlBridge({ fileUri, getWorkerClient: () => {
+    return worker
+  }, getOxstsClient: () => {
+    return oxsts
+  } })
   const verifyArguments = { uri: fileUri, range: sysmlRange, portfolio: 'smart' }
   return {
     bridge,
-    run: () => bridge.client.sendRequest('workspace/executeCommand', { command: 'sysml.case.verify', arguments: [verifyArguments] }) as Promise<VerificationCaseResult>,
+    run: () => {
+      return bridge.client.sendRequest('workspace/executeCommand', { command: 'sysml.case.verify', arguments: [verifyArguments] }) as Promise<VerificationCaseResult>
+    },
   }
 }
 
 describe('sysml bridge', () => {
   it('discovers the verification case elements in the edited document', async () => {
-    const bridge = createSysmlBridge({ fileUri, getWorkerClient: () => stubWorker(), getOxstsClient: () => undefined })
+    const bridge = createSysmlBridge({ fileUri, getWorkerClient: () => {
+      return stubWorker()
+    }, getOxstsClient: () => {
+      return undefined
+    } })
 
     await expect(bridge.client.sendRequest('workspace/executeCommand', { command: 'sysml.case.discover', arguments: [fileUri] })).resolves.toEqual([
       { id: 'LampNeverLit', label: 'LampNeverLit', location: { uri: fileUri, range: sysmlRange } },
@@ -140,7 +150,11 @@ describe('sysml bridge', () => {
         : stubbed(method, params)
     }
     const oxsts = stubOxsts()
-    const bridge = createSysmlBridge({ fileUri, getWorkerClient: () => worker, getOxstsClient: () => oxsts.client })
+    const bridge = createSysmlBridge({ fileUri, getWorkerClient: () => {
+      return worker
+    }, getOxstsClient: () => {
+      return oxsts.client
+    } })
     const verifying = oxsts.client.sendRequest
     oxsts.client.sendRequest = async (method, params) => {
       if ((params as Command).command === 'oxsts.case.verify') {
@@ -169,8 +183,14 @@ describe('sysml bridge', () => {
     }
     let session = stubOxsts()
     const firstSession = session
-    const bridge = createSysmlBridge({ fileUri, getWorkerClient: () => worker, getOxstsClient: () => session.client })
-    const verify = () => bridge.client.sendRequest('workspace/executeCommand', { command: 'sysml.case.verify', arguments: [{ uri: fileUri, range: sysmlRange }] })
+    const bridge = createSysmlBridge({ fileUri, getWorkerClient: () => {
+      return worker
+    }, getOxstsClient: () => {
+      return session.client
+    } })
+    const verify = () => {
+      return bridge.client.sendRequest('workspace/executeCommand', { command: 'sysml.case.verify', arguments: [{ uri: fileUri, range: sysmlRange }] })
+    }
 
     await verify()
     oxstsText = 'second'
@@ -178,7 +198,9 @@ describe('sysml bridge', () => {
     session = stubOxsts()
     await verify()
 
-    expect(firstSession.notifications.map((notification) => notification.method)).toEqual([
+    expect(firstSession.notifications.map((notification) => {
+      return notification.method
+    })).toEqual([
       'textDocument/didOpen',
       'textDocument/didChange',
     ])
@@ -186,12 +208,18 @@ describe('sysml bridge', () => {
       textDocument: { uri: SYSML_OXSTS_URI, version: 2 },
       contentChanges: [{ text: 'second' }],
     })
-    expect(session.notifications.map((notification) => notification.method)).toEqual(['textDocument/didOpen'])
+    expect(session.notifications.map((notification) => {
+      return notification.method
+    })).toEqual(['textDocument/didOpen'])
   })
 
   it('errors without reaching the backend when no case is at the requested range', async () => {
     const oxsts = stubOxsts()
-    const bridge = createSysmlBridge({ fileUri, getWorkerClient: () => stubWorker(), getOxstsClient: () => oxsts.client })
+    const bridge = createSysmlBridge({ fileUri, getWorkerClient: () => {
+      return stubWorker()
+    }, getOxstsClient: () => {
+      return oxsts.client
+    } })
     const otherRange = { start: { line: 12, character: 0 }, end: { line: 14, character: 1 } }
 
     const result = (await bridge.client.sendRequest('workspace/executeCommand', { command: 'sysml.case.verify', arguments: [{ uri: fileUri, range: otherRange }] })) as VerificationCaseResult
