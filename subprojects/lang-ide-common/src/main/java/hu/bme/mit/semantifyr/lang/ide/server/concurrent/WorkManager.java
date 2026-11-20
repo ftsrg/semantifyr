@@ -7,7 +7,6 @@
 package hu.bme.mit.semantifyr.lang.ide.server.concurrent;
 
 import com.google.inject.Singleton;
-import java.util.concurrent.CancellationException;
 import java.util.concurrent.ConcurrentHashMap;
 import org.eclipse.lsp4j.ProgressParams;
 import org.eclipse.lsp4j.WorkDoneProgressBegin;
@@ -28,13 +27,9 @@ public class WorkManager {
 
     public void checkCanceled(Either<String, Integer> token) {
         var indicator = indicators.get(token);
+        // a cancel stays until the work ends, since every check that follows it must see it
         if (indicator != null) {
-            try {
-                indicator.checkCanceled();
-            } catch (CancellationException cancellationException) {
-                indicators.remove(token);
-                throw cancellationException;
-            }
+            indicator.checkCanceled();
         }
     }
 
