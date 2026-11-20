@@ -18,6 +18,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralString
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.LocalVarDeclarationOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.catchThrowable
 import org.junit.jupiter.api.Test
 
 class TracedRuntimeArgumentTest : FlatteningTestBase() {
@@ -134,6 +135,27 @@ class TracedRuntimeArgumentTest : FlatteningTestBase() {
 
         assertThat(domain).containsExactlyInAnyOrder("first", "second")
         assertThat(recorded.typeSpecification.domain.name).isEqualTo("int")
+    }
+
+    @Test
+    fun `an argument of a parameter typed by a feature is an instance id over the feature's instances`() {
+        val compilation = flatten("FeatureTypedArgument", MODEL)
+        val recorded = compilation.recordedVariable()
+
+        val domain = compilation.flatteningInfo.variableInstanceDomains.getValue(recorded).map {
+            it.name.substringAfterLast("$")
+        }
+
+        assertThat(domain).containsExactlyInAnyOrder("first", "second")
+    }
+
+    @Test
+    fun `a record forwarded to a traced any parameter is refused at its argument`() {
+        val thrown = catchThrowable {
+            flatten("ForwardedRecordArgument", MODEL)
+        }
+
+        assertThat(thrown).hasMessageContaining("Record arguments of the traced transition 'note' are not yet supported")
     }
 
     private fun FlattenedCompilationContext.tracer(): VariableDeclaration {
@@ -375,6 +397,55 @@ class TracedRuntimeArgumentTest : FlatteningTestBase() {
                         current := second
                     }
                     inline first.toggle(current)
+                }
+
+                prop {
+                    return AG true
+                }
+            }
+            @VerificationCase
+            class FeatureTypedArgument {
+                features lamps: Lamp
+                contains first: Lamp[1] subsets lamps
+                contains second: Lamp[1] subsets lamps
+                var current: Lamp := first
+
+                @Trace
+                tran pick(chosen: lamps) {
+                }
+
+                redefine tran {
+                    choice {
+                        current := first
+                    } or {
+                        current := second
+                    }
+                    inline pick(current)
+                }
+
+                prop {
+                    return AG true
+                }
+            }
+
+            record Point {
+                var x: int := 0
+            }
+
+            @VerificationCase
+            class ForwardedRecordArgument {
+                contains display: Display
+                var point: Point := Point {
+                    x = 0
+                }
+
+                tran relay(value: any) {
+                    inline display.note(value)
+                }
+
+                redefine tran {
+                    havoc(point.x)
+                    inline relay(point)
                 }
 
                 prop {

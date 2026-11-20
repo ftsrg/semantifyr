@@ -35,6 +35,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.LocalVarDeclarationOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Operation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ParameterDeclaration
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.RecordDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.TransitionDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.TypeSpecification
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
@@ -108,7 +109,7 @@ class TransitionCallTraceTransformer @Inject constructor(
                 val argument = OxstsUtils.getArgumentFor(callExpression.arguments, parameter, index)
                 val temporary = runtimeArguments[parameter]
                 if (argument != null && temporary != null) {
-                    val variable = createArgumentVariable(tracerIndex, parameter, argument.expression)
+                    val variable = createArgumentVariable(tracerIndex, transitionDeclaration, parameter, argument.expression)
                     argumentRecords += OxstsFactory.createAssignmentOperation().also {
                         it.reference = OxstsFactory.createElementReference(variable)
                         it.expression = OxstsFactory.createElementReference(temporary)
@@ -200,6 +201,7 @@ class TransitionCallTraceTransformer @Inject constructor(
 
     private fun createArgumentVariable(
         tracerIndex: Int,
+        transitionDeclaration: TransitionDeclaration,
         parameter: ParameterDeclaration,
         argument: Expression,
     ): VariableDeclaration {
@@ -227,6 +229,9 @@ class TransitionCallTraceTransformer @Inject constructor(
                 OxstsFactory.createLiteralNothing()
             }
             domain === builtinSymbolResolver.anyDatatype(parameter) -> OxstsFactory.createLiteralInteger(0)
+            domain is RecordDeclaration -> {
+                sourceError(argument, "Record arguments of the traced transition '${transitionDeclaration.name}' are not yet supported by the compiler, the witness cannot record a record value.")
+            }
             else -> error("No recording variable for a run-time argument of type '${domain?.name}'")
         }
         return createObservationVariable(
