@@ -88,7 +88,6 @@ function reportOf(verdict: ReportVerdict, trace: ReportTrace | null, message: st
     };
 }
 
-// a cancelled case has no report, every other result holds its outcome in its report
 export function result(status: VerificationStatus, trace: ReportTrace | null = null, message: string | null = null): VerificationCaseResult {
     const verdict = Object.entries(STATUS_OF_VERDICT).find(([, statusOfVerdict]) => {
         return statusOfVerdict === status;
