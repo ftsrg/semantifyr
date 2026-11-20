@@ -8,18 +8,22 @@ import { readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { parseArgs } from 'node:util'
 import { chromium, type BrowserContext, type Page } from 'playwright'
+import { liveEditorUrl } from '@semantifyr/editor-common'
+import type { CaseManifest } from '@semantifyr/editor-common/examples'
 
 import { FIXTURES_DIRECTORY, type AdminFixture, type RestFixture } from './fixtures.ts'
 import { fixturesOf, isRunFinished, type RecordedSession, type Transcript } from './transcript.ts'
 
 const usage = `Usage: npm run ui:record -- [options]
 
-Records what a live server answers while a browser walks every example of every language, verifies the first example of each and opens its documents, cancels a run, and reads the admin API, then writes the mock backend's fixtures.
+Records what a live server answers while a browser walks every example of every language and every stage of the lessons, verifies the first example of each and opens its documents, cancels a run and a validation, and reads the admin API, then writes the mock backend's fixtures.
 
   --url <url>               live server (default $SEMANTIFYR_LIVE_URL)
   --admin-user-header <h>   the header the server reads the admin user from; without it the admin fixture is kept
   --transcript <file>       write the raw exchanges here, or with --replay read them from here
   --replay                  build the fixtures from --transcript without a browser`
+
+const LESSON_STAGES_DIRECTORY = join(import.meta.dirname, '../../../../../../oxsts-test-models/tutorial')
 
 const SETTLED_TIMEOUT_MS = 4 * 60 * 1000
 const RUN_TIMEOUT_MS = 10 * 60 * 1000
@@ -101,6 +105,30 @@ async function verifyAndRead(context: BrowserContext, liveUrl: string, address: 
   await page.close()
 }
 
+async function walkLessonStages(context: BrowserContext, liveUrl: string): Promise<void> {
+  const manifest = JSON.parse(readFileSync(join(LESSON_STAGES_DIRECTORY, 'manifest.json'), 'utf-8')) as CaseManifest
+  const page = await context.newPage()
+  for (const model of manifest.models) {
+    const text = readFileSync(join(LESSON_STAGES_DIRECTORY, model.file), 'utf-8')
+    await page.goto(await liveEditorUrl(`${liveUrl}/`, { language: 'oxsts', model: text }))
+    await settled(page)
+    console.log(`${model.file}: ${await page.locator('.results .case-row').count()} cases`)
+  }
+  await page.close()
+}
+
+// the client cancels a validation through its progress alone when Cancel meets it running
+async function cancelValidation(context: BrowserContext, liveUrl: string, address: string): Promise<void> {
+  const page = await context.newPage()
+  await page.goto(`${liveUrl}${address}`)
+  await settled(page)
+  await page.locator('.results').getByRole('button', { name: 'Verify all', exact: true }).click()
+  await page.locator('.results .validation-mark.is-validating').first().waitFor({ timeout: RUN_TIMEOUT_MS })
+  await page.locator('.results .button-cancel').click()
+  await page.waitForTimeout(3000)
+  await page.close()
+}
+
 async function cancelRuns(context: BrowserContext, liveUrl: string, address: string): Promise<void> {
   const page = await context.newPage()
   await page.goto(`${liveUrl}${address}`)
@@ -175,6 +203,8 @@ async function record(liveUrl: string, adminUserHeader: string | undefined): Pro
     })
   }
   await attempt(cancelRuns(context, liveUrl, '/language/extending-the-library'))
+  await attempt(cancelValidation(context, liveUrl, '/language/extending-the-library'))
+  await attempt(walkLessonStages(context, liveUrl))
   for (const address of ['/language', '/language?library=gamma', '/language?library=sysml', '/gamma', '/sysml']) {
     await attempt(walkExamples(context, liveUrl, address))
   }

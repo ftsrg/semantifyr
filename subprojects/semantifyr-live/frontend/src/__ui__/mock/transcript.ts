@@ -46,7 +46,7 @@ interface Pending {
 }
 
 function emptyFixture(): FlavorFixture {
-  return { initialize: null, sessionInfo: null, documents: {}, results: {}, validations: {}, reads: {}, verifyProgress: [], validateProgress: [] }
+  return { initialize: null, sessionInfo: null, documents: {}, results: {}, validations: {}, cancelledValidation: null, reads: {}, verifyProgress: [], validateProgress: [] }
 }
 
 function sameStart(left: Range, right: Range): boolean {
@@ -74,6 +74,24 @@ export function isRunFinished(rowClassNames: readonly string[], validationMarkCl
   })
 }
 
+function commandKindOf(command: string): 'discover' | 'compiled' | 'verify' | 'validate' {
+  if (command.endsWith('.case.discover')) {
+    return 'discover'
+  }
+  if (command.endsWith('.compiled.oxsts')) {
+    return 'compiled'
+  }
+  if (command.endsWith('.case.verify')) {
+    return 'verify'
+  }
+  return 'validate'
+}
+
+function isValidation(message: RequestMessage): boolean {
+  const command = (message.params as { command?: string } | undefined)?.command
+  return message.method === 'workspace/executeCommand' && command !== undefined && commandKindOf(command) === 'validate'
+}
+
 export function fixturesOf(transcript: Transcript): Map<string, FlavorFixture> {
   const fixtures = new Map<string, FlavorFixture>()
   for (const session of transcript.sessions) {
@@ -87,6 +105,7 @@ export function fixturesOf(transcript: Transcript): Map<string, FlavorFixture> {
     const discovered = new Map<string, VerificationCaseSpecification[]>()
     const pending = new Map<MessageId, Pending>()
     const progress = new Map<string, ProgressValue[]>()
+    const cancelledValidations = new Set<MessageId>()
     const documentOf = (uri: string) => {
       const text = texts.get(uri)
       if (text === undefined) {
@@ -108,6 +127,16 @@ export function fixturesOf(transcript: Transcript): Map<string, FlavorFixture> {
           if (message.method === 'textDocument/didOpen') {
             const { textDocument } = message.params as { textDocument: { uri: string, text: string } }
             texts.set(textDocument.uri, textDocument.text)
+          }
+          if (message.method === 'window/workDoneProgress/cancel') {
+            const { token } = message.params as { token: string }
+            if (runKindOf(progress.get(token)?.[0]?.title) === 'validate') {
+              for (const [id, waiting] of pending) {
+                if (isValidation(waiting.message)) {
+                  cancelledValidations.add(id)
+                }
+              }
+            }
           }
           if (message.method === 'textDocument/didChange') {
             const { textDocument, contentChanges } = message.params as { textDocument: { uri: string }, contentChanges: { text: string }[] }
@@ -151,28 +180,31 @@ export function fixturesOf(transcript: Transcript): Map<string, FlavorFixture> {
         fixture.reads[(params as { uri: string }).uri] = (message.result as { text: string | null } | null)?.text ?? null
       } else if (method === 'workspace/executeCommand') {
         const { command, arguments: commandArguments } = params as { command: string, arguments: unknown[] }
-        if (command.endsWith('.case.discover')) {
+        const kind = commandKindOf(command)
+        if (kind === 'discover') {
           const uri = commandArguments[0] as string
           const cases = message.result as VerificationCaseSpecification[]
           discovered.set(uri, cases)
           if (request.key !== null) {
             fixture.documents[request.key] = { ...fixture.documents[request.key], cases }
           }
-        } else if (command.endsWith('.compiled.oxsts')) {
+        } else if (kind === 'compiled') {
           if (request.key !== null) {
             fixture.documents[request.key] = { ...fixture.documents[request.key], compiled: message.result as CompiledOxstsResult }
           }
         } else {
           const location = commandArguments[0] as { uri: string, range: Range }
           const caseId = caseAt(location.uri, location.range)
-          if (command.endsWith('.case.verify')) {
+          if (kind === 'verify') {
             const result = message.result as VerificationCaseResult
             if (caseId !== null && caseOutcomeOf(result).status !== VerificationStatus.Errored) {
               fixture.results[caseId] = result
             }
           } else {
             const result = message.result as WitnessValidationResult
-            if (result.status !== WitnessValidationStatus.Errored) {
+            if (cancelledValidations.has(message.id ?? -1) && result.status === WitnessValidationStatus.Errored) {
+              fixture.cancelledValidation = result
+            } else if (result.status !== WitnessValidationStatus.Errored) {
               fixture.validations[caseId ?? location.uri] = result
             }
           }

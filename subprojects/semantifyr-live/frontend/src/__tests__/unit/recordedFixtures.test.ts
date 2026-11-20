@@ -214,6 +214,34 @@ describe('the fixtures derived from a recorded transcript', () => {
     ])
   })
 
+  it('keep the answer to a validation whose progress the client cancelled apart from the validations', () => {
+    const cancelled: WitnessValidationResult = {
+      status: 'errored',
+      message: 'java.util.concurrent.CancellationException',
+      portfolioId: 'smart',
+      report: null,
+    }
+    const fixtures = fixturesOf(transcriptOf([
+      verify(2, 1),
+      created(100, 'a'),
+      ...firstVerification.map((value) => {
+        return progressed('a', value)
+      }),
+      verified(2, 'Failed'),
+      client(request(3, 'workspace/executeCommand', { command: 'oxsts.case.validateWitness', arguments: [{ uri: WITNESS_URI, range: rangeAt(0) }] })),
+      created(101, 'v'),
+      ...validation.map((value) => {
+        return progressed('v', value)
+      }),
+      client(notification('window/workDoneProgress/cancel', { token: 'v' })),
+      server(response(3, cancelled)),
+    ]))
+
+    const fixture = fixtures.get('oxsts')!
+    expect(fixture.cancelledValidation).toEqual(cancelled)
+    expect(fixture.validations).toEqual({})
+  })
+
   it('fail naming the flavor when it verified a case and no verification series finished', () => {
     const transcript = transcriptOf([
       verify(2, 1),
