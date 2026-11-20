@@ -14,6 +14,7 @@ import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.job
 import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.withTimeoutOrNull
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.condition.DisabledOnOs
@@ -194,6 +195,14 @@ class ShellBasedBackendExecutorTest {
         }
 
         assertThat(workingDirectory.resolve("produced.txt")).doesNotExist()
+        // Windows frees a killed process's directory a moment after the process is gone
+        val freed = withTimeoutOrNull(10.seconds) {
+            while (workingDirectory.name in temporaryDirectory.list().orEmpty()) {
+                workingDirectory.deleteRecursively()
+                delay(50.milliseconds)
+            }
+        }
+        assertThat(freed).describedAs("the cancelled tool still holds its working directory").isNotNull()
     }
 
     private fun launcher(name: String, body: String): StubExecutor {
