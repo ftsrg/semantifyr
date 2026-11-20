@@ -84,6 +84,9 @@ class TransitionCallTraceTransformer @Inject constructor(
     // inlined sequences are spliced into their parent, so the enclosing call is recorded per pending inline operation
     private val enclosingTraces = mutableMapOf<InlineOperation, TransitionCallTrace>()
 
+    // a temporary is written once, by its initializer, so its initializer is the value a forwarded argument carries
+    private val argumentTemporaries = mutableSetOf<LocalVarDeclarationOperation>()
+
     fun traceTransitionCall(
         instance: Instance,
         containerInstance: Instance,
@@ -128,6 +131,10 @@ class TransitionCallTraceTransformer @Inject constructor(
         val tracerAssignment = createTracerAssignment(tracerVariable, value = true)
         tracerAssignments[tracerAssignment] = transitionCallTrace
         return TracedCall(tracerAssignment, argumentRecords)
+    }
+
+    fun registerArgumentTemporaries(temporaries: Collection<LocalVarDeclarationOperation>) {
+        argumentTemporaries += temporaries
     }
 
     fun inheritEnclosingTrace(operation: InlineOperation, expansion: Operation) {
@@ -230,13 +237,18 @@ class TransitionCallTraceTransformer @Inject constructor(
         )
     }
 
-    // an `any` parameter records the value the argument has, of the argument's own type
+    // an `any` parameter records the value the argument has, of the argument's own type, through forwarding calls
     private fun recordedDomainOf(parameter: ParameterDeclaration, argument: Expression): DomainDeclaration? {
-        val parameterDomain = classOrDatatypeOf(parameter.typeSpecification.domain)
-        if (parameterDomain !== builtinSymbolResolver.anyDatatype(parameter)) {
-            return parameterDomain
+        val anyDatatype = builtinSymbolResolver.anyDatatype(parameter)
+        var domain = classOrDatatypeOf(parameter.typeSpecification.domain)
+        var value: Expression? = argument
+        while (domain === anyDatatype && value != null) {
+            domain = classOrDatatypeOf(expressionTypeEvaluatorProvider.evaluate(value).domain)
+            value = ((value as? ElementReference)?.element as? LocalVarDeclarationOperation)?.takeIf {
+                it in argumentTemporaries
+            }?.expression
         }
-        return classOrDatatypeOf(expressionTypeEvaluatorProvider.evaluate(argument).domain)
+        return domain
     }
 
     private fun classOrDatatypeOf(domain: DomainDeclaration?): DomainDeclaration? {

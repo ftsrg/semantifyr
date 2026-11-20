@@ -82,6 +82,14 @@ class TracedRuntimeArgumentTest : FlatteningTestBase() {
     }
 
     @Test
+    fun `an argument forwarded through an any parameter is recorded in the type it started with`() {
+        val recorded = flatten("ForwardedAnyArgument", MODEL).recordedVariable()
+
+        assertThat(recorded.typeSpecification.domain.name).isEqualTo("bool")
+        assertThat((recorded.expression as LiteralBoolean).isValue).isFalse()
+    }
+
+    @Test
     fun `every step resets the tracer and the recorded argument before it runs`() {
         val compilation = flatten("IntegerArgument", MODEL)
         val recorded = compilation.transitionCallTraces.getTransitionCallTrace(compilation.tracer()).recordedArguments.single().variable
@@ -280,6 +288,25 @@ class TracedRuntimeArgumentTest : FlatteningTestBase() {
                 redefine tran {
                     havoc(requested)
                     inline display.note(requested)
+                }
+
+                prop {
+                    return AG true
+                }
+            }
+
+            @VerificationCase
+            class ForwardedAnyArgument {
+                contains display: Display
+                var requested: bool := false
+
+                tran relay(value: any) {
+                    inline display.note(value)
+                }
+
+                redefine tran {
+                    havoc(requested)
+                    inline relay(requested)
                 }
 
                 prop {

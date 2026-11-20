@@ -158,6 +158,7 @@ class InlineOperationExpander @Inject constructor(
         }
 
         val arguments = bindArguments(actualTransition, callExpression)
+        transitionCallTraceTransformer.registerArgumentTemporaries(arguments.runtimeArguments.values)
 
         val inlined = OxstsFactory.createChoiceOperation().also {
             for (currentOperation in actualTransition.branches) {
