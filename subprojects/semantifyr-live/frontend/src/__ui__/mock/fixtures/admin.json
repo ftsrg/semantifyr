@@ -4,7 +4,7 @@
  },
  "config": {
   "server": {
-   "port": 18350,
+   "port": 28431,
    "pingPeriod": "PT30S",
    "pingTimeout": "PT15S",
    "webRootDirectory": "/opt/semantifyr/staging/web",
@@ -69,80 +69,87 @@
  "status": {
   "sessions": [
    {
-    "sessionId": "4df0caed-4651-452f-9d75-ca2fd107d467",
-    "remoteIp": "127.0.0.1",
-    "flavorId": "gamma",
-    "kind": "embed",
-    "languageId": "gamma",
-    "uptime": "PT5.024819271S",
-    "runningCount": 0,
-    "queuedCount": 0,
-    "workingDirectory": "/tmp/semantifyr/sessions/4df0caed-4651-452f-9d75-ca2fd107d467",
-    "activeVerifications": []
-   },
-   {
-    "sessionId": "adf90e7e-3898-42d8-a6fd-4109c98672d6",
+    "sessionId": "8edfd446-7dd0-4062-821a-7a35f06dc619",
     "remoteIp": "127.0.0.1",
     "flavorId": "oxsts",
     "kind": "full",
     "languageId": "oxsts",
-    "uptime": "PT4.854305740S",
+    "uptime": "PT4.340473011S",
     "runningCount": 4,
-    "queuedCount": 2,
-    "workingDirectory": "/tmp/semantifyr/sessions/adf90e7e-3898-42d8-a6fd-4109c98672d6",
+    "queuedCount": 3,
+    "workingDirectory": "/tmp/semantifyr/sessions/8edfd446-7dd0-4062-821a-7a35f06dc619",
     "activeVerifications": [
      {
-      "verificationId": "f43814f7-0ed9-409f-9562-6bbac850992d",
+      "verificationId": "bcb3423b-9e6f-4150-8198-2bde24b93e6f",
       "portfolioId": "smart",
       "kind": "Verify",
       "state": "Running",
-      "elapsed": "PT0.086065738S"
+      "elapsed": "PT0.051783726S"
      },
      {
-      "verificationId": "4c9ed21f-c2d4-42ae-b0c6-0b7e7fd59590",
+      "verificationId": "e94de0bf-36f2-4948-a8b5-edbe5ce6887a",
       "portfolioId": "smart",
       "kind": "Verify",
       "state": "Running",
-      "elapsed": "PT0.084329573S"
+      "elapsed": "PT0.050356228S"
      },
      {
-      "verificationId": "aa90a3b5-fa19-44d8-88fa-ec2e061bc2f3",
+      "verificationId": "768d3282-62bb-42d6-b6f3-2d14ba0668c6",
       "portfolioId": "smart",
       "kind": "Verify",
       "state": "Running",
-      "elapsed": "PT0.083518427S"
+      "elapsed": "PT0.049676950S"
      },
      {
-      "verificationId": "c2a11f7e-bc81-47c9-afcc-20dd3edaf0ec",
+      "verificationId": "a6587624-99ea-46d7-8f09-bf9e4f4416d8",
       "portfolioId": "smart",
       "kind": "Verify",
       "state": "Running",
-      "elapsed": "PT0.082210706S"
+      "elapsed": "PT0.048351747S"
      },
      {
-      "verificationId": "1b171c64-ccd0-429e-b6d7-db40d0b890da",
+      "verificationId": "c9de4112-b265-4fed-a5b0-29f704be27a2",
       "portfolioId": "smart",
       "kind": "Verify",
       "state": "Queued",
-      "elapsed": "PT0.081262320S"
+      "elapsed": "PT0.047109515S"
      },
      {
-      "verificationId": "f251cfa7-07d6-4948-8725-2dee9ab189d8",
+      "verificationId": "e9dbc0ca-9439-4257-929c-53012aa401f6",
       "portfolioId": "smart",
       "kind": "Verify",
       "state": "Queued",
-      "elapsed": "PT0.080194844S"
+      "elapsed": "PT0.046578152S"
+     },
+     {
+      "verificationId": "989ec9b0-9e03-44c4-9889-d2ca81309c9d",
+      "portfolioId": "smart",
+      "kind": "Verify",
+      "state": "Queued",
+      "elapsed": "PT0.046132613S"
      }
     ]
+   },
+   {
+    "sessionId": "38b83653-cc77-4f67-9103-eaa1813fc14c",
+    "remoteIp": "127.0.0.1",
+    "flavorId": "gamma",
+    "kind": "embed",
+    "languageId": "gamma",
+    "uptime": "PT4.517763348S",
+    "runningCount": 0,
+    "queuedCount": 0,
+    "workingDirectory": "/tmp/semantifyr/sessions/38b83653-cc77-4f67-9103-eaa1813fc14c",
+    "activeVerifications": []
    }
   ],
   "load": {
    "activeSessions": 2,
    "maxSessions": 256,
    "runningVerifications": 4,
-   "queuedVerifications": 2,
+   "queuedVerifications": 3,
    "verificationPermits": 4,
-   "uptime": "PT2M10.839485449S"
+   "uptime": "PT3M6.219089179S"
   }
  }
 }
