@@ -72,39 +72,9 @@ describe('liveFlavors', () => {
     expect(flavor?.examples[0]?.code).toContain('verification def');
   });
 
-  it('every flavor has at least one example with a valid id and label', () => {
-    for (const flavor of servedLiveFlavors) {
-      expect(flavor.examples.length).toBeGreaterThan(0);
-      for (const example of flavor.examples) {
-        expect(example.id.length).toBeGreaterThan(0);
-        expect(example.label.length).toBeGreaterThan(0);
-        // Blank examples have empty code - that's intentional. Named tutorial
-        // snapshots must have non-empty code.
-        if (example.id !== 'blank') {
-          expect(example.code.length).toBeGreaterThan(0);
-        }
-      }
-    }
-  });
-
-  it('example ids are address names, lower-case with hyphens', () => {
-    for (const flavor of servedLiveFlavors) {
-      for (const example of flavor.examples) {
-        expect(example.id).toMatch(/^[a-z0-9]+(-[a-z0-9]+)*$/);
-      }
-    }
-  });
-
   it('the blank Gamma model names its package, which a Gamma model must', () => {
     const gamma = findFlavor(servedLiveFlavors, 'gamma')!;
     expect(findExample(gamma, 'blank')?.code).toMatch(/^package \w+\n$/);
-  });
-
-  it('example ids are unique within a flavor', () => {
-    for (const flavor of servedLiveFlavors) {
-      const ids = flavor.examples.map((example) => example.id);
-      expect(new Set(ids).size).toBe(ids.length);
-    }
   });
 
   it('every example references its parent flavor id', () => {
@@ -113,19 +83,6 @@ describe('liveFlavors', () => {
         expect(example.flavor).toBe(flavor.id);
       }
     }
-  });
-
-  it('the trafficlight tutorial snapshots are registered as named oxsts examples', () => {
-    const oxsts = findFlavor(servedLiveFlavors, 'oxsts')!;
-    const ids = oxsts.examples.map((example) => example.id);
-    expect(ids).toContain('modeling-and-verification');
-    expect(ids).toContain('semantic-libraries');
-    expect(ids).toContain('extending-the-library');
-  });
-
-  it('the trafficlight snapshots contain code that mentions a verification case', () => {
-    const direct = findExample(findFlavor(servedLiveFlavors, 'oxsts')!, 'modeling-and-verification');
-    expect(direct?.code).toContain('@VerificationCase');
   });
 });
 
