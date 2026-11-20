@@ -37,21 +37,26 @@ async function connect(flavorId: string) {
   return connection;
 }
 
+async function healthy(): Promise<boolean> {
+  try {
+    return (await fetch(`${api.httpBase}/api/health`)).ok;
+  } catch {
+    return false;
+  }
+}
+
 describe(`live deployment at ${url}`, () => {
   // a container started a moment ago refuses connections until its backend is up
   beforeAll(async () => {
-    await expect
-      .poll(
-        async () => {
-          try {
-            return (await fetch(`${api.httpBase}/api/health`)).ok;
-          } catch {
-            return false;
-          }
-        },
-        { timeout: STARTUP, interval: 3000 },
-      )
-      .toBe(true);
+    const deadline = Date.now() + STARTUP;
+    while (!(await healthy())) {
+      if (Date.now() > deadline) {
+        throw new Error(`the live backend at ${url} did not answer its health endpoint`);
+      }
+      await new Promise((resolve) => {
+        setTimeout(resolve, 3000);
+      });
+    }
   }, STARTUP + 10_000);
 
   it('serves the web root', async () => {
