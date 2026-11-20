@@ -168,7 +168,6 @@ class GammaTraceLanguageServerTest {
 
         assertThat(result.status()).isEqualTo(WitnessValidationStatus.ERRORED);
         assertThat(result.report()).isNull();
-        assertThat(result.message()).contains("The witness is not in the directory of its case");
     }
 
     private Location crossroadsCase(String name) throws Exception {

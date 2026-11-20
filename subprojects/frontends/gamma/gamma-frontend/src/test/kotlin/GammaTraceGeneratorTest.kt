@@ -129,7 +129,11 @@ class GammaTraceGeneratorTest {
 
         assertThat(trace.steps).hasSize(3)
         assertThat(actTypes(trace.steps.first())).containsExactly(ResetAct::class.java)
-        assertThat(trace.steps.drop(1).map { actTypes(it) }).containsOnly(listOf(ScheduleAct::class.java))
+        assertThat(
+            trace.steps.drop(1).map {
+                actTypes(it)
+            },
+        ).containsOnly(listOf(ScheduleAct::class.java))
     }
 
     @Test
