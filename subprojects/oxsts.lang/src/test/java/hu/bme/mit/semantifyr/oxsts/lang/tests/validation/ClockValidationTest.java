@@ -336,6 +336,74 @@ public class ClockValidationTest {
         assertThat(warnedLines(source, parsedPackage)).containsExactly("if (other < 1) {");
     }
 
+    @Test
+    void aConditionalClockTestIsClosedOnlyOnceEveryClockItReadsIsReset() {
+        var source = TIMER + """
+                redefine tran {
+                    elapsed := 0
+                    if ((if flag then elapsed else other) < 1) {
+                        flag := true
+                    }
+                    other := 0
+                    if ((if flag then other else elapsed) < 1) {
+                        flag := false
+                    }
+                }
+            }
+            """;
+        var parsedPackage = parseHelper.parse(source, CheckMode.ALL);
+
+        parsedPackage.assertNoResourceErrors();
+        assertThat(warnedLines(source, parsedPackage)).containsExactly("if ((if flag then elapsed else other) < 1) {");
+    }
+
+    @Test
+    void aResetCarriesPastAnIfOnlyWhenBothItsBranchesMakeIt() {
+        var source = TIMER + """
+                redefine tran {
+                    if (flag) {
+                        elapsed := 0
+                        other := 0
+                    } else {
+                        elapsed := 0
+                    }
+                    if (elapsed < 1) {
+                        flag := true
+                    }
+                    if (other < 1) {
+                        flag := false
+                    }
+                }
+            }
+            """;
+        var parsedPackage = parseHelper.parse(source, CheckMode.ALL);
+
+        parsedPackage.assertNoResourceErrors();
+        assertThat(warnedLines(source, parsedPackage)).containsExactly("if (other < 1) {");
+    }
+
+    @Test
+    void aResetInALoopBodyDoesNotCarryPastTheLoop() {
+        var source = TIMER + """
+                redefine tran {
+                    for (index in 0..2) {
+                        elapsed := 0
+                        if (elapsed < 1) {
+                            flag := true
+                        }
+                    }
+                    if (elapsed < 2) {
+                        flag := false
+                    }
+                }
+            }
+            """;
+        var parsedPackage = parseHelper.parse(source, CheckMode.ALL);
+
+        parsedPackage.assertNoResourceErrors();
+        assertThat(warnedLines(source, parsedPackage)).containsExactly("if (elapsed < 2) {");
+    }
+
     private static List<String> warnedLines(String source, WrappedOxstsPackage parsedPackage) {
         var lines = source.lines().toList();
         return parsedPackage.getIssues().stream()
