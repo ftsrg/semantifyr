@@ -44,7 +44,7 @@ class CompilationTests {
     private lateinit var injector: Injector
 
     @Test
-    fun `primitive int variable with assignment and EF property`() {
+    fun `an int variable with an assignment and an EF property compiles`() {
         assertCompiles(
             classToCompile = "Incrementing",
             source = """
@@ -67,7 +67,7 @@ class CompilationTests {
     }
 
     @Test
-    fun `primitive bool variable with havoc`() {
+    fun `a havocked bool variable compiles`() {
         assertCompiles(
             classToCompile = "HavocBool",
             source = """
@@ -87,7 +87,7 @@ class CompilationTests {
     }
 
     @Test
-    fun `choice operation with multiple branches`() {
+    fun `a choice with three branches compiles`() {
         assertCompiles(
             classToCompile = "ChoiceStep",
             source = """
@@ -113,7 +113,7 @@ class CompilationTests {
     }
 
     @Test
-    fun `if operation inside transition`() {
+    fun `an if inside a transition compiles`() {
         assertCompiles(
             classToCompile = "IfStep",
             source = """
@@ -137,7 +137,7 @@ class CompilationTests {
     }
 
     @Test
-    fun `assume guard before write`() {
+    fun `an assume before a write compiles`() {
         assertCompiles(
             classToCompile = "GuardedWrite",
             source = """
@@ -160,7 +160,7 @@ class CompilationTests {
     }
 
     @Test
-    fun `local variable declaration inside transition`() {
+    fun `a local variable inside a transition compiles`() {
         assertCompiles(
             classToCompile = "LocalVar",
             source = """
@@ -181,7 +181,7 @@ class CompilationTests {
     }
 
     @Test
-    fun `inline if with static guard`() {
+    fun `an inline if with a constant guard compiles`() {
         assertCompiles(
             classToCompile = "InlineIf",
             source = """
@@ -205,7 +205,7 @@ class CompilationTests {
     }
 
     @Test
-    fun `parametric transition called inline`() {
+    fun `an inline call of a parametric transition compiles`() {
         assertCompiles(
             classToCompile = "ParametricInline",
             source = """
@@ -231,7 +231,7 @@ class CompilationTests {
     }
 
     @Test
-    fun `inheritance with redefine of tran`() {
+    fun `a child redefining an inherited tran compiles`() {
         assertCompiles(
             classToCompile = "Child",
             source = """
@@ -257,7 +257,7 @@ class CompilationTests {
     }
 
     @Test
-    fun `abstract class with concrete subclass`() {
+    fun `a concrete subclass of an abstract class compiles`() {
         assertCompiles(
             classToCompile = "Concrete",
             source = """
@@ -284,7 +284,7 @@ class CompilationTests {
     }
 
     @Test
-    fun `containment feature with required multiplicity`() {
+    fun `a required containment feature compiles`() {
         assertCompiles(
             classToCompile = "Parent",
             source = """
@@ -311,7 +311,7 @@ class CompilationTests {
     }
 
     @Test
-    fun `optional containment feature holds nothing`() {
+    fun `an optional containment feature compiles`() {
         assertCompiles(
             classToCompile = "Parent",
             source = """
@@ -336,7 +336,7 @@ class CompilationTests {
     }
 
     @Test
-    fun `opposite containment and container features`() {
+    fun `opposite containment and container features compile`() {
         assertCompiles(
             classToCompile = "Parent",
             source = """
@@ -366,7 +366,7 @@ class CompilationTests {
     }
 
     @Test
-    fun `enum declaration and literal comparison`() {
+    fun `an enum and comparisons of its literals compile`() {
         assertCompiles(
             classToCompile = "LightCycle",
             source = """
@@ -401,7 +401,7 @@ class CompilationTests {
     }
 
     @Test
-    fun `AG safety property with boolean operators`() {
+    fun `an AG property with boolean operators compiles`() {
         assertCompiles(
             classToCompile = "Safety",
             source = """
@@ -426,7 +426,7 @@ class CompilationTests {
     }
 
     @Test
-    fun `redefine refers with instance expression`() {
+    fun `a redefined refers bound to an instance compiles`() {
         assertCompiles(
             classToCompile = "Wiring",
             source = """
@@ -459,7 +459,7 @@ class CompilationTests {
     }
 
     @Test
-    fun `parametric property with parameter`() {
+    fun `a property with a parameter compiles`() {
         assertCompiles(
             classToCompile = "ParametricProp",
             source = """
@@ -484,7 +484,7 @@ class CompilationTests {
     }
 
     @Test
-    fun `nested feature navigation through multiple containments`() {
+    fun `navigation through nested containments compiles`() {
         assertCompiles(
             classToCompile = "Outer",
             source = """
@@ -517,7 +517,7 @@ class CompilationTests {
     }
 
     @Test
-    fun `negation and unary minus operators`() {
+    fun `negation and unary minus compile`() {
         assertCompiles(
             classToCompile = "Negations",
             source = """
@@ -539,7 +539,7 @@ class CompilationTests {
     }
 
     @Test
-    fun `multiple init branches via or`() {
+    fun `an init with three branches compiles`() {
         assertCompiles(
             classToCompile = "ChoicyInit",
             source = """
@@ -586,7 +586,7 @@ class CompilationTests {
     }
 
     @Test
-    fun `self reference resolves to current instance`() {
+    fun `self references compile`() {
         val compiled = assertCompiles(
             classToCompile = "SelfUse",
             source = """
@@ -611,7 +611,7 @@ class CompilationTests {
     }
 
     @Test
-    fun `integer comparisons spanning ordering operators`() {
+    fun `ordering comparisons compile`() {
         assertCompiles(
             classToCompile = "Ordering",
             source = """
@@ -635,7 +635,7 @@ class CompilationTests {
     }
 
     @Test
-    fun `global containment feature at package level`() {
+    fun `a global containment feature compiles`() {
         assertCompiles(
             classToCompile = "Consumer",
             source = """
@@ -660,7 +660,7 @@ class CompilationTests {
     }
 
     @Test
-    fun `abstract property with concrete redefinition`() {
+    fun `a redefined abstract property compiles`() {
         assertCompiles(
             classToCompile = "Concrete",
             source = """
@@ -687,7 +687,7 @@ class CompilationTests {
     }
 
     @Test
-    fun `nested negation and boolean combinators in property`() {
+    fun `nested negations in a property compile`() {
         assertCompiles(
             classToCompile = "Nested",
             source = """
@@ -712,7 +712,7 @@ class CompilationTests {
     }
 
     @Test
-    fun `parametric transition called with a non-literal argument`() {
+    fun `an inline call with a non-literal argument compiles`() {
         assertCompiles(
             classToCompile = "ComputedArg",
             source = """
@@ -739,7 +739,7 @@ class CompilationTests {
     }
 
     @Test
-    fun `parametric transition called with an enum argument`() {
+    fun `an inline call with an enum argument compiles`() {
         assertCompiles(
             classToCompile = "Dispatcher",
             source = """
@@ -836,11 +836,12 @@ class CompilationTests {
                     }
                 }
             """,
+            messageContains = "not a meta-expression",
         )
     }
 
     @Test
-    fun `non-inline for over an integer range iterates at runtime`() {
+    fun `a non-inline for over an integer range stays a run-time loop`() {
         val compiled = assertCompiles(
             classToCompile = "RuntimeFor",
             source = """
@@ -864,7 +865,7 @@ class CompilationTests {
     }
 
     @Test
-    fun `abstract features kind is compiled when subsetters provide instances`() {
+    fun `a features feature with a subsetting containment compiles`() {
         assertCompiles(
             classToCompile = "Host",
             source = """
@@ -931,7 +932,7 @@ class CompilationTests {
     }
 
     @Test
-    fun `two verification cases in one package`() {
+    fun `one of two verification cases in a package compiles`() {
         assertCompiles(
             classToCompile = "SecondCase",
             source = """
@@ -1005,35 +1006,15 @@ class CompilationTests {
         }
 
         assertThat(thrown).isNotNull
-        assertThat(thrown.message).startsWith("$fileName:5: ")
+        assertThat(thrown.message).isEqualTo("$fileName:5: A clock is compared with a compile-time integer, but this bound is known only at run time.")
     }
 
     private fun assertCompilationFails(
         classToCompile: String,
         source: String,
-        messageContains: String = "",
+        messageContains: String,
     ) {
-        val parsed = try {
-            parseHelper.parse(source.trimIndent())
-        } catch (exception: Exception) {
-            if (messageContains.isNotEmpty()) {
-                assertThat(exception.message).asString().containsIgnoringCase(messageContains)
-            }
-            return
-        }
-
-        if (parsed.resourceErrors.isNotEmpty()) {
-            if (messageContains.isNotEmpty()) {
-                val joined = parsed.resourceErrors.joinToString("\n") { it.message ?: "" }
-                assertThat(joined).containsIgnoringCase(messageContains)
-            }
-            return
-        }
-
-        val classDeclaration = EcoreUtil2.eAllOfType(parsed.oxstsPackage, ClassDeclaration::class.java).singleOrNull {
-            it.name == classToCompile
-        } ?: error("Class '$classToCompile' not found in the test model")
-
+        val classDeclaration = parseClass(classToCompile, source)
         val artifactDirectory = temporaryDirectory.resolve("artifacts").also {
             Files.createDirectories(it)
         }
@@ -1048,15 +1029,13 @@ class CompilationTests {
         assertThat(thrown)
             .`as`("compilation of '$classToCompile' was expected to fail")
             .isNotNull()
-        if (messageContains.isNotEmpty()) {
-            assertThat(thrown!!.message ?: "").containsIgnoringCase(messageContains)
-        }
+        assertThat(thrown.message).containsIgnoringCase(messageContains)
     }
 
-    private fun assertCompiles(
+    private fun parseClass(
         classToCompile: String,
         source: String,
-    ): FlattenedCompilationContext {
+    ): ClassDeclaration {
         val parsed = parseHelper.parse(source.trimIndent())
         if (parsed.resourceErrors.isNotEmpty()) {
             val formatted = parsed.resourceErrors.joinToString("\n") {
@@ -1065,10 +1044,16 @@ class CompilationTests {
             error("Test fixture failed to parse:\n$formatted")
         }
 
-        val classDeclaration = EcoreUtil2.eAllOfType(parsed.oxstsPackage, ClassDeclaration::class.java).singleOrNull {
+        return EcoreUtil2.eAllOfType(parsed.oxstsPackage, ClassDeclaration::class.java).singleOrNull {
             it.name == classToCompile
         } ?: error("Class '$classToCompile' not found in the test model")
+    }
 
+    private fun assertCompiles(
+        classToCompile: String,
+        source: String,
+    ): FlattenedCompilationContext {
+        val classDeclaration = parseClass(classToCompile, source)
         val artifactDirectory = temporaryDirectory.resolve("artifacts").also {
             Files.createDirectories(it)
         }
@@ -1078,8 +1063,6 @@ class CompilationTests {
         )
         val compiled = compiler.compile(classDeclaration, artifactDirectory)
 
-        assertThat(compiled.inlinedOxsts.classDeclaration).isNotNull
-        assertThat(compiled.flatteningInfo).isNotNull
         assertFlattenedContract(compiled)
 
         val emitted = artifactDirectory.toFile().walkTopDown().filter {
@@ -1100,14 +1083,12 @@ class CompilationTests {
             .`as`("post-flatten IR must have no rootFeature")
             .isNull()
 
-        val transitions = listOfNotNull(inlined.initTransition, inlined.mainTransition)
-        val property = requireNotNull(inlined.property) {
-            "post-flatten must have a property declaration"
-        }
-        assertThat(inlined.initTransition).`as`("init transition is present").isNotNull
-        assertThat(inlined.mainTransition).`as`("main transition is present").isNotNull
-
-        val reachableRoots = transitions + property
+        val property = inlined.property
+        val reachableRoots = listOf(
+            inlined.initTransition,
+            inlined.mainTransition,
+            property,
+        )
 
         val remainingNothing = reachableRoots.flatMap {
             EcoreUtil2.eAllOfType(it, LiteralNothing::class.java)
@@ -1152,9 +1133,5 @@ class CompilationTests {
                 .`as`("variableHolders key '${holder.name}' must match a surviving variable in inlinedOxsts.variables")
                 .isTrue()
         }
-
-        assertThat(compiled.flatteningInfo.instanceIdMapping)
-            .`as`("flatteningInfo must carry an instance-id mapping (even if empty)")
-            .isNotNull
     }
 }
