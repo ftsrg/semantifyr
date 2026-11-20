@@ -15,7 +15,7 @@ import {
     WitnessValidationStatus,
 } from "./wire.ts";
 
-const STATUS_OF_VERDICT: Record<ReportVerdict, VerificationStatus> = {
+export const STATUS_OF_VERDICT: Readonly<Record<ReportVerdict, VerificationStatus>> = {
     Passed: VerificationStatus.Passed,
     Failed: VerificationStatus.Failed,
     Inconclusive: VerificationStatus.Inconclusive,

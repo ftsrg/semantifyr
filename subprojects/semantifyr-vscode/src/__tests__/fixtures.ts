@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import type { ReportTrace, ReportVerdict, VerificationCaseResult, VerificationCaseSpecification, VerificationReport, VerificationStatus } from '@semantifyr/editor-common';
+import { type ReportTrace, type ReportVerdict, STATUS_OF_VERDICT, type VerificationCaseResult, type VerificationCaseSpecification, type VerificationReport, type VerificationStatus } from '@semantifyr/editor-common';
 
 export const modelUri = 'file:///workspace/lamp.semantifyr';
 
@@ -88,18 +88,11 @@ function reportOf(verdict: ReportVerdict, trace: ReportTrace | null, message: st
     };
 }
 
-const VERDICTS: Readonly<Partial<Record<VerificationStatus, ReportVerdict>>> = {
-    passed: 'Passed',
-    failed: 'Failed',
-    inconclusive: 'Inconclusive',
-    timeout: 'Timeout',
-    not_supported: 'NotSupported',
-    errored: 'Errored',
-};
-
 // a cancelled case has no report, every other result holds its outcome in its report
 export function result(status: VerificationStatus, trace: ReportTrace | null = null, message: string | null = null): VerificationCaseResult {
-    const verdict = VERDICTS[status];
+    const verdict = Object.entries(STATUS_OF_VERDICT).find(([, statusOfVerdict]) => {
+        return statusOfVerdict === status;
+    })?.[0] as ReportVerdict | undefined;
     if (verdict === undefined) {
         return { status, message, portfolioId: 'theta', report: null, witnessUri: null, traceUri: null };
     }
