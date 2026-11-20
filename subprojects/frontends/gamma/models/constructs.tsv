@@ -1,5 +1,5 @@
 area	construct	outcome	warning	fixture	marker	detail
-Types and expressions	Integer and boolean types, variables with a literal initial value	conformant	no	gamma-frontend/src/test/kotlin/GammaToOxstsSerializerTest.kt	var first : boolean := true	
+Types and expressions	Integer and boolean types, variables with a literal initial value	conformant	no	gamma-frontend/src/test/kotlin/GammaToOxstsSerializerTest.kt	var count : integer := 0	
 Types and expressions	Record types, nested records, record-typed variables and event parameters	conformant	no	models/semantics/Records.gamma	#Point { x := 3, y := 0 }	
 Types and expressions	Arithmetic, comparison and boolean operators with Gamma's precedence for `not`, equality, ordering, `and` and `or`	conformant	no	gamma.lang/src/test/kotlin/hu/bme/mit/semantifyr/frontends/gamma/lang/GammaGrammarTest.kt	not binds tighter than and	
 Types and expressions	Variables with a non-literal initial value	planned	no			The mapper refuses it with a diagnostic.

@@ -123,13 +123,13 @@ class GammaGrammarTest {
             """
                 package test
                 statechart Machine {
-                    var a : integer
-                    var b : boolean
+                    var count : integer
+                    var ready : boolean
                     region Main {
                         initial Start
                         state Idle
                     }
-                    transition from Start to Idle [not a = 1 or b and a < 2 = b]
+                    transition from Start to Idle [not count = 1 or ready and count < 2 = ready]
                 }
             """,
         )
@@ -148,14 +148,14 @@ class GammaGrammarTest {
             """
                 package test
                 statechart Machine {
-                    var a : boolean
-                    var b : boolean
-                    var c : boolean
+                    var first : boolean
+                    var second : boolean
+                    var third : boolean
                     region Main {
                         initial Start
                         state Idle
                     }
-                    transition from Start to Idle [(a or b) and c]
+                    transition from Start to Idle [(first or second) and third]
                 }
             """,
         )
