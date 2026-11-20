@@ -16,12 +16,14 @@ import hu.bme.mit.semantifyr.backend.boolean
 import hu.bme.mit.semantifyr.backend.enumeration
 import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
 import hu.bme.mit.semantifyr.backend.integer
+import hu.bme.mit.semantifyr.backend.witness.Fraction
 import hu.bme.mit.semantifyr.backends.spin.ReplayingSpinExecutor
 import hu.bme.mit.semantifyr.backends.spin.SpinExecutorKey
 import hu.bme.mit.semantifyr.compiler.pipeline.context.TransitionCallTraceMap
 import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.entry
 import org.junit.jupiter.api.Test
 import java.nio.file.Path
 import kotlin.io.path.Path
@@ -216,5 +218,26 @@ class SpinBackendReplayTest {
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.NotSupported)
         assertThat(result.message).matches("spin:safe-dfs does not support arrays.semantifyr:\\d+: unbounded integer variables \\(slots\\)")
+    }
+
+    @Test
+    suspend fun `a clock trace states every kept clock's value after the step and the whole delays that passed`() {
+        val result = verifyFixture("clocks", "ClockZeroDelayAfterResetViolated")
+
+        assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
+        val states = result.inlinedWitness!!.transitionStates
+        assertThat(
+            states.last().clockValues.associate {
+                it.variable.name to it.value
+            },
+        ).containsExactly(
+            entry("\$\$root\$\$lap", Fraction.ZERO),
+            entry("\$\$root\$\$total", Fraction.of(1)),
+        )
+        assertThat(
+            states.fold(Fraction.ZERO) { sum, state ->
+                sum + state.elapsed
+            },
+        ).isEqualTo(Fraction.of(1))
     }
 }

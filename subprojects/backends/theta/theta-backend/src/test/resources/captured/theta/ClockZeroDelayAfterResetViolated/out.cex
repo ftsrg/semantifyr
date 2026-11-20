@@ -1,0 +1,25 @@
+(XstsStateSequence
+  (XstsState pre_init last_env
+    (ExplState ($$root$$lap 0)
+               ($$root$$late false)
+               ($$root$$total 0)
+               (__semantifyr_delay 0)
+               (__semantifyr_initialized false)))
+  (XstsState post_init last_internal
+    (ExplState ($$root$$lap 0)
+               ($$root$$late false)
+               ($$root$$total 0)
+               (__semantifyr_delay 0)
+               (__semantifyr_initialized true)))
+  (XstsState post_init last_env
+    (ExplState ($$root$$lap 0)
+               ($$root$$late false)
+               ($$root$$total 0)
+               (__semantifyr_delay 0)
+               (__semantifyr_initialized true)))
+  (XstsState post_init last_internal
+    (ExplState ($$root$$lap 0)
+               ($$root$$late true)
+               ($$root$$total 1)
+               (__semantifyr_delay 1)
+               (__semantifyr_initialized true))))

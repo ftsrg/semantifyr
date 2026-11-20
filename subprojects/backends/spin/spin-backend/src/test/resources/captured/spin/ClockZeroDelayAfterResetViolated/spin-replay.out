@@ -1,0 +1,43 @@
+ltl p: [] ((! (__semantifyr_stable)) || (! (__root__late)))
+starting claim 1
+Never claim moves to line 4	[(1)]
+  2:	proc  0 (:init::1) model.pml:11 (state 1)	[semantifyr_stable = 0]
+  3:	proc  0 (:init::1) model.pml:12 (state 2)	[(1)]
+  3:	proc  0 (:init::1) model.pml:13 (state 3)	[semantifyr_stable = 1]
+		__semantifyr_stable = 1
+  5:	proc  0 (:init::1) model.pml:17 (state 5)	[semantifyr_stable = 0]
+		__semantifyr_stable = 0
+  5:	proc  0 (:init::1) model.pml:18 (state 6)	[semantifyr_delay = 0]
+		__semantifyr_stable = 0
+  6:	proc  0 (:init::1) model.pml:18 (state 7)	[((semantifyr_delay<2))]
+  6:	proc  0 (:init::1) model.pml:18 (state 8)	[semantifyr_delay = (semantifyr_delay+1)]
+		__semantifyr_delay = 1
+  7:	proc  0 (:init::1) model.pml:18 (state 9)	[goto :b1]
+  7:	proc  0 (:init::1) model.pml:19 (state 13)	[root__lap = ( (((root__lap+semantifyr_delay)>=2)) -> (2) : ((root__lap+semantifyr_delay)) )]
+		__root__lap = 1
+  7:	proc  0 (:init::1) model.pml:20 (state 14)	[root__total = ( (((root__total+semantifyr_delay)>=2)) -> (2) : ((root__total+semantifyr_delay)) )]
+		__root__lap = 1
+		__root__total = 1
+  8:	proc  0 (:init::1) model.pml:21 (state 15)	[((root__lap<=1))]
+  9:	proc  0 (:init::1) model.pml:22 (state 16)	[((root__total<=1))]
+  9:	proc  0 (:init::1) model.pml:23 (state 17)	[root__lap = 0]
+		__root__lap = 0
+ 10:	proc  0 (:init::1) model.pml:26 (state 18)	[((root__total>=1))]
+ 10:	proc  0 (:init::1) model.pml:27 (state 19)	[root__late = 1]
+		__root__late = 1
+ 10:	proc  0 (:init::1) model.pml:31 (state 24)	[semantifyr_stable = 1]
+		__root__late = 1
+		__semantifyr_stable = 1
+spin: _spin_nvr.tmp:3, Error: assertion violated
+spin: text of failed assertion: assert(!(!((!(semantifyr_stable)||!(root__late)))))
+Never claim moves to line 3	[assert(!(!((!(semantifyr_stable)||!(root__late)))))]
+spin: trail ends after 11 steps
+#processes: 1
+		__root__lap = 0
+		__root__total = 1
+		__root__late = 1
+		__semantifyr_stable = 1
+		__semantifyr_delay = 1
+ 11:	proc  0 (:init::1) model.pml:15 (state 26)
+ 11:	proc  - (p:1) _spin_nvr.tmp:2 (state 6)
+1 processes created
