@@ -12,6 +12,15 @@ import com.google.inject.Inject;
 import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts;
 import hu.bme.mit.semantifyr.oxsts.lang.tests.utils.OxstsPackageParseHelper;
 import hu.bme.mit.semantifyr.oxsts.lang.validation.OxstsValidator;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Supplier;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.core.LogEvent;
+import org.apache.logging.log4j.core.Logger;
+import org.apache.logging.log4j.core.appender.AbstractAppender;
+import org.apache.logging.log4j.core.config.Property;
 import org.eclipse.xtext.diagnostics.Severity;
 import org.eclipse.xtext.validation.CheckMode;
 import org.junit.jupiter.api.Test;
@@ -35,22 +44,41 @@ public class MultiplicityBoundTypeValidationTest {
                 "refers limit: int[\"two\"] = 2",
                 "var weights: int[1.5] := [0]",
             })
-    void aMultiplicityBoundThatIsNoIntegerIsRejected(String declaration) {
-        var parsedPackage = parseHelper.parse("""
+    void aMultiplicityBoundThatIsNoIntegerIsRejectedAndNoCheckFails(String declaration) {
+        var loggedErrors = new ArrayList<LogEvent>();
+        var parsedPackage = recordingValidatorErrors(
+                loggedErrors, () -> parseHelper.parse("""
                 package test
                 class Part {
                 }
                 class Host {
                     %s
                 }
-                """.formatted(declaration), CheckMode.ALL);
+                """.formatted(declaration), CheckMode.ALL));
 
+        assertThat(loggedErrors).isEmpty();
         parsedPackage.assertNoResourceErrors();
         assertThat(parsedPackage.getIssues())
                 .filteredOn(issue -> issue.getSeverity() == Severity.ERROR)
                 .filteredOn(issue -> issue.getMessage().startsWith("A multiplicity bound must be an integer"))
                 .singleElement()
                 .satisfies(issue -> assertThat(issue.getCode()).isEqualTo(OxstsValidator.TYPE_MISMATCH));
+    }
+
+    @Test
+    void anIntegerArrayWithABooleanBoundGivesItsOneError() {
+        var parsedPackage = parseHelper.parse("""
+                package test
+                class Host {
+                    var values: int[true] := [0]
+                }
+                """, CheckMode.ALL);
+
+        assertThat(parsedPackage.getIssues())
+                .filteredOn(issue -> issue.getSeverity() == Severity.ERROR)
+                .singleElement()
+                .satisfies(
+                        issue -> assertThat(issue.getMessage()).startsWith("A multiplicity bound must be an integer"));
     }
 
     @Test
@@ -70,5 +98,25 @@ public class MultiplicityBoundTypeValidationTest {
 
         parsedPackage.assertNoResourceErrors();
         parsedPackage.assertNoValidationIssues();
+    }
+
+    private static <T> T recordingValidatorErrors(List<LogEvent> loggedErrors, Supplier<T> action) {
+        var logger = (Logger) LogManager.getLogger(OxstsValidator.class);
+        var appender = new AbstractAppender("validator-errors", null, null, true, Property.EMPTY_ARRAY) {
+            @Override
+            public void append(LogEvent event) {
+                if (event.getLevel().isMoreSpecificThan(Level.ERROR)) {
+                    loggedErrors.add(event.toImmutable());
+                }
+            }
+        };
+        appender.start();
+        logger.addAppender(appender);
+        try {
+            return action.get();
+        } finally {
+            logger.removeAppender(appender);
+            appender.stop();
+        }
     }
 }

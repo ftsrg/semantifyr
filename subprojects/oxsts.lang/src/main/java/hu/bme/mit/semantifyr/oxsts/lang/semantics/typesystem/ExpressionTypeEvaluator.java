@@ -295,7 +295,13 @@ public class ExpressionTypeEvaluator extends ExpressionEvaluator<TypeEvaluation>
             return InvalidTypeEvaluation.Instance;
         }
 
-        var rangeEvaluation = multiplicityRangeEvaluator.evaluate(typeSpecification);
+        RangeEvaluation rangeEvaluation;
+        try {
+            rangeEvaluation = multiplicityRangeEvaluator.evaluate(typeSpecification);
+        } catch (IllegalArgumentException e) {
+            // a bound that is no integer carries its own diagnostic
+            return InvalidTypeEvaluation.Instance;
+        }
 
         return new ImmutableTypeEvaluation(domain, rangeEvaluation);
     }
@@ -305,7 +311,13 @@ public class ExpressionTypeEvaluator extends ExpressionEvaluator<TypeEvaluation>
         if (typeSpecification == null) {
             return new ImmutableTypeEvaluation(featureDeclaration);
         }
-        var rangeEvaluation = multiplicityRangeEvaluator.evaluate(typeSpecification);
+        RangeEvaluation rangeEvaluation;
+        try {
+            rangeEvaluation = multiplicityRangeEvaluator.evaluate(typeSpecification);
+        } catch (IllegalArgumentException e) {
+            // a bound that is no integer carries its own diagnostic
+            return InvalidTypeEvaluation.Instance;
+        }
         return new ImmutableTypeEvaluation(featureDeclaration, rangeEvaluation);
     }
 }
