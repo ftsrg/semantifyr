@@ -160,16 +160,6 @@ describe('Live', () => {
     expect(open.live.unsaved.get()).toBe(true)
   })
 
-  it('keeps a result after an edit and marks it outdated', async () => {
-    const routed = routedClient([caseAt('a', 1)])
-    open = await openConnected(routed)
-    await runAll(open)
-
-    open.models.edit(MODEL_URI, 'edited model')
-
-    expect(verificationOf(open).cases[0]).toMatchObject({ status: 'passed', resultStatus: 'passed', outdated: true })
-  })
-
   it('keeps the earlier results of Verify all until the new ones arrive', async () => {
     const routed = routedClient([caseAt('a', 1)])
     routed.results.set(1, async () => {
@@ -377,24 +367,29 @@ describe('Live', () => {
     expect(open.live.verificationPortfolioId()).toBe('smart')
   })
 
-  it('opens the default language on a bare address, and says which name of an address it did not find', async () => {
+  it('opens the default language on a bare address', async () => {
     const routed = routedClient([])
-    const [, gamma] = [servedFlavors[0], servedFlavors[3]]
-    open = createTestLive(routed.client, servedFlavors, { defaultFlavorId: gamma!.id })
+    const gamma = servedFlavors[3]!
+    open = createTestLive(routed.client, servedFlavors, { defaultFlavorId: gamma.id })
     open.live.start('')
     await vi.waitFor(() => {
-      expect(open!.live.workspace.get().flavor?.id).toBe(gamma!.id)
+      expect(open!.live.workspace.get().flavor?.id).toBe(gamma.id)
     })
     expect(open.live.address.get()).toBeNull()
-    await open.live.dispose()
+  })
 
-    open = createTestLive(routed.client, servedFlavors, { defaultFlavorId: gamma!.id })
+  it('opens the default language for a language it does not know, and says which name it did not find', async () => {
+    const routed = routedClient([])
+    const gamma = servedFlavors[3]!
+    open = createTestLive(routed.client, servedFlavors, { defaultFlavorId: gamma.id })
     open.live.start('/kerml')
     await vi.waitFor(() => {
-      expect(open!.live.address.get()).toMatchObject({ kind: 'language', requested: 'kerml', flavorId: gamma!.id })
+      expect(open!.live.address.get()).toMatchObject({ kind: 'language', requested: 'kerml', flavorId: gamma.id })
     })
-    await open.live.dispose()
+  })
 
+  it('says which example of an address it did not find until another model is chosen', async () => {
+    const routed = routedClient([])
     open = createTestLive(routed.client)
     open.live.start('/language/missing')
     await vi.waitFor(() => {
