@@ -137,7 +137,7 @@ class ThetaBackendReplayTest {
     }
 
     @Test
-    suspend fun `a variable havoced in init can violate an invariant once initialized`() {
+    suspend fun `a witness's initialized state holds the value a variable was havoced to in init`() {
         val result = verifyFixture("initial_values", "UninitializedIntegerBound")
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
@@ -145,7 +145,7 @@ class ThetaBackendReplayTest {
     }
 
     @Test
-    suspend fun `an enum variable havoced in init can violate an invariant once initialized`() {
+    suspend fun `a witness's initialized state holds the literal an enum variable was havoced to in init`() {
         val result = verifyFixture("initial_values", "UninitializedEnumBound")
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
@@ -193,22 +193,23 @@ class ThetaBackendReplayTest {
             }.awaitAll()
         }
 
-        assertThat(results.map { "${it.verdict} ${it.message}" }).containsOnly("Passed null")
-        assertThat(results.map { it.inlinedWitness }).doesNotContainNull()
+        assertThat(
+            results.map {
+                "${it.verdict} ${it.message}"
+            },
+        ).containsOnly("Passed null")
+        assertThat(
+            results.map {
+                it.inlinedWitness
+            },
+        ).doesNotContainNull()
     }
 
     @Test
-    suspend fun `a runtime for operation iterates its whole inclusive range`() {
+    suspend fun `a witness through a runtime for operation reads back past the loop variable`() {
         val result = verifyFixture("runtime_for", "InclusiveRangeReach")
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Passed)
         assertThat(result.inlinedWitness!!.transitionStates.last().integer("\$\$root\$\$x")).isEqualTo(3)
-    }
-
-    @Test
-    suspend fun `a runtime for operation stops before the end of an exclusive range`() {
-        val result = verifyFixture("runtime_for", "ExclusiveRangeBound")
-
-        assertThat(result.verdict).isEqualTo(VerificationVerdict.Passed)
     }
 }

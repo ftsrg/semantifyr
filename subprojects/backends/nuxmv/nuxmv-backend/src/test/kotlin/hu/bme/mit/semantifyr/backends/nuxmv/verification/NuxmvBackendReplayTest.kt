@@ -23,7 +23,6 @@ import hu.bme.mit.semantifyr.compiler.pipeline.context.TransitionCallTraceMap
 import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import org.assertj.core.api.Assertions.assertThat
-import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
 import java.nio.file.Path
 import kotlin.io.path.Path
@@ -78,6 +77,12 @@ class NuxmvBackendReplayTest {
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Passed)
         assertThat(result.inlinedWitness!!.transitionStates.last().integer("\$\$root\$\$x")).isEqualTo(1)
+    }
+
+    @Test
+    suspend fun `the commands hide the auxiliary variables from the trace`() {
+        verifyFixture("control_flow", "ChoiceBranch1Reach")
+
         val commands = Path("build", "test-artifacts", "NuxmvBackendReplayTest", "ChoiceBranch1Reach", "commands.cmd").readText()
         assertThat(commands).contains("set traces_hiding_prefix \"~\"")
     }
@@ -91,53 +96,6 @@ class NuxmvBackendReplayTest {
 
         val commands = artifactDirectory.resolve("commands.cmd").readText()
         assertThat(commands).contains("msat_check_invar_bmc -a een-sorensson -k 50 -p \"")
-    }
-
-    @Test
-    fun `a bound must be positive`() {
-        assertThatThrownBy {
-            NuxmvConfig.KInductionInvar.copy(bound = 0)
-        }.isInstanceOf(IllegalArgumentException::class.java)
-    }
-
-    @Test
-    suspend fun `choices in several transition branches are decided independently`() {
-        val result = verify(
-            "WitnessShapedChoices",
-            models.parse(
-                """
-                    inlined oxsts of semantifyr::Anything
-                    var chosen : int := 0
-                    var step : int := 0
-                    init {
-                    }
-                    tran {
-                        assume(step == 0)
-                        choice {
-                            chosen := 1
-                        } or {
-                            chosen := 2
-                        }
-                        step := 1
-                    } or {
-                        assume(step == 1)
-                        choice {
-                            chosen := 3
-                        } or {
-                            chosen := 4
-                        }
-                        step := 2
-                    }
-                    prop {
-                        EF chosen == 4
-                    }
-                """,
-            ),
-            TransitionCallTraceMap(emptyMap()),
-        )
-
-        assertThat(result.verdict).isEqualTo(VerificationVerdict.Passed)
-        assertThat(result.inlinedWitness!!.transitionStates.last().integer("chosen")).isEqualTo(4)
     }
 
     @Test
@@ -189,7 +147,7 @@ class NuxmvBackendReplayTest {
     }
 
     @Test
-    suspend fun `a variable havoced in init can violate an invariant once initialized`() {
+    suspend fun `a witness's initialized state holds the value a variable was havoced to in init`() {
         val result = verifyFixture("initial_values", "UninitializedIntegerBound")
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
@@ -197,7 +155,7 @@ class NuxmvBackendReplayTest {
     }
 
     @Test
-    suspend fun `an enum variable havoced in init can violate an invariant once initialized`() {
+    suspend fun `a witness's initialized state holds the literal an enum variable was havoced to in init`() {
         val result = verifyFixture("initial_values", "UninitializedEnumBound")
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)

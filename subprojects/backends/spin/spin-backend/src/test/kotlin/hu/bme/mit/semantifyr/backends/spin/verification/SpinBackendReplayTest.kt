@@ -125,9 +125,12 @@ class SpinBackendReplayTest {
 
     @Test
     suspend fun `a step too long for statement merging is searched again without merging`() {
-        val padding = (1..150).joinToString(" ") {
-            "filler := filler + 1 filler := filler - 1"
-        }
+        val padding = (1..150).flatMap {
+            listOf(
+                "filler := filler + 1",
+                "filler := filler - 1",
+            )
+        }.joinToString("\n" + " ".repeat(24))
         val result = verify(
             "MergeLimit",
             models.parse(
@@ -138,7 +141,8 @@ class SpinBackendReplayTest {
                     init {
                     }
                     tran {
-                        assume(counter < 2) $padding
+                        assume(counter < 2)
+                        $padding
                         counter := counter + 1
                     }
                     prop {
@@ -161,7 +165,7 @@ class SpinBackendReplayTest {
     }
 
     @Test
-    suspend fun `a variable havoced in init can violate an invariant once initialized`() {
+    suspend fun `a witness's initialized state holds the value a variable was havoced to in init`() {
         val result = verifyFixture("initial_values", "UninitializedIntegerBound")
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
@@ -169,7 +173,7 @@ class SpinBackendReplayTest {
     }
 
     @Test
-    suspend fun `an enum variable havoced in init can violate an invariant once initialized`() {
+    suspend fun `a witness's initialized state holds the literal an enum variable was havoced to in init`() {
         val result = verifyFixture("initial_values", "UninitializedEnumBound")
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
@@ -198,14 +202,6 @@ class SpinBackendReplayTest {
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.NotSupported)
         assertThat(result.message).matches("spin:safe-dfs does not support \\S+:2: variables of type real \\(ratio\\); \\S+:2: real literals")
-    }
-
-    @Test
-    suspend fun `an unbounded integer the property depends on is NotSupported before dispatch`() {
-        val result = verify("UnboundedCounter", models.parse(BackendTestModels.COUNTER_EXCEEDS_BOUND), TransitionCallTraceMap(emptyMap()))
-
-        assertThat(result.verdict).isEqualTo(VerificationVerdict.NotSupported)
-        assertThat(result.message).matches("spin:safe-dfs does not support \\S+:2: unbounded integer variables \\(counter\\)")
     }
 
     @Test

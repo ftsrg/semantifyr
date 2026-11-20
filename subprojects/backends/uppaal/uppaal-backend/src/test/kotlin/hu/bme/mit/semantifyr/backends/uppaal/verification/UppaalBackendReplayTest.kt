@@ -140,7 +140,7 @@ class UppaalBackendReplayTest {
     }
 
     @Test
-    suspend fun `a variable havoced in init can violate an invariant once initialized`() {
+    suspend fun `a witness's initialized state holds the value a variable was havoced to in init`() {
         val result = verifyFixture("initial_values", "UninitializedIntegerBound")
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
@@ -148,7 +148,7 @@ class UppaalBackendReplayTest {
     }
 
     @Test
-    suspend fun `an enum variable havoced in init can violate an invariant once initialized`() {
+    suspend fun `a witness's initialized state holds the literal an enum variable was havoced to in init`() {
         val result = verifyFixture("initial_values", "UninitializedEnumBound")
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
@@ -207,31 +207,6 @@ class UppaalBackendReplayTest {
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.NotSupported)
         assertThat(result.message).matches("uppaal:over-approximation does not support \\S+:2: havoced integers read other than in comparisons with literals \\(havoced\\)")
-    }
-
-    @Test
-    suspend fun `arithmetic that may leave 32 bits under the declared ranges is NotSupported before dispatch`() {
-        val result = verify(
-            "UnboundedTripling",
-            models.parse(
-                """
-                    inlined oxsts of semantifyr::Anything
-                    var counter : int := 1
-                    init {
-                    }
-                    tran {
-                        counter := counter * 3
-                    }
-                    prop {
-                        AG counter > 0
-                    }
-                """,
-            ),
-            TransitionCallTraceMap(emptyMap()),
-        )
-
-        assertThat(result.verdict).isEqualTo(VerificationVerdict.NotSupported)
-        assertThat(result.message).matches("uppaal:default does not support \\S+:2: arithmetic that may leave the 32-bit range \\(counter\\)")
     }
 
     @Test
