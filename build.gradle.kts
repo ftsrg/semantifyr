@@ -12,7 +12,14 @@ plugins {
     `jacoco-report-aggregation`
 }
 
-val javadocModules = listOf("oxsts.lang", "oxsts.model")
+val javadocModules = listOf(
+    "oxsts.lang",
+    "oxsts.model",
+)
+
+val undocumentedModules = listOf(
+    "corpus-check",
+)
 
 // build-logic's semantifyrArtifact, which the root project does not load
 fun semantifyrArtifact(kind: String): Action<AttributeContainer> {
@@ -36,7 +43,7 @@ dependencies {
             jacocoAggregation(project(subproject.path))
         }
         subproject.plugins.withId("org.jetbrains.kotlin.jvm") {
-            if (subproject.name !in javadocModules) {
+            if (subproject.name !in javadocModules && subproject.name !in undocumentedModules) {
                 dokka(project(subproject.path))
             }
         }
