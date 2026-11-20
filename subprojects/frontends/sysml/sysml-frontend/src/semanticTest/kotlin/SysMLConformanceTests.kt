@@ -19,7 +19,7 @@ class SysMLConformanceTests {
         private val helper = SysMLv2FrontendTestHelper()
         private val artifactRoot = SysMLv2FrontendTestHelper.testArtifactRoot(SysMLConformanceTests::class.java)
 
-        // the model tests run every other case through the launcher, which selects no library variant
+        // the frontend tests run every other case through the launcher, which selects no library variant
         @JvmStatic
         fun `Cases Of A Library Variant Reach Their Expected Verdict`(): List<CorpusEntry> {
             return SysMLCorpus.load().entries.filter {

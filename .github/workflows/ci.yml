@@ -121,18 +121,18 @@ jobs:
           if-no-files-found: error
           compression-level: 0
           retention-days: 90
-      - name: Pack the model test harness and the SysML v2 corpus
+      - name: Pack the frontend test harness and the SysML v2 corpus
         if: ${{ runner.os == 'Linux' }}
         run: >-
-          tar -czf "$RUNNER_TEMP/model-tests.tar.gz" -C subprojects
+          tar -czf "$RUNNER_TEMP/frontend-tests.tar.gz" -C subprojects
           corpus-check/build/distributions
           frontends/sysml/sysml-wrapper/build/corpus
-      - name: Upload the model test harness
+      - name: Upload the frontend test harness
         if: ${{ runner.os == 'Linux' }}
         uses: actions/upload-artifact@v7
         with:
-          name: model-tests
-          path: ${{ runner.temp }}/model-tests.tar.gz
+          name: frontend-tests
+          path: ${{ runner.temp }}/frontend-tests.tar.gz
           if-no-files-found: error
           compression-level: 0
           retention-days: 1
@@ -162,8 +162,8 @@ jobs:
           compression-level: 0
           retention-days: 1
 
-  model-tests-gamma:
-    name: Model tests (gamma)
+  frontend-tests-gamma:
+    name: Frontend Tests (Gamma)
     needs: build
     permissions:
       contents: read
@@ -183,25 +183,25 @@ jobs:
         with:
           name: gamma-cli
           path: ${{ runner.temp }}/downloads
-      - name: Download the model test harness
+      - name: Download the frontend test harness
         uses: actions/download-artifact@v8
         with:
-          name: model-tests
+          name: frontend-tests
           path: ${{ runner.temp }}/downloads
       - name: Unpack them
         run: |
           cd "$RUNNER_TEMP"
-          mkdir model-tests
-          tar -xzf downloads/model-tests.tar.gz -C model-tests
-          unzip -q model-tests/corpus-check/build/distributions/corpus-check-*.zip -d harness
+          mkdir frontend-tests
+          tar -xzf downloads/frontend-tests.tar.gz -C frontend-tests
+          unzip -q frontend-tests/corpus-check/build/distributions/corpus-check-*.zip -d harness
           unzip -q downloads/semantifyr-gamma-*.zip -d launcher
-      - name: Run the model tests of the semantic library
+      - name: Run the frontend tests of the semantic library
         run: >-
           "$RUNNER_TEMP"/harness/corpus-check-*/bin/corpus-check
           --launcher "$(echo "$RUNNER_TEMP"/launcher/semantifyr-gamma-*/bin/semantifyr-gamma)"
           --corpus subprojects/frontends/gamma/models/semantics
           --timeout-seconds 120
-      - name: Run the model tests of the examples
+      - name: Run the frontend tests of the examples
         if: ${{ !cancelled() }}
         run: >-
           "$RUNNER_TEMP"/harness/corpus-check-*/bin/corpus-check
@@ -209,8 +209,8 @@ jobs:
           --corpus subprojects/frontends/gamma/models/examples
           --timeout-seconds 1800
 
-  model-tests-sysml:
-    name: Model tests (sysml)
+  frontend-tests-sysml:
+    name: Frontend Tests (SysML)
     needs: build
     permissions:
       contents: read
@@ -234,23 +234,23 @@ jobs:
         with:
           name: sysml-cli
           path: ${{ runner.temp }}/downloads
-      - name: Download the model test harness
+      - name: Download the frontend test harness
         uses: actions/download-artifact@v8
         with:
-          name: model-tests
+          name: frontend-tests
           path: ${{ runner.temp }}/downloads
       - name: Unpack them
         run: |
           cd "$RUNNER_TEMP"
-          mkdir model-tests
-          tar -xzf downloads/model-tests.tar.gz -C model-tests
-          unzip -q model-tests/corpus-check/build/distributions/corpus-check-*.zip -d harness
+          mkdir frontend-tests
+          tar -xzf downloads/frontend-tests.tar.gz -C frontend-tests
+          unzip -q frontend-tests/corpus-check/build/distributions/corpus-check-*.zip -d harness
           unzip -q downloads/semantifyr-sysml-*.zip -d launcher
-      - name: Run the model tests
+      - name: Run the frontend tests
         run: >-
           "$RUNNER_TEMP"/harness/corpus-check-*/bin/corpus-check
           --launcher "$(echo "$RUNNER_TEMP"/launcher/semantifyr-sysml-*/bin/semantifyr-sysml)"
-          --corpus "$RUNNER_TEMP/model-tests/frontends/sysml/sysml-wrapper/build/corpus"
+          --corpus "$RUNNER_TEMP/frontend-tests/frontends/sysml/sysml-wrapper/build/corpus"
           --case-namespace semantifyr::sysml::model::
           --timeout-seconds 120
 
