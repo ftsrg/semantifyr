@@ -22,7 +22,7 @@ import kotlin.time.Duration.Companion.minutes
 private val gson = Gson()
 
 suspend fun verifyEndToEnd(
-    tmp: Path,
+    temporaryDirectory: Path,
     flavor: String,
     modelSource: String,
     pickCase: (List<VerificationCaseSpecification>) -> VerificationCaseSpecification,
@@ -34,7 +34,7 @@ suspend fun verifyEndToEnd(
     verifyTimeout: Duration = 1.minutes,
 ) {
     StagedTestSupport.assumeStaged()
-    withRealServer(config(tmp)) { client, port ->
+    withRealServer(config(temporaryDirectory)) { client, port ->
         client.webSocket("ws://localhost:$port/ws/lsp/$flavor") {
             send(Frame.Text(LspWire.initializeRequest()))
             awaitResponseFor(id = 1)

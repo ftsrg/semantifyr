@@ -55,57 +55,57 @@ class SessionDocumentManagerTest {
     }
 
     @Test
-    fun `openByClient writes nothing to disk on open`(@TempDir tmp: Path) {
-        val manager = buildManager(tmp)
+    fun `openByClient writes nothing to disk on open`(@TempDir temporaryDirectory: Path) {
+        val manager = buildManager(temporaryDirectory)
         manager.openByClient("file:///workspace/snippet.semantifyr", "package x")
-        val onDisk = tmp.resolve("snippet.semantifyr")
+        val onDisk = temporaryDirectory.resolve("snippet.semantifyr")
         assertThat(Files.exists(onDisk)).isFalse()
     }
 
     @Test
-    fun `flushAllToDisk writes the in-memory text to disk`(@TempDir tmp: Path) {
-        val manager = buildManager(tmp)
+    fun `flushAllToDisk writes the in-memory text to disk`(@TempDir temporaryDirectory: Path) {
+        val manager = buildManager(temporaryDirectory)
         manager.openByClient("file:///workspace/snippet.semantifyr", "package x")
         manager.flushAllToDisk()
-        val onDisk = tmp.resolve("snippet.semantifyr")
+        val onDisk = temporaryDirectory.resolve("snippet.semantifyr")
         assertThat(Files.readString(onDisk)).isEqualTo("package x")
     }
 
     @Test
-    fun `openByClient stores by server URI, findByClient and findByServer agree`(@TempDir tmp: Path) {
-        val manager = buildManager(tmp)
+    fun `openByClient stores by server URI, findByClient and findByServer agree`(@TempDir temporaryDirectory: Path) {
+        val manager = buildManager(temporaryDirectory)
         val opened = manager.openByClient("file:///workspace/a.semantifyr", "package x")
-        val serverUri = tmp.resolve("a.semantifyr").toUri().toString()
+        val serverUri = temporaryDirectory.resolve("a.semantifyr").toUri().toString()
         assertThat(manager.findByClient("file:///workspace/a.semantifyr")).isSameAs(opened)
         assertThat(manager.findByServer(serverUri)).isSameAs(opened)
     }
 
     @Test
-    fun `find accepts either client or server URI form`(@TempDir tmp: Path) {
-        val manager = buildManager(tmp)
+    fun `find accepts either client or server URI form`(@TempDir temporaryDirectory: Path) {
+        val manager = buildManager(temporaryDirectory)
         val opened = manager.openByClient("file:///workspace/b.semantifyr", "package x")
-        val serverUri = tmp.resolve("b.semantifyr").toUri().toString()
+        val serverUri = temporaryDirectory.resolve("b.semantifyr").toUri().toString()
         assertThat(manager.find("file:///workspace/b.semantifyr")).isSameAs(opened)
         assertThat(manager.find(serverUri)).isSameAs(opened)
     }
 
     @Test
-    fun `closeByClient removes the document and returns true`(@TempDir tmp: Path) {
-        val manager = buildManager(tmp)
+    fun `closeByClient removes the document and returns true`(@TempDir temporaryDirectory: Path) {
+        val manager = buildManager(temporaryDirectory)
         manager.openByClient("file:///workspace/c.semantifyr", "package x")
         assertThat(manager.closeByClient("file:///workspace/c.semantifyr")).isTrue()
         assertThat(manager.findByClient("file:///workspace/c.semantifyr")).isNull()
     }
 
     @Test
-    fun `closeByClient returns false for an unknown URI`(@TempDir tmp: Path) {
-        val manager = buildManager(tmp)
+    fun `closeByClient returns false for an unknown URI`(@TempDir temporaryDirectory: Path) {
+        val manager = buildManager(temporaryDirectory)
         assertThat(manager.closeByClient("file:///workspace/missing.semantifyr")).isFalse()
     }
 
     @Test
-    fun `openByServer rejects URIs outside the workspace`(@TempDir tmp: Path) {
-        val manager = buildManager(tmp)
+    fun `openByServer rejects URIs outside the workspace`(@TempDir temporaryDirectory: Path) {
+        val manager = buildManager(temporaryDirectory)
         assertThatThrownBy {
             manager.openByServer("file:///etc/passwd", "evil")
         }.isInstanceOf(WorkspaceUriException::class.java)
@@ -113,8 +113,8 @@ class SessionDocumentManagerTest {
     }
 
     @Test
-    fun `openByServer rejects non-file URIs`(@TempDir tmp: Path) {
-        val manager = buildManager(tmp)
+    fun `openByServer rejects non-file URIs`(@TempDir temporaryDirectory: Path) {
+        val manager = buildManager(temporaryDirectory)
         assertThatThrownBy {
             manager.openByServer("http://example.com/a.semantifyr", "x")
         }.isInstanceOf(WorkspaceUriException::class.java)
@@ -122,15 +122,15 @@ class SessionDocumentManagerTest {
     }
 
     @Test
-    fun `a client URI in the workspace names its file in the session's directory`(@TempDir tmp: Path) {
-        val manager = buildManager(tmp)
+    fun `a client URI in the workspace names its file in the session's directory`(@TempDir temporaryDirectory: Path) {
+        val manager = buildManager(temporaryDirectory)
         assertThat(manager.workspaceUriOf("file:///workspace/.artifacts/Case/witness.semantifyr"))
-            .isEqualTo(tmp.resolve(".artifacts/Case/witness.semantifyr").toUri().toString())
+            .isEqualTo(temporaryDirectory.resolve(".artifacts/Case/witness.semantifyr").toUri().toString())
     }
 
     @Test
-    fun `a client URI outside the workspace names no file`(@TempDir tmp: Path) {
-        val manager = buildManager(tmp)
+    fun `a client URI outside the workspace names no file`(@TempDir temporaryDirectory: Path) {
+        val manager = buildManager(temporaryDirectory)
         for (outside in listOf(
             "file:///etc/passwd",
             "file:///workspace/../../etc/passwd",
@@ -143,16 +143,16 @@ class SessionDocumentManagerTest {
     }
 
     @Test
-    fun `serverToClient rewrites the workspace prefix`(@TempDir tmp: Path) {
-        val manager = buildManager(tmp)
-        val serverUri = tmp.resolve("snippet.semantifyr").toUri().toString()
+    fun `serverToClient rewrites the workspace prefix`(@TempDir temporaryDirectory: Path) {
+        val manager = buildManager(temporaryDirectory)
+        val serverUri = temporaryDirectory.resolve("snippet.semantifyr").toUri().toString()
         assertThat(manager.serverToClient(serverUri)).isEqualTo("file:///workspace/snippet.semantifyr")
     }
 
     @Test
-    fun `openExistingByServer reads the file from disk and does not change it`(@TempDir tmp: Path) {
-        val manager = buildManager(tmp)
-        val target = tmp.resolve("witness.semantifyr")
+    fun `openExistingByServer reads the file from disk and does not change it`(@TempDir temporaryDirectory: Path) {
+        val manager = buildManager(temporaryDirectory)
+        val target = temporaryDirectory.resolve("witness.semantifyr")
         Files.writeString(target, "package preexisting")
         val serverUri = target.toUri().toString()
 
@@ -165,9 +165,9 @@ class SessionDocumentManagerTest {
     }
 
     @Test
-    fun `openExistingByServer fails if the file does not exist`(@TempDir tmp: Path) {
-        val manager = buildManager(tmp)
-        val serverUri = tmp.resolve("ghost.semantifyr").toUri().toString()
+    fun `openExistingByServer fails if the file does not exist`(@TempDir temporaryDirectory: Path) {
+        val manager = buildManager(temporaryDirectory)
+        val serverUri = temporaryDirectory.resolve("ghost.semantifyr").toUri().toString()
         assertThatThrownBy {
             manager.openExistingByServer(serverUri)
         }.isInstanceOf(IllegalArgumentException::class.java)
@@ -175,40 +175,40 @@ class SessionDocumentManagerTest {
     }
 
     @Test
-    fun `toClientUri rewrites a workspace path uri to the workspace prefix`(@TempDir tmp: Path) {
-        val manager = buildManager(tmp)
-        val witnessPath = tmp.resolve(".artifacts").resolve("Case").resolve("witness.semantifyr")
+    fun `toClientUri rewrites a workspace path uri to the workspace prefix`(@TempDir temporaryDirectory: Path) {
+        val manager = buildManager(temporaryDirectory)
+        val witnessPath = temporaryDirectory.resolve(".artifacts").resolve("Case").resolve("witness.semantifyr")
         assertThat(manager.toClientUri(witnessPath.toUri().toString()))
             .isEqualTo("file:///workspace/.artifacts/Case/witness.semantifyr")
     }
 
     @Test
-    fun `toClientUri accepts the EMF single-slash file uri form`(@TempDir tmp: Path) {
-        val manager = buildManager(tmp)
-        val witnessPath = tmp.resolve(".artifacts").resolve("Case").resolve("witness.semantifyr")
+    fun `toClientUri accepts the EMF single-slash file uri form`(@TempDir temporaryDirectory: Path) {
+        val manager = buildManager(temporaryDirectory)
+        val witnessPath = temporaryDirectory.resolve(".artifacts").resolve("Case").resolve("witness.semantifyr")
         val emfStyleUri = URI.createFileURI(witnessPath.toAbsolutePath().normalize().toString()).toString()
         assertThat(manager.toClientUri(emfStyleUri))
             .isEqualTo("file:///workspace/.artifacts/Case/witness.semantifyr")
     }
 
     @Test
-    fun `toClientUri leaves uris outside the workspace untouched`(@TempDir tmp: Path) {
-        val manager = buildManager(tmp)
+    fun `toClientUri leaves uris outside the workspace untouched`(@TempDir temporaryDirectory: Path) {
+        val manager = buildManager(temporaryDirectory)
         val outside = "file:///tmp/semantifyr-1234/Case/witness.semantifyr"
         assertThat(manager.toClientUri(outside)).isEqualTo(outside)
     }
 
     @Test
-    fun `readDocumentText returns the in-memory text for an open document`(@TempDir tmp: Path) {
-        val manager = buildManager(tmp)
+    fun `readDocumentText returns the in-memory text for an open document`(@TempDir temporaryDirectory: Path) {
+        val manager = buildManager(temporaryDirectory)
         manager.openByClient("file:///workspace/snippet.semantifyr", "package x")
         assertThat(manager.readDocumentText("file:///workspace/snippet.semantifyr")).isEqualTo("package x")
     }
 
     @Test
-    fun `readDocumentText falls back to the on-disk content for a closed file`(@TempDir tmp: Path) {
-        val manager = buildManager(tmp)
-        val target = tmp.resolve(".artifacts").resolve("Case").resolve("witness.semantifyr")
+    fun `readDocumentText falls back to the on-disk content for a closed file`(@TempDir temporaryDirectory: Path) {
+        val manager = buildManager(temporaryDirectory)
+        val target = temporaryDirectory.resolve(".artifacts").resolve("Case").resolve("witness.semantifyr")
         Files.createDirectories(target.parent)
         Files.writeString(target, "package preexisting")
         assertThat(manager.readDocumentText("file:///workspace/.artifacts/Case/witness.semantifyr"))
@@ -216,14 +216,14 @@ class SessionDocumentManagerTest {
     }
 
     @Test
-    fun `readDocumentText returns null for a missing file`(@TempDir tmp: Path) {
-        val manager = buildManager(tmp)
+    fun `readDocumentText returns null for a missing file`(@TempDir temporaryDirectory: Path) {
+        val manager = buildManager(temporaryDirectory)
         assertThat(manager.readDocumentText("file:///workspace/ghost.semantifyr")).isNull()
     }
 
     @Test
-    fun `validation publishes each issue under the client uri with a zero-based range, its severity and its code`(@TempDir tmp: Path) {
-        val manager = buildManager(tmp)
+    fun `validation publishes each issue under the client uri with a zero-based range, its severity and its code`(@TempDir temporaryDirectory: Path) {
+        val manager = buildManager(temporaryDirectory)
         val model = """
             package test
 

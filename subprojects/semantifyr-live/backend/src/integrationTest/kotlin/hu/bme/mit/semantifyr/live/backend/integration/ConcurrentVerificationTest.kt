@@ -88,10 +88,10 @@ class ConcurrentVerificationTest {
     )
 
     @Test
-    suspend fun `one session verifies more cases at once than there are permits and every case gets its verdict`(@TempDir tmp: Path) {
+    suspend fun `one session verifies more cases at once than there are permits and every case gets its verdict`(@TempDir temporaryDirectory: Path) {
         StagedTestSupport.assumeStaged()
         val documentUri = "file:///workspace/concurrent.semantifyr"
-        withRealServer(StagedTestSupport.config(tmp, verification = VerificationConfig(concurrency = 2))) { client, port ->
+        withRealServer(StagedTestSupport.config(temporaryDirectory, verification = VerificationConfig(concurrency = 2))) { client, port ->
             client.webSocket("ws://localhost:$port/ws/lsp/oxsts") {
                 send(Frame.Text(LspWire.initializeRequest()))
                 awaitResponseFor(id = 1)
