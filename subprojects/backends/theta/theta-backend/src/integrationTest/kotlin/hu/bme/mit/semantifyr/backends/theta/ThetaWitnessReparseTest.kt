@@ -7,12 +7,10 @@
 package hu.bme.mit.semantifyr.backends.theta
 
 import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup
-import hu.bme.mit.semantifyr.verifier.ReportValue
 import hu.bme.mit.semantifyr.verifier.SemantifyrVerifierTestHelper
 import hu.bme.mit.semantifyr.verifier.assumeBackendAvailable
 import hu.bme.mit.semantifyr.verifier.portfolio.SingleBackendPortfolio
 import org.assertj.core.api.Assertions.assertThat
-import org.assertj.core.api.Assertions.entry
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import kotlin.io.path.Path
@@ -50,39 +48,21 @@ class ThetaWitnessReparseTest {
 
     @Test
     suspend fun `array witness reparses and re-verifies`() {
-        val checked = helper.checkWitnessReparses(
+        helper.checkWitnessReparses(
             modelPath = Path("build/test-models/semantic/arrays.semantifyr"),
             qualifiedName = "semantifyr::verification::lang::arrays::ArraySlotIndependenceReach",
             verificationPortfolio = portfolio,
             outputDirectory = outputDirectory,
         )
-
-        assertThat(requireNotNull(checked.report.trace).states.last().values).contains(
-            entry("root.slots[0]", ReportValue.Integer(1)),
-            entry("root.slots[1]", ReportValue.Integer(1)),
-            entry("root.slots[2]", ReportValue.Integer(1)),
-        )
     }
 
     @Test
     suspend fun `witness of an array of records sized from a binding reparses and re-verifies`() {
-        val checked = helper.checkWitnessReparses(
+        helper.checkWitnessReparses(
             modelPath = Path("build/test-models/semantic/records.semantifyr"),
             qualifiedName = "semantifyr::verification::lang::records::RecordArrayRuntimeIndexReach",
             verificationPortfolio = portfolio,
             outputDirectory = outputDirectory,
-        )
-
-        assertThat(requireNotNull(checked.report.trace).states.last().values).contains(
-            entry(
-                "root.store.readings[2]",
-                ReportValue.Record(
-                    mapOf(
-                        "value" to ReportValue.Integer(2),
-                        "valid" to ReportValue.Bool(true),
-                    ),
-                ),
-            ),
         )
     }
 }

@@ -102,14 +102,6 @@ class BackendTestModels @Inject constructor(
         return inlinedOxsts
     }
 
-    fun compile(
-        file: String,
-        className: String,
-        outputDirectory: Path,
-    ): InlinedOxsts {
-        return compileFlattened(file, className, outputDirectory).inlinedOxsts
-    }
-
     fun compileFlattened(
         file: String,
         className: String,

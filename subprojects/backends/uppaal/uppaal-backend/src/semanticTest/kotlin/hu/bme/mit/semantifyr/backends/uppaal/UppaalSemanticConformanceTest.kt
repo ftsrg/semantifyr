@@ -41,7 +41,7 @@ class UppaalSemanticConformanceTest {
         }
 
         @JvmStatic
-        fun `OXSTS Simple Test Suite Passes`(): List<Arguments> {
+        fun `OXSTS Semantic Test Suite Passes`(): List<Arguments> {
             return helper.collectAcceptedCasesAsArguments(
                 context,
                 UppaalBackend(),
@@ -56,7 +56,7 @@ class UppaalSemanticConformanceTest {
 
     @ParameterizedTest
     @MethodSource
-    suspend fun `OXSTS Simple Test Suite Passes`(verificationCase: VerificationCase) {
+    suspend fun `OXSTS Semantic Test Suite Passes`(verificationCase: VerificationCase) {
         helper.checkTestModel(
             context,
             verificationCase,

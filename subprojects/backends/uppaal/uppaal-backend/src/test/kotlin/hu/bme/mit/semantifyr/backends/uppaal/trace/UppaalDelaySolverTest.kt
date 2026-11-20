@@ -29,10 +29,10 @@ class UppaalDelaySolverTest {
 
     private fun test(
         clock: VariableDeclaration,
-        op: UppaalClockOp,
+        operator: UppaalClockOp,
         bound: Long,
     ): UppaalClockEdge {
-        return UppaalClockEdge.Test(listOf(UppaalClockAtom(clock, op, bound)))
+        return UppaalClockEdge.Test(listOf(UppaalClockAtom(clock, operator, bound)))
     }
 
     private fun reset(clock: VariableDeclaration): UppaalClockEdge {

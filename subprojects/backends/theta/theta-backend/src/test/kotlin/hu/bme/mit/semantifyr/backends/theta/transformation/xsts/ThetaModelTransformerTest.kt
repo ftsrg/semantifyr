@@ -239,17 +239,23 @@ class ThetaModelTransformerTest : ThetaTransformationTestBase() {
     }
 
     @Test
-    suspend fun `tracers are declared outside the control set`() {
-        val xsts = withTransformer {
-            it.transform(compile("tracing", "TracedChoiceBranchReach"), testXstsUri).xsts
-        }
+    suspend fun `a tracer, declared without the Control annotation, is declared outside the control set`() {
+        val tracer = TransitionTracerNames.tracerName(0)
+        val lines = xstsLines(
+            """
+                var $tracer : bool := false
+                init {
+                }
+                tran {
+                    $tracer := true
+                }
+                prop {
+                    AG true
+                }
+            """,
+        )
 
-        val tracers = xsts.variableDeclarations.filter {
-            TransitionTracerNames.isTracerName(it.name)
-        }
-        assertThat(tracers).isNotEmpty.noneMatch {
-            it.isControl
-        }
+        assertThat(lines).contains("var $tracer: boolean = false")
     }
 
     @Test
