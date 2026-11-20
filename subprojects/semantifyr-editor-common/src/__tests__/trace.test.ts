@@ -96,7 +96,6 @@ describe("formatReportValue", () => {
 
 describe("traceCalls", () => {
     const calls = trace({
-        root: "system",
         states: [{ values: {} }, { values: {} }, { values: {} }],
         steps: [
             {
@@ -104,20 +103,20 @@ describe("traceCalls", () => {
                 target: 1,
                 elapsed: 0,
                 calls: [
-                    { self: "system.track.transition", transition: "Transition::fire", arguments: { item: { speed: 2 } }, calls: [call("system.track.port", "Port::send")] },
+                    { self: "root.track.transition", transition: "Transition::fire", arguments: { item: { speed: 2 } }, calls: [call("root.track.port", "Port::send")] },
                 ],
             },
             { source: 1, target: 2, elapsed: 0, calls: [] },
         ],
     });
 
-    it("starts every step with the environment's call on the report's root, init first and main after it, which encloses the recorded calls", () => {
+    it("starts every step with the environment's call on the root instance, init first and main after it, which encloses the recorded calls", () => {
         const result = traceCalls(calls);
 
         expect(result.initialized.calls.map((entry) => {
             return [entry.self, entry.transition, entry.enclosing, entry.depth];
         })).toEqual([
-            ["system", "init", null, 0],
+            ["root", "init", null, 0],
         ]);
         expect(result.steps.map((step) => {
             return step.calls.map((entry) => {
@@ -125,12 +124,12 @@ describe("traceCalls", () => {
             });
         })).toEqual([
             [
-                ["system", "main", null, 0],
-                ["system.track.transition", "Transition::fire", 0, 1],
-                ["system.track.port", "Port::send", 1, 2],
+                ["root", "main", null, 0],
+                ["root.track.transition", "Transition::fire", 0, 1],
+                ["root.track.port", "Port::send", 1, 2],
             ],
             [
-                ["system", "main", null, 0],
+                ["root", "main", null, 0],
             ],
         ]);
     });
@@ -140,7 +139,7 @@ describe("traceCalls", () => {
     });
 
     it("has a lifeline for the root instance, then one per instance in the order of its first call", () => {
-        expect(traceCalls(calls).lifelines).toEqual(["system", "system.track.transition", "system.track.port"]);
+        expect(traceCalls(calls).lifelines).toEqual(["root", "root.track.transition", "root.track.port"]);
     });
 
     it("has no lifeline and no step when no call was recorded", () => {
