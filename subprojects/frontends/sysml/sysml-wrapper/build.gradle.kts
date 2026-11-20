@@ -24,7 +24,7 @@ dependencies {
     implementation(project(":logging"))
 }
 
-val sysmlCommit = "1517ac8d92b775c384ba1803237b207cc80ec78c" // fix: the reserved class names drop ConstraintReferenceExpression, which the library no longer declares
+val sysmlCommit = "fde763a0e37da7d7dd2c68aa18b0fcadf6a57aab" // feat: the SysML trace reads a report without a version and without missing calls
 val sysmlUrl = "https://github.com/arminzavada/sysml-2ls.git"
 val sysmlDir = layout.projectDirectory.dir("sysml-2ls")
 
