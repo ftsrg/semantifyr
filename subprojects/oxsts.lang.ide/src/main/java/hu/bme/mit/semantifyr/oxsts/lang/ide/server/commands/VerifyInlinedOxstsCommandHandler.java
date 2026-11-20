@@ -14,10 +14,12 @@ import hu.bme.mit.semantifyr.lang.ide.server.commands.AbstractCommandHandler;
 import hu.bme.mit.semantifyr.lang.ide.server.commands.CommandProgressContext;
 import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseRequest;
 import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseResult;
+import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationStatus;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts;
 import hu.bme.mit.semantifyr.verifier.SemantifyrVerifier;
 import hu.bme.mit.semantifyr.verifier.VerificationOutcome;
 import java.util.List;
+import java.util.concurrent.CancellationException;
 import org.eclipse.xtext.ide.server.ILanguageServerAccess;
 import org.eclipse.xtext.util.CancelIndicator;
 import org.slf4j.Logger;
@@ -93,6 +95,9 @@ public class VerifyInlinedOxstsCommandHandler
                         runBlocking(continuation -> verifier.verify(inlinedOxsts, progressContext, continuation));
                 LOGGER.info("LSP verify {}", outcome.getReport().getResult().getVerdict());
                 return VerificationCaseResult.fromOutcome(outcome, null);
+            } catch (CancellationException e) {
+                LOGGER.info("Verification cancelled");
+                return VerificationCaseResult.cancelled(VerificationStatus.CANCELLED_MESSAGE, portfolio.getId());
             } catch (Exception e) {
                 LOGGER.warn("Verification threw {}", e.getClass().getSimpleName(), e);
                 return VerificationCaseResult.errored(e.toString(), portfolio.getId());

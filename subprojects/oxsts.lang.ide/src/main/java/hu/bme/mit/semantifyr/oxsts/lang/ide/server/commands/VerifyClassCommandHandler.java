@@ -16,12 +16,14 @@ import hu.bme.mit.semantifyr.lang.ide.server.commands.AbstractCommandHandler;
 import hu.bme.mit.semantifyr.lang.ide.server.commands.CommandProgressContext;
 import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseRequest;
 import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseResult;
+import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationStatus;
 import hu.bme.mit.semantifyr.oxsts.lang.naming.OxstsQualifiedNameProvider;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration;
 import hu.bme.mit.semantifyr.verifier.SemantifyrVerifier;
 import hu.bme.mit.semantifyr.verifier.VerificationOutcome;
 import hu.bme.mit.semantifyr.verifier.discovery.VerificationCaseDiscoverer;
 import java.util.List;
+import java.util.concurrent.CancellationException;
 import org.eclipse.emf.common.util.URI;
 import org.eclipse.xtext.ide.server.ILanguageServerAccess;
 import org.eclipse.xtext.util.CancelIndicator;
@@ -125,6 +127,9 @@ public class VerifyClassCommandHandler
                     witnessOwners.record(URI.createURI(result.witnessUri()), caseResource);
                 }
                 return result;
+            } catch (CancellationException e) {
+                LOGGER.info("LSP verify '{}' cancelled", targetQualifiedName);
+                return VerificationCaseResult.cancelled(VerificationStatus.CANCELLED_MESSAGE, portfolio.getId());
             } catch (Exception e) {
                 LOGGER.error(
                         "LSP verify '{}' threw {}",

@@ -18,7 +18,9 @@ import hu.bme.mit.semantifyr.lang.ide.server.commands.AbstractCommandHandler;
 import hu.bme.mit.semantifyr.lang.ide.server.commands.CommandProgressContext;
 import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseRequest;
 import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseResult;
+import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationStatus;
 import java.util.List;
+import java.util.concurrent.CancellationException;
 import org.eclipse.xtext.ide.server.ILanguageServerAccess;
 import org.eclipse.xtext.util.CancelIndicator;
 import org.slf4j.Logger;
@@ -105,6 +107,9 @@ public class VerifyGammaCaseCommandHandler
                         gammaResult.getOutcome().getReport().getResult().getVerdict());
 
                 return toCaseResult(gammaResult);
+            } catch (CancellationException e) {
+                LOGGER.info("LSP verify '{}' cancelled", gammaCase.getQualifiedName());
+                return VerificationCaseResult.cancelled(VerificationStatus.CANCELLED_MESSAGE, portfolio.getId());
             } catch (Exception e) {
                 LOGGER.error(
                         "LSP verify '{}' threw {}",

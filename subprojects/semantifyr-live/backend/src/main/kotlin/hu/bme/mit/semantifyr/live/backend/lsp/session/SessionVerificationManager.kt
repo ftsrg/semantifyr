@@ -10,6 +10,7 @@ import com.google.inject.Inject
 import hu.bme.mit.semantifyr.backend.BackendMetrics
 import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseRequest
 import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseResult
+import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationStatus
 import hu.bme.mit.semantifyr.lang.ide.server.wire.WitnessValidationResult
 import hu.bme.mit.semantifyr.live.backend.BackendConfig
 import hu.bme.mit.semantifyr.live.backend.data.VerificationKind
@@ -84,7 +85,7 @@ class SessionVerificationManager @Inject constructor(
         var cancelled = false
 
         @Volatile
-        var cancellationMessage = "Verification cancelled"
+        var cancellationMessage = VerificationStatus.CANCELLED_MESSAGE
 
         @Volatile
         var state = VerificationState.Queued

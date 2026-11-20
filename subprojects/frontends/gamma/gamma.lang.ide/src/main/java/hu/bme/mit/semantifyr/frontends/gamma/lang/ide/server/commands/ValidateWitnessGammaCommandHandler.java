@@ -15,12 +15,14 @@ import hu.bme.mit.semantifyr.lang.ide.server.OxstsInjector;
 import hu.bme.mit.semantifyr.lang.ide.server.ServerSettings;
 import hu.bme.mit.semantifyr.lang.ide.server.commands.AbstractCommandHandler;
 import hu.bme.mit.semantifyr.lang.ide.server.commands.CommandProgressContext;
+import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationStatus;
 import hu.bme.mit.semantifyr.lang.ide.server.wire.WitnessValidationRequest;
 import hu.bme.mit.semantifyr.lang.ide.server.wire.WitnessValidationResult;
 import hu.bme.mit.semantifyr.verifier.VerificationOutcome;
 import java.net.URI;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.concurrent.CancellationException;
 import org.eclipse.xtext.ide.server.ILanguageServerAccess;
 import org.eclipse.xtext.util.CancelIndicator;
 import org.slf4j.Logger;
@@ -118,6 +120,9 @@ public class ValidateWitnessGammaCommandHandler
                         outcome.getReport().getResult().getVerdict());
 
                 return WitnessValidationResult.fromOutcome(outcome, portfolio.getId());
+            } catch (CancellationException e) {
+                LOGGER.info("LSP validate witness '{}' cancelled", gammaCase.getQualifiedName());
+                return WitnessValidationResult.cancelled(VerificationStatus.CANCELLED_MESSAGE, portfolio.getId());
             } catch (Exception e) {
                 LOGGER.error(
                         "LSP validate witness '{}' threw {}",
