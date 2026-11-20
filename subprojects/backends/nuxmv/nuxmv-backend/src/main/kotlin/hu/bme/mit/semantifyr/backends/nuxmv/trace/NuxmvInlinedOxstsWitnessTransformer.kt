@@ -47,7 +47,7 @@ class NuxmvInlinedOxstsWitnessTransformer @Inject constructor(
         val states = trace.states.mapIndexed { index, state ->
             for ((name, raw) in state.variableValues) {
                 val variable = resolver.stateVariableOf(name) ?: continue
-                val kind = nuxmvVariableTransformer.kindOf(variable)
+                val kind = nuxmvVariableTransformer.kindOf(variable) ?: error("The variable $name has no nuXmv kind")
                 if (kind == NuxmvVariableKind.Clock) {
                     runningClocks[variable] = parseReal(raw) ?: throw WitnessFailedException("nuXmv's trace holds $raw for $name, which is no value of a clock")
                     continue
@@ -86,38 +86,17 @@ class NuxmvInlinedOxstsWitnessTransformer @Inject constructor(
     }
 
     private fun parseReal(raw: String): Fraction? {
-        val negative = raw.startsWith("-")
-        val magnitude = raw.removePrefix("-")
-        val value = if (magnitude.startsWith("f'")) {
-            parseFraction(magnitude.removePrefix("f'"))
-        } else {
-            parseDecimal(magnitude)
-        } ?: return null
-        if (negative) {
-            return Fraction.of(value.numerator.negate(), value.denominator)
+        val whole = WHOLE_REAL.matchEntire(raw)
+        if (whole != null) {
+            return Fraction.of(BigInteger(whole.groupValues[1]))
         }
-        return value
-    }
-
-    private fun parseFraction(text: String): Fraction? {
-        return try {
-            Fraction.parse(text)
-        } catch (_: NumberFormatException) {
-            null
-        }
-    }
-
-    private fun parseDecimal(text: String): Fraction? {
-        val decimal = text.toBigDecimalOrNull() ?: return null
-        if (decimal.scale() <= 0) {
-            return Fraction.of(decimal.toBigIntegerExact())
-        }
-        return Fraction.of(decimal.unscaledValue(), BigInteger.TEN.pow(decimal.scale()))
+        val fraction = FRACTION_REAL.matchEntire(raw) ?: return null
+        return Fraction.of(BigInteger(fraction.groupValues[1] + fraction.groupValues[2]), BigInteger(fraction.groupValues[3]))
     }
 
     private fun parseValue(
         variable: VariableDeclaration,
-        kind: NuxmvVariableKind?,
+        kind: NuxmvVariableKind,
         raw: String,
     ): Expression? {
         return when (kind) {
@@ -136,7 +115,11 @@ class NuxmvInlinedOxstsWitnessTransformer @Inject constructor(
                 } ?: return null
                 OxstsFactory.createElementReference(literal)
             }
-            NuxmvVariableKind.Clock, null -> null
+            NuxmvVariableKind.Clock -> null
         }
     }
 }
+
+// the forms nuXmv prints a real in: a whole one as 2.0 or -1.0, any other as f'17/6 or -f'3/2
+private val WHOLE_REAL = Regex("(-?[0-9]+)\\.0")
+private val FRACTION_REAL = Regex("(-?)f'([0-9]+)/([1-9][0-9]*)")

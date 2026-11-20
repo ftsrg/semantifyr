@@ -82,7 +82,7 @@ class UppaalInlinedOxstsWitnessTransformer @Inject constructor(
     ) {
         for ((name, raw) in state.variableValues) {
             val variable = resolver.stateVariableOf(name) ?: continue
-            val kind = uppaalVariableTransformer.kindOf(variable)
+            val kind = uppaalVariableTransformer.kindOf(variable) ?: error("The variable $name has no Uppaal kind")
             if (kind == UppaalVariableKind.Clock) {
                 continue
             }
@@ -120,7 +120,7 @@ class UppaalInlinedOxstsWitnessTransformer @Inject constructor(
 
     private fun parseValue(
         variable: VariableDeclaration,
-        kind: UppaalVariableKind?,
+        kind: UppaalVariableKind,
         raw: String,
     ): Expression? {
         return when (kind) {
@@ -129,7 +129,7 @@ class UppaalInlinedOxstsWitnessTransformer @Inject constructor(
             }
             UppaalVariableKind.Boolean -> parseBooleanValue(raw)
             UppaalVariableKind.Enum -> parseEnumValue(variable, raw)
-            UppaalVariableKind.Clock, null -> null
+            UppaalVariableKind.Clock -> null
         }
     }
 
