@@ -19,17 +19,18 @@ class SysMLConformanceTests {
         private val helper = SysMLv2FrontendTestHelper()
         private val artifactRoot = SysMLv2FrontendTestHelper.testArtifactRoot(SysMLConformanceTests::class.java)
 
+        // the model tests run every other case through the launcher, which selects no library variant
         @JvmStatic
-        fun `Conformance Model Cases Reach Their Expected Verdict`(): List<CorpusEntry> {
+        fun `Cases Of A Library Variant Reach Their Expected Verdict`(): List<CorpusEntry> {
             return SysMLCorpus.load().entries.filter {
-                it.model.conformance && it.case.tier != CorpusTier.Nightly
+                it.model.variant != SysMLv2Variant.Default && it.case.tier != CorpusTier.Nightly
             }
         }
     }
 
     @ParameterizedTest(name = "{0}")
     @MethodSource
-    suspend fun `Conformance Model Cases Reach Their Expected Verdict`(entry: CorpusEntry) {
+    suspend fun `Cases Of A Library Variant Reach Their Expected Verdict`(entry: CorpusEntry) {
         val frontend = helper.buildFrontend(entry, Portfolios.SmartFull, artifactRoot)
         helper.checkConformance(frontend, entry)
     }
