@@ -8,7 +8,6 @@ package hu.bme.mit.semantifyr.lang.ide.wire;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
-import com.google.gson.JsonParser;
 import com.google.gson.TypeAdapter;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
@@ -33,16 +32,7 @@ public final class VerificationReportAdapter extends TypeAdapter<VerificationRep
             out.nullValue();
             return;
         }
-        // lsp4j's writer drops nulls, the report's TypeScript mirror declares its null fields present
-        var serializeNulls = out.getSerializeNulls();
-        out.setSerializeNulls(true);
-        try {
-            ELEMENT.write(
-                    out,
-                    JsonParser.parseString(JSON.encodeToString(VerificationReport.Companion.serializer(), report)));
-        } finally {
-            out.setSerializeNulls(serializeNulls);
-        }
+        out.jsonValue(JSON.encodeToString(VerificationReport.Companion.serializer(), report));
     }
 
     @Override
