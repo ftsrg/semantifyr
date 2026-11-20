@@ -19,6 +19,8 @@ import org.eclipse.xtext.validation.CheckMode;
 import org.eclipse.xtext.validation.IResourceValidator;
 import org.eclipse.xtext.validation.Issue;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 @InjectWithOxsts
 public class TimeScaleValidationTest {
@@ -29,9 +31,11 @@ public class TimeScaleValidationTest {
     @Inject
     private IResourceValidator resourceValidator;
 
-    @Test
-    void witnessWithATimeScaleAboveOneIsAccepted() throws Exception {
-        assertThat(validate("witness of semantifyr::Anything timescale 2")).isEmpty();
+    @ParameterizedTest
+    @ValueSource(ints = {1, 2})
+    void witnessWithATimeScaleOfAtLeastOneIsAccepted(int timeScale) throws Exception {
+        assertThat(validate("witness of semantifyr::Anything timescale " + timeScale))
+                .isEmpty();
     }
 
     @Test
