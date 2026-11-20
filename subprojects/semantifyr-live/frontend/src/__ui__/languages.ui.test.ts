@@ -69,7 +69,6 @@ describe('initialization', () => {
 })
 
 interface Shown {
-  path: string
   initializing: string | null
   rows: string[]
   marks: string[]
@@ -90,7 +89,6 @@ async function shown(page: Page): Promise<Shown> {
     })
     const initialization = document.querySelector<HTMLElement>('.results .initialization')
     return {
-      path: `${location.pathname}${location.search}`,
       initializing: initialization ? initialization.innerText : null,
       rows: [...document.querySelectorAll('.results .case-row')].map((row) => {
         return stateOf([...row.classList], 'status-').join(' ')
@@ -111,6 +109,7 @@ async function marksAreTheCases(page: Page): Promise<void> {
   await expect.poll(async () => {
     return (await shown(page)).initializing
   }).toBeNull()
+  await page.locator('.tabs [role="tab"]').first().click()
   await expect.poll(async () => {
     const now = await shown(page)
     expect(now.doubled).toEqual([])
@@ -130,7 +129,7 @@ describe('a switch', () => {
       }
       return recorded()
     })
-    const page = await ui.open('/language/modeling-and-verification', { height: 2000 })
+    const page = await ui.open('/language/modeling-and-verification', { height: 5800 })
     await expect.poll(async () => {
       return page.locator('.results .initialization-step.is-current').innerText()
     }).toContain('Finding the verification cases')
@@ -143,7 +142,7 @@ describe('a switch', () => {
   })
 
   test('after a run leaves in the margin the marks of the shown model alone, there and back', async ({ ui }) => {
-    const page = await ui.open('/language/level-crossing', { height: 2000 })
+    const page = await ui.open('/language/level-crossing', { height: 5800 })
     await casesListed(page)
     await results(page).verifyAll.click()
     await expect.poll(async () => {
@@ -160,14 +159,13 @@ describe('a switch', () => {
   })
 
   test('from a read-only document leaves in the margin the marks of the model alone', async ({ ui }) => {
-    const page = await ui.open('/language/level-crossing', { height: 2000 })
+    const page = await ui.open('/language/level-crossing', { height: 5800 })
     await casesListed(page)
     await page.getByRole('button', { name: 'Read-only documents' }).click()
     await page.locator('.documents-group:not([aria-label="Selected case"]):not([aria-label="Model"]) .menu-item').first().click()
 
     await page.locator('.language-switch [role=group] button', { hasText: 'Gamma' }).click()
     await casesListed(page)
-    await page.locator('.tabs [role="tab"]').first().click()
 
     await marksAreTheCases(page)
   })
