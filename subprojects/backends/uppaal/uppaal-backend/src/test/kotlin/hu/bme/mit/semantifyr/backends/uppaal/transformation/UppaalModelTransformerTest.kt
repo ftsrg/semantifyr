@@ -528,7 +528,11 @@ class UppaalModelTransformerTest : UppaalTransformationTestBase() {
         val boundaries = template.locations.filter {
             it.name.endsWith("Start") || it.name.endsWith("Running")
         }
-        assertThat(boundaries.map { it.id }).containsExactly("start", "running")
+        assertThat(
+            boundaries.map {
+                it.id
+            },
+        ).containsExactly("start", "running")
     }
 
     @Test
