@@ -28,6 +28,20 @@ class ClockBoundCheckerTest : FlatteningTestBase() {
     }
 
     @Test
+    fun `a run-time bound forwarded through a second call is refused`() {
+        val exception = assertThrows<IllegalStateException> {
+            flatten("RelayedRunTimeBound", MODEL)
+        }
+
+        assertThat(exception.message).contains("known only at run time")
+    }
+
+    @Test
+    fun `a constant bound forwarded through a second call compiles`() {
+        flatten("RelayedCompileTimeBound", MODEL)
+    }
+
+    @Test
     fun `a clock that the verified property reads through a property it calls is refused`() {
         val exception = assertThrows<IllegalStateException> {
             flatten("PropertyReadsClock", MODEL)
@@ -103,6 +117,41 @@ class ClockBoundCheckerTest : FlatteningTestBase() {
 
                 redefine tran {
                     inline timer.expire(3)
+                }
+
+                prop {
+                    return AG true
+                }
+            }
+
+            class Relay {
+                contains timer: Timer
+
+                tran relay(limit: int) {
+                    inline timer.expire(limit)
+                }
+            }
+
+            @VerificationCase
+            class RelayedRunTimeBound {
+                contains relay: Relay
+                var limit: int := 3
+
+                redefine tran {
+                    inline relay.relay(limit)
+                }
+
+                prop {
+                    return AG true
+                }
+            }
+
+            @VerificationCase
+            class RelayedCompileTimeBound {
+                contains relay: Relay
+
+                redefine tran {
+                    inline relay.relay(3)
                 }
 
                 prop {
