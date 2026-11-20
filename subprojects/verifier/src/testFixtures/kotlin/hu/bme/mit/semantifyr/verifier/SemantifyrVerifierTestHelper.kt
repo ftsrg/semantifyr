@@ -106,6 +106,20 @@ class SemantifyrVerifierTestHelper @Inject constructor(
         }
     }
 
+    fun <T : BackendConfig> collectApproximatedCasesAsArguments(
+        context: SemantifyrModelContext,
+        backend: VerificationBackend<T>,
+        config: T,
+        outputDirectory: Path,
+        filter: CaseFilter = CaseFilter.All,
+    ): List<Arguments> {
+        return collectSupportedCases(context, backend, config, outputDirectory, filter).filter {
+            !it.loweredExactly
+        }.map {
+            Arguments.of(Named.of(it.case.qualifiedName, it.case))
+        }
+    }
+
     fun <T : BackendConfig> collectSupportedCasesAsArguments(
         context: SemantifyrModelContext,
         backend: VerificationBackend<T>,
