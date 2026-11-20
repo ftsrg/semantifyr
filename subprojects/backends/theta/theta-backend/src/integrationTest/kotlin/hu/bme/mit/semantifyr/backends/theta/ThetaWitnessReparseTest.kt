@@ -15,7 +15,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.entry
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
-import java.math.BigInteger
 import kotlin.io.path.Path
 
 class ThetaWitnessReparseTest {
@@ -59,9 +58,9 @@ class ThetaWitnessReparseTest {
         )
 
         assertThat(requireNotNull(checked.report.trace).states.last().values).contains(
-            entry("root.slots[0]", ReportValue.Integer(BigInteger.ONE)),
-            entry("root.slots[1]", ReportValue.Integer(BigInteger.ONE)),
-            entry("root.slots[2]", ReportValue.Integer(BigInteger.ONE)),
+            entry("root.slots[0]", ReportValue.Integer(1)),
+            entry("root.slots[1]", ReportValue.Integer(1)),
+            entry("root.slots[2]", ReportValue.Integer(1)),
         )
     }
 
@@ -79,7 +78,7 @@ class ThetaWitnessReparseTest {
                 "root.store.readings[2]",
                 ReportValue.Record(
                     mapOf(
-                        "value" to ReportValue.Integer(BigInteger.TWO),
+                        "value" to ReportValue.Integer(2),
                         "valid" to ReportValue.Bool(true),
                     ),
                 ),
