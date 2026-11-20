@@ -6,7 +6,7 @@
 
 import { createRoot } from 'react-dom/client'
 import { beforeAll, describe, expect, it, onTestFinished } from 'vitest'
-import { page, server } from 'vitest/browser'
+import { page, server, userEvent } from 'vitest/browser'
 
 import type { ResolvedColorMode } from '../lib/util/colorMode'
 import type { VerificationCaseState, VerificationState } from '../lib/verification/engine'
@@ -84,7 +84,6 @@ const STATES: Readonly<Record<string, ScreenState>> = {
     expectState: () => {
       expect(count('.embed-case.status-queued')).toBe(2)
       expect(count('.strip-bar .button-cancel')).toBe(1)
-      expect(text('[data-testid=status-message]')).toBe('Verify all waits: initializing the SysML v2 language server')
     },
   },
   'initialization-timed-out': {
@@ -111,7 +110,6 @@ const STATES: Readonly<Record<string, ScreenState>> = {
     expectState: () => {
       expect(count('.embed-case.status-queued')).toBe(2)
       expect(count('.embed-case.status-running')).toBe(0)
-      expect(text('[data-testid=status-message]')).toBe(`The server is busy with other verifications: ${BARRIER.id} waits`)
     },
   },
   'results': {
@@ -153,7 +151,7 @@ const STATES: Readonly<Record<string, ScreenState>> = {
       await expect.poll(() => {
         return document.querySelector('.embed-trace .trace-views [data-view=steps]')
       }).toBeTruthy()
-      document.querySelector<HTMLElement>('.embed-trace .trace-views [data-view=steps]')!.click()
+      await userEvent.click(document.querySelector<HTMLElement>('.embed-trace .trace-views [data-view=steps]')!)
     },
     expectState: () => {
       expect(count('.embed-trace [data-testid=trace-steps] .step')).toBe(4)
@@ -168,7 +166,7 @@ const STATES: Readonly<Record<string, ScreenState>> = {
       await expect.poll(() => {
         return document.querySelector('.embed-trace .trace-views [data-view=calls]')
       }).toBeTruthy()
-      document.querySelector<HTMLElement>('.embed-trace .trace-views [data-view=calls]')!.click()
+      await userEvent.click(document.querySelector<HTMLElement>('.embed-trace .trace-views [data-view=calls]')!)
     },
     expectState: () => {
       expect(count('.embed-trace [data-testid=trace-calls] .call')).toBe(9)

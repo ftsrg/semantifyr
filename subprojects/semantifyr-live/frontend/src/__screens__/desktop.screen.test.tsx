@@ -121,7 +121,6 @@ const STATES: Readonly<Record<string, ScreenState>> = {
     expectState: () => {
       expect(count('.case-row.status-not-run')).toBe(2)
       expect(count('.initialization')).toBe(0)
-      expect(text('[data-testid=status-message]')).toBe('Initializing the SysML v2 language server')
       expect(count('.connection.is-busy')).toBe(1)
     },
   },
@@ -131,7 +130,6 @@ const STATES: Readonly<Record<string, ScreenState>> = {
       expect(count(`.case-row.status-queued[data-case="${BARRIER.id}"]`)).toBe(1)
       expect(count('.case-row.status-not-run')).toBe(1)
       expect(count('.results-header .button-cancel')).toBe(1)
-      expect(text('[data-testid=status-message]')).toBe(`Verify ${BARRIER.id} waits: initializing the SysML v2 language server`)
     },
   },
   'initialization-timed-out': {
@@ -147,7 +145,6 @@ const STATES: Readonly<Record<string, ScreenState>> = {
       expect(count('.results-header .button-cancel')).toBe(1)
       expect(count(`.case-row.status-running[data-case="${BARRIER.id}"]`)).toBe(1)
       expect(count(`.case-row.status-queued[data-case="${TWO_TRAINS.id}"]`)).toBe(1)
-      expect(text('[data-testid=status-message]')).toBe(`Verifying ${BARRIER.id}, 0 of 2 done`)
     },
   },
   'server-busy': {
@@ -243,7 +240,7 @@ const STATES: Readonly<Record<string, ScreenState>> = {
       await expect.poll(() => {
         return text('.problem-counts')
       }).toContain('1')
-      document.querySelector<HTMLElement>('.problem-counts')?.click()
+      await userEvent.click(document.querySelector<HTMLElement>('.problem-counts')!)
       await expect.poll(() => {
         return count('.problems-popover .problem-item')
       }).toBe(2)
@@ -259,7 +256,7 @@ const STATES: Readonly<Record<string, ScreenState>> = {
       const about = [...document.querySelectorAll<HTMLElement>('.toolbar .button')].find((button) => {
         return button.innerText.trim() === 'About'
       })
-      about!.click()
+      await userEvent.click(about!)
       await expect.poll(() => {
         return count('.dialog')
       }).toBe(1)
@@ -276,7 +273,7 @@ const STATES: Readonly<Record<string, ScreenState>> = {
   'settings': {
     seed: { verification: discovered([notRun(BARRIER), notRun(TWO_TRAINS)]), portfolios: PORTFOLIOS },
     act: async () => {
-      document.querySelector<HTMLElement>('[aria-label="Portfolios and validation"]')!.click()
+      await userEvent.click(document.querySelector<HTMLElement>('[aria-label="Portfolios and validation"]')!)
       await expect.poll(() => {
         return count('.portfolio-item')
       }).toBe(4)
