@@ -184,6 +184,32 @@ val generatedReference = listOf(
     generatedReferenceTask("verdicts"),
 )
 
+// written for the alias @generated-witness: the witness model the verifier derives from the stored timed report
+val witnessReferenceDir = rootProject.layout.projectDirectory.dir("oxsts-test-models/witness")
+val generatedWitnessDir = layout.buildDirectory.dir("generated-witness")
+
+val generatedWitness = tasks.register<JavaExec>("generatedWitness") {
+    classpath = generate.runtimeClasspath
+    mainClass = "hu.bme.mit.semantifyr.website.GenerateWitnessKt"
+    jvmArgs("-Dguice_bytecode_gen_option=DISABLED")
+    inputs.file(witnessReferenceDir.file("blinker.semantifyr")).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.file(witnessReferenceDir.file("blinker.report.json")).withPathSensitivity(PathSensitivity.RELATIVE)
+    outputs.dir(generatedWitnessDir)
+    outputs.cacheIf { true }
+    val outputDirectory = generatedWitnessDir.get().asFile
+    // relative paths keep the arguments, and so the cache key, the same in every checkout
+    workingDir = outputDirectory
+    args(
+        witnessReferenceDir.file("blinker.semantifyr").asFile.relativeTo(outputDirectory).invariantSeparatorsPath,
+        witnessReferenceDir.file("blinker.report.json").asFile.relativeTo(outputDirectory).invariantSeparatorsPath,
+        "blinker.witness.$oxstsFileExtension",
+    )
+    doFirst {
+        outputDirectory.deleteRecursively()
+        outputDirectory.mkdirs()
+    }
+}
+
 tasks.npmInstall {
     workingDir = rootProject.projectDir
 }
@@ -271,6 +297,7 @@ fun NpmTask.configureSharedInputs() {
     inputs.file(rootProject.layout.projectDirectory.file("deploy/live/env.example")).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.file(rootProject.layout.projectDirectory.file("subprojects/semantifyr-vscode/package.json")).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.file(sourceAliasesFile).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.files(generatedWitness).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(sourceAliasDirectories).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(servedExampleSources()).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.dir(lessonStagesDir).withPathSensitivity(PathSensitivity.RELATIVE)
@@ -465,6 +492,9 @@ tasks {
         // the completeness test reads the models the pages import through the source aliases
         inputs.file(sourceAliasesFile)
             .withPropertyName("sourceAliases")
+            .withPathSensitivity(PathSensitivity.RELATIVE)
+        inputs.files(generatedWitness)
+            .withPropertyName("generatedWitness")
             .withPathSensitivity(PathSensitivity.RELATIVE)
         inputs.files(sourceAliasDirectories)
             .withPropertyName("importedModels")
