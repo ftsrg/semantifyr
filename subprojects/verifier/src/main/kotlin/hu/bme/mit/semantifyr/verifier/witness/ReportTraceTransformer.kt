@@ -11,6 +11,7 @@ import hu.bme.mit.semantifyr.compiler.pipeline.context.ArraySlot
 import hu.bme.mit.semantifyr.compiler.pipeline.context.FlattenedCompilationContext
 import hu.bme.mit.semantifyr.compiler.pipeline.inlining.ArgumentTrace
 import hu.bme.mit.semantifyr.compiler.pipeline.inlining.TransitionCallTrace
+import hu.bme.mit.semantifyr.compiler.pipeline.instantiation.InstanceNames
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.eAllOfType
 import hu.bme.mit.semantifyr.oxsts.lang.naming.OxstsQualifiedNameProvider
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssignmentOperation
@@ -44,6 +45,7 @@ class ReportTraceTransformer @Inject constructor(
     )
 
     fun transform(classWitness: ClassWitness, compilation: FlattenedCompilationContext): ReportTrace {
+        checkRootName(compilation)
         val siteOrder = siteOrder(compilation)
         val states = listOf(classWitness.initializedState) + classWitness.transitionStates
         val entries = states.map {
@@ -56,7 +58,6 @@ class ReportTraceTransformer @Inject constructor(
             }
         }
         return ReportTrace(
-            root = rootName(compilation),
             transitions = observedTransitions(compilation, siteOrder),
             variables = variables.values.toList(),
             initial = ReportInitialEntry(
@@ -81,13 +82,17 @@ class ReportTraceTransformer @Inject constructor(
         )
     }
 
-    private fun rootName(compilation: FlattenedCompilationContext): String {
-        val root = compilation.rootInstance.children.map {
+    private fun checkRootName(compilation: FlattenedCompilationContext) {
+        val names = compilation.rootInstance.children.map {
             it.domain
-        }.singleOrNull {
+        }.filter {
             it.eContainer() !is OxstsModelPackage
-        } as? NamedElement ?: error("the inlined model has no single root instance")
-        return root.name
+        }.filterIsInstance<NamedElement>().map {
+            it.name
+        }
+        if (names != listOf(InstanceNames.ROOT_FEATURE_NAME)) {
+            error("the root instance is named ${InstanceNames.ROOT_FEATURE_NAME} by convention, the verified model names it ${names.joinToString(", ")}")
+        }
     }
 
     private fun siteOrder(compilation: FlattenedCompilationContext): Map<VariableDeclaration, Int> {

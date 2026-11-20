@@ -8,6 +8,9 @@ import type { ReportCall, ReportState, ReportStep, ReportTrace, ReportValue } fr
 
 const CLOCK_TYPE = "semantifyr::clock";
 
+// every path in a report starts at the root instance, named so by convention
+export const ROOT_INSTANCE = "root";
+
 export interface TraceValue {
     variable: string;
     value: string;
@@ -141,11 +144,11 @@ export function traceCalls(trace: ReportTrace): TraceCalls {
         return { initialized: { calls: [], elapsed: null }, steps: [], lifelines: [] };
     }
     const elapsed = elapsedOf(trace);
-    const initialized = callStepOf(trace.root, "init", trace.initial.calls, null);
+    const initialized = callStepOf(ROOT_INSTANCE, "init", trace.initial.calls, null);
     const steps = trace.steps.map((step) => {
-        return callStepOf(trace.root, "main", step.calls, elapsed(step));
+        return callStepOf(ROOT_INSTANCE, "main", step.calls, elapsed(step));
     });
-    const lifelines = new Set<string>([trace.root]);
+    const lifelines = new Set<string>([ROOT_INSTANCE]);
     for (const step of [initialized, ...steps]) {
         for (const call of step.calls) {
             lifelines.add(call.self);

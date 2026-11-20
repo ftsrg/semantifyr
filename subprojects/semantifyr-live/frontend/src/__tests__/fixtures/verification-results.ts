@@ -15,7 +15,6 @@ export const sampleReport = reportOf({
   soundness: 'UnderApproximating',
   message: 'property fails',
   trace: {
-    root: 'root',
     transitions: [],
     variables: [],
     initial: { state: 0, calls: [] },

@@ -12,7 +12,7 @@ import type { LspClient } from '../../lib/verification/engine'
 const fileUri = 'file:///workspace/snippet.sysml'
 const sysmlRange = { start: { line: 4, character: 0 }, end: { line: 9, character: 1 } }
 const oxstsRange = { start: { line: 40, character: 0 }, end: { line: 60, character: 1 } }
-const report = { kind: 'run', verificationCase: 'semantifyr::sysml::model::LampNeverLit', portfolioId: 'smart', result: { verdict: 'Failed', message: null }, trace: { root: 'root', steps: [] } } as unknown as VerificationReport
+const report = { kind: 'run', verificationCase: 'semantifyr::sysml::model::LampNeverLit', portfolioId: 'smart', result: { verdict: 'Failed', message: null }, trace: { steps: [] } } as unknown as VerificationReport
 const nameMap = { modelHash: 'abc' }
 const witnessUri = 'file:///workspace/.artifacts/case/witness.semantifyr'
 

@@ -308,7 +308,6 @@ class GammaTraceGeneratorTest {
             ReportState(it.second)
         }
         val trace = ReportTrace(
-            root = "root",
             transitions = emptyList(),
             variables = states.flatMap {
                 it.values.entries

@@ -173,7 +173,6 @@ export interface ReportStep {
 }
 
 export interface ReportTrace {
-    root: string;
     transitions: ObservedTransition[];
     variables: ObservedVariable[];
     initial: ReportInitialEntry;

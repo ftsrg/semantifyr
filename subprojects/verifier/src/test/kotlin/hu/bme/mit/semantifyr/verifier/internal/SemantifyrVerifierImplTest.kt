@@ -308,6 +308,23 @@ class SemantifyrVerifierImplTest {
     }
 
     @Test
+    suspend fun `a model that names its root instance otherwise fails the read-back of its witness`(@TempDir output: Path) {
+        val portfolio = ScriptedPortfolio { request, _ ->
+            decisiveResult(VerificationVerdict.Passed).copy(
+                inlinedWitness = linearInlinedWitness(request.inlinedOxsts, listOf(WitnessState(emptyList(), emptyList(), Fraction.ZERO))),
+            )
+        }
+        val case = loadFirstCase()
+        val witness = loadWitness(case, output.resolve("renamed.semantifyr"), rootName = "system")
+
+        val outcome = build(portfolio, output).verify(witness)
+
+        assertThat(outcome.report.result.verdict).isEqualTo(VerificationVerdict.Errored)
+        assertThat(outcome.report.result.message).contains("the root instance is named root by convention")
+        assertThat(outcome.report.trace).isNull()
+    }
+
+    @Test
     suspend fun `re-verifying a witness keeps the verify's artifacts and leaves the witness model unchanged`(@TempDir output: Path) {
         val portfolio = ScriptedPortfolio { _, _ -> decisiveResult(VerificationVerdict.Passed) }
         val verifier = build(portfolio, output)
@@ -359,31 +376,35 @@ class SemantifyrVerifierImplTest {
         )
     }
 
-    private fun loadWitness(case: VerificationCase, witnessPath: Path): InlinedOxsts {
+    private fun loadWitness(
+        case: VerificationCase,
+        witnessPath: Path,
+        rootName: String = "root",
+    ): InlinedOxsts {
         witnessPath.writeText(
             """
             witness of semantifyr::verification::simple::Incrementing
 
             var step: int := 0
 
-            contains root: semantifyr::verification::simple::Incrementing
+            contains $rootName: semantifyr::verification::simple::Incrementing
 
             init {
                 assume(step == 0)
-                inline root.init()
-                assume(root.x == 1)
+                inline $rootName.init()
+                assume($rootName.x == 1)
                 step := 1
             }
 
             tran {
                 assume(step == 1)
-                inline root.main()
-                assume(root.x == 2)
+                inline $rootName.main()
+                assume($rootName.x == 2)
                 step := 2
             }
 
             prop {
-                root.prop()
+                $rootName.prop()
             }
             """.trimIndent(),
         )

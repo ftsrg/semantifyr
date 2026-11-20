@@ -18,7 +18,6 @@ function entry(self: string, transition: string, calls: ReportCall[] = [], argum
 
 function traceOf(...calls: ReportCall[]): ReportTrace {
   return {
-    root: 'root',
     transitions: [],
     variables: [],
     initial: { state: 0, calls: [] },

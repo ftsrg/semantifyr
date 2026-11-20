@@ -90,7 +90,6 @@ data class ReportStep(
 
 @Serializable
 data class ReportTrace(
-    val root: String,
     val transitions: List<ObservedTransition>,
     val variables: List<ObservedVariable>,
     val initial: ReportInitialEntry,

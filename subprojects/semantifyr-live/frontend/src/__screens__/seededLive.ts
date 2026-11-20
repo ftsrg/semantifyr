@@ -292,7 +292,6 @@ export function caseOf(id: string, line: number, uri = 'file:///workspace/snippe
 }
 
 const EMPTY_TRACE: ReportTrace = {
-  root: 'root',
   transitions: [],
   variables: [],
   initial: { state: 0, calls: [] },

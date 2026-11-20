@@ -25,7 +25,6 @@ export const reachableCase: VerificationCaseSpecification = {
 };
 
 export const counterexample: ReportTrace = {
-    root: 'root',
     transitions: [
         {
             transition: 'lamp::Lamp::toggle',

@@ -9,6 +9,7 @@ package hu.bme.mit.semantifyr.frontends.gamma.trace
 import com.google.inject.Inject
 import com.google.inject.Provider
 import hu.bme.mit.semantifyr.backend.witness.Fraction
+import hu.bme.mit.semantifyr.compiler.pipeline.instantiation.InstanceNames
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.Act
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.AsynchronousAdapterDeclaration
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.BooleanType
@@ -283,7 +284,7 @@ class GammaTraceGenerator @Inject constructor(
     ) {
         fun resolveOrNull(path: String): List<EObject>? {
             val names = path.split('.')
-            if (names.first() != ROOT_FEATURE) {
+            if (names.first() != InstanceNames.ROOT_FEATURE_NAME) {
                 return null
             }
             return nameMap.resolveOrNull(verificationCase, names.drop(1))
@@ -318,7 +319,6 @@ class GammaTraceGenerator @Inject constructor(
     }
 
     companion object {
-        private const val ROOT_FEATURE = "root"
         private const val TRACE_RESOURCE_NAME = "trace.get"
         private const val RAISE_INPUT_EVENT = "semantifyr::gamma::ports::Port::raiseInputEvent"
         private const val SET_OUTPUT_EVENT = "semantifyr::gamma::ports::Port::setOutputEvent"

@@ -9,6 +9,7 @@ package hu.bme.mit.semantifyr.compiler.pipeline
 import com.google.inject.Inject
 import hu.bme.mit.semantifyr.compiler.pipeline.context.CreatedCompilationContext
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.RedefinitionAwareReferenceResolver
+import hu.bme.mit.semantifyr.compiler.pipeline.instantiation.InstanceNames
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.sourceError
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinSymbolResolver
@@ -51,7 +52,7 @@ class InlinedOxstsModelCreator @Inject constructor(
             it.typeSpecification = OxstsFactory.createTypeSpecification().also {
                 it.domain = inlinedOxsts.classDeclaration
             }
-            it.name = "root"
+            it.name = InstanceNames.ROOT_FEATURE_NAME
         }
 
         inlinedOxsts.initTransition = createTransitionDeclaration(inlinedOxsts, builtinSymbolResolver.anythingInitTransition(inlinedOxsts))

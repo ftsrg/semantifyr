@@ -122,7 +122,6 @@ const ELAPSED: readonly Fraction[] = [
 
 function traceOf(recorded: boolean, timed: boolean): ReportTrace {
   return {
-    root: 'root',
     transitions: [],
     variables: Object.keys(START).map((variable) => {
       return { variable: `root.system.${variable}`, type: { kind: 'class', name: 'semantifyr::Anything' }, slot: null }

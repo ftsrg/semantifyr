@@ -286,7 +286,6 @@ class BackAnnotationFidelityTest {
         val annotated = backAnnotate(compilation, witness)
 
         val trace = annotated.trace
-        assertThat(trace.root).isEqualTo("root")
         assertThat(trace.initial).isEqualTo(ReportInitialEntry(state = 0, calls = emptyList()))
         assertThat(trace.states).hasSize(2)
         assertThat(trace.states[1].values).containsEntry("root.kitchen.lamp.on", ReportValue.Bool(true))
@@ -488,7 +487,6 @@ class BackAnnotationFidelityTest {
         val annotated = backAnnotate(compilation, witness)
 
         val trace = annotated.trace
-        assertThat(trace.root).isEqualTo("root")
         assertThat(trace.states.last().values.values).containsExactly(ReportValue.Integer(1))
         assertThat(annotated.assumptions).anySatisfy {
             assertThat(it).matches(".*counter\\.tick == 1")
@@ -514,7 +512,6 @@ class BackAnnotationFidelityTest {
         val annotated = backAnnotate(compilation, witness)
 
         val trace = annotated.trace
-        assertThat(trace.root).isEqualTo("root")
         assertThat(trace.states.last().values).containsEntry("root.x", ReportValue.Integer(1))
         assertThat(annotated.assumptions).contains("root.x == 1")
     }
@@ -592,7 +589,6 @@ class BackAnnotationFidelityTest {
         val case = loadText(models, "timed.semantifyr", TIMED_MODEL, TIMED_CASE)
         val tiny = Fraction.of(BigInteger.ONE, BigInteger.TWO.pow(40))
         val trace = ReportTrace(
-            root = "root",
             transitions = emptyList(),
             variables = listOf(
                 ObservedVariable("root.timer.elapsed", ReportType(ReportTypeKind.Datatype, "semantifyr::clock")),
@@ -679,7 +675,6 @@ class BackAnnotationFidelityTest {
 
     private fun timedTrace(state: ReportState): ReportTrace {
         return ReportTrace(
-            root = "root",
             transitions = emptyList(),
             variables = state.values.keys.map {
                 ObservedVariable(it, ReportType(ReportTypeKind.Datatype, "semantifyr::clock"))

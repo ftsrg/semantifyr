@@ -14,7 +14,6 @@ function call(self: string, transition: string, calls: ReportCall[] = []): Repor
 
 function trace(overrides: Partial<ReportTrace>): ReportTrace {
     return {
-        root: "root",
         transitions: [],
         variables: [],
         initial: { state: 0, calls: [] },

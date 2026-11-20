@@ -25,7 +25,6 @@ class VerificationReportTest {
     @Test
     fun `a report reads back as the report that was written`() {
         val trace = ReportTrace(
-            root = "root",
             transitions = listOf(
                 ObservedTransition(
                     transition = "example::Lamp::toggle",
@@ -190,7 +189,6 @@ class VerificationReportTest {
         listed: Boolean = true,
     ): ReportTrace {
         return ReportTrace(
-            root = "root",
             transitions = emptyList(),
             variables = values.keys.filter {
                 listed

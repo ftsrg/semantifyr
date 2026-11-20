@@ -12,6 +12,7 @@ import hu.bme.mit.semantifyr.backend.witness.Fraction
 import hu.bme.mit.semantifyr.compiler.pipeline.context.FlattenedCompilationContext
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.InstanceReferenceProvider
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.RedefinitionAwareReferenceResolver
+import hu.bme.mit.semantifyr.compiler.pipeline.instantiation.InstanceNames
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.copy
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.treeSequence
@@ -83,7 +84,7 @@ class ClassWitnessBackAnnotator @Inject constructor(
                 it.typeSpecification = OxstsFactory.createTypeSpecification().also {
                     it.domain = classDeclaration
                 }
-                it.name = "root"
+                it.name = InstanceNames.ROOT_FEATURE_NAME
             }
         }
 

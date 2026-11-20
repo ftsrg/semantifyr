@@ -34,7 +34,6 @@ class VerificationReportAdapterTest {
     @Test
     void aReportCrossesTheLanguageServersWireAsWritten() {
         var trace = new ReportTrace(
-                "root",
                 List.of(),
                 List.of(new ObservedVariable(
                         "root.lamp.partner", new ReportType(ReportTypeKind.Class, "example::Lamp"), null)),
