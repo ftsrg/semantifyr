@@ -66,7 +66,7 @@ class SpinInlinedOxstsWitnessTransformer @Inject constructor(
                     WitnessStateValue(variable, it.copy())
                 }
             }
-            WitnessState(values, elapsed = delay)
+            WitnessState(values, emptyList(), delay)
         }
 
         return linearInlinedWitness(inlinedOxsts, states)

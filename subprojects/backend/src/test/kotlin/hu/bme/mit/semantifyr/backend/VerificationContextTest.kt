@@ -7,6 +7,7 @@
 package hu.bme.mit.semantifyr.backend
 
 import hu.bme.mit.semantifyr.backend.execution.BackendExecutor
+import hu.bme.mit.semantifyr.backend.witness.Fraction
 import hu.bme.mit.semantifyr.backend.witness.InlinedWitness
 import hu.bme.mit.semantifyr.backend.witness.WitnessFailedException
 import hu.bme.mit.semantifyr.backend.witness.WitnessState
@@ -159,7 +160,7 @@ class VerificationContextTest {
     suspend fun `an under-approximating context trusts a reached target`() {
         val inlinedOxsts = modelChecking(OxstsFactory.createEF())
         val context = ScriptedContext(
-            witness = linearInlinedWitness(inlinedOxsts, listOf(WitnessState(emptyList()))),
+            witness = linearInlinedWitness(inlinedOxsts, listOf(WitnessState(emptyList(), emptyList(), Fraction.ZERO))),
             inlinedOxsts = inlinedOxsts,
             soundness = SoundnessDirection.UnderApproximating,
         )
@@ -180,7 +181,7 @@ class VerificationContextTest {
     @Test
     suspend fun `the witness is passed through and its back-annotation is timed`() {
         val inlinedOxsts = modelChecking(OxstsFactory.createAG())
-        val witness = linearInlinedWitness(inlinedOxsts, listOf(WitnessState(emptyList())))
+        val witness = linearInlinedWitness(inlinedOxsts, listOf(WitnessState(emptyList(), emptyList(), Fraction.ZERO)))
 
         val result = ScriptedContext(
             runStep = {
@@ -246,8 +247,8 @@ class VerificationContextTest {
         val witness = linearInlinedWitness(
             inlinedOxsts,
             listOf(
-                WitnessState(listOf(WitnessStateValue(tracer, OxstsFactory.createLiteralBoolean(false)))),
-                WitnessState(emptyList()),
+                WitnessState(listOf(WitnessStateValue(tracer, OxstsFactory.createLiteralBoolean(false))), emptyList(), Fraction.ZERO),
+                WitnessState(emptyList(), emptyList(), Fraction.ZERO),
             ),
         )
 
@@ -280,8 +281,8 @@ class VerificationContextTest {
         val witness = linearInlinedWitness(
             inlinedOxsts,
             listOf(
-                WitnessState(listOf(WitnessStateValue(argument, OxstsFactory.createLiteralInteger(0)))),
-                WitnessState(emptyList()),
+                WitnessState(listOf(WitnessStateValue(argument, OxstsFactory.createLiteralInteger(0))), emptyList(), Fraction.ZERO),
+                WitnessState(emptyList(), emptyList(), Fraction.ZERO),
             ),
         )
 

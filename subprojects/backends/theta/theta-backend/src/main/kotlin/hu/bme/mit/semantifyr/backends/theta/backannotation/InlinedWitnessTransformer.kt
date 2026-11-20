@@ -34,6 +34,7 @@ class InlinedWitnessTransformer @Inject constructor(
 
             return WitnessState(
                 transformStateValues(stateVariableValues),
+                clockValues = emptyList(),
                 elapsed = delays.singleOrNull()?.let {
                     Fraction.of(xstsExpressionToOxstsExpressionTransformer.transformInteger(it.value))
                 } ?: Fraction.ZERO,

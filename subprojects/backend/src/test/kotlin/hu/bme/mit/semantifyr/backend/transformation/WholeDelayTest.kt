@@ -175,6 +175,7 @@ class WholeDelayTest {
                     WitnessStateValue(elapsed, OxstsFactory.createLiteralInteger(clock)),
                     WitnessStateValue(late, OxstsFactory.createLiteralBoolean(false)),
                 ),
+                clockValues = emptyList(),
                 elapsed = Fraction.of(delay),
             )
         }
@@ -235,6 +236,8 @@ class WholeDelayTest {
                     listOf(
                         WitnessStateValue(elapsed, OxstsFactory.createLiteralInteger(4)),
                     ),
+                    emptyList(),
+                    Fraction.ZERO,
                 ),
             ),
         )
@@ -258,6 +261,8 @@ class WholeDelayTest {
                     listOf(
                         WitnessStateValue(late, OxstsFactory.createLiteralBoolean(false)),
                     ),
+                    emptyList(),
+                    Fraction.ZERO,
                 ),
             ),
         )

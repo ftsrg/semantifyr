@@ -20,6 +20,7 @@ import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.backend.execution.AvailabilityReport
 import hu.bme.mit.semantifyr.backend.execution.BackendExecutor
 import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
+import hu.bme.mit.semantifyr.backend.witness.Fraction
 import hu.bme.mit.semantifyr.backend.witness.InlinedWitness
 import hu.bme.mit.semantifyr.backend.witness.WitnessState
 import hu.bme.mit.semantifyr.backend.witness.linearInlinedWitness
@@ -231,7 +232,7 @@ class SemantifyrVerifierImplTest {
     suspend fun `a verdict with a witness returns the run's report with its trace and writes the witness`(@TempDir output: Path) {
         val portfolio = ScriptedPortfolio { request, _ ->
             decisiveResult(VerificationVerdict.Passed).copy(
-                inlinedWitness = linearInlinedWitness(request.inlinedOxsts, listOf(WitnessState(emptyList()), WitnessState(emptyList()))),
+                inlinedWitness = linearInlinedWitness(request.inlinedOxsts, listOf(WitnessState(emptyList(), emptyList(), Fraction.ZERO), WitnessState(emptyList(), emptyList(), Fraction.ZERO))),
             )
         }
 

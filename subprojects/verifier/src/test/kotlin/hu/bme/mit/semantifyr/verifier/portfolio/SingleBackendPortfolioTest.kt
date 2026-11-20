@@ -13,6 +13,7 @@ import hu.bme.mit.semantifyr.backend.BackendVerificationResult
 import hu.bme.mit.semantifyr.backend.SoundnessDirection
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
+import hu.bme.mit.semantifyr.backend.witness.Fraction
 import hu.bme.mit.semantifyr.backend.witness.InlinedWitness
 import hu.bme.mit.semantifyr.backend.witness.WitnessState
 import hu.bme.mit.semantifyr.compiler.pipeline.context.TransitionCallTraceMap
@@ -140,7 +141,7 @@ class SingleBackendPortfolioTest {
 
     private fun witness(): InlinedWitness {
         return InlinedWitness(
-            initializedState = WitnessState(emptyList()),
+            initializedState = WitnessState(emptyList(), emptyList(), Fraction.ZERO),
             transitionStates = emptyList(),
             inlinedOxsts = OxstsFactory.createInlinedOxsts(),
         )

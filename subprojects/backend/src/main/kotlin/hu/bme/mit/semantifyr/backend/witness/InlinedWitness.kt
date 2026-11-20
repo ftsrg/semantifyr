@@ -22,8 +22,8 @@ class WitnessClockValue(
 
 class WitnessState(
     val values: List<WitnessStateValue>,
-    val clockValues: List<WitnessClockValue> = emptyList(),
-    val elapsed: Fraction = Fraction.ZERO,
+    val clockValues: List<WitnessClockValue>,
+    val elapsed: Fraction,
 )
 
 class InlinedWitness(

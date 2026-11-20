@@ -11,6 +11,7 @@ import hu.bme.mit.semantifyr.backend.BackendMetrics
 import hu.bme.mit.semantifyr.backend.BackendVerificationResult
 import hu.bme.mit.semantifyr.backend.VerificationMetadata
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
+import hu.bme.mit.semantifyr.backend.witness.Fraction
 import hu.bme.mit.semantifyr.backend.witness.InlinedWitness
 import hu.bme.mit.semantifyr.backend.witness.WitnessState
 import hu.bme.mit.semantifyr.logging.info
@@ -71,8 +72,8 @@ class TrivialVerifier @Inject constructor(
 
     private fun trivialWitness(inlinedOxsts: InlinedOxsts): InlinedWitness {
         return InlinedWitness(
-            initializedState = WitnessState(values = emptyList()),
-            transitionStates = listOf(WitnessState(values = emptyList())),
+            initializedState = WitnessState(values = emptyList(), clockValues = emptyList(), elapsed = Fraction.ZERO),
+            transitionStates = listOf(WitnessState(values = emptyList(), clockValues = emptyList(), elapsed = Fraction.ZERO)),
             inlinedOxsts = inlinedOxsts,
         )
     }

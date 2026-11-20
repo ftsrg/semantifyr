@@ -674,6 +674,8 @@ class BackAnnotationFidelityTest {
                 }
                 InlinedWitnessStateValue(variable, literal)
             },
+            emptyList(),
+            Fraction.ZERO,
         )
     }
 
@@ -682,6 +684,8 @@ class BackAnnotationFidelityTest {
             tracers.map {
                 InlinedWitnessStateValue(it, OxstsFactory.createLiteralBoolean(value))
             },
+            emptyList(),
+            Fraction.ZERO,
         )
     }
 
