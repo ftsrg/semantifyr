@@ -43,7 +43,7 @@ async function heightsOf(page: Page): Promise<number[]> {
 }
 
 describe('the verifying embed', () => {
-  test('verifies its cases, opens the trace of a case below it and tells the page the height it grows to', async ({ ui }) => {
+  test('verifies its cases, opens the first trace by itself, opens a trace of a case below it and tells the page the height it grows to', async ({ ui }) => {
     const page = await ui.host(framing('/language/level-crossing?library=gamma&view=embed', 'width: 760px; height: 600px'))
     const frame = page.frameLocator('iframe')
     const cases = frame.locator('.embed-case')
@@ -57,9 +57,10 @@ describe('the verifying embed', () => {
       return statesOf(cases, 'status-')
     }).toEqual(['failed', 'passed'])
     const opened = frame.locator('.embed-case.is-open')
-    if (await opened.count() > 0) {
-      await opened.click()
-    }
+    await expect.poll(async () => {
+      return opened.count()
+    }).toBe(1)
+    await opened.click()
     await expect.poll(async () => {
       return frame.locator('.embed-trace').count()
     }).toBe(0)

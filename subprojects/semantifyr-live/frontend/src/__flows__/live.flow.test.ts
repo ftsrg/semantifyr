@@ -56,7 +56,7 @@ describe('the SysML v2 language server of the fork, in the page', () => {
 })
 
 describe('the verifying embed in a frame', () => {
-  test('verifies and grows the frame with the trace it opens', async ({ flow }) => {
+  test('verifies, opens the first trace by itself and grows the frame with a trace opened again', async ({ flow }) => {
     const page = await flow.open('/api/health', { width: 900, height: 900 })
     await page.setContent(`
       <iframe src="${LIVE_URL}/gamma/level-crossing?view=embed" style="width: 760px; height: 600px; border: 0"></iframe>
@@ -78,9 +78,10 @@ describe('the verifying embed in a frame', () => {
 
     await verifyAll(frame.locator('.embed-case'), frame.getByRole('button', { name: 'Verify all', exact: true }))
     const withTrace = frame.locator('.embed-case.has-trace').first()
-    if (await withTrace.getAttribute('aria-expanded') === 'true') {
-      await withTrace.click()
-    }
+    await expect.poll(async () => {
+      return withTrace.getAttribute('aria-expanded')
+    }, { timeout: 30_000 }).toBe('true')
+    await withTrace.click()
     await expect.poll(async () => {
       return frame.locator('.embed-trace').count()
     }, { timeout: 30_000 }).toBe(0)

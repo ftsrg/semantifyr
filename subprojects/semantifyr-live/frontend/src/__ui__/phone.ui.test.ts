@@ -60,7 +60,7 @@ describe('the phone', () => {
     await phone(page).verify.click()
     await phone(page).tab('Results').click()
     await expect.poll(async () => {
-      return page.locator('.case-row.status-failed, .phone-case.status-failed, [class*="status-failed"]').count()
+      return page.locator('.phone-case.status-failed').count()
     }).toBeGreaterThan(0)
     expect(await phone(page).shell.getAttribute('data-pane')).toBe('results')
     await expect.poll(async () => {
