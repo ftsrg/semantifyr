@@ -15,6 +15,7 @@ import hu.bme.mit.semantifyr.compiler.pipeline.instantiation.Instance
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinSymbolResolver
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.IntegerEvaluation
+import hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.ExpressionTypeEvaluatorProvider
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssignmentOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ElementReference
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
@@ -31,6 +32,7 @@ class TransitionCallTraceTransformerTest {
     private val evaluatorProvider: CompileTimeExpressionEvaluatorProvider = mock()
     private val evaluator: CompileTimeExpressionEvaluator = mock()
     private val builtinSymbolResolver: BuiltinSymbolResolver = mock()
+    private val typeEvaluatorProvider: ExpressionTypeEvaluatorProvider = mock()
     private val instance: Instance = mock()
     private val container: Instance = mock()
 
@@ -52,7 +54,7 @@ class TransitionCallTraceTransformerTest {
         whenever(evaluatorProvider.getEvaluator(any())).thenReturn(evaluator)
         whenever(builtinSymbolResolver.boolDatatype(any())).thenReturn(boolDatatype)
         whenever(builtinSymbolResolver.nonOptimizableAnnotation(any())).thenReturn(nonOptimizableAnnotation)
-        return TransitionCallTraceTransformer(evaluatorProvider, builtinSymbolResolver)
+        return TransitionCallTraceTransformer(evaluatorProvider, builtinSymbolResolver, typeEvaluatorProvider)
     }
 
     @Test

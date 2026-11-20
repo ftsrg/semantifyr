@@ -81,7 +81,7 @@ annotation Shared
 /*
  * Marks a transition whose calls the trace lists: each call that fired, in the step it fired in, with its receiver's path from the root instance, such as `root.kitchen.lamp`, and the values of its arguments when the call fired.
  * 
- * No argument of a call to a traced transition may be a record, or a real or string computed at run time.
+ * No argument of a call to a traced transition may be a record. A run-time argument is recorded in a variable of its type, so a backend that cannot hold a variable of that type refuses the model.
  */
 annotation Trace
 

@@ -20,10 +20,12 @@ import hu.bme.mit.semantifyr.compiler.scopes.CompilationScoped
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinSymbolResolver
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.EvaluationFailureException
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.ExpressionEvaluation
+import hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.ExpressionTypeEvaluatorProvider
 import hu.bme.mit.semantifyr.oxsts.lang.utils.OxstsUtils
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssignmentOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.CallSuffixExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.DomainDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ElementReference
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.EnumDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
@@ -73,6 +75,7 @@ class TracedCall(
 class TransitionCallTraceTransformer @Inject constructor(
     private val compileTimeExpressionEvaluatorProvider: CompileTimeExpressionEvaluatorProvider,
     private val builtinSymbolResolver: BuiltinSymbolResolver,
+    private val expressionTypeEvaluatorProvider: ExpressionTypeEvaluatorProvider,
 ) {
 
     private var tracerCount = 0
@@ -99,16 +102,17 @@ class TransitionCallTraceTransformer @Inject constructor(
             self = InstanceEvaluation(containerInstance),
             transitionDeclaration = transitionDeclaration,
             arguments = transitionDeclaration.parameters.withIndex().mapNotNull { (index, parameter) ->
+                val argument = OxstsUtils.getArgumentFor(callExpression.arguments, parameter, index)
                 val temporary = runtimeArguments[parameter]
-                if (temporary != null) {
-                    val variable = createArgumentVariable(tracerIndex, parameter, temporary)
+                if (argument != null && temporary != null) {
+                    val variable = createArgumentVariable(tracerIndex, parameter, argument.expression, temporary)
                     argumentRecords += OxstsFactory.createAssignmentOperation().also {
                         it.reference = OxstsFactory.createElementReference(variable)
                         it.expression = OxstsFactory.createElementReference(temporary)
                     }
                     return@mapNotNull ArgumentTrace.Recorded(parameter, variable)
                 }
-                OxstsUtils.getArgumentFor(callExpression.arguments, parameter, index)?.let {
+                argument?.let {
                     val evaluation = try {
                         evaluator.evaluateTyped(ExpressionEvaluation::class.java, it.expression)
                     } catch (_: EvaluationFailureException) {
@@ -190,20 +194,22 @@ class TransitionCallTraceTransformer @Inject constructor(
     private fun createArgumentVariable(
         tracerIndex: Int,
         parameter: ParameterDeclaration,
+        argument: Expression,
         temporary: LocalVarDeclarationOperation,
     ): VariableDeclaration {
-        val declaredDomain = parameter.typeSpecification.domain
-        val domain = if (declaredDomain is FeatureDeclaration) {
-            declaredDomain.typeSpecification.domain
-        } else {
-            declaredDomain
-        }
+        val domain = recordedDomainOf(parameter, argument)
         val typeSpecification = OxstsFactory.createTypeSpecification().also {
             it.domain = domain
         }
         val initialValue = when {
             domain === builtinSymbolResolver.intDatatype(parameter) -> OxstsFactory.createLiteralInteger(0)
             domain === builtinSymbolResolver.boolDatatype(parameter) -> OxstsFactory.createLiteralBoolean(false)
+            domain === builtinSymbolResolver.realDatatype(parameter) -> OxstsFactory.createLiteralReal().also {
+                it.value = 0.0
+            }
+            domain === builtinSymbolResolver.stringDatatype(parameter) -> OxstsFactory.createLiteralString().also {
+                it.value = ""
+            }
             domain is EnumDeclaration -> OxstsFactory.createElementReference(domain.literals.first())
             domain is ClassDeclaration -> {
                 typeSpecification.multiplicity = OxstsFactory.createDefiniteMultiplicity().also {
@@ -214,7 +220,7 @@ class TransitionCallTraceTransformer @Inject constructor(
                 }
                 OxstsFactory.createLiteralNothing()
             }
-            else -> sourceError(temporary, "A run-time argument of type '${domain.name}' cannot be recorded for the traced call.")
+            else -> sourceError(temporary, "A run-time argument of type '${domain?.name}' cannot be recorded for the traced call.")
         }
         return createObservationVariable(
             name = TransitionTracerNames.argumentName(tracerIndex, parameter.name),
@@ -222,6 +228,22 @@ class TransitionCallTraceTransformer @Inject constructor(
             initialValue = initialValue,
             context = parameter,
         )
+    }
+
+    // an `any` parameter records the value the argument has, of the argument's own type
+    private fun recordedDomainOf(parameter: ParameterDeclaration, argument: Expression): DomainDeclaration? {
+        val parameterDomain = classOrDatatypeOf(parameter.typeSpecification.domain)
+        if (parameterDomain !== builtinSymbolResolver.anyDatatype(parameter)) {
+            return parameterDomain
+        }
+        return classOrDatatypeOf(expressionTypeEvaluatorProvider.evaluate(argument).domain)
+    }
+
+    private fun classOrDatatypeOf(domain: DomainDeclaration?): DomainDeclaration? {
+        if (domain is FeatureDeclaration) {
+            return domain.typeSpecification.domain
+        }
+        return domain
     }
 
     private fun createObservationVariable(

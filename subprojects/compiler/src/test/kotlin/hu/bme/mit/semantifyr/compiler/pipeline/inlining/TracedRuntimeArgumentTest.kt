@@ -13,6 +13,8 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssignmentOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ElementReference
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralBoolean
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralInteger
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralReal
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralString
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.LocalVarDeclarationOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 import org.assertj.core.api.Assertions.assertThat
@@ -53,6 +55,30 @@ class TracedRuntimeArgumentTest : FlatteningTestBase() {
 
         assertThat(recorded.typeSpecification.domain.name).isEqualTo("Mode")
         assertThat((recorded.expression as ElementReference).element.name).isEqualTo("Off")
+    }
+
+    @Test
+    fun `a recorded real argument starts at zero`() {
+        val recorded = flatten("RealArgument", MODEL).recordedVariable()
+
+        assertThat(recorded.typeSpecification.domain.name).isEqualTo("real")
+        assertThat((recorded.expression as LiteralReal).value).isEqualTo(0.0)
+    }
+
+    @Test
+    fun `a recorded string argument starts empty`() {
+        val recorded = flatten("StringArgument", MODEL).recordedVariable()
+
+        assertThat(recorded.typeSpecification.domain.name).isEqualTo("string")
+        assertThat((recorded.expression as LiteralString).value).isEmpty()
+    }
+
+    @Test
+    fun `an argument of an any parameter is recorded in the argument's own type`() {
+        val recorded = flatten("AnyArgument", MODEL).recordedVariable()
+
+        assertThat(recorded.typeSpecification.domain.name).isEqualTo("bool")
+        assertThat((recorded.expression as LiteralBoolean).isValue).isFalse()
     }
 
     @Test
@@ -135,6 +161,27 @@ class TracedRuntimeArgumentTest : FlatteningTestBase() {
                 }
             }
 
+            class Display {
+                var reading: real := 0.0
+                var label: string := ""
+                var seen: bool := false
+
+                @Trace
+                tran show(value: real) {
+                    reading := value
+                }
+
+                @Trace
+                tran write(text: string) {
+                    label := text
+                }
+
+                @Trace
+                tran note(value: any) {
+                    seen := true
+                }
+            }
+
             class Lamp {
                 var on: bool := false
 
@@ -190,6 +237,49 @@ class TracedRuntimeArgumentTest : FlatteningTestBase() {
                         requested := Mode::On
                     }
                     inline device.set(requested)
+                }
+
+                prop {
+                    return AG true
+                }
+            }
+
+            @VerificationCase
+            class RealArgument {
+                contains display: Display
+                var level: real := 0.5
+
+                redefine tran {
+                    inline display.show(level)
+                }
+
+                prop {
+                    return AG true
+                }
+            }
+
+            @VerificationCase
+            class StringArgument {
+                contains display: Display
+                var name: string := "a"
+
+                redefine tran {
+                    inline display.write(name)
+                }
+
+                prop {
+                    return AG true
+                }
+            }
+
+            @VerificationCase
+            class AnyArgument {
+                contains display: Display
+                var requested: bool := false
+
+                redefine tran {
+                    havoc(requested)
+                    inline display.note(requested)
                 }
 
                 prop {
