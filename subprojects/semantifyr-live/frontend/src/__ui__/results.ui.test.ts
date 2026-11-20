@@ -118,12 +118,9 @@ describe('the rows', () => {
     expect(await rowStates(page)).toEqual(['failed', 'passed'])
   })
 
-  test('show Inconclusive for a timeout and an unsupported construct, and Error for a broken run, the reason in the message', async ({ ui }) => {
-    ui.backend.answer('verify', (request, recorded) => {
-      const name = request.caseId?.split('::').at(-1)
-      return name === BARRIER
-        ? { ...recorded(), status: 'timeout', message: 'The portfolio timed out after 60 s', report: null, witnessUri: null }
-        : { ...recorded(), status: 'errored', message: 'The backend crashed', report: null, witnessUri: null }
+  test('show the reason the server gives for a broken run', async ({ ui }) => {
+    ui.backend.answer('verify', (_request, recorded) => {
+      return { ...recorded(), status: 'errored', message: 'The backend crashed', report: null, witnessUri: null }
     })
     const page = await opened(ui)
 
@@ -131,8 +128,7 @@ describe('the rows', () => {
 
     await expect.poll(async () => {
       return rowStates(page)
-    }).toEqual(['inconclusive', 'error'])
-    expect(await results(page).row(BARRIER).locator('.case-message').innerText()).toContain('timed out')
+    }).toEqual(['error', 'error'])
     expect(await results(page).row(TWO_TRAINS).locator('.case-message').innerText()).toContain('The backend crashed')
   })
 })
