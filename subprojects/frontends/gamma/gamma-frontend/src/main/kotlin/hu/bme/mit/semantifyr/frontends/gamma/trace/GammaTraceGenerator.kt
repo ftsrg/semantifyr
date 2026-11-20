@@ -258,7 +258,7 @@ class GammaTraceGenerator @Inject constructor(
                 it.isValue = (value as? ReportValue.Bool)?.value ?: error("Variable '${variable.name}' holds $value, not a boolean")
             }
         }
-        val number = (value as? ReportValue.Integer)?.value?.intValueExact() ?: error("Variable '${variable.name}' holds $value, not an integer")
+        val number = (value as? ReportValue.Integer)?.value ?: error("Variable '${variable.name}' holds $value, not an integer")
         val literal = factory.createLiteralInteger().also {
             it.value = Math.absExact(number)
         }

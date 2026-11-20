@@ -24,11 +24,14 @@ import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.VariableReferenceExpress
 import hu.bme.mit.semantifyr.frontends.gamma.lang.tests.InjectWithGamma
 import hu.bme.mit.semantifyr.frontends.gamma.reader.GammaReader
 import hu.bme.mit.semantifyr.frontends.gamma.trace.GammaTraceGenerator
+import hu.bme.mit.semantifyr.verifier.ObservedVariable
 import hu.bme.mit.semantifyr.verifier.ReportCall
 import hu.bme.mit.semantifyr.verifier.ReportInitialEntry
 import hu.bme.mit.semantifyr.verifier.ReportState
 import hu.bme.mit.semantifyr.verifier.ReportStep
 import hu.bme.mit.semantifyr.verifier.ReportTrace
+import hu.bme.mit.semantifyr.verifier.ReportType
+import hu.bme.mit.semantifyr.verifier.ReportTypeKind
 import hu.bme.mit.semantifyr.verifier.ReportValue
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -61,7 +64,7 @@ class GammaTraceGeneratorTest {
             ),
             mapOf(
                 "root.component._Main.activeState" to instance("root.component._Main._Holding"),
-                "root.component._measure.interface._level._value.value" to ReportValue.Integer(7.toBigInteger()),
+                "root.component._measure.interface._level._value.value" to ReportValue.Integer(7),
             ),
         )
 
@@ -236,7 +239,7 @@ class GammaTraceGeneratorTest {
             "Triggers.gamma",
             "TransitionOnTheSecondTriggerFires",
             emptyList(),
-            mapOf("root.component._entered.value" to ReportValue.Integer(2.toBigInteger())),
+            mapOf("root.component._entered.value" to ReportValue.Integer(2)),
         )
 
         val comparison = trace.steps.last().asserts.filterIsInstance<ComparisonOperator>().single()
@@ -250,7 +253,7 @@ class GammaTraceGeneratorTest {
             "Triggers.gamma",
             "TransitionOnTheSecondTriggerFires",
             emptyList(),
-            mapOf("root.component._entered.value" to ReportValue.Integer(-3.toBigInteger())),
+            mapOf("root.component._entered.value" to ReportValue.Integer(-3)),
         )
 
         val comparison = trace.steps.last().asserts.filterIsInstance<ComparisonOperator>().single()
@@ -301,19 +304,34 @@ class GammaTraceGeneratorTest {
         val verificationCase = gammaPackage.verificationCases.single {
             it.name == caseName
         }
+        val states = listOf(ReportState(initialValues)) + steps.map {
+            ReportState(it.second)
+        }
         val trace = ReportTrace(
             root = "root",
             transitions = emptyList(),
-            variables = emptyList(),
-            initial = ReportInitialEntry(0, emptyList()),
-            states = listOf(ReportState(initialValues)) + steps.map {
-                ReportState(it.second)
+            variables = states.flatMap {
+                it.values.entries
+            }.distinctBy {
+                it.key
+            }.map {
+                ObservedVariable(it.key, typeOf(it.value))
             },
+            initial = ReportInitialEntry(0, emptyList()),
+            states = states,
             steps = steps.mapIndexed { index, step ->
                 ReportStep(index, index + 1, elapsed, step.first)
             },
         )
         return gammaTraceGenerator.generate(verificationCase, trace, nameMap, timeUnitMilliseconds)
+    }
+
+    private fun typeOf(value: ReportValue): ReportType {
+        return when (value) {
+            is ReportValue.Bool -> ReportType(ReportTypeKind.Datatype, "semantifyr::bool")
+            is ReportValue.Integer -> ReportType(ReportTypeKind.Datatype, "semantifyr::int")
+            else -> ReportType(ReportTypeKind.Class, "semantifyr::Anything")
+        }
     }
 
     private fun instance(path: String): ReportValue {
