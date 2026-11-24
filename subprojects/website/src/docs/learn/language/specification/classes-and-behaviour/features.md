@@ -155,7 +155,7 @@ class Wrapper {
 }
 ```
 
-This is the primary way semantic libraries declaratively add instances to a collection defined in a superclass. A redefinition that names no `subsets` keeps the superset of the feature it redefines. A bound feature (`= expr`) and a `derived refers` hold the instances their expression or opposite gives them, so neither can be subset. {/* OXSTS.INCORRECT_SUBSETS */}
+This is the primary way semantic libraries declaratively add instances to a collection defined in a superclass. A redefinition that names no `subsets` keeps the superset of the feature it redefines. A feature and the features that redefine it have the same values, so a subsetter of a feature is a subsetter of each feature that redefines it, through a chain of redefinitions and by `redefine` or `redefines` alike, and a feature that redefines one and subsets another is under the supersets of both. A bound feature (`= expr`) and a `derived refers` hold the instances their expression or opposite gives them, so neither can be subset. {/* OXSTS.INCORRECT_SUBSETS */}
 
 ## `redefine` and `redefines`
 

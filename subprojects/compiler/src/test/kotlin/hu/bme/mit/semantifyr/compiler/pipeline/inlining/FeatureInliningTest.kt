@@ -48,6 +48,43 @@ class FeatureInliningTest : InliningTestBase() {
     }
 
     @Test
+    fun `inline for over a redefined feature unrolls over the subsetters of the redefined feature`() {
+        val main = inlinedMain(
+            "Host",
+            """
+                package inlining::tests
+                class Item {
+                    var hits: int := 0
+                    tran act() {
+                        hits := hits + 1
+                    }
+                }
+                class Holder {
+                    contains items: Item[0..*]
+                    contains first: Item[1] subsets items
+                }
+                @VerificationCase
+                class Host : Holder {
+                    contains second: Item[1] subsets items
+                    redefine contains items: Item[0..*]
+                    redefine tran {
+                        inline for (item in items) {
+                            inline item.act()
+                        }
+                    }
+                    prop {
+                        return AG true
+                    }
+                }
+            """,
+        )
+
+        assertThat(main)
+            .contains("root.first.hits := root.first.hits + 1")
+            .contains("root.second.hits := root.second.hits + 1")
+    }
+
+    @Test
     fun `a redefinition without subsets stays in the superset of the redefined feature`() {
         val main = inlinedMain(
             "Host",
