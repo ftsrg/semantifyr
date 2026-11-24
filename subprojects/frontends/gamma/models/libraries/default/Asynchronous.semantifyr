@@ -205,7 +205,7 @@ class MessageQueue {
             }
             inline shift()
             inline if (runningMessages == messages) {
-                inline adapter.run()
+                inline adapter?.run()
             } else {
                 inline if (runningMessages != nothing) {
                     var runs: bool := false
@@ -213,12 +213,12 @@ class MessageQueue {
                         runs := runs || head == message
                     }
                     if (runs) {
-                        inline adapter.run()
+                        inline adapter?.run()
                     }
                 }
             }
             inline if (resettingMessages == messages) {
-                inline adapter.resetComponent()
+                inline adapter?.resetComponent()
             } else {
                 inline if (resettingMessages != nothing) {
                     var resets: bool := false
@@ -226,7 +226,7 @@ class MessageQueue {
                         resets := resets || head == message
                     }
                     if (resets) {
-                        inline adapter.resetComponent()
+                        inline adapter?.resetComponent()
                     }
                 }
             }
@@ -244,7 +244,7 @@ class MessageQueue {
                 }
             }
             inline if (clearingAllMessages == messages) {
-                inline adapter.clearQueues()
+                inline adapter?.clearQueues()
             } else {
                 inline if (clearingAllMessages != nothing) {
                     var clearsAll: bool := false
@@ -252,12 +252,12 @@ class MessageQueue {
                         clearsAll := clearsAll || head == message
                     }
                     if (clearsAll) {
-                        inline adapter.clearQueues()
+                        inline adapter?.clearQueues()
                     }
                 }
             }
             inline if (clearingOtherMessages == messages) {
-                inline adapter.clearOtherQueues(self)
+                inline adapter?.clearOtherQueues(self)
             } else {
                 inline if (clearingOtherMessages != nothing) {
                     var clearsOthers: bool := false
@@ -265,7 +265,7 @@ class MessageQueue {
                         clearsOthers := clearsOthers || head == message
                     }
                     if (clearsOthers) {
-                        inline adapter.clearOtherQueues(self)
+                        inline adapter?.clearOtherQueues(self)
                     }
                 }
             }
@@ -300,7 +300,7 @@ class MessageQueue {
         } or {
             inline for choice (message in messages) {
                 inline if (message.port != nothing) {
-                    inline message.port.receiveInputMessage(message.source)
+                    inline message.port?.receiveInputMessage(message.source)
                     inline enqueueArbitrary(message)
                 }
             }
@@ -432,9 +432,9 @@ class MessageDispatch {
 
     tran dispatch() {
         if (event.isRaised) {
-            inline message.queue.dropOldestWhenFull()
+            inline message.queue?.dropOldestWhenFull()
             if (!message.queue.isFull()) {
-                inline message.queue.enqueue(message, event)
+                inline message.queue?.enqueue(message, event)
             }
             inline if (resetsSource) {
                 inline event.reset()
