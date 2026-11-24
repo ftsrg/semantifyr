@@ -21,7 +21,7 @@ import org.eclipse.emf.ecore.util.EcoreUtil
 // until flattening adds the assumption that blocks its operation, a fold must not erase an operand without a value
 fun Expression.mayHaveNoValue(): Boolean {
     return (sequenceOf(this) + eAllOfType<Expression>()).any {
-        it is IndexingSuffixExpression || it is ArithmeticBinaryOperator && it.isDivisionByPossibleZero()
+        it is IndexingSuffixExpression || (it is ArithmeticBinaryOperator && it.isDivisionByPossibleZero())
     }
 }
 
