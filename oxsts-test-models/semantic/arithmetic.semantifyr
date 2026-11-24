@@ -321,3 +321,39 @@ class DivisionByZeroUnreachable {
         return EF (divided && divisor == 0)
     }
 }
+
+@VerificationCase
+@Tag("expect-pass")
+class RealDivisionByZeroBlocks {
+    var divisor: int := 0
+    var divided: bool := false
+
+    redefine tran {
+        havoc(divisor)
+        assume(divisor >= 0 && divisor <= 2)
+        assume(6.0 / (divisor * 1.0) > 0.0)
+        divided := true
+    }
+
+    prop {
+        return AG !(divided && divisor == 0)
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+class RealDivisionByZeroUnreachable {
+    var divisor: int := 0
+    var divided: bool := false
+
+    redefine tran {
+        havoc(divisor)
+        assume(divisor >= 0 && divisor <= 2)
+        assume(6.0 / (divisor * 1.0) > 0.0)
+        divided := true
+    }
+
+    prop {
+        return EF (divided && divisor == 0)
+    }
+}
