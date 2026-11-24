@@ -248,7 +248,7 @@ class Child {
 
 ## Indexing (`[]`)
 
-`a[i]` is the slot `i` of the array `a`, counted from 0, and has the array's domain with the multiplicity `[1]`. The index is numeric, and indexing a value whose multiplicity's upper bound is at most one, such as an `int` variable, is rejected. The index may read the state, and then the slot is chosen when the model runs. A slot is read and written like a variable, and a slot of an array whose lower bound is 0, such as `Item[0..2]`, takes `nothing` when it is written.
+`a[i]` is the slot `i` of the array `a`, counted from 0, and has the array's domain with the multiplicity `[1]`. The index is numeric, and indexing a value whose multiplicity's upper bound is at most one, such as an `int` variable, is rejected. The index may read the state, and then the slot is chosen when the model runs. An index outside the array has no slot: a constant one is an error when the case is compiled, and the operation that evaluates one that reads the state blocks, whether it reads or writes the slot and wherever the indexing stands in its expression, so `seen := if index < 3 then items[index] else 0` blocks when `index` is 3. A slot is read and written like a variable, and a slot of an array whose lower bound is 0, such as `Item[0..2]`, takes `nothing` when it is written.
 
 ```oxsts
 // hide-start

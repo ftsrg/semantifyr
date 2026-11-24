@@ -35,6 +35,9 @@ class ValuelessOperandPatternsTest : PatternTestBase() {
                 Arguments.of(IfThenElseIdenticalBranchesPattern(), "result := if 1 / divisor > 0 then 0 else 0"),
                 Arguments.of(RemoveEmptyIfBodyPattern(), "if (1 / divisor > 0) {\n}"),
                 Arguments.of(RemoveEmptyForPattern(), "for (index in 0..1 / divisor) {\n}"),
+                Arguments.of(ArithmeticIdentityPattern(), "result := slots[divisor] * 0"),
+                Arguments.of(SelfComparisonPattern(), "assume(slots[divisor] == slots[divisor])"),
+                Arguments.of(IfThenElseConstantGuardPattern(), "result := if false then slots[divisor] else 0"),
             )
         }
     }
@@ -57,6 +60,7 @@ class ValuelessOperandPatternsTest : PatternTestBase() {
             inlined oxsts of semantifyr::Anything
             var divisor: int := 0
             var result: int := 0
+            var slots: int[2] := [0, 0]
             init {
             }
             tran {

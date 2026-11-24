@@ -10,6 +10,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.ArithmeticBinaryOperator
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ArithmeticOp
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssumptionOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.IndexingSuffixExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralInteger
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralReal
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Operation
@@ -20,7 +21,7 @@ import org.eclipse.emf.ecore.util.EcoreUtil
 // until flattening adds the assumption that blocks its operation, a fold must not erase an operand without a value
 fun Expression.mayHaveNoValue(): Boolean {
     return (sequenceOf(this) + eAllOfType<Expression>()).any {
-        it is ArithmeticBinaryOperator && it.isDivisionByPossibleZero()
+        it is IndexingSuffixExpression || it is ArithmeticBinaryOperator && it.isDivisionByPossibleZero()
     }
 }
 

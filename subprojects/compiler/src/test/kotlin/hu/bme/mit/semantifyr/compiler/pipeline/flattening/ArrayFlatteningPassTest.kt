@@ -584,6 +584,34 @@ class ArrayFlatteningPassTest {
         assertThat((runtimeNested.guard as ComparisonOperator).left).isInstanceOf(IfThenElse::class.java)
     }
 
+    @Test
+    fun `an operation that reads or writes a slot at a runtime index assumes the index within the array`() {
+        val inlined = parseHelper.parse(
+            """
+                inlined oxsts of semantifyr::Anything
+                var values: int[3] := [10, 20, 30]
+                var index: int := 0
+                var seen: int := 0
+                init {
+                }
+                tran {
+                    seen := if index < 3 then values[index] else 0
+                    values[index] := 42
+                }
+                prop {
+                    AG true
+                }
+            """.trimIndent(),
+        )
+
+        flattenArrays(inlined)
+
+        assertThat(serialize(inlined).replace(Regex("\\s+"), " ")).contains(
+            "assume(index >= 0 && index < 3) seen := if index < 3 then if index == 0 then values_0 else if index == 1 then values_1 else values_2 else 0",
+            "assume(index >= 0 && index < 3) if (index == 0) { values_0 := 42 } else { if (index == 1) { values_1 := 42 } else { values_2 := 42 } }",
+        )
+    }
+
     private fun assignedValues(inlined: InlinedOxsts, variableName: String): List<Expression> {
         return inlined.eAllOfType<AssignmentOperation>().filter {
             ((it.reference as? ElementReference)?.element as? VariableDeclaration)?.name == variableName

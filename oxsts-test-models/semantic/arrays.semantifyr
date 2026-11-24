@@ -465,3 +465,81 @@ class ArrayNestedIndexViolated {
         return AG result == 0
     }
 }
+
+@VerificationCase
+@Tag("expect-pass")
+class ArrayIndexReadOutsideBlocks {
+    var slots: int[3] := [10, 20, 30]
+    var index: int := 0
+    var seen: int := 0
+    var read: bool := false
+
+    redefine tran {
+        havoc(index)
+        assume(index >= 0 && index <= 3)
+        seen := if index < 3 then slots[index] else 0
+        read := true
+    }
+
+    prop {
+        return AG !(read && index == 3)
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+class ArrayIndexReadOutsideUnreachable {
+    var slots: int[3] := [10, 20, 30]
+    var index: int := 0
+    var seen: int := 0
+    var read: bool := false
+
+    redefine tran {
+        havoc(index)
+        assume(index >= 0 && index <= 3)
+        seen := if index < 3 then slots[index] else 0
+        read := true
+    }
+
+    prop {
+        return EF (read && index == 3)
+    }
+}
+
+@VerificationCase
+@Tag("expect-pass")
+class ArrayIndexWriteOutsideBlocks {
+    var slots: int[3] := [10, 20, 30]
+    var index: int := 0
+    var written: bool := false
+
+    redefine tran {
+        havoc(index)
+        assume(index >= 0 && index <= 3)
+        slots[index] := 5
+        written := true
+    }
+
+    prop {
+        return AG !(written && index == 3)
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+class ArrayIndexWriteOutsideUnreachable {
+    var slots: int[3] := [10, 20, 30]
+    var index: int := 0
+    var written: bool := false
+
+    redefine tran {
+        havoc(index)
+        assume(index >= 0 && index <= 3)
+        slots[index] := 5
+        written := true
+    }
+
+    prop {
+        return EF (written && index == 3)
+    }
+}
