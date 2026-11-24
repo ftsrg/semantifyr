@@ -24,7 +24,7 @@ Semantifyr verifies a SysML v2 model against its SysML v2 semantic library, an a
 
 A verification case runs the verified part in steps, each after a wait in which [time](#time) passes. In each step the environment may put an item on every port of the verified part, every part and every region of a parallel state with an enabled transition fires one (maximal progress), and the flows move the items sent in the step to their receiving ports. A reaction takes no time.
 
-Initialization builds the part tree, sets the initial values of the attributes and enters every exhibited state: its entry action, then its initial descent. A guarded initial transition is chosen among those whose guard is open. No transition fires and no input arrives during initialization, and the items sent by its entry actions arrive in the first step.
+Initialization builds the part tree, sets the initial values of the attributes and enters every exhibited state: its entry action, then its initial descent. The initial transitions of a state are its transitions from `start` and every transition without `first` between its entry action and its next state usage, as in `entry; if c then A; if not c then B;`; the descent takes one of those whose guard is open. No transition fires and no input arrives during initialization, and the items sent by its entry actions arrive in the first step.
 
 ### Assumptions
 
@@ -47,7 +47,7 @@ Initialization builds the part tree, sets the initial values of the attributes a
 
 #### Transitions
 
-- A firing is atomic within the step: trigger and guard are read, then the exits, the effect, the entries and the initial descent run at zero duration. The target's transitions are enabled from the next step, so a chain of untriggered transitions takes one step per transition. Abstraction for a transition observed in progress and compound transitions; unsupported for decision, terminate and action targets. A transition to `done` is conformant; a source or a target other than a state of the model or `done` is a diagnostic.
+- A firing is atomic within the step: trigger and guard are read, then the exits, the effect, the entries and the initial descent run at zero duration. The target's transitions are enabled from the next step, so a chain of untriggered transitions takes one step per transition. Abstraction for a transition observed in progress and compound transitions; unsupported for decision, terminate and action targets. A transition to `done` is conformant; a source or a target other than a state of the model or `done` is a diagnostic. A transition without `first` leaves the closest state usage before it in its state, the transitions in between not counting (SysML 7.18.3), conformant; one with no state usage before it is a diagnostic.
 - A trigger on an initial transition is unsupported, a diagnostic, and an initial transition whose guard is the literal `false` is a diagnostic, since it can never be taken. A guard closed only at runtime on every initial transition blocks initialization, which makes every verdict vacuous, by convention.
 
 #### Entry, Exit and Do Actions

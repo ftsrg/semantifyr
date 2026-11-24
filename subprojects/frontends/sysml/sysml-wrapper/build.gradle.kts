@@ -24,7 +24,7 @@ dependencies {
     implementation(project(":logging"))
 }
 
-val sysmlCommit = "7fb52bf2146d9dbbd69102cb9be1d1faa7ce75a5" // feat: the SysML trace names the root instance root by convention instead of reading it from the report
+val sysmlCommit = "e68e5d5dcd73f09b66d9db2d9de606a84748d49d" // fix: a transition without first leaves the closest previous state usage, and every transition after the entry action is initial
 val sysmlUrl = "https://github.com/arminzavada/sysml-2ls.git"
 val sysmlDir = layout.projectDirectory.dir("sysml-2ls")
 

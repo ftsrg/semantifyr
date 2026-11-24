@@ -92,7 +92,11 @@
                 { "name": "UnvaluedBooleanMayStartFalseTestCase", "verdict": "Passed", "tier": "Integration" },
                 { "name": "InitialValueHoldsViolated", "verdict": "Failed", "tier": "Integration" },
                 { "name": "LastItemOnOneSlotIsAcceptedTestCase", "verdict": "Passed", "tier": "Integration" },
-                { "name": "EarlierItemOnOneSlotIsNeverAcceptedTestCase", "verdict": "Passed", "tier": "Integration" }
+                { "name": "EarlierItemOnOneSlotIsNeverAcceptedTestCase", "verdict": "Passed", "tier": "Integration" },
+                { "name": "TargetTransitionLeavesPreviousStateTestCase", "verdict": "Passed", "tier": "Integration" },
+                { "name": "TargetTransitionLeavesLaterStateUnreachable", "verdict": "Failed", "tier": "Integration" },
+                { "name": "EntryTransitionsEnterOpenGuardTestCase", "verdict": "Passed", "tier": "Integration" },
+                { "name": "EntryTransitionsEnterClosedGuardUnreachable", "verdict": "Failed", "tier": "Integration" }
             ]
         },
         {

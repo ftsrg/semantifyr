@@ -1454,3 +1454,76 @@ verification def EarlierItemOnOneSlotIsNeverAcceptedTestCase {
         }
     }
 }
+
+part def TargetTransitionSourceModel {
+    port input : PortE;
+    attribute visitedSecond : Boolean := false;
+    attribute visitedThird : Boolean := false;
+
+    exhibit state Behaviour {
+        entry; then Outer;
+        state Outer {
+            entry; then First;
+            state First;
+            accept : EventE via input then Second;
+            state Second {
+                entry assign visitedSecond := true;
+            }
+            accept : EventE via input then Third;
+            state Third {
+                entry assign visitedThird := true;
+            }
+        }
+    }
+}
+
+verification def TargetTransitionLeavesPreviousStateTestCase {
+    subject system : TargetTransitionSourceModel;
+    objective {
+        verify requirement {
+            require constraint { mustAlways(not (isStateActive(system.Behaviour.Outer.Third) and system.visitedSecond == false)) }
+        }
+    }
+}
+
+verification def TargetTransitionLeavesLaterStateUnreachable {
+    subject system : TargetTransitionSourceModel;
+    objective {
+        verify requirement {
+            require constraint { eventually(isStateActive(system.Behaviour.Outer.Second) and system.visitedThird) }
+        }
+    }
+}
+
+part def EntryTransitionsModel {
+    attribute isInitOff : Boolean := false;
+
+    exhibit state Behaviour {
+        entry; then Device;
+        state Device {
+            entry;
+            if isInitOff then Off;
+            if not isInitOff then On;
+            state Off;
+            state On;
+        }
+    }
+}
+
+verification def EntryTransitionsEnterOpenGuardTestCase {
+    subject system : EntryTransitionsModel;
+    objective {
+        verify requirement {
+            require constraint { eventually(isStateActive(system.Behaviour.Device.On)) }
+        }
+    }
+}
+
+verification def EntryTransitionsEnterClosedGuardUnreachable {
+    subject system : EntryTransitionsModel;
+    objective {
+        verify requirement {
+            require constraint { eventually(isStateActive(system.Behaviour.Device.Off)) }
+        }
+    }
+}
