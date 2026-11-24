@@ -24,7 +24,7 @@ dependencies {
     implementation(project(":logging"))
 }
 
-val sysmlCommit = "e68e5d5dcd73f09b66d9db2d9de606a84748d49d" // fix: a transition without first leaves the closest previous state usage, and every transition after the entry action is initial
+val sysmlCommit = "569fe43143fe23f96eb668dc9e87af2d5b9cf8c7" // feat: a transition whose first names the entry action of its state is initial
 val sysmlUrl = "https://github.com/arminzavada/sysml-2ls.git"
 val sysmlDir = layout.projectDirectory.dir("sysml-2ls")
 
