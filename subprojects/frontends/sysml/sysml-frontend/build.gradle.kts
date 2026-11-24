@@ -61,3 +61,10 @@ tasks.withType<Test>().configureEach {
     inputs.dir(layout.projectDirectory.dir("../models/etc")).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.dir(layout.projectDirectory.dir("../models/tutorial")).withPathSensitivity(PathSensitivity.RELATIVE)
 }
+
+// the corpus test holds the manifest's decisions against the page that lists them
+tasks.test {
+    inputs.file(rootProject.layout.projectDirectory.file("subprojects/website/src/docs/learn/frontends/sysml-v2/decisions.mdx"))
+        .withPropertyName("decisionsPage")
+        .withPathSensitivity(PathSensitivity.RELATIVE)
+}

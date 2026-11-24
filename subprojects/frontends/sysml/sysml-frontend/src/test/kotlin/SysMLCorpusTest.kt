@@ -14,6 +14,7 @@ import hu.bme.mit.semantifyr.portfolios.testing.ServedExamples
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.nio.file.Path
+import kotlin.io.path.Path
 import kotlin.io.path.extension
 import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.name
@@ -25,6 +26,9 @@ class SysMLCorpusTest {
 
     private val caseDeclaration = Regex("""^\s*verification\s+def\s+(\w+)""", RegexOption.MULTILINE)
     private val blockComment = Regex("""/\*.*?\*/""", RegexOption.DOT_MATCHES_ALL)
+
+    private val decisionsPage = Path("../../../website/src/docs/learn/frontends/sysml-v2/decisions.mdx")
+    private val decisionHeading = Regex("""^### .+ \{#([a-z]+(?:-[a-z]+)*)}$""", RegexOption.MULTILINE)
 
     private fun declaredCases(model: Path): List<String> {
         val source = model.readText().replace(blockComment, "")
@@ -64,6 +68,18 @@ class SysMLCorpusTest {
             it.file in served
         }.forEach {
             assertThat(it.variant).describedAs(it.file).isEqualTo(SysMLv2Variant.Default)
+        }
+    }
+
+    @Test
+    fun `every decision a case names is a decision of the decisions page`() {
+        val decisions = decisionHeading.findAll(decisionsPage.readText()).map {
+            it.groupValues[1]
+        }.toSet()
+
+        assertThat(decisions).isNotEmpty()
+        corpus.entries.forEach {
+            assertThat(decisions).describedAs(it.toString()).containsAll(it.case.decisions)
         }
     }
 
