@@ -77,3 +77,111 @@ class MemberReadThroughVariableViolated : Plant {
         return AG levelOf(current) == 1
     }
 }
+
+class Marker {
+    var done: bool := false
+
+    tran mark() {
+        done := true
+    }
+}
+
+class Dispatcher {
+    contains first: Marker
+    contains second: Marker
+    var current: Marker[0..1] := nothing
+    var stepped: bool := false
+    var seen: bool := false
+}
+
+@VerificationCase
+@Tag("expect-pass")
+class OptionalCallThroughVariableReach : Dispatcher {
+    redefine init {
+        current := first
+    }
+
+    redefine tran {
+        inline current?.mark()
+    }
+
+    prop {
+        return EF first.done
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+class OptionalCallThroughVariableUnreachable : Dispatcher {
+    redefine init {
+        current := first
+    }
+
+    redefine tran {
+        inline current?.mark()
+    }
+
+    prop {
+        return EF second.done
+    }
+}
+
+@VerificationCase
+@Tag("expect-pass")
+class OptionalCallThroughNothingReach : Dispatcher {
+    redefine tran {
+        inline current?.mark()
+        stepped := true
+    }
+
+    prop {
+        return EF stepped
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+class OptionalCallThroughNothingUnreachable : Dispatcher {
+    redefine tran {
+        inline current?.mark()
+        stepped := true
+    }
+
+    prop {
+        return EF (first.done || second.done)
+    }
+}
+
+@VerificationCase
+@Tag("expect-pass")
+class ReadThroughNothingBlocks : Dispatcher {
+    redefine tran {
+        seen := current.done
+        stepped := true
+    }
+
+    prop {
+        return AG !stepped
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+class ReadThroughNothingBlocksViolated : Dispatcher {
+    redefine init {
+        choice {
+            current := nothing
+        } or {
+            current := first
+        }
+    }
+
+    redefine tran {
+        seen := current.done
+        stepped := true
+    }
+
+    prop {
+        return AG !stepped
+    }
+}

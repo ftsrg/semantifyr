@@ -161,6 +161,7 @@ public class OxstsValidator extends AbstractOxstsValidator {
     public static final String INCORRECT_ASSIGNMENT = ISSUE_PREFIX + "INCORRECT_ASSIGNMENT";
     public static final String INCORRECT_CALLED_ELEMENT = ISSUE_PREFIX + "INCORRECT_CALLED_ELEMENT";
     public static final String CALL_THROUGH_MANY_VALUED_FEATURE = ISSUE_PREFIX + "CALL_THROUGH_MANY_VALUED_FEATURE";
+    public static final String INCORRECT_CALL_HOLDER_MULTIPLICITY = ISSUE_PREFIX + "INCORRECT_CALL_HOLDER_MULTIPLICITY";
     public static final String SELF_OUTSIDE_CLASS = ISSUE_PREFIX + "SELF_OUTSIDE_CLASS";
     public static final String VARIABLE_WITH_IMPLICIT_TYPE = ISSUE_PREFIX + "VARIABLE_WITH_IMPLICIT_TYPE";
     public static final String UNSUPPORTED_FEATURE = ISSUE_PREFIX + "UNSUPPORTED_FEATURE";
@@ -1580,6 +1581,80 @@ public class OxstsValidator extends AbstractOxstsValidator {
     }
 
     @Check
+    public void checkInlineCallHolderMultiplicity(CallSuffixExpression callSuffixExpression) {
+        if (!(callSuffixExpression.eContainer() instanceof InlineCall inlineCall)
+                || inlineCall.getCallExpression() != callSuffixExpression
+                || !(callSuffixExpression.getPrimary() instanceof NavigationSuffixExpression navigation)
+                || navigation.getMember() == null
+                || navigation.getMember().eIsProxy()) {
+            return;
+        }
+        var holder = navigation.getPrimary();
+        EObject member = null;
+        if (holder instanceof ElementReference reference) {
+            member = reference.getElement();
+        } else if (holder instanceof NavigationSuffixExpression holderNavigation) {
+            member = holderNavigation.getMember();
+        }
+        TypeSpecification typeSpecification = null;
+        if (member instanceof FeatureDeclaration feature) {
+            typeSpecification = feature.getTypeSpecification();
+        } else if (member instanceof VariableDeclaration variable && !OxstsUtils.isLoopVariable(variable)) {
+            typeSpecification = variable.getTypeSpecification();
+        } else if (member instanceof ParameterDeclaration parameter) {
+            typeSpecification = parameter.getTypeSpecification();
+        }
+        if (typeSpecification == null) {
+            return;
+        }
+        RangeEvaluation range;
+        try {
+            range = multiplicityRangeEvaluator.evaluate(typeSpecification);
+        } catch (RuntimeException e) {
+            return;
+        }
+        var upperBound = range.getUpperBound();
+        if (member instanceof FeatureDeclaration && (upperBound == RangeEvaluation.INFINITY || upperBound > 1)) {
+            // checkCallThroughSingleValuedFeature reports it
+            return;
+        }
+        var expected = navigation.isOptional() ? RangeEvaluation.OPTIONAL : RangeEvaluation.ONE;
+        if (range.getLowerBound() == expected.getLowerBound() && upperBound == expected.getUpperBound()) {
+            return;
+        }
+        var operator = navigation.isOptional() ? "?." : ".";
+        var expectedText = navigation.isOptional() ? "[0..1]" : "[1]";
+        var hint = range.getLowerBound() == 0 && upperBound == 1
+                ? "; call with '?.', which drops the call when the holder is absent"
+                : range.getLowerBound() == 1 && upperBound == 1 ? "; call with '.'" : "";
+        acceptError(
+                "An inline call with '"
+                        + operator
+                        + "' needs a holder of multiplicity "
+                        + expectedText
+                        + ", and '"
+                        + NamingUtil.getName((NamedElement) member)
+                        + "' is "
+                        + multiplicityText(typeSpecification, range)
+                        + hint
+                        + ".",
+                navigation,
+                INCORRECT_CALL_HOLDER_MULTIPLICITY);
+    }
+
+    private static String multiplicityText(TypeSpecification typeSpecification, RangeEvaluation range) {
+        var multiplicity = typeSpecification.getMultiplicity();
+        if (multiplicity == null) {
+            return "[1]";
+        }
+        var node = NodeModelUtils.findActualNodeFor(multiplicity);
+        if (node == null) {
+            return "[" + range.getLowerBound() + ".." + range.getUpperBound() + "]";
+        }
+        return NodeModelUtils.getTokenText(node);
+    }
+
+    @Check
     public void checkSelfInsideClass(SelfReference selfReference) {
         if (selfReference.getClass_() == null
                 && EcoreUtil2.getContainerOfType(selfReference, ClassDeclaration.class) == null
@@ -2371,7 +2446,7 @@ public class OxstsValidator extends AbstractOxstsValidator {
         }
         if (expression.eContainer() instanceof CallSuffixExpression call
                 && call.getPrimary() == expression
-                && !expression.isOptional()) {
+                && (!expression.isOptional() || call.eContainer() instanceof InlineCall)) {
             return;
         }
         if (expression.getMember() instanceof VariableDeclaration member
@@ -2400,7 +2475,7 @@ public class OxstsValidator extends AbstractOxstsValidator {
             acceptError(
                     "Optional navigation '?.' through variable '"
                             + variable.getName()
-                            + "' is not yet supported by the compiler; a read or a call with '.' dispatches over the instances the variable may hold.",
+                            + "' is not yet supported by the compiler; a read or a property call with '.' dispatches over the instances the variable may hold.",
                     expression,
                     UNSUPPORTED_FEATURE);
         }

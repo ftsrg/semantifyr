@@ -223,21 +223,20 @@ public class UnsupportedFeatureTest {
     }
 
     @Test
-    void optionalCallThroughVariableIsRejected() {
+    void optionalPropertyCallThroughVariableIsRejected() {
         var parsedPackage = parseHelper.parse(WORKERS + """
             class Team {
                 contains lead: Worker
                 var current: Worker[0..1] := nothing
-                redefine tran {
-                    havoc(current)
-                    inline current?.step()
+                prop {
+                    return EF current?.isDone()
                 }
             }
             """, CheckMode.ALL);
 
         parsedPackage.assertNoResourceErrors();
         parsedPackage.assertHasValidationIssue(OxstsValidator.UNSUPPORTED_FEATURE, "'?.' through variable 'current'");
-        assertOnlyErrorsAreUnsupportedAtLine(parsedPackage, 17);
+        assertOnlyErrorsAreUnsupportedAtLine(parsedPackage, 16);
     }
 
     @Test
@@ -249,7 +248,7 @@ public class UnsupportedFeatureTest {
                 var current: Worker[0..1] := nothing
                 redefine tran {
                     havoc(current)
-                    inline current.step()
+                    inline current?.step()
                     for (worker in workers) {
                         inline worker.step()
                     }

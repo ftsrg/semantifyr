@@ -17,7 +17,7 @@ Positional argument after a named one `f(a = 1, 2)`	reject	constructs/positional
 Member read through a variable `v.x`	pass	semantic/member_dispatch.semantifyr	MemberReadThroughVariableReach
 Write through a variable `v.x := e`	reject	constructs/write_through_variable.semantifyr	OXSTS.UNSUPPORTED_FEATURE
 Optional read through a variable `v?.x`	reject	constructs/optional_read_through_variable.semantifyr	OXSTS.UNSUPPORTED_FEATURE
-Optional call through a variable `v?.t()`	reject	constructs/optional_call_through_variable.semantifyr	OXSTS.UNSUPPORTED_FEATURE
+Optional call through a variable `v?.t()`	pass	semantic/member_dispatch.semantifyr	OptionalCallThroughNothingReach
 Call through a many-valued feature `workers.step()`	reject	constructs/call_through_many_valued_feature.semantifyr	OXSTS.CALL_THROUGH_MANY_VALUED_FEATURE
 `record X { ... }`	pass	semantic/records.semantifyr	RecordFieldWriteReach
 Record literal `Point { x = 0 }`	pass	semantic/records.semantifyr	RecordLiteralAssignReach

@@ -36,7 +36,7 @@ class VariableDispatchInliningTest : InliningTestBase() {
                         current := first
                     }
                     redefine tran {
-                        inline current.step()
+                        inline current?.step()
                     }
                     prop {
                         return EF first.done
@@ -55,6 +55,8 @@ class VariableDispatchInliningTest : InliningTestBase() {
                     } or {
                         assume(root.current == root.second)
                         root.second.done := true
+                    } or {
+                        assume(root.current == nothing)
                     }
                 }
 
@@ -90,7 +92,7 @@ class VariableDispatchInliningTest : InliningTestBase() {
                         }
                     }
                     redefine tran {
-                        inline current.step()
+                        inline current?.step()
                     }
                     prop {
                         return AG (current == nothing || current == first || current == second)
@@ -113,6 +115,8 @@ class VariableDispatchInliningTest : InliningTestBase() {
                     } or {
                         assume(root.current == root.second)
                         root.second.done := true
+                    } or {
+                        assume(root.current == nothing)
                     }
                 }
 
@@ -135,7 +139,7 @@ class VariableDispatchInliningTest : InliningTestBase() {
                     contains second: Worker[1] subsets workers
                     var current: workers[0..1] := nothing
                     tran run(worker: Worker[0..1]) {
-                        inline worker.step()
+                        inline worker?.step()
                     }
                     redefine init {
                         current := first
@@ -161,6 +165,8 @@ class VariableDispatchInliningTest : InliningTestBase() {
                     } or {
                         assume('worker$$$local0' == root.second)
                         root.second.done := true
+                    } or {
+                        assume('worker$$$local0' == nothing)
                     }
                 }
 

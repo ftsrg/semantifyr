@@ -189,7 +189,7 @@ A range is an `int` range. `a..<a` is empty, and `a..<*` is unbounded like `a..*
 
 ## Member Access (`.`)
 
-The `.` operator names a member of an instance. When the instance is held by a variable, the member of the instance the variable holds is read (see [Feature-Typed Variables](../classes-and-behaviour/variables.md#feature-typed-variables)).
+The `.` operator names a member of an instance. When the instance is held by a variable, the member of the instance the variable holds is read (see [Feature-Typed Variables](../classes-and-behaviour/variables.md#feature-typed-variables)). A read or a property call through a variable that holds `nothing` has no value, and the operation of a transition that evaluates it blocks, wherever the read stands in the expression: in a branch of an if-then-else or an operand of `&&` as anywhere else.
 
 ```oxsts
 // hide-start
@@ -212,7 +212,7 @@ class Holder {
 
 ### Optional Member Access (`?.`)
 
-`?.` navigates through an optional (`[0..1]`) reference. An `inline` call whose receiver is absent is dropped, and the rest of the transition runs; reading a member through an absent receiver fails compilation.
+`?.` navigates through an optional (`[0..1]`) reference. An `inline` call whose receiver is absent is dropped, and the rest of the transition runs, also when the receiver is a variable that holds `nothing` as the model runs; an `inline` call takes `?.` exactly when its receiver is optional ([Inline Call](../classes-and-behaviour/inline-operations.md#inline-call)). Reading a member through an absent receiver fails compilation, and a read or a property call through a variable takes `.` only.
 
 ```oxsts
 // hide-start

@@ -455,7 +455,7 @@ public class TypeValidationTest {
                 contains workers: Worker[0..*]
                 contains lead: Worker[1] subsets workers
                 var current: workers[0..1] := nothing
-                tran run(worker: Worker[0..1]) { inline worker.step() }
+                tran run(worker: Worker[0..1]) { inline worker?.step() }
                 redefine tran { inline run(current) }
             }
             """, CheckMode.ALL);

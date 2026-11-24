@@ -381,7 +381,7 @@ class FeatureInliningTest : InliningTestBase() {
                 abstract class Slot {
                     features payload: Item[0..1]
                     tran run() {
-                        inline payload.act()
+                        inline payload?.act()
                     }
                 }
                 class FilledSlot : Slot {

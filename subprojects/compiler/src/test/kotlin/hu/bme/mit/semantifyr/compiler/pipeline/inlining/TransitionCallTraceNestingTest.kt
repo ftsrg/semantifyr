@@ -128,7 +128,7 @@ class TransitionCallTraceNestingTest : InliningTestBase() {
 
                 @Trace
                 tran fireSelected() {
-                    inline selected.send(4)
+                    inline selected?.send(4)
                 }
             }
 

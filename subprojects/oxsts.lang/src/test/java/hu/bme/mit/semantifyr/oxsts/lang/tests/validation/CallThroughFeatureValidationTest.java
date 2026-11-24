@@ -15,6 +15,8 @@ import hu.bme.mit.semantifyr.oxsts.lang.validation.OxstsValidator;
 import org.eclipse.xtext.diagnostics.Severity;
 import org.eclipse.xtext.validation.CheckMode;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 @InjectWithOxsts
 public class CallThroughFeatureValidationTest {
@@ -85,6 +87,65 @@ public class CallThroughFeatureValidationTest {
             """;
 
         assertOnlyErrorAt(WORKERS + model, "workers.isDone");
+    }
+
+    @ParameterizedTest
+    @CsvSource(
+            delimiter = '|',
+            nullValues = "none",
+            value = {
+                "contains held: Worker        |                      | held.step()  | none",
+                "contains held: Worker        |                      | held?.step() | OXSTS.INCORRECT_CALL_HOLDER_MULTIPLICITY",
+                "contains held: Worker[1]     |                      | held.step()  | none",
+                "contains held: Worker[0..1]  |                      | held.step()  | OXSTS.INCORRECT_CALL_HOLDER_MULTIPLICITY",
+                "contains held: Worker[0..1]  |                      | held?.step() | none",
+                "contains held: Worker[0..*]  |                      | held?.step() | OXSTS.CALL_THROUGH_MANY_VALUED_FEATURE",
+                "refers held: Worker[]        |                      | held?.step() | OXSTS.CALL_THROUGH_MANY_VALUED_FEATURE",
+                "var held: Worker := lead     |                      | held.step()  | none",
+                "var held: Worker := lead     |                      | held?.step() | OXSTS.INCORRECT_CALL_HOLDER_MULTIPLICITY",
+                "var held: Worker[0..1] := nothing |                 | held.step()  | OXSTS.INCORRECT_CALL_HOLDER_MULTIPLICITY",
+                "var held: Worker[0..1] := nothing |                 | held?.step() | none",
+                "                             | held: Worker         | held.step()  | none",
+                "                             | held: Worker         | held?.step() | OXSTS.INCORRECT_CALL_HOLDER_MULTIPLICITY",
+                "                             | held: Worker[0..1]   | held.step()  | OXSTS.INCORRECT_CALL_HOLDER_MULTIPLICITY",
+                "                             | held: Worker[0..1]   | held?.step() | none",
+            })
+    void inlineCallHolderFollowsItsMultiplicity(String member, String parameter, String call, String expectedCode) {
+        var source = WORKERS + """
+            class Host {
+                contains lead: Worker
+                %s
+                tran act(%s) {
+                    inline %s
+                }
+            }
+            """.formatted(member == null ? "" : member, parameter == null ? "" : parameter, call);
+        var parsedPackage = parseHelper.parse(source, CheckMode.ALL);
+
+        parsedPackage.assertNoResourceErrors();
+        var errorCodes = parsedPackage.getIssues().stream()
+                .filter(issue -> issue.getSeverity() == Severity.ERROR)
+                .map(issue -> issue.getCode())
+                .toList();
+        if (expectedCode == null) {
+            assertThat(errorCodes).isEmpty();
+        } else {
+            assertThat(errorCodes).containsExactly(expectedCode);
+        }
+    }
+
+    @Test
+    void propertyCallThroughAnOptionalFeatureWithADotPasses() {
+        var parsedPackage = parseHelper.parse(WORKERS + """
+            class Lead : Team {
+                prop {
+                    return EF spare.isDone()
+                }
+            }
+            """, CheckMode.ALL);
+
+        parsedPackage.assertNoResourceErrors();
+        parsedPackage.assertNoValidationErrors();
     }
 
     private void assertOnlyErrorAt(String source, String navigationText) {

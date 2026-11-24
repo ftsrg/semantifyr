@@ -28,9 +28,10 @@ class OptionalInliningTest : InliningTestBase() {
             leaf + """
                 @VerificationCase
                 class Host {
-                    contains leaf: Leaf[1]
+                    contains leaves: Leaf[0..1]
+                    contains leaf: Leaf[1] subsets leaves
                     redefine tran {
-                        inline leaf?.bump()
+                        inline leaves?.bump()
                     }
                     prop {
                         return EF leaf.count == 3
@@ -96,7 +97,7 @@ class OptionalInliningTest : InliningTestBase() {
                 class Host {
                     contains leaf: Leaf[0..1]
                     redefine tran {
-                        inline leaf.bump()
+                        inline (leaf as Leaf).bump()
                     }
                     prop {
                         return EF true
@@ -107,6 +108,31 @@ class OptionalInliningTest : InliningTestBase() {
             assertThatThrownBy { inlineAll(it) }
                 .isInstanceOf(IllegalStateException::class.java)
                 .hasMessageContaining("The holder of the call to 'bump' evaluates to nothing")
+        }
+    }
+
+    @Test
+    fun `a call through a holder of several instances is rejected`() {
+        prepare(
+            "Host",
+            leaf + """
+                @VerificationCase
+                class Host {
+                    contains leaves: Leaf[0..1]
+                    contains first: Leaf[1] subsets leaves
+                    contains second: Leaf[1] subsets leaves
+                    redefine tran {
+                        inline leaves?.bump()
+                    }
+                    prop {
+                        return EF true
+                    }
+                }
+            """,
+        ) {
+            assertThatThrownBy { inlineAll(it) }
+                .isInstanceOf(IllegalStateException::class.java)
+                .hasMessageContaining("The holder of the call to 'bump' evaluates to 2 instances")
         }
     }
 

@@ -33,7 +33,7 @@ class RuntimeMemberDispatchTest : InliningTestBase() {
     """
 
     @Test
-    fun `a read through a feature-typed variable in a transition dispatches over the instances of the feature`() {
+    fun `a read through a feature-typed variable in a transition blocks the operation when the variable holds nothing`() {
         assertInlinedModel(
             "Host",
             worker + """
@@ -58,6 +58,7 @@ class RuntimeMemberDispatchTest : InliningTestBase() {
                 }
 
                 tran {
+                    assume(root.current != nothing)
                     root.seen := if root.current == root.first then root.first.done else root.second.done
                 }
 
@@ -69,7 +70,7 @@ class RuntimeMemberDispatchTest : InliningTestBase() {
     }
 
     @Test
-    fun `a read through a class-typed variable in a property dispatches over the instances of the class`() {
+    fun `a read through a class-typed variable in a property takes the last candidate when the variable holds nothing`() {
         assertInlinedModel(
             "Host",
             worker + """
@@ -131,7 +132,7 @@ class RuntimeMemberDispatchTest : InliningTestBase() {
     }
 
     @Test
-    fun `a read through a class-typed parameter of a transition dispatches over the instances of the class`() {
+    fun `a read through a class-typed parameter of a transition blocks the operation when the argument is nothing`() {
         assertInlinedModel(
             "Host",
             worker + """
@@ -158,6 +159,7 @@ class RuntimeMemberDispatchTest : InliningTestBase() {
 
                 tran {
                     var 'worker$$$local0': inlining::tests::Worker[0..1] := root.current
+                    assume('worker$$$local0' != nothing)
                     root.seen := if 'worker$$$local0' == root.first then root.first.done else root.second.done
                 }
 
@@ -192,6 +194,7 @@ class RuntimeMemberDispatchTest : InliningTestBase() {
                 }
 
                 tran {
+                    assume(root.current != nothing)
                     root.seen := if root.current == root.first then root.first.part.done else root.second.part.done
                 }
 
@@ -265,6 +268,7 @@ class RuntimeMemberDispatchTest : InliningTestBase() {
                 }
 
                 tran {
+                    assume(root.current != nothing)
                     root.flags[if root.current == root.first then root.first.slot else root.second.slot] := true
                 }
 
@@ -427,6 +431,93 @@ class RuntimeMemberDispatchTest : InliningTestBase() {
 
                 prop {
                     EF if root.queue[1] == root.first then root.first.done else root.second.done
+                }
+            """,
+        )
+    }
+
+    @Test
+    fun `an optional call through a variable drops the call when the variable holds nothing`() {
+        assertInlinedModel(
+            "Host",
+            worker + """
+                @VerificationCase
+                class Host {
+                    contains first: Part[1]
+                    contains second: Part[1]
+                    var current: Part[0..1] := nothing
+                    redefine tran {
+                        inline current?.step()
+                    }
+                    prop {
+                        return EF first.done
+                    }
+                }
+            """,
+            """
+                init {
+                }
+
+                tran {
+                    choice {
+                        assume(root.current == root.first)
+                        root.first.done := true
+                    } or {
+                        assume(root.current == root.second)
+                        root.second.done := true
+                    } or {
+                        assume(root.current == nothing)
+                    }
+                }
+
+                prop {
+                    EF root.first.done
+                }
+            """,
+        )
+    }
+
+    @Test
+    fun `a read inside a dispatched branch requires its holder only when the dispatch takes the branch`() {
+        assertInlinedModel(
+            "Host",
+            worker + """
+                class Pair {
+                    contains part: Part[1]
+                    var partner: Part[0..1] := nothing
+                    prop partnerDone(): bool {
+                        return partner.done
+                    }
+                }
+                @VerificationCase
+                class Host {
+                    contains pairs: Pair[0..*]
+                    contains first: Pair[1] subsets pairs
+                    contains second: Pair[1] subsets pairs
+                    var seen: bool := false
+                    redefine tran {
+                        for (pair in pairs) {
+                            seen := pair.partnerDone()
+                        }
+                    }
+                    prop {
+                        return EF seen
+                    }
+                }
+            """,
+            """
+                init {
+                }
+
+                tran {
+                    for (pair in [root.first, root.second]) {
+                        assume(if pair == root.first then root.first.partner != nothing else root.second.partner != nothing)
+                        root.seen := if pair == root.first then if root.first.partner == root.first.part then root.first.part.done else root.second.part.done else if root.second.partner == root.first.part then root.first.part.done else root.second.part.done
+                    }
+                }
+
+                prop {
+                    EF root.seen
                 }
             """,
         )

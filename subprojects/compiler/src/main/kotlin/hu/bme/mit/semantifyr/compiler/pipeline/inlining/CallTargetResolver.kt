@@ -18,6 +18,7 @@ import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.copy
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.parentSequence
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.sourceError
+import hu.bme.mit.semantifyr.oxsts.lang.semantics.MultiplicityRangeEvaluator
 import hu.bme.mit.semantifyr.oxsts.lang.utils.OxstsUtils
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AbstractForOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ArrayLiteral
@@ -51,6 +52,8 @@ sealed interface CallTarget {
         val variable: VariableDeclaration,
         val branches: List<DispatchBranch>,
         val targetDeclaration: NamedElement,
+        val holderMayBeAbsent: Boolean,
+        val dropsWhenAbsent: Boolean,
     ) : CallTarget
 
     data class MissingOptional(
@@ -67,6 +70,7 @@ data class RuntimeHolder(
     val holderExpression: Expression,
     val variable: VariableDeclaration,
     val candidateInstances: Set<Instance>,
+    val mayBeAbsent: Boolean,
 )
 
 class CallTargetResolver @Inject constructor(
@@ -75,6 +79,7 @@ class CallTargetResolver @Inject constructor(
     private val instanceCollector: InstanceCollector,
     private val localVariableManager: LocalVariableManager,
     private val instanceReferenceProvider: InstanceReferenceProvider,
+    private val multiplicityRangeEvaluator: MultiplicityRangeEvaluator,
 ) {
 
     fun resolve(callExpression: CallSuffixExpression, instance: Instance): CallTarget {
@@ -102,21 +107,25 @@ class CallTargetResolver @Inject constructor(
                 variable = runtimeHolder.variable,
                 branches = dispatchBranchesOf(runtimeHolder, holderExpression, instance),
                 targetDeclaration = targetDeclaration,
+                holderMayBeAbsent = runtimeHolder.mayBeAbsent,
+                dropsWhenAbsent = primary.isOptional && runtimeHolder.holderExpression === holderExpression && runtimeHolder.mayBeAbsent,
             )
         }
 
         val evaluator = compileTimeExpressionEvaluatorProvider.getEvaluator(instance)
-        val containerInstance = evaluator.evaluateSingleInstanceOrNull(holderExpression)
+        val containerInstances = evaluator.evaluateInstancesOrNull(holderExpression)
+            ?: return CallTarget.DirectInstance(holderExpression, instance, targetDeclaration)
+
+        if (containerInstances.size > 1) {
+            sourceError(primary, "The holder of the call to '${targetDeclaration.name}' evaluates to ${containerInstances.size} instances; a call needs one, so call each in an `inline for`")
+        }
+
+        val containerInstance = containerInstances.singleOrNull()
         if (containerInstance == null) {
             if (primary.isOptional) {
                 return CallTarget.MissingOptional(holderExpression)
             }
-
-            if (evaluator.evaluateInstancesOrNull(holderExpression)?.isEmpty() == true) {
-                sourceError(primary, "The holder of the call to '${targetDeclaration.name}' evaluates to nothing; navigate with '?.' where it may be absent")
-            }
-
-            return CallTarget.DirectInstance(holderExpression, instance, targetDeclaration)
+            sourceError(primary, "The holder of the call to '${targetDeclaration.name}' evaluates to nothing; navigate with '?.' where it may be absent")
         }
 
         return CallTarget.DirectInstance(
@@ -143,9 +152,18 @@ class CallTargetResolver @Inject constructor(
                 holderExpression = holderExpression,
                 variable = variable,
                 candidateInstances = candidateInstancesOf(variable, variableAccessExpression, instance),
+                mayBeAbsent = mayBeAbsent(variable),
             )
         }
         return null
+    }
+
+    private fun mayBeAbsent(variable: VariableDeclaration): Boolean {
+        if (OxstsUtils.isLoopVariable(variable)) {
+            return false
+        }
+        val typeSpecification = variable.typeSpecification ?: return false
+        return multiplicityRangeEvaluator.evaluate(typeSpecification).lowerBound <= 0
     }
 
     fun replaceHolder(

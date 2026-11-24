@@ -109,7 +109,7 @@ class InlineOperationExpander @Inject constructor(
         instance: Instance,
         target: CallTarget.VariableDispatch,
     ): Operation {
-        if (target.branches.isEmpty()) {
+        if (target.branches.isEmpty() && !target.dropsWhenAbsent) {
             sourceError(
                 callExpression,
                 "Variable '${target.variable.name}' has no candidate instances to dispatch the call over.",
@@ -136,6 +136,17 @@ class InlineOperationExpander @Inject constructor(
                 it.steps += inlinedBranch
             }
             dispatch.branches += guardedBranch
+        }
+        if (target.dropsWhenAbsent) {
+            dispatch.branches += OxstsFactory.createSequenceOperation().also {
+                it.steps += OxstsFactory.createAssumptionOperation(
+                    OxstsFactory.createComparisonOperator().also { comparison ->
+                        comparison.op = ComparisonOp.EQ
+                        comparison.left = target.containerReferenceExpression.copy()
+                        comparison.right = OxstsFactory.createLiteralNothing()
+                    },
+                )
+            }
         }
         return dispatch
     }
