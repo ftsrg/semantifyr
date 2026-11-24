@@ -39,7 +39,7 @@ Finally, the room puts the two parts together:
 
 The room's own `button` port is bound to the switch's button, and a flow connects the switch's output to the lamp's input.
 
-The semantic library executes such a model in steps. In each step, the environment may put an item on each port of the verified part; here that means someone may or may not press the button. Then every state machine with an enabled transition fires one, and every region of a parallel state does the same; an item fires at most one transition per part. At the end of the step the flows move the items sent in it to the receiving ports, which hold them for the next step only: an item that the receiver does not accept in that step is dropped. [Supported Language](supported.mdx) lists the constructs the translator reads and every assumption the library makes.
+The semantic library executes such a model in steps. In each step, the environment may put an item on each port of the verified part; here that means someone may or may not press the button. Then every state machine with an enabled transition fires one, and every region of a parallel state does the same; an item fires at most one transition per part. At the end of the step the flows move the items sent in it to the receiving ports, which hold them for the next step only: an item that the receiver does not accept in that step is dropped. [Supported Language](supported.mdx) lists the constructs the translator reads, and [Semantic Decisions](decisions.mdx) every decision the library makes about their meaning.
 
 ## Requirements and Verification Cases
 

@@ -78,6 +78,7 @@ val apiDocsFiles = configurations.resolvable("apiDocsFiles") {
 dependencies {
     add(generate.implementationConfigurationName, project(":cli-common"))
     add(generate.implementationConfigurationName, project(":verifier"))
+    add(generate.implementationConfigurationName, testFixtures(project(":verifier")))
     add(generate.implementationConfigurationName, libs.kotlinx.serialization.json)
 
     testImplementation(libs.kotlinx.serialization.json)
@@ -183,6 +184,32 @@ val generatedReference = listOf(
     generatedReferenceTask("report-fields"),
     generatedReferenceTask("verdicts"),
 )
+
+// the cases the SysML v2 corpus manifest ties to each decision of the decisions page
+val sysmlCorpusDir = rootProject.layout.projectDirectory.dir("subprojects/frontends/sysml/models/examples")
+val sysmlDecisionsPage = layout.projectDirectory.file("src/docs/learn/frontends/sysml-v2/decisions.mdx")
+
+val decisionCases = tasks.register<JavaExec>("generatedReference_decision-cases") {
+    val outputFile = generatedReferenceDir.map { it.file("decision-cases.json") }
+    classpath = generate.runtimeClasspath
+    mainClass = "hu.bme.mit.semantifyr.website.GenerateDecisionCasesKt"
+    inputs.file(sysmlCorpusDir.file("manifest.json")).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.file(sysmlDecisionsPage).withPathSensitivity(PathSensitivity.RELATIVE)
+    outputs.file(outputFile)
+    outputs.cacheIf { true }
+    // relative paths keep the arguments, and so the cache key, the same in every checkout
+    workingDir = projectDir
+    args(
+        sysmlCorpusDir.asFile.relativeTo(projectDir).invariantSeparatorsPath,
+        sysmlDecisionsPage.asFile.relativeTo(projectDir).invariantSeparatorsPath,
+    )
+    doFirst {
+        standardOutput = outputFile.get().asFile.outputStream()
+    }
+    doLast {
+        standardOutput.close()
+    }
+}
 
 // written for the alias @generated-witness: the witness model the verifier derives from the stored timed report
 val witnessReferenceDir = rootProject.layout.projectDirectory.dir("oxsts-test-models/witness")
@@ -320,6 +347,7 @@ val npmAssemble = tasks.register<NpmTask>("npmAssemble") {
     inputs.property("siteTag", providers.environmentVariable("SEMANTIFYR_SITE_TAG").orElse(""))
     inputs.files(cliReference).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(generatedReference).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.files(decisionCases).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(cloneSysmlConstructs).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(cloneScreenshots).withPathSensitivity(PathSensitivity.RELATIVE)
 
