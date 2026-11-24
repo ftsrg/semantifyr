@@ -35,6 +35,7 @@ enum class CompilationPass {
     VariableReferenceRewriting,
     LocalInstanceDomainRegistration,
     RecordFlattening,
+    DivisionAssumption,
     ArrayFlattening,
     FeatureTypedVariableRewriting,
     StaticExpressionRewriting,

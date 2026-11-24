@@ -283,3 +283,41 @@ class RuntimeDivisionViolated {
         return AG result <= 2
     }
 }
+
+@VerificationCase
+@Tag("expect-pass")
+class DivisionByZeroBlocks {
+    var divisor: int := 0
+    var result: int := 0
+    var divided: bool := false
+
+    redefine tran {
+        havoc(divisor)
+        assume(divisor >= 0 && divisor <= 2)
+        result := 6 / divisor
+        divided := true
+    }
+
+    prop {
+        return AG !(divided && divisor == 0)
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+class DivisionByZeroUnreachable {
+    var divisor: int := 0
+    var result: int := 0
+    var divided: bool := false
+
+    redefine tran {
+        havoc(divisor)
+        assume(divisor >= 0 && divisor <= 2)
+        result := 6 / divisor
+        divided := true
+    }
+
+    prop {
+        return EF (divided && divisor == 0)
+    }
+}

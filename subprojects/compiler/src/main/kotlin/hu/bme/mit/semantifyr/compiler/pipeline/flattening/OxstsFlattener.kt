@@ -126,6 +126,11 @@ class OxstsFlattener @Inject constructor(
         }
         val recordFields = registerRecordFields(recordFieldVariables, variableHolders, variableMappings)
 
+        logger.debug { "Assuming nonzero divisors" }
+        if (addDivisionAssumptions(inlinedOxsts)) {
+            compilationArtifactManager.commitStep(CompilationPass.DivisionAssumption)
+        }
+
         logger.debug { "Flattening array variables" }
         val arraySlotVariables = arrayFlatteningPass.flattenArrays(inlinedOxsts, instanceTree)
         logger.debug { "Flattened ${arraySlotVariables.size} array variable(s)" }

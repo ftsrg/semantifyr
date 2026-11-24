@@ -8,6 +8,7 @@ package hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns.expression
 
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationPattern
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.Worklist
+import hu.bme.mit.semantifyr.compiler.pipeline.utils.mayHaveNoValue
 import hu.bme.mit.semantifyr.oxsts.lang.utils.OxstsUtils
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.BooleanOp
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.BooleanOperator
@@ -81,8 +82,8 @@ class ConstantFalseAndPattern : OptimizationPattern {
             return false
         }
         val replacement = when {
-            OxstsUtils.isConstantLiteralFalse(element.left) -> element.left
-            OxstsUtils.isConstantLiteralFalse(element.right) -> element.right
+            OxstsUtils.isConstantLiteralFalse(element.left) && !element.right.mayHaveNoValue() -> element.left
+            OxstsUtils.isConstantLiteralFalse(element.right) && !element.left.mayHaveNoValue() -> element.right
             else -> return false
         }
         val parent = element.eContainer() ?: return false
@@ -100,8 +101,8 @@ class ConstantTrueOrPattern : OptimizationPattern {
             return false
         }
         val replacement = when {
-            OxstsUtils.isConstantLiteralTrue(element.left) -> element.left
-            OxstsUtils.isConstantLiteralTrue(element.right) -> element.right
+            OxstsUtils.isConstantLiteralTrue(element.left) && !element.right.mayHaveNoValue() -> element.left
+            OxstsUtils.isConstantLiteralTrue(element.right) && !element.left.mayHaveNoValue() -> element.right
             else -> return false
         }
         val parent = element.eContainer() ?: return false

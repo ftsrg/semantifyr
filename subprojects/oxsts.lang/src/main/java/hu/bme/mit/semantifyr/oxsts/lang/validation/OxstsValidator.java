@@ -23,8 +23,10 @@ import hu.bme.mit.semantifyr.oxsts.lang.semantics.RedefinitionHandler;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.clock.ClockTestAnalysis;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.ConstantExpressionEvaluatorProvider;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.EvaluationFailureException;
+import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.IntegerEvaluation;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.MetaConstantExpressionEvaluatorProvider;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.RangeEvaluation;
+import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.RealEvaluation;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.modality.ExpressionModalityEvaluatorProvider;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.modality.Modality;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.ExpressionTypeEvaluatorProvider;
@@ -168,6 +170,7 @@ public class OxstsValidator extends AbstractOxstsValidator {
     public static final String EXPRESSION_MODALITY_TOO_HIGH = ISSUE_PREFIX + "EXPRESSION_MODALITY_TOO_HIGH";
     public static final String COULD_BE_INLINE = ISSUE_PREFIX + "COULD_BE_INLINE";
     public static final String CONSTANT_EXPRESSION = ISSUE_PREFIX + "CONSTANT_EXPRESSION";
+    public static final String DIVISION_BY_ZERO = ISSUE_PREFIX + "DIVISION_BY_ZERO";
     public static final String TYPE_MISMATCH = ISSUE_PREFIX + "TYPE_MISMATCH";
     public static final String INVALID_CAST = ISSUE_PREFIX + "INVALID_CAST";
     public static final String MULTIPLE_INHERITANCE = ISSUE_PREFIX + "MULTIPLE_INHERITANCE";
@@ -1879,6 +1882,22 @@ public class OxstsValidator extends AbstractOxstsValidator {
     public void checkArithmeticBinaryOperandTypes(ArithmeticBinaryOperator operator) {
         requireNumeric(operator.getLeft(), "left arithmetic operand must be numeric");
         requireNumeric(operator.getRight(), "right arithmetic operand must be numeric");
+    }
+
+    @Check
+    public void checkConstantDivisor(ArithmeticBinaryOperator operator) {
+        if (operator.getOp() != ArithmeticOp.DIV || evaluateModalitySafely(operator.getRight()) != Modality.CONSTANT) {
+            return;
+        }
+        try {
+            var divisor = constantExpressionEvaluatorProvider.evaluate(operator.getRight());
+            if (divisor instanceof IntegerEvaluation(int integer) && integer == 0
+                    || divisor instanceof RealEvaluation(double real) && real == 0.0) {
+                acceptError("The divisor is zero.", operator.getRight(), DIVISION_BY_ZERO);
+            }
+        } catch (EvaluationFailureException e) {
+            // a divisor that does not evaluate is assumed nonzero when the model runs
+        }
     }
 
     @Check

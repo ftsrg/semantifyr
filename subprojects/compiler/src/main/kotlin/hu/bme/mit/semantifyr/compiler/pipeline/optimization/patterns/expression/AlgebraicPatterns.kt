@@ -9,6 +9,7 @@ package hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns.expression
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationPattern
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.Worklist
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
+import hu.bme.mit.semantifyr.compiler.pipeline.utils.mayHaveNoValue
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ArithmeticBinaryOperator
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ArithmeticOp
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ArithmeticUnaryOperator
@@ -52,7 +53,8 @@ class ArithmeticIdentityPattern : OptimizationPattern {
                 else -> return false
             }
             ArithmeticOp.MUL -> when {
-                leftValue == 0 || rightValue == 0 -> OxstsFactory.createLiteralInteger(0)
+                leftValue == 0 && !element.right.mayHaveNoValue() -> OxstsFactory.createLiteralInteger(0)
+                rightValue == 0 && !element.left.mayHaveNoValue() -> OxstsFactory.createLiteralInteger(0)
                 leftValue == 1 -> element.right
                 rightValue == 1 -> element.left
                 else -> return false

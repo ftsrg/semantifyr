@@ -37,7 +37,7 @@ class FlatteningStepsTest : FlatteningTestBase() {
                 var picked: Worker := first
                 havoc(picked)
                 havoc(current)
-                position.x := values[0]
+                position.x := values[0] / position.x
                 if (picked == current) {
                     first.done := true
                 }
@@ -70,6 +70,7 @@ class FlatteningStepsTest : FlatteningTestBase() {
         CompilationPass.VariableReferenceRewriting,
         CompilationPass.LocalInstanceDomainRegistration,
         CompilationPass.RecordFlattening,
+        CompilationPass.DivisionAssumption,
         CompilationPass.ArrayFlattening,
         CompilationPass.FeatureTypedVariableRewriting,
         CompilationPass.StaticExpressionRewriting,

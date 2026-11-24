@@ -141,6 +141,19 @@ Evaluated at compile time, as in an `inline if` guard, `==` between instance exp
 
 Their operands are numeric, `int`, `real` or `any`, and their value is an `int` for two `int` operands and a `real` when either is `real`.
 
+A division by zero has no value, and the operation that evaluates it blocks: an assignment, a local variable's initial value, an `assume`, the guard of an `if` or the range of a `for`. Where the division stands in its expression does not matter, since `&&`, `||` and an if-then-else whose guard reads the state guard none of their operands: `assume(divisor != 0 && total / divisor > 1)` and `share := if divisor != 0 then total / divisor else 0` block when `divisor` is 0. A divisor that is zero as a constant is rejected.
+
+```oxsts issue=OXSTS.DIVISION_BY_ZERO
+class Counter {
+  var total: int := 0
+  var share: int := 0
+
+  redefine tran {
+    share := total / 0
+  }
+}
+```
+
 ```oxsts
 class Counter {
   var value: int := 0
