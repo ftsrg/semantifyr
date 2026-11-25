@@ -32,7 +32,7 @@ The synchronous composite `LevelCrossing` holds a statechart of each kind, two t
 
 <CodeBlock language="gamma">{selectDeclarations(levelCrossing.text, ['LevelCrossing'])}</CodeBlock>
 
-The Gamma semantic library runs the composite in steps. In each step the environment may raise any of the input events of its ports, here the sensors of both tracks, and then every statechart runs once. A synchronous composite passes an event over its channels only after every statechart has run, so the controller takes a track's report in the step after it, and the barrier the controller's command in the step after that. [Supported Language](supported.mdx#semantic-assumptions) states the step, time and events as the library has them.
+The Gamma semantic library runs the composite in steps. In each step the environment may raise any of the input events of its ports, here the sensors of both tracks, and then every statechart runs once. A synchronous composite passes an event over its channels only after every statechart has run, so the controller takes a track's report in the step after it, and the barrier the controller's command in the step after that. [Supported Language](supported.mdx#semantic-assumptions) states the step, time and events as the library has them, and how a scheduling constraint bounds the time between two steps.
 
 ## Verification Cases
 
