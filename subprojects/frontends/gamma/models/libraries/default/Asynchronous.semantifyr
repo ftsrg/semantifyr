@@ -14,10 +14,6 @@ class Clock {
     refers rate: int
 
     var elapsed: clock := 0
-
-    prop isUp(): bool {
-        return elapsed >= rate
-    }
 }
 
 abstract class StoredParameter {
@@ -350,13 +346,15 @@ abstract class AsynchronousAdapter : Component {
 
     tran tickClocks() {
         inline for (clock in clocks) {
-            // no wait passes a tick, so the clock ticks once every rate
+            // no wait passes a tick, so the clock ticks once every rate, and a step at the tick's instant may come before it
             assume(clock.elapsed <= clock.rate)
-            if (clock.isUp()) {
+            choice {
+                assume(clock.elapsed >= clock.rate)
                 clock.elapsed := 0
                 inline for (queue in queues) {
                     inline queue.receiveClockTick(clock)
                 }
+            } or {
             }
         }
     }
