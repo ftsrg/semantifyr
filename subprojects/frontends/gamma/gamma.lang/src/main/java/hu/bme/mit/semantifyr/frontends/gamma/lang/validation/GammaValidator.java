@@ -352,7 +352,7 @@ public class GammaValidator extends AbstractGammaValidator {
             }
             return;
         }
-        for (var constraint : constraints.subList(Math.min(1, constraints.size()), constraints.size())) {
+        for (var constraint : constraints.stream().skip(1).toList()) {
             error(
                     "'" + component.getName() + "' has more than one scheduling constraint",
                     constraint,
