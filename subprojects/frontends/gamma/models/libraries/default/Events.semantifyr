@@ -121,14 +121,25 @@ class Timeout {
 
     var clock: clock := 0
     // a timeout is up until it is first set
-    var isSet: bool := false
+    var expired: bool := true
 
     tran set() {
         clock := 0
-        isSet := true
+        expired := false
+    }
+
+    tran expire() {
+        if (!expired) {
+            choice {
+                assume(clock >= value)
+                expired := true
+            } or {
+                assume(clock <= value)
+            }
+        }
     }
 
     prop isUp(): bool {
-        return !isSet || clock >= value
+        return expired
     }
 }

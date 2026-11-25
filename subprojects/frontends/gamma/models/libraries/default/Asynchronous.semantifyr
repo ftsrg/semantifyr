@@ -339,6 +339,10 @@ abstract class AsynchronousAdapter : Component {
         inline wrapped.init()
     }
 
+    redefine tran expireTimeouts() {
+        inline wrapped.expireTimeouts()
+    }
+
     redefine tran schedule() {
         inline tickClocks()
         inline receiveMessage()
@@ -460,6 +464,12 @@ abstract class AsynchronousComposite : Component {
     tran tickClocks() {
         inline for (adapter in adapters) {
             inline adapter.tickClocks()
+        }
+    }
+
+    redefine tran expireTimeouts() {
+        inline for (adapter in adapters) {
+            inline adapter.expireTimeouts()
         }
     }
 

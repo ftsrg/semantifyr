@@ -68,6 +68,7 @@ import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.StatechartDeclaration
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.SyncComponentDeclaration
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.TemporalOperator
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.TimeoutDeclaration
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.TimeUnit
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.TimeoutTrigger
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.Transition
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.TransitionPriority
@@ -1217,6 +1218,9 @@ class GammaToOxstsSerializer(
             val component = verificationCase.component
             nameMap.declareTyped(verificationCase, component, CASE_COMPONENT, component)
             appendLine("redefine contains $CASE_COMPONENT: ${componentClassName(component)}")
+            System.getProperty("semantifyr.spike.periodMilliseconds")?.let {
+                appendLine("redefine refers period: int = ${GammaTime.inUnit(it.toInt(), TimeUnit.MILLISECOND, timeUnitMilliseconds)}")
+            }
 
             serialize(verificationCase.expression, "propertyExpression")
         }

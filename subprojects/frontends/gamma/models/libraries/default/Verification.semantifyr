@@ -7,11 +7,21 @@ class GammaVerificationCase {
     contains component: Component
     contains propertyExpression: Expression
 
+    refers period: int = 0
+
+    var timer: clock := 0
+
     redefine init {
         inline component.init()
     }
 
     redefine tran {
+        inline if (period > 0) {
+            assume(timer >= period)
+            assume(timer <= period)
+            timer := 0
+        }
+        inline component.expireTimeouts()
         inline component.resetOutputEvents()
         inline component.havocInputEvents()
         inline component.main()
