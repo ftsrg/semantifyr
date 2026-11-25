@@ -58,6 +58,7 @@ import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.RecordLiteralExpression
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.RecordType
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.Region
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.ScheduledAsynchronousCompositeComponentDeclaration
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.SchedulingConstraint
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.SchedulingOrder
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.SetTimeoutAction
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.ShallowHistoryState
@@ -67,8 +68,8 @@ import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.StateReferenceExpression
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.StatechartDeclaration
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.SyncComponentDeclaration
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.TemporalOperator
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.TimeSpecification
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.TimeoutDeclaration
-import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.TimeUnit
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.TimeoutTrigger
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.Transition
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.TransitionPriority
@@ -1218,12 +1219,25 @@ class GammaToOxstsSerializer(
             val component = verificationCase.component
             nameMap.declareTyped(verificationCase, component, CASE_COMPONENT, component)
             appendLine("redefine contains $CASE_COMPONENT: ${componentClassName(component)}")
-            System.getProperty("semantifyr.spike.periodMilliseconds")?.let {
-                appendLine("redefine refers period: int = ${GammaTime.inUnit(it.toInt(), TimeUnit.MILLISECOND, timeUnitMilliseconds)}")
+            // the validator lets a component hold one constraint, which only the case verifying it reads
+            component.schedulingConstraints.firstOrNull()?.let {
+                serialize(it)
             }
 
             serialize(verificationCase.expression, "propertyExpression")
         }
+    }
+
+    private fun IndentingStringBuilder.serialize(constraint: SchedulingConstraint) {
+        appendIndent("contains $SCHEDULING_CONSTRAINT: SchedulingConstraint subsets schedulingConstraint") {
+            appendLine("redefine refers minimumPeriod: int = ${inUnit(constraint.minimumPeriod)}")
+            appendLine("redefine refers maximumPeriod: int = ${inUnit(constraint.maximumPeriod)}")
+        }
+    }
+
+    private fun inUnit(period: TimeSpecification): Int {
+        val value = GammaUtils.evaluateInteger(period.value) ?: error("An orchestrating period is not a constant")
+        return GammaTime.inUnit(value, period.unit, timeUnitMilliseconds)
     }
 
     private fun IndentingStringBuilder.serialize(
@@ -1508,6 +1522,7 @@ class GammaToOxstsSerializer(
 
     companion object {
         private const val CASE_COMPONENT = "component"
+        private const val SCHEDULING_CONSTRAINT = "scheduling"
         private const val PARAMETER_CLASS = "parameter"
         private const val VARIABLE_CLASS = "variable"
         private const val ACCESS_CLASS = "access"

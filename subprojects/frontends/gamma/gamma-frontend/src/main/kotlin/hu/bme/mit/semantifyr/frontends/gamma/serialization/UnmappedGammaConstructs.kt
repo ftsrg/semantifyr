@@ -35,6 +35,7 @@ import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.ShallowHistoryState
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.State
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.StateNode
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.StatechartDeclaration
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.TimeSpecification
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.Transition
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.TypeDeclaration
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.VariableDeclaration
@@ -158,6 +159,13 @@ object UnmappedGammaConstructs {
             is SetTimeoutAction -> {
                 if (GammaUtils.evaluateInteger(element.value) == null) {
                     "the value of timeout '${element.timeout?.name}' other than a constant"
+                } else {
+                    null
+                }
+            }
+            is TimeSpecification -> {
+                if (GammaUtils.evaluateInteger(element.value) == null) {
+                    "an orchestrating period other than a constant"
                 } else {
                     null
                 }

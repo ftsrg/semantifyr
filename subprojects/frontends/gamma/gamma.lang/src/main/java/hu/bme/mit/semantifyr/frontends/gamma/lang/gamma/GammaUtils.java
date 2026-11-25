@@ -232,6 +232,17 @@ public class GammaUtils {
         };
     }
 
+    public static Long evaluateMilliseconds(TimeSpecification time) {
+        var value = evaluateInteger(time.getValue());
+        if (value == null) {
+            return null;
+        }
+        if (time.getUnit() == TimeUnit.SECOND) {
+            return value * 1000L;
+        }
+        return value.longValue();
+    }
+
     public static Type resolveType(Type type) {
         var current = type;
         var visited = new LinkedHashSet<TypeDeclaration>();

@@ -849,6 +849,90 @@ class GammaToOxstsSerializerTest {
         )
     }
 
+    private fun constrainedLines(): List<String> {
+        return oxstsLines(
+            """
+                package test
+                statechart Machine {
+                    scheduling-constraint {
+                        minimum-orchestrating-period : 500 ms
+                        maximum-orchestrating-period : 1 s
+                    }
+                    region Main {
+                        initial MainInitial
+                        state Idle
+                    }
+                    transition from MainInitial to Idle
+                }
+                sync System {
+                    component machine : Machine
+                }
+                adapter Buffered of component machine : Machine {
+                    when any / run
+                }
+                verification case MachineIdleReachable of Machine {
+                    EF state Main.Idle
+                }
+                verification case SystemIdleReachable of System {
+                    EF state machine.Main.Idle
+                }
+                verification case BufferedIdleReachable of Buffered {
+                    EF state machine.Main.Idle
+                }
+            """.trimIndent(),
+        )
+    }
+
+    private fun caseLines(lines: List<String>, name: String): List<String> {
+        val caseLines = lines.dropWhile {
+            it != "class $name : GammaVerificationCase {"
+        }
+        assertThat(caseLines).describedAs(name).isNotEmpty
+        return caseLines.takeWhile {
+            !it.startsWith("redefine contains propertyExpression:")
+        }
+    }
+
+    @Test
+    fun `the scheduling constraint of the component a case names reaches that case in the model's time unit`() {
+        val lines = constrainedLines()
+
+        assertThat(caseLines(lines, "_MachineIdleReachable")).containsSequence(
+            "contains scheduling: SchedulingConstraint subsets schedulingConstraint {",
+            "redefine refers minimumPeriod: int = 1",
+            "redefine refers maximumPeriod: int = 2",
+            "}",
+        )
+    }
+
+    @Test
+    fun `the scheduling constraint of a part of a composite or of the component under an adapter reaches no case`() {
+        val lines = constrainedLines()
+
+        assertThat(caseLines(lines, "_SystemIdleReachable")).noneMatch {
+            it.contains("SchedulingConstraint")
+        }
+        assertThat(caseLines(lines, "_BufferedIdleReachable")).noneMatch {
+            it.contains("SchedulingConstraint")
+        }
+    }
+
+    @Test
+    fun `a case of a component without a scheduling constraint holds none, so time passes freely`() {
+        val lines = systemLines(
+            system,
+            """
+                verification case LeaderIdleReachable of System {
+                    EF state leader.Main.Idle
+                }
+            """.trimIndent(),
+        )
+
+        assertThat(lines).noneMatch {
+            it.contains("SchedulingConstraint")
+        }
+    }
+
     @Test
     fun `a state atom names the state by its containment path in the instance`() {
         val lines = oxstsLines(
