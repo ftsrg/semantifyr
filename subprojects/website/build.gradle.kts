@@ -17,8 +17,6 @@ import hu.bme.mit.semantifyr.gradle.servedExampleSources
 plugins {
     id("hu.bme.mit.semantifyr.jvm")
     id("hu.bme.mit.semantifyr.nodejs")
-    kotlin("jvm")
-    kotlin("plugin.serialization")
 }
 
 val editorCommon = artifactsOf("npm-package", ":semantifyr-editor-common")
@@ -35,7 +33,6 @@ val generatedWitness = artifactsOf("generated-witness", ":verifier")
 val phaseWalk = artifactsOf("phase-walk", ":semantifyr-cli")
 
 dependencies {
-    testImplementation(libs.kotlinx.serialization.json)
     testImplementation(project(":oxsts.lang"))
     testImplementation(testFixtures(project(":oxsts.lang")))
 
