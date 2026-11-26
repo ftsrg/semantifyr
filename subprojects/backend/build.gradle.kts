@@ -20,7 +20,7 @@ dependencies {
     implementation(libs.docker.java.core)
     implementation(libs.docker.java.transport)
 
-    testFixturesApi(testFixtures(project(":compiler")))
+    testFixturesApi(testFixtures(project(":oxsts.lang")))
 
     testImplementation(libs.kotlinx.coroutines.test)
 }

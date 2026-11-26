@@ -30,7 +30,7 @@ class SpinWitnessTest {
         private val context by lazy {
             helper.semantifyrLoader
                 .startContext()
-                .loadModels(Path("build/test-models/semantic"))
+                .loadModels(Path("../../../../oxsts-test-models/semantic"))
                 .buildAndResolve()
         }
 

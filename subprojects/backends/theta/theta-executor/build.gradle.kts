@@ -12,8 +12,6 @@ plugins {
     kotlin("jvm")
 }
 
-val thetaXstsCliVersion = providers.gradleProperty("thetaXstsCliVersion").get()
-
 val operatingSystemName = System.getProperty("os.name").lowercase()
 val currentOs = when {
     operatingSystemName.contains("win") -> "windows"
@@ -58,32 +56,99 @@ dependencies {
     implementation(libs.docker.java.core)
     implementation(libs.docker.java.transport)
 
-    thetaCli("hu.bme.mit.ftsrg.theta:theta-xsts-cli:$thetaXstsCliVersion@jar")
+    thetaCli(
+        variantOf(libs.theta.xsts.cli) {
+            artifactType("jar")
+        },
+    )
 
     // Z3 - available on all platforms and architectures
-    thetaNativeLibraries("org.sosy-lab:javasmt-solver-z3:4.14.0:libz3-$currentArchitecture@$nativeExtension")
-    thetaNativeLibraries("org.sosy-lab:javasmt-solver-z3:4.14.0:libz3java-$currentArchitecture@$nativeExtension")
+    thetaNativeLibraries(
+        variantOf(libs.javasmt.z3) {
+            classifier("libz3-$currentArchitecture")
+            artifactType(nativeExtension)
+        },
+    )
+    thetaNativeLibraries(
+        variantOf(libs.javasmt.z3) {
+            classifier("libz3java-$currentArchitecture")
+            artifactType(nativeExtension)
+        },
+    )
 
     when (currentOs) {
         "linux" if currentArchitecture == "x64" -> {
-            thetaNativeLibraries("org.sosy-lab:javasmt-solver-mathsat5:5.6.11-sosy1:libmathsat5j-x64@so")
-            thetaNativeLibraries("org.sosy-lab:javasmt-solver-cvc5:1.2.1-g8594a8e4dc:libcvc5jni-x64@so")
-            thetaNativeLibraries("org.sosy-lab:javasmt-solver-bitwuzla:0.7.0-13.1-g595512ae:libbitwuzlaj-x64@so")
-            thetaNativeLibraries("org.sosy-lab:javasmt-solver-opensmt:2.9.0-gef441e1c:libopensmtj-x64@so")
+            thetaNativeLibraries(
+                variantOf(libs.javasmt.mathsat5) {
+                    classifier("libmathsat5j-x64")
+                    artifactType("so")
+                },
+            )
+            thetaNativeLibraries(
+                variantOf(libs.javasmt.cvc5) {
+                    classifier("libcvc5jni-x64")
+                    artifactType("so")
+                },
+            )
+            thetaNativeLibraries(
+                variantOf(libs.javasmt.bitwuzla) {
+                    classifier("libbitwuzlaj-x64")
+                    artifactType("so")
+                },
+            )
+            thetaNativeLibraries(
+                variantOf(libs.javasmt.opensmt) {
+                    classifier("libopensmtj-x64")
+                    artifactType("so")
+                },
+            )
         }
 
         "windows" if currentArchitecture == "x64" -> {
-            thetaNativeLibraries("org.sosy-lab:javasmt-solver-mathsat5:5.6.11-sosy1:mathsat5j-x64@dll")
-            thetaNativeLibraries("org.sosy-lab:javasmt-solver-mathsat5:5.6.11-sosy1:mathsat-x64@dll")
-            thetaNativeLibraries("org.sosy-lab:javasmt-solver-mathsat5:5.6.11-sosy1:mpir-x64@dll")
-            thetaNativeLibraries("org.sosy-lab:javasmt-solver-cvc5:1.2.1-g8594a8e4dc:libcvc5jni-x64@dll")
-            thetaNativeLibraries("org.sosy-lab:javasmt-solver-bitwuzla:0.7.0-13.1-g595512ae:libbitwuzlaj-x64@dll")
+            thetaNativeLibraries(
+                variantOf(libs.javasmt.mathsat5) {
+                    classifier("mathsat5j-x64")
+                    artifactType("dll")
+                },
+            )
+            thetaNativeLibraries(
+                variantOf(libs.javasmt.mathsat5) {
+                    classifier("mathsat-x64")
+                    artifactType("dll")
+                },
+            )
+            thetaNativeLibraries(
+                variantOf(libs.javasmt.mathsat5) {
+                    classifier("mpir-x64")
+                    artifactType("dll")
+                },
+            )
+            thetaNativeLibraries(
+                variantOf(libs.javasmt.cvc5) {
+                    classifier("libcvc5jni-x64")
+                    artifactType("dll")
+                },
+            )
+            thetaNativeLibraries(
+                variantOf(libs.javasmt.bitwuzla) {
+                    classifier("libbitwuzlaj-x64")
+                    artifactType("dll")
+                },
+            )
         }
     }
 
     // Z3 legacy - a custom Z3 4.5.0 fork with renamed library symbols, committed to the theta repo
-    thetaZ3LegacyLibraries("hu.bme.mit.ftsrg.theta.lib:libz3legacy:$thetaXstsCliVersion@$nativeExtension")
-    thetaZ3LegacyLibraries("hu.bme.mit.ftsrg.theta.lib:libz3javalegacy:$thetaXstsCliVersion@$nativeExtension")
+    thetaZ3LegacyLibraries(
+        variantOf(libs.theta.libz3legacy) {
+            artifactType(nativeExtension)
+        },
+    )
+    thetaZ3LegacyLibraries(
+        variantOf(libs.theta.libz3javalegacy) {
+            artifactType(nativeExtension)
+        },
+    )
 }
 
 val thetaXstsCliDirectory = layout.buildDirectory.dir("theta-xsts-cli")

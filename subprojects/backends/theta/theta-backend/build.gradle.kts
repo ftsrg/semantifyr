@@ -4,15 +4,19 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
+import hu.bme.mit.semantifyr.gradle.artifactsOf
 import hu.bme.mit.semantifyr.gradle.oxstsFileExtension
-import hu.bme.mit.semantifyr.gradle.semantifyrArtifact
+import hu.bme.mit.semantifyr.gradle.runsWithTheta
 
 plugins {
     id("hu.bme.mit.semantifyr.backend")
     id("hu.bme.mit.semantifyr.benchmark")
+    id("hu.bme.mit.semantifyr.theta")
     kotlin("jvm")
     kotlin("plugin.serialization")
 }
+
+val benchmark = sourceSets["benchmark"]
 
 dependencies {
     api(project(":backend"))
@@ -26,48 +30,36 @@ dependencies {
 
     testImplementation(testFixtures(project(":backend")))
 
-    "benchmarkImplementation"(project(":verifier"))
-    "benchmarkImplementation"(project(":compiler")) {
+    add(benchmark.implementationConfigurationName, project(":verifier"))
+    add(benchmark.implementationConfigurationName, project(":compiler")) {
         capabilities {
             requireFeature("benchmark")
         }
     }
-    "benchmarkImplementation"(libs.kotlinx.coroutines.core)
+    add(benchmark.implementationConfigurationName, libs.kotlinx.coroutines.core)
 }
 
-val benchmarkSysmlCorpus = configurations.dependencyScope("benchmarkSysmlCorpus")
-val benchmarkSysmlCorpusFiles = configurations.resolvable("benchmarkSysmlCorpusFiles") {
-    extendsFrom(benchmarkSysmlCorpus.get())
-    attributes(semantifyrArtifact("compiled-corpus"))
-}
-
-val benchmarkGammaExamples = configurations.dependencyScope("benchmarkGammaExamples")
-val benchmarkGammaExamplesFiles = configurations.resolvable("benchmarkGammaExamplesFiles") {
-    extendsFrom(benchmarkGammaExamples.get())
-    attributes(semantifyrArtifact("compiled-examples"))
-}
-
-dependencies {
-    benchmarkSysmlCorpus(project(":sysml-wrapper"))
-    benchmarkGammaExamples(project(":gamma-frontend"))
-}
+val sysmlCompiledCorpus = artifactsOf("compiled-corpus", ":sysml-wrapper")
+val sysmlLibrary = artifactsOf("sysml-library", ":sysml-frontend")
+val gammaCompiledExamples = artifactsOf("compiled-examples", ":gamma-frontend")
+val gammaLibrary = artifactsOf("gamma-library", ":gamma-frontend")
 
 val syncBenchmarkModels = tasks.register<Sync>("syncBenchmarkModels") {
-    from(benchmarkSysmlCorpusFiles) {
+    from(sysmlCompiledCorpus) {
         include("crossroads.$oxstsFileExtension")
         into("sysml")
     }
-    from(rootProject.layout.projectDirectory.dir("subprojects/frontends/sysml/models/libraries/default")) {
+    from(sysmlLibrary) {
         into("sysml/library")
     }
-    from(benchmarkGammaExamplesFiles) {
+    from(gammaCompiledExamples) {
         include("LevelCrossing.$oxstsFileExtension")
         into("gamma")
     }
-    from(rootProject.layout.projectDirectory.dir("subprojects/frontends/gamma/models/libraries/default")) {
+    from(gammaLibrary) {
         into("gamma/library")
     }
-    from(rootProject.layout.projectDirectory.dir("oxsts-test-models/tutorial")) {
+    from(isolated.rootProject.projectDirectory.dir("oxsts-test-models/tutorial")) {
         include("extending-the-library-nested-states.$oxstsFileExtension")
         into("tutorial")
     }
@@ -76,4 +68,5 @@ val syncBenchmarkModels = tasks.register<Sync>("syncBenchmarkModels") {
 
 tasks.named<JavaExec>("benchmark") {
     inputs.files(syncBenchmarkModels)
+    runsWithTheta()
 }

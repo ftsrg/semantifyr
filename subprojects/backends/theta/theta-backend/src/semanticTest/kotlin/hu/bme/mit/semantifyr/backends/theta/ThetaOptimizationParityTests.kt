@@ -28,7 +28,7 @@ class ThetaOptimizationParityTests {
         private val context by lazy {
             helper.semantifyrLoader
                 .startContext()
-                .loadModels(Path("build/test-models/constant-guards"))
+                .loadModels(Path("../../../../oxsts-test-models/constant-guards"))
                 .buildAndResolve()
         }
 
