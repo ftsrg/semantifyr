@@ -4,52 +4,40 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
+import hu.bme.mit.semantifyr.gradle.artifactsOf
 import hu.bme.mit.semantifyr.gradle.corpusModels
-import hu.bme.mit.semantifyr.gradle.semantifyrArtifact
 
 plugins {
     base
     id("hu.bme.mit.semantifyr.formatting")
 }
 
-val vscodeExtensions = configurations.dependencyScope("vscodeExtensions")
-val vscodeExtensionsFiles = configurations.resolvable("vscodeExtensionsFiles") {
-    extendsFrom(vscodeExtensions.get())
-    attributes(semantifyrArtifact("vscode-extension"))
-}
-
-val theta = configurations.dependencyScope("theta")
-val thetaFiles = configurations.resolvable("thetaFiles") {
-    extendsFrom(theta.get())
-    attributes(semantifyrArtifact("theta-xsts-cli"))
-}
-
-dependencies {
-    vscodeExtensions(project(":semantifyr-vscode"))
-    vscodeExtensions(project(":sysml-wrapper"))
-
-    theta(project(":theta-executor"))
-}
+val vscodeExtensions = artifactsOf("vscode-extension", ":semantifyr-vscode", ":sysml-wrapper")
+val theta = artifactsOf("theta-xsts-cli", ":theta-executor")
+val gammaLibrary = artifactsOf("gamma-library", ":gamma-frontend")
+val sysmlLibrary = artifactsOf("sysml-library", ":sysml-frontend")
+val gammaExamples = artifactsOf("gamma-examples", ":gamma-frontend")
+val sysmlExamples = artifactsOf("sysml-examples", ":sysml-frontend")
 
 val cloneDistribution = tasks.register<Sync>("cloneDistribution") {
-    from(vscodeExtensionsFiles)
+    from(vscodeExtensions)
 
     into("extensions")
 }
 
 val cloneTheta = tasks.register<Sync>("cloneTheta") {
-    from(thetaFiles)
+    from(theta)
 
     into("theta-xsts-cli")
 }
 
 val cloneGammaLibrary = tasks.register<Sync>("cloneGammaLibrary") {
-    from(rootProject.layout.projectDirectory.dir("subprojects/frontends/gamma/models/libraries/default"))
+    from(gammaLibrary)
     into("examples/gamma/Library")
 }
 
 val cloneSysMLLibrary = tasks.register<Sync>("cloneSysMLLibrary") {
-    from(rootProject.layout.projectDirectory.dir("subprojects/frontends/sysml/models/libraries/default"))
+    from(sysmlLibrary)
     into("examples/sysml/Library")
 }
 
@@ -59,20 +47,18 @@ val cloneLibraries = tasks.register("cloneLibraries") {
 }
 
 val cloneGammaTestModels = tasks.register<Sync>("cloneGammaTestModels") {
-    from(rootProject.layout.projectDirectory.dir("subprojects/frontends/gamma/models/examples")) {
+    from(gammaExamples) {
         include("*.gamma")
     }
     into("examples/gamma/TestModels")
 }
 
-val sysmlCorpusDirectory = rootProject.layout.projectDirectory.dir("subprojects/frontends/sysml/models/examples")
-
 val cloneSysMLTestModels = tasks.register<Sync>("cloneSysMLTestModels") {
-    from(sysmlCorpusDirectory) {
+    from(sysmlExamples) {
         // the corpus models share its isStateActive and eventually
         include("Verification.sysml")
         include(
-            corpusModels(sysmlCorpusDirectory).map {
+            corpusModels(layout.projectDirectory.dir(sysmlExamples.singleFile.path)).map {
                 it.file
             },
         )
@@ -81,7 +67,7 @@ val cloneSysMLTestModels = tasks.register<Sync>("cloneSysMLTestModels") {
 }
 
 val cloneTutorialModels = tasks.register<Sync>("cloneTutorialModels") {
-    from(rootProject.layout.projectDirectory.dir("oxsts-test-models/tutorial"))
+    from(isolated.rootProject.projectDirectory.dir("oxsts-test-models/tutorial"))
     into("examples/tutorial/")
 }
 
@@ -113,5 +99,6 @@ val vscodeServerImageContext = tasks.register<Tar>("vscodeServerImageContext") {
 }
 
 tasks.register("pack") {
+    group = LifecycleBasePlugin.BUILD_GROUP
     dependsOn(vscodeServerImageContext)
 }

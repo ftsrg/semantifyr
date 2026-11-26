@@ -15,7 +15,6 @@ export interface InfoResponse {
   startedAt: string
   version: string
   commit: string
-  buildTime: string
   activeSessions: number
   maxSessions: number
 }

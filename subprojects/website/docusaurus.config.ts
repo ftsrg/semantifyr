@@ -264,15 +264,15 @@ export default {
                 return [alias, path.resolve(__dirname, directory)];
               }),
             ),
-            // written by the cliReference_* Gradle tasks
+            // written by the cloneCliReference Gradle task
             '@cli-reference': path.resolve(__dirname, 'build/cli-reference'),
             // written by the cloneSysmlConstructs Gradle task from the SysML translation's registry
             '@sysml-constructs': path.resolve(__dirname, 'build/sysml-constructs'),
             // written by the cloneGrammars Gradle task
             '@grammars': path.resolve(__dirname, 'build/grammars'),
-            // written by the generatedReference_* Gradle tasks
+            // written by the cloneGeneratedReference Gradle task
             '@generated-reference': path.resolve(__dirname, 'build/generated-reference'),
-            // written by the phases Gradle task
+            // written by the clonePhaseWalk Gradle task
             '@phases': path.resolve(__dirname, 'build/phases'),
             '@vscode-extension': path.resolve(__dirname, '../semantifyr-vscode'),
           },

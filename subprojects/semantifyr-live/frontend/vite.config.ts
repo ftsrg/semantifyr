@@ -68,7 +68,6 @@ export default defineConfig({
   cacheDir: 'build/vite/app',
   define: {
     __VERSION__: JSON.stringify(getVersion()),
-    __BUILD_TIME__: JSON.stringify(new Date().toISOString()),
     __GIT_COMMIT__: JSON.stringify(getGitCommit()),
     __BACKEND_URL__: JSON.stringify(backendProxyTarget),
   },

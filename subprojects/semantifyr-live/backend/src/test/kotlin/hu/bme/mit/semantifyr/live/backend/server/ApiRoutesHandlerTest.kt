@@ -87,7 +87,6 @@ class ApiRoutesHandlerTest {
         assertThat(info.uptime).isNotNull()
         assertThat(info.version).isNotEmpty().isNotEqualTo("unknown")
         assertThat(info.commit).isNotEmpty()
-        assertThat(info.buildTime).isNotEmpty()
     }
 
     @Test

@@ -6,16 +6,13 @@
 
 import com.github.gradle.node.npm.task.NpmTask
 import groovy.json.JsonSlurper
+import hu.bme.mit.semantifyr.gradle.artifactsOf
 import hu.bme.mit.semantifyr.gradle.commitHash
-import hu.bme.mit.semantifyr.gradle.javaRuntimeLibrary
-import hu.bme.mit.semantifyr.gradle.oxstsFileExtension
 import hu.bme.mit.semantifyr.gradle.readsServedExamples
+import hu.bme.mit.semantifyr.gradle.readsWorkspace
 import hu.bme.mit.semantifyr.gradle.registerBrandingAssets
 import hu.bme.mit.semantifyr.gradle.semantifyrArtifact
 import hu.bme.mit.semantifyr.gradle.servedExampleSources
-import hu.bme.mit.semantifyr.gradle.stampOnSuccess
-import hu.bme.mit.semantifyr.gradle.testBrowser
-import hu.bme.mit.semantifyr.gradle.testChromium
 
 plugins {
     id("hu.bme.mit.semantifyr.jvm")
@@ -24,68 +21,24 @@ plugins {
     kotlin("plugin.serialization")
 }
 
-val generate = sourceSets.create("generate")
-
-val editorCommon = configurations.dependencyScope("editorCommon")
-val editorCommonFiles = configurations.resolvable("editorCommonFiles") {
-    extendsFrom(editorCommon.get())
-    attributes(semantifyrArtifact("npm-package"))
-}
-
-val cliDistribution = configurations.dependencyScope("cliDistribution")
-val cliDistributionFiles = configurations.resolvable("cliDistributionFiles") {
-    extendsFrom(cliDistribution.get())
-    attributes(semantifyrArtifact("application-distribution"))
-}
-
-val sysmlConstructs = configurations.dependencyScope("sysmlConstructs")
-val sysmlConstructsFiles = configurations.resolvable("sysmlConstructsFiles") {
-    extendsFrom(sysmlConstructs.get())
-    attributes(semantifyrArtifact("sysml-constructs"))
-}
-
-val sysmlWorker = configurations.dependencyScope("sysmlWorker")
-val sysmlWorkerFiles = configurations.resolvable("sysmlWorkerFiles") {
-    extendsFrom(sysmlWorker.get())
-    attributes(semantifyrArtifact("sysml-worker"))
-}
-
-// the launchers' runtime classpaths, so that a module a launcher gains is read by the terms test without a list of its own
-val launcherModulesGraph = configurations.resolvable("launcherModulesGraph") {
-    extendsFrom(cliDistribution.get())
-    attributes(javaRuntimeLibrary())
-}
-
-val liveScreenshots = configurations.dependencyScope("liveScreenshots")
-val liveScreenshotsFiles = configurations.resolvable("liveScreenshotsFiles") {
-    extendsFrom(liveScreenshots.get())
-    attributes(semantifyrArtifact("screenshots"))
-}
-
-val liveWebDistribution = configurations.dependencyScope("liveWebDistribution")
-val liveWebDistributionFiles = configurations.resolvable("liveWebDistributionFiles") {
-    extendsFrom(liveWebDistribution.get())
-    attributes(semantifyrArtifact("web-distribution"))
-}
+val editorCommon = artifactsOf("npm-package", ":semantifyr-editor-common")
+val sysmlConstructs = artifactsOf("sysml-constructs", ":sysml-wrapper")
+val sysmlWorker = artifactsOf("sysml-worker", ":sysml-wrapper")
+val grammars = artifactsOf("textmate-grammar", ":oxsts.lang", ":gamma.lang")
+val liveScreenshots = artifactsOf("screenshots", ":semantifyr-live-frontend")
+val liveWebDistribution = artifactsOf("web-distribution", ":semantifyr-live-frontend")
+val liveUiMock = artifactsOf("live-ui-mock", ":semantifyr-live-frontend")
+val vscodeManifest = artifactsOf("vscode-manifest", ":semantifyr-vscode")
+val cliReference = artifactsOf("cli-reference", ":semantifyr-cli", ":sysml-cli", ":gamma-cli")
+val generatedReference = artifactsOf("generated-reference", ":cli-common", ":verifier", ":sysml-frontend")
+val generatedWitness = artifactsOf("generated-witness", ":verifier")
+val phaseWalk = artifactsOf("phase-walk", ":semantifyr-cli")
 
 dependencies {
-    add(generate.implementationConfigurationName, project(":cli-common"))
-    add(generate.implementationConfigurationName, project(":verifier"))
-    add(generate.implementationConfigurationName, testFixtures(project(":verifier")))
-    add(generate.implementationConfigurationName, libs.kotlinx.serialization.json)
-
     testImplementation(libs.kotlinx.serialization.json)
     testImplementation(project(":oxsts.lang"))
     testImplementation(testFixtures(project(":oxsts.lang")))
 
-    editorCommon(project(":semantifyr-editor-common"))
-    cliDistribution(project(":semantifyr-cli"))
-    cliDistribution(project(":sysml-cli"))
-    cliDistribution(project(":gamma-cli"))
-    sysmlConstructs(project(":sysml-wrapper"))
-    liveScreenshots(project(":semantifyr-live-frontend"))
-    liveWebDistribution(project(":semantifyr-live-frontend"))
-    sysmlWorker(project(":sysml-wrapper"))
     listOf(
         ":backend",
         ":benchmark",
@@ -141,193 +94,31 @@ val linkingFilesFile = layout.projectDirectory.file("linking-files.json")
 
 @Suppress("UNCHECKED_CAST")
 val linkingFiles = (JsonSlurper().parseText(providers.fileContents(linkingFilesFile).asText.get()) as List<String>).map {
-    rootProject.layout.projectDirectory.file(it)
+    isolated.rootProject.projectDirectory.file(it)
 }
 
-val cliReferenceDirectory = layout.buildDirectory.dir("cli-reference")
-
-class Launcher(
-    val name: String,
-    val mainClass: String,
-)
-
-val semantifyr = Launcher("semantifyr", "hu.bme.mit.semantifyr.cli.SemantifyrCliKt")
-val semantifyrSysml = Launcher("semantifyr-sysml", "hu.bme.mit.semantifyr.frontends.sysml.cli.SemantifyrSysMLCliKt")
-val semantifyrGamma = Launcher("semantifyr-gamma", "hu.bme.mit.semantifyr.frontends.gamma.cli.SemantifyrGammaCliKt")
-
-fun cliReferenceTask(
-    name: String,
-    launcher: Launcher,
-    vararg arguments: String,
-): TaskProvider<JavaExec> {
-    return tasks.register<JavaExec>("cliReference_$name") {
-        val outputFile = cliReferenceDirectory.map {
-            it.file("$name.txt")
-        }
-        classpath = cliDistributionFiles.get().asFileTree.matching {
-            include("${launcher.name}/lib/*.jar")
-        }
-        mainClass = launcher.mainClass
-        jvmArgs("--enable-native-access=ALL-UNNAMED")
-        args(*arguments)
-        outputs.file(outputFile)
-        outputs.cacheIf {
-            true
-        }
-        doFirst {
-            standardOutput = outputFile.get().asFile.outputStream()
-        }
-        doLast {
-            standardOutput.close()
-            val file = outputFile.get().asFile
-            file.writeText(file.readText().replace("\r\n", "\n"))
-        }
-    }
+// written for the alias @cli-reference
+val cloneCliReference = tasks.register<Sync>("cloneCliReference") {
+    from(cliReference)
+    into(layout.buildDirectory.dir("cli-reference"))
 }
-
-val cliReference = listOf(
-    cliReferenceTask("help", semantifyr, "--help"),
-    cliReferenceTask("verify", semantifyr, "verify", "--help"),
-    cliReferenceTask("compile", semantifyr, "compile", "--help"),
-    cliReferenceTask("list", semantifyr, "list", "--help"),
-    cliReferenceTask("metrics", semantifyr, "metrics", "--help"),
-    cliReferenceTask("portfolios-help", semantifyr, "portfolios", "--help"),
-    cliReferenceTask("portfolios", semantifyr, "portfolios"),
-    cliReferenceTask("sysml-help", semantifyrSysml, "--help"),
-    cliReferenceTask("sysml-verify", semantifyrSysml, "verify", "--help"),
-    cliReferenceTask("sysml-compile", semantifyrSysml, "compile", "--help"),
-    cliReferenceTask("gamma-help", semantifyrGamma, "--help"),
-    cliReferenceTask("gamma-verify", semantifyrGamma, "verify", "--help"),
-    cliReferenceTask("gamma-compile", semantifyrGamma, "compile", "--help"),
-)
-
-val generatedReferenceDirectory = layout.buildDirectory.dir("generated-reference")
 
 // written for the alias @generated-reference: what the pages show of a type, generated from it
-fun generatedReferenceTask(name: String): TaskProvider<JavaExec> {
-    return tasks.register<JavaExec>("generatedReference_$name") {
-        val outputFile = generatedReferenceDirectory.map {
-            it.file("$name.json")
-        }
-        classpath = generate.runtimeClasspath
-        mainClass = "hu.bme.mit.semantifyr.website.GenerateReferenceKt"
-        args(name)
-        outputs.file(outputFile)
-        outputs.cacheIf {
-            true
-        }
-        doFirst {
-            standardOutput = outputFile.get().asFile.outputStream()
-        }
-        doLast {
-            standardOutput.close()
-        }
-    }
-}
-
-val generatedReference = listOf(
-    generatedReferenceTask("exit-codes"),
-    generatedReferenceTask("report-fields"),
-    generatedReferenceTask("verdicts"),
-)
-
-// the cases the SysML v2 corpus manifest ties to each decision of the decisions page
-val sysmlCorpusDirectory = rootProject.layout.projectDirectory.dir("subprojects/frontends/sysml/models/examples")
-val sysmlDecisionsPage = layout.projectDirectory.file("src/docs/learn/frontends/sysml-v2/decisions.mdx")
-
-val decisionCases = tasks.register<JavaExec>("generatedReference_decision-cases") {
-    val outputFile = generatedReferenceDirectory.map {
-        it.file("decision-cases.json")
-    }
-    classpath = generate.runtimeClasspath
-    mainClass = "hu.bme.mit.semantifyr.website.GenerateDecisionCasesKt"
-    inputs.file(sysmlCorpusDirectory.file("manifest.json")).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.file(sysmlDecisionsPage).withPathSensitivity(PathSensitivity.RELATIVE)
-    outputs.file(outputFile)
-    outputs.cacheIf {
-        true
-    }
-    // relative paths keep the arguments, and so the cache key, the same in every checkout
-    args(
-        sysmlCorpusDirectory.asFile.relativeTo(projectDir).invariantSeparatorsPath,
-        sysmlDecisionsPage.asFile.relativeTo(projectDir).invariantSeparatorsPath,
-    )
-    doFirst {
-        standardOutput = outputFile.get().asFile.outputStream()
-    }
-    doLast {
-        standardOutput.close()
-    }
+val cloneGeneratedReference = tasks.register<Sync>("cloneGeneratedReference") {
+    from(generatedReference)
+    into(layout.buildDirectory.dir("generated-reference"))
 }
 
 // written for the alias @generated-witness: the witness model the verifier derives from the stored timed report
-val witnessReferenceDirectory = rootProject.layout.projectDirectory.dir("oxsts-test-models/witness")
-val generatedWitnessDirectory = layout.buildDirectory.dir("generated-witness")
-
-val generatedWitness = tasks.register<JavaExec>("generatedWitness") {
-    classpath = generate.runtimeClasspath
-    mainClass = "hu.bme.mit.semantifyr.website.GenerateWitnessKt"
-    inputs.file(witnessReferenceDirectory.file("blinker.semantifyr")).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.file(witnessReferenceDirectory.file("blinker.report.json")).withPathSensitivity(PathSensitivity.RELATIVE)
-    outputs.dir(generatedWitnessDirectory)
-    outputs.cacheIf {
-        true
-    }
-    val outputDirectory = generatedWitnessDirectory.get().asFile
-    // relative paths keep the arguments, and so the cache key, the same in every checkout
-    workingDir = outputDirectory
-    args(
-        witnessReferenceDirectory.file("blinker.semantifyr").asFile.relativeTo(outputDirectory).invariantSeparatorsPath,
-        witnessReferenceDirectory.file("blinker.report.json").asFile.relativeTo(outputDirectory).invariantSeparatorsPath,
-        "blinker.witness.$oxstsFileExtension",
-    )
-    doFirst {
-        outputDirectory.deleteRecursively()
-        outputDirectory.mkdirs()
-    }
+val cloneGeneratedWitness = tasks.register<Sync>("cloneGeneratedWitness") {
+    from(generatedWitness)
+    into(layout.buildDirectory.dir("generated-witness"))
 }
 
 // written for the alias @phases
-val phasesModel = rootProject.layout.projectDirectory.file("oxsts-test-models/phases/room.semantifyr")
-val phasesDirectory = layout.buildDirectory.dir("phases")
-
-val phases = tasks.register<JavaExec>("phases") {
-    classpath = cliDistributionFiles.get().asFileTree.matching {
-        include("${semantifyr.name}/lib/*.jar")
-    }
-    mainClass = semantifyr.mainClass
-    jvmArgs("--enable-native-access=ALL-UNNAMED")
-    inputs.file(phasesModel).withPathSensitivity(PathSensitivity.RELATIVE)
-    outputs.dir(phasesDirectory)
-    outputs.cacheIf {
-        true
-    }
-    val outputDirectory = phasesDirectory.get().asFile
-    // relative paths keep the arguments, and so the cache key, the same in every checkout
-    workingDir = outputDirectory
-    args(
-        "compile",
-        "--artifacts=debug",
-        "--disable-artifact=mapping",
-        "--artifact-directory=.",
-        "--output=compiled.$oxstsFileExtension",
-        phasesModel.asFile.relativeTo(outputDirectory).invariantSeparatorsPath,
-    )
-    doFirst {
-        outputDirectory.deleteRecursively()
-        outputDirectory.mkdirs()
-    }
-    doLast {
-        outputDirectory.walkTopDown().filter {
-            it.isFile
-        }.forEach {
-            it.writeText(it.readText().replace("\r\n", "\n"))
-        }
-    }
-}
-
-tasks.npmInstall {
-    workingDir = rootProject.projectDir
+val clonePhaseWalk = tasks.register<Sync>("clonePhaseWalk") {
+    from(phaseWalk)
+    into(layout.buildDirectory.dir("phases"))
 }
 
 val importedBrandingDirectory = layout.projectDirectory.dir("static-imported-branding")
@@ -336,23 +127,21 @@ val cloneBrandingAssets = registerBrandingAssets(importedBrandingDirectory.dir("
 
 // written for the alias @sysml-constructs
 val cloneSysmlConstructs = tasks.register<Sync>("cloneSysmlConstructs") {
-    from(sysmlConstructsFiles)
+    from(sysmlConstructs)
     into(layout.buildDirectory.dir("sysml-constructs"))
 }
 
 // written for the alias @grammars: the grammars live's editor loads
 val cloneGrammars = tasks.register<Sync>("cloneGrammars") {
-    from(rootProject.layout.projectDirectory.dir("subprojects/semantifyr-vscode/syntaxes")) {
-        include("*.tmLanguage.json")
-    }
-    from(sysmlWorkerFiles) {
+    from(grammars)
+    from(sysmlWorker) {
         include("sysml.tmLanguage.json")
     }
     into(layout.buildDirectory.dir("grammars"))
 }
 
 val cloneScreenshots = tasks.register<Sync>("cloneScreenshots") {
-    from(liveScreenshotsFiles)
+    from(liveScreenshots)
     into(layout.buildDirectory.dir("live-screenshots/img/screenshots"))
 }
 
@@ -368,37 +157,26 @@ val cloneApiDocs = tasks.register<Sync>("cloneApiDocs") {
 }
 
 fun NpmTask.configureSharedInputs() {
-    inputs.dir(project.layout.projectDirectory.dir("src")).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.file(project.layout.projectDirectory.file("docusaurus.config.ts")).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.file(project.layout.projectDirectory.file("sidebars.ts")).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.file(project.layout.projectDirectory.file("babel.config.cts")).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.file(project.layout.projectDirectory.file("tsconfig.json")).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.file(project.layout.projectDirectory.file("eslint.config.mjs")).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.file(project.layout.projectDirectory.file("vitest.config.mts")).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.file(project.layout.projectDirectory.file("package.json")).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.file(rootProject.layout.projectDirectory.file("tsconfig.base.json")).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.file(rootProject.layout.projectDirectory.file("eslint.config.base.js")).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.file(rootProject.layout.projectDirectory.file("package.json")).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.file(rootProject.layout.projectDirectory.file("package-lock.json")).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.file(rootProject.layout.projectDirectory.file("gradle.properties")).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.file(rootProject.layout.projectDirectory.file(".nvmrc")).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.file(rootProject.layout.projectDirectory.file("deploy/live/env.example")).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.file(rootProject.layout.projectDirectory.file("subprojects/semantifyr-vscode/package.json")).withPathSensitivity(PathSensitivity.RELATIVE)
+    readsWorkspace()
+    inputs.dir(layout.projectDirectory.dir("src")).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.file(layout.projectDirectory.file("docusaurus.config.ts")).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.file(layout.projectDirectory.file("sidebars.ts")).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.file(layout.projectDirectory.file("babel.config.cts")).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.file(layout.projectDirectory.file("tsconfig.json")).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.file(layout.projectDirectory.file("eslint.config.mjs")).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.file(layout.projectDirectory.file("vitest.config.mts")).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.file(layout.projectDirectory.file("package.json")).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.file(isolated.rootProject.projectDirectory.file("gradle.properties")).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.file(isolated.rootProject.projectDirectory.file(".nvmrc")).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.file(isolated.rootProject.projectDirectory.file("deploy/live/env.example")).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.files(vscodeManifest).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.file(sourceAliasesFile).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.files(generatedWitness).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.files(cloneGeneratedWitness).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(sourceAliasDirectories).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(servedExampleSources()).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(cloneGrammars).withPathSensitivity(PathSensitivity.RELATIVE)
-    // the builds keep their own caches under node_modules/.cache, which say nothing of the result
-    dependsOn(tasks.npmInstall)
-    val installed = tasks.npmInstall.map {
-        it.outputs.files.asFileTree.matching {
-            exclude("**/.cache/**")
-        }
-    }
-    inputs.files(installed).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(cloneBrandingAssets).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.files(editorCommonFiles).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.files(editorCommon).withPathSensitivity(PathSensitivity.RELATIVE)
 }
 
 val npmAssemble = tasks.register<NpmTask>("npmAssemble") {
@@ -407,10 +185,9 @@ val npmAssemble = tasks.register<NpmTask>("npmAssemble") {
     environment.put("SEMANTIFYR_SITE_COMMIT", commitHash())
     // the deploying workflow names its tag when it is a release
     inputs.property("siteTag", providers.environmentVariable("SEMANTIFYR_SITE_TAG").orElse(""))
-    inputs.files(cliReference).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.files(generatedReference).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.files(decisionCases).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.files(phases).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.files(cloneCliReference).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.files(cloneGeneratedReference).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.files(clonePhaseWalk).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(cloneSysmlConstructs).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(cloneScreenshots).withPathSensitivity(PathSensitivity.RELATIVE)
 
@@ -422,146 +199,66 @@ val npmAssemble = tasks.register<NpmTask>("npmAssemble") {
     }
 }
 
-// the walk imports live's mock backend and its static server's content types, which the check type-checks, with what they import of live's
-val liveTestSources = rootProject.files(
-    "subprojects/semantifyr-live/frontend/src/__ui__/mock",
-    "subprojects/semantifyr-live/frontend/src/__ui__/staticServer.ts",
-    "subprojects/semantifyr-live/frontend/src/lib/api/types.ts",
-)
-
 val npmCheck = tasks.register<NpmTask>("npmCheck") {
     configureSharedInputs()
-    // the terms test reads live's texts too
-    inputs.files(
-        rootProject.fileTree("subprojects/semantifyr-live/frontend/src") {
-            exclude("snippets/**", "vscode/**", "__*__/**")
-        },
-    ).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.file(rootProject.layout.projectDirectory.file("subprojects/semantifyr-live/frontend/index.html")).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.file(linkingFilesFile).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(linkingFiles).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.files(liveTestSources).withPropertyName("liveTestSources").withPathSensitivity(PathSensitivity.RELATIVE)
+    // the walk imports live's mock backend and its static server's content types, which the check type-checks
+    inputs.files(liveUiMock).withPathSensitivity(PathSensitivity.RELATIVE)
 
     npmCommand = listOf("run", "check")
 
-    stampOnSuccess()
+    outputs.file(layout.buildDirectory.file("tsconfig.tsbuildinfo"))
+    outputs.file(layout.buildDirectory.file("eslint.json"))
+    outputs.file(layout.buildDirectory.file("test-results/unit.xml"))
     outputs.cacheIf {
         true
     }
 }
 
-val walkBrowser = testChromium("The keyboard walk needs")
-
-val uiTest = tasks.register<NpmTask>("uiTest") {
+// the walk runs in Chromium alone
+tasks.register<NpmTask>("uiTestChromium") {
     group = LifecycleBasePlugin.VERIFICATION_GROUP
-    val testBrowser = testBrowser()
-    onlyIf("the walk runs in Chromium alone") {
-        testBrowser.get() == "chromium"
-    }
 
     configureSharedInputs()
     inputs.file(layout.projectDirectory.file("vitest.walk.config.mts")).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.files(npmAssemble).withPropertyName("site").withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.files(liveWebDistributionFiles).withPropertyName("live").withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.files(liveTestSources).withPropertyName("liveTestSources").withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.property("walkBrowser", walkBrowser)
+    inputs.files(npmAssemble).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.files(liveWebDistribution).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.files(liveUiMock).withPathSensitivity(PathSensitivity.RELATIVE)
 
     npmCommand = listOf("run", "walk")
 
-    stampOnSuccess()
+    outputs.file(layout.buildDirectory.file("test-results/walk.xml"))
     outputs.cacheIf {
         true
     }
 }
 
-tasks.register("continuousIntegration") {
-    group = LifecycleBasePlugin.VERIFICATION_GROUP
-    dependsOn(uiTest)
+tasks.named<Test>("test") {
+    inputs.dir(layout.projectDirectory.dir("src/docs")).withPathSensitivity(PathSensitivity.RELATIVE)
+    // the completeness test reads the models the pages import through the source aliases
+    inputs.file(sourceAliasesFile).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.files(cloneGeneratedWitness).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.files(sourceAliasDirectories).withPathSensitivity(PathSensitivity.RELATIVE)
+    // and the served examples the pages embed
+    readsServedExamples()
 }
 
-val projectDirectories = rootProject.allprojects.associate {
-    it.path to it.projectDir
+configurations.consumable("sysmlDecisionsPageElements") {
+    attributes(semantifyrArtifact("sysml-decisions-page"))
+    outgoing.artifact(layout.projectDirectory.file("src/docs/learn/frontends/sysml-v2/decisions.mdx"))
 }
 
-val launcherSourceDirectories = launcherModulesGraph.flatMap {
-    it.incoming.resolutionResult.rootComponent
-}.map { root ->
-    val reached = mutableSetOf<ResolvedComponentResult>()
-    val pending = ArrayDeque(listOf(root))
-    while (pending.isNotEmpty()) {
-        pending.removeFirst().dependencies.filterIsInstance<ResolvedDependencyResult>().forEach {
-            if (reached.add(it.selected)) {
-                pending.add(it.selected)
-            }
-        }
-    }
-    reached.mapNotNull {
-        (it.id as? ProjectComponentIdentifier)?.projectPath
-    }.distinct().sorted().flatMap { path ->
-        listOf("kotlin", "java").map {
-            projectDirectories.getValue(path).resolve("src/main/$it")
-        }
-    }.filter {
-        it.isDirectory
-    }
+tasks.register("pack") {
+    group = LifecycleBasePlugin.BUILD_GROUP
+    dependsOn(npmAssemble)
 }
 
-class RelativePathsArgument(
-    private val name: String,
-    private val module: File,
-    private val paths: Provider<List<File>>,
-) : CommandLineArgumentProvider {
-    override fun asArguments(): Iterable<String> {
-        val relative = paths.get().map {
-            it.relativeTo(module).invariantSeparatorsPath
-        }
-        return listOf("-D$name=${relative.joinToString(",")}")
-    }
+tasks.named("check") {
+    dependsOn(npmCheck)
 }
 
-tasks {
-    test {
-        // the terms test reads these files from disk, so they key the test's results beside its classes
-        inputs.file(rootProject.layout.projectDirectory.file("subprojects/semantifyr-editor-common/src/terms/terms.json"))
-            .withPropertyName("terms")
-            .withPathSensitivity(PathSensitivity.RELATIVE)
-        inputs.files(launcherSourceDirectories)
-            .withPropertyName("launcherSources")
-            .withPathSensitivity(PathSensitivity.RELATIVE)
-        inputs.files(cloneSysmlConstructs)
-            .withPropertyName("sysmlConstructs")
-            .withPathSensitivity(PathSensitivity.RELATIVE)
-        jvmArgumentProviders.add(RelativePathsArgument("semantifyr.launcherSources", projectDir, launcherSourceDirectories))
-        inputs.dir(layout.projectDirectory.dir("src/docs"))
-            .withPropertyName("documentation")
-            .withPathSensitivity(PathSensitivity.RELATIVE)
-        // the completeness test reads the models the pages import through the source aliases
-        inputs.file(sourceAliasesFile)
-            .withPropertyName("sourceAliases")
-            .withPathSensitivity(PathSensitivity.RELATIVE)
-        inputs.files(generatedWitness)
-            .withPropertyName("generatedWitness")
-            .withPathSensitivity(PathSensitivity.RELATIVE)
-        inputs.files(sourceAliasDirectories)
-            .withPropertyName("importedModels")
-            .withPathSensitivity(PathSensitivity.RELATIVE)
-        // and the served examples the pages embed
-        readsServedExamples()
-        inputs.files(servedExampleSources())
-            .withPropertyName("servedExamples")
-            .withPathSensitivity(PathSensitivity.RELATIVE)
-    }
-
-    register("pack") {
-        dependsOn(npmAssemble)
-    }
-
-    check {
-        dependsOn(npmCheck)
-    }
-
-    clean {
-        delete(".docusaurus")
-        delete(importedBrandingDirectory)
-    }
+tasks.named<Delete>("clean") {
+    delete(".docusaurus")
+    delete(importedBrandingDirectory)
 }

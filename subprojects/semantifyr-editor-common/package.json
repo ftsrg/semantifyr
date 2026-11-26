@@ -18,10 +18,10 @@
     "src"
   ],
   "scripts": {
-    "typecheck": "tsc",
+    "typecheck": "tsc --incremental --tsBuildInfoFile build/tsconfig.tsbuildinfo",
     "typecheck:watch": "tsc --watch",
-    "lint": "eslint",
-    "test": "vitest run",
+    "lint": "eslint --format json --output-file build/eslint.json || eslint",
+    "test": "vitest run --reporter=default --reporter=junit --outputFile.junit=build/test-results/unit.xml",
     "test:watch": "vitest",
     "check": "npm run typecheck && npm run lint && npm run test"
   },

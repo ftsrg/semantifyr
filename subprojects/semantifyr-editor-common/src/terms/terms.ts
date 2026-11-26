@@ -11,11 +11,6 @@ export interface Term {
   term: string;
   short?: string;
   meaning: string;
-  rejected: string[];
-  // the one page that may use a rejected word, where it explains it
-  explainedOn?: string;
-  // patterns of the places a rejected word stays as it is, since they are code or quoted: a text has them taken out before its rejected words are looked for
-  kept?: string[];
 }
 
 export interface OutcomeTerm extends Term {

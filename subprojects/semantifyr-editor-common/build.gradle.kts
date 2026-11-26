@@ -5,40 +5,37 @@
  */
 
 import com.github.gradle.node.npm.task.NpmTask
+import hu.bme.mit.semantifyr.gradle.readsWorkspace
 import hu.bme.mit.semantifyr.gradle.semantifyrArtifact
-import hu.bme.mit.semantifyr.gradle.stampOnSuccess
 
 plugins {
     id("hu.bme.mit.semantifyr.nodejs")
 }
 
-tasks.npmInstall {
-    workingDir = rootProject.projectDir
-}
-
 val npmCheck = tasks.register<NpmTask>("npmCheck") {
-    inputs.dir(layout.projectDirectory.dir("src"))
-    inputs.file(layout.projectDirectory.file("tsconfig.json"))
-    inputs.file(layout.projectDirectory.file("eslint.config.js"))
-    inputs.file(layout.projectDirectory.file("vitest.config.ts"))
-    inputs.file(layout.projectDirectory.file("package.json"))
-    inputs.file(rootProject.layout.projectDirectory.file("tsconfig.base.json"))
-    inputs.file(rootProject.layout.projectDirectory.file("eslint.config.base.js"))
-    inputs.file(rootProject.layout.projectDirectory.file("package.json"))
-    inputs.file(rootProject.layout.projectDirectory.file("package-lock.json"))
-    inputs.files(tasks.npmInstall)
+    readsWorkspace()
+    inputs.dir(layout.projectDirectory.dir("src")).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.file(layout.projectDirectory.file("tsconfig.json")).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.file(layout.projectDirectory.file("eslint.config.js")).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.file(layout.projectDirectory.file("vitest.config.ts")).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.file(layout.projectDirectory.file("package.json")).withPathSensitivity(PathSensitivity.RELATIVE)
     // the corpora whose manifests and models the tests read
     listOf(
         "oxsts-test-models",
         "subprojects/frontends/gamma/models",
         "subprojects/frontends/sysml/models",
     ).forEach {
-        inputs.dir(rootProject.layout.projectDirectory.dir(it)).withPathSensitivity(PathSensitivity.RELATIVE)
+        inputs.dir(isolated.rootProject.projectDirectory.dir(it)).withPathSensitivity(PathSensitivity.RELATIVE)
     }
 
     npmCommand = listOf("run", "check")
 
-    stampOnSuccess()
+    outputs.file(layout.buildDirectory.file("tsconfig.tsbuildinfo"))
+    outputs.file(layout.buildDirectory.file("eslint.json"))
+    outputs.file(layout.buildDirectory.file("test-results/unit.xml"))
+    outputs.cacheIf {
+        true
+    }
 }
 
 configurations.consumable("npmPackageElements") {
@@ -46,6 +43,6 @@ configurations.consumable("npmPackageElements") {
     outgoing.artifact(layout.projectDirectory.dir("src"))
 }
 
-tasks.check {
+tasks.named("check") {
     dependsOn(npmCheck)
 }

@@ -45,7 +45,6 @@ export default defineConfig({
   cacheDir: 'build/vite/screen',
   define: {
     __VERSION__: JSON.stringify('screen'),
-    __BUILD_TIME__: JSON.stringify('screen'),
     __GIT_COMMIT__: JSON.stringify('screen'),
     __BACKEND_URL__: JSON.stringify('http://live.example'),
   },

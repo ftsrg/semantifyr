@@ -145,6 +145,9 @@ val sysmlConstructs = tasks.register<NodeTask>("sysmlConstructs") {
             targetFile.get().asFile.relativeTo(projectDir).invariantSeparatorsPath,
         )
     }
+    outputs.cacheIf {
+        true
+    }
 }
 
 configurations.consumable("sysmlConstructsElements") {
@@ -247,6 +250,11 @@ fun sysmlCompileTask(
         }
         inputs.files(workspace).withPathSensitivity(PathSensitivity.RELATIVE)
         outputs.file(targetFile)
+        outputs.file(
+            targetDirectory.map {
+                it.file("$name.names.json")
+            },
+        )
         outputs.cacheIf {
             true
         }
@@ -290,14 +298,10 @@ val tutorialWorkspace = fileTree(tutorialSourceDirectory) {
     include("**/*.sysml", "**/*.kerml")
 }
 
-val compileSysmlExamples = tasks.register("compileSysmlExamples") {
-    inputs.files(compileSysmlExampleTasks)
-}
-
 configurations.consumable("compiledExamplesElements") {
     attributes(semantifyrArtifact("compiled-examples"))
     outgoing.artifact(compiledExamplesDirectory) {
-        builtBy(compileSysmlExamples)
+        builtBy(compileSysmlExampleTasks)
     }
 }
 
@@ -314,14 +318,10 @@ val compileSysmlTutorialTasks = corpusModels(tutorialSourceDirectory).map {
     )
 }
 
-val compileSysmlTutorial = tasks.register("compileSysmlTutorial") {
-    inputs.files(compileSysmlTutorialTasks)
-}
-
 configurations.consumable("compiledTutorialElements") {
     attributes(semantifyrArtifact("compiled-tutorial"))
     outgoing.artifact(compiledTutorialDirectory) {
-        builtBy(compileSysmlTutorial)
+        builtBy(compileSysmlTutorialTasks)
     }
 }
 
@@ -342,14 +342,10 @@ val compileSysmlCorpusTasks = corpusModels(examplesSourceDirectory).filter {
     )
 }
 
-val compileSysmlCorpus = tasks.register("compileSysmlCorpus") {
-    inputs.files(compileSysmlCorpusTasks)
-}
-
 configurations.consumable("compiledCorpusElements") {
     attributes(semantifyrArtifact("compiled-corpus"))
     outgoing.artifact(compiledCorpusDirectory) {
-        builtBy(compileSysmlCorpus)
+        builtBy(compileSysmlCorpusTasks)
     }
 }
 

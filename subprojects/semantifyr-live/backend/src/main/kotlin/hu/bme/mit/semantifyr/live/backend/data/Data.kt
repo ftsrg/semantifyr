@@ -22,7 +22,6 @@ data class InfoResponse(
     val startedAt: Instant,
     val version: String,
     val commit: String,
-    val buildTime: String,
     val activeSessions: Int,
     val maxSessions: Int,
 )

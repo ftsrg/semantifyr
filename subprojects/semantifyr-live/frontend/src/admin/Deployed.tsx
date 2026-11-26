@@ -61,14 +61,12 @@ export function Deployed({ store }: { store: AdminStore }): React.JSX.Element | 
           <dl>
             <Fact label="Version" value={info.version} mono />
             <Fact label="Commit" value={info.commit} mono />
-            <Fact label="Built" value={info.buildTime} />
           </dl>
         </Group>
         <Group title="Frontend">
           <dl>
             <Fact label="Version" value={__VERSION__} mono />
             <Fact label="Commit" value={__GIT_COMMIT__} mono />
-            <Fact label="Built" value={__BUILD_TIME__} />
           </dl>
         </Group>
         <Group title="Limits">
