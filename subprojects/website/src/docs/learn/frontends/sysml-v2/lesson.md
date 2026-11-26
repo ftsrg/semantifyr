@@ -36,7 +36,7 @@ Finally, the room puts the two parts together:
 
 The room's own `button` port is bound to the switch's button, and a flow connects the switch's output to the lamp's input.
 
-The model runs in steps. In each step someone may press the button, every state machine fires one enabled transition, and the items sent move along the flows, arriving in the next step. [Semantic Decisions](decisions.mdx) states the full semantics.
+The model runs in steps. In each step someone may press the button, every state machine fires one enabled transition, and the items sent move along the flows, arriving in the next step. [Semantic Decisions](semantic-decisions.mdx) states the full semantics.
 
 ## Requirements and Verification Cases
 

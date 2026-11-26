@@ -245,7 +245,7 @@ tasks.named<Test>("test") {
 
 configurations.consumable("sysmlDecisionsPageElements") {
     attributes(semantifyrArtifact("sysml-decisions-page"))
-    outgoing.artifact(layout.projectDirectory.file("src/docs/learn/frontends/sysml-v2/decisions.mdx"))
+    outgoing.artifact(layout.projectDirectory.file("src/docs/learn/frontends/sysml-v2/semantic-decisions.mdx"))
 }
 
 tasks.register("pack") {
