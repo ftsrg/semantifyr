@@ -6,6 +6,7 @@
 
 import groovy.json.JsonSlurper
 import hu.bme.mit.semantifyr.gradle.semantifyrArtifact
+import hu.bme.mit.semantifyr.gradle.semantifyrKtlint
 
 plugins {
     alias(libs.plugins.kotlin.jvm) apply false
@@ -50,9 +51,12 @@ tasks.named("sonar") {
 
 sonar {
     properties {
-        property("sonar.coverage.jacoco.xmlReportPaths", suiteReportTasks.map {
-            it.get().reports.xml.outputLocation.get().asFile
-        })
+        property(
+            "sonar.coverage.jacoco.xmlReportPaths",
+            suiteReportTasks.map {
+                it.get().reports.xml.outputLocation.get().asFile
+            },
+        )
         property("sonar.exclusions", "**/generated/**,**/xtext-gen/**,**/emf-gen/**")
         property("sonar.projectKey", "ftsrg_semantifyr")
         property("sonar.organization", "ftsrg-github")
@@ -112,6 +116,7 @@ spotless {
                 include("**/*.kt")
             },
         )
+        semantifyrKtlint(libs.versions.ktlint.get())
     }
 
     kotlinGradle {

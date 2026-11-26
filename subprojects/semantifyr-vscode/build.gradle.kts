@@ -97,12 +97,18 @@ tasks.register<NpmTask>("endToEndTest") {
     inputs.file(isolated.rootProject.projectDirectory.file("oxsts-test-models/smoke/smoke.semantifyr"))
 
     npmCommand = listOf("run", "test:end-to-end")
-    environment.put("SEMANTIFYR_VSIX", vsixFile.map {
-        it.asFile.absolutePath
-    })
-    environment.put("PATH", thetaDirectory.elements.zip(providers.environmentVariable("PATH")) { directories, path ->
-        "${directories.single().asFile.absolutePath}${File.pathSeparator}$path"
-    })
+    environment.put(
+        "SEMANTIFYR_VSIX",
+        vsixFile.map {
+            it.asFile.absolutePath
+        },
+    )
+    environment.put(
+        "PATH",
+        thetaDirectory.elements.zip(providers.environmentVariable("PATH")) { directories, path ->
+            "${directories.single().asFile.absolutePath}${File.pathSeparator}$path"
+        },
+    )
 }
 
 tasks.register("pack") {
