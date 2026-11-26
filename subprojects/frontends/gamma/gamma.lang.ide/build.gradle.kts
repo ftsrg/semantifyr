@@ -5,8 +5,8 @@
  */
 
 plugins {
-    id("hu.bme.mit.semantifyr.gradle.conventions.application")
-    id("hu.bme.mit.semantifyr.gradle.xtext-ide")
+    id("hu.bme.mit.semantifyr.cli")
+    id("hu.bme.mit.semantifyr.xtext-ide")
 }
 
 dependencies {

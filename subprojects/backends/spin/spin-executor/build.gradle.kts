@@ -5,14 +5,10 @@
  */
 
 plugins {
-    id("hu.bme.mit.semantifyr.gradle.conventions.jvm")
+    id("hu.bme.mit.semantifyr.jvm")
     kotlin("jvm")
 }
 
 dependencies {
     api(project(":backend"))
-    api(libs.guice)
-
-    implementation(project(":logging"))
-    implementation(libs.kotlinx.coroutines.core)
 }

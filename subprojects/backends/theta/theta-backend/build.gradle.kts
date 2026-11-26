@@ -4,28 +4,27 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import hu.bme.mit.semantifyr.gradle.conventions.oxstsFileExtension
-import hu.bme.mit.semantifyr.gradle.conventions.semantifyrArtifact
+import hu.bme.mit.semantifyr.gradle.oxstsFileExtension
+import hu.bme.mit.semantifyr.gradle.semantifyrArtifact
 
 plugins {
-    id("hu.bme.mit.semantifyr.gradle.conventions.backend")
-    id("hu.bme.mit.semantifyr.gradle.conventions.benchmark")
+    id("hu.bme.mit.semantifyr.backend")
+    id("hu.bme.mit.semantifyr.benchmark")
     kotlin("jvm")
     kotlin("plugin.serialization")
 }
 
 dependencies {
     api(project(":backend"))
+    api(project(":cex.lang"))
     api(project(":xsts.lang"))
     api(project(":theta-executor"))
     api(libs.guice.extensions.assistedinject)
 
     implementation(project(":logging"))
     implementation(libs.kotlinx.coroutines.core)
-    implementation(libs.kotlinx.serialization.json)
 
     testImplementation(testFixtures(project(":backend")))
-    testImplementation(testFixtures(project(":verifier")))
 
     "benchmarkImplementation"(project(":verifier"))
     "benchmarkImplementation"(project(":compiler")) {
@@ -75,15 +74,6 @@ val syncBenchmarkModels = tasks.register<Sync>("syncBenchmarkModels") {
     into(layout.buildDirectory.dir("benchmark-models"))
 }
 
-val cloneTheta = tasks.named<Sync>("cloneTheta")
-
 tasks.named<JavaExec>("benchmark") {
     inputs.files(syncBenchmarkModels)
-    inputs.files(cloneTheta)
-    val thetaDirectory = cloneTheta.map {
-        it.destinationDir.absolutePath
-    }
-    doFirst {
-        environment("PATH", "${thetaDirectory.get()}${File.pathSeparator}${System.getenv("PATH")}")
-    }
 }

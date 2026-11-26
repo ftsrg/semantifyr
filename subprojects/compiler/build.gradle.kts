@@ -4,13 +4,12 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import hu.bme.mit.semantifyr.gradle.conventions.oxstsFileExtension
-import hu.bme.mit.semantifyr.gradle.conventions.semantifyrArtifact
+import hu.bme.mit.semantifyr.gradle.oxstsFileExtension
+import hu.bme.mit.semantifyr.gradle.semantifyrArtifact
 
 plugins {
-    id("hu.bme.mit.semantifyr.gradle.conventions.jvm")
-    id("hu.bme.mit.semantifyr.gradle.conventions.suites")
-    id("hu.bme.mit.semantifyr.gradle.conventions.benchmark")
+    id("hu.bme.mit.semantifyr.suites")
+    id("hu.bme.mit.semantifyr.benchmark")
     kotlin("jvm")
     kotlin("plugin.serialization")
 }
@@ -23,10 +22,8 @@ dependencies {
     api(project(":oxsts.lang"))
 
     implementation(project(":logging"))
-    implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.serialization.json)
 
-    testFixturesApi(project(":oxsts.lang"))
     testFixturesApi(testFixtures(project(":oxsts.lang")))
 }
 

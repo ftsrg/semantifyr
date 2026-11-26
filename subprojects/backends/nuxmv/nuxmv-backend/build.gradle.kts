@@ -5,9 +5,8 @@
  */
 
 plugins {
-    id("hu.bme.mit.semantifyr.gradle.conventions.backend")
+    id("hu.bme.mit.semantifyr.backend")
     kotlin("jvm")
-    kotlin("plugin.serialization")
 }
 
 dependencies {
@@ -18,7 +17,6 @@ dependencies {
     implementation(project(":logging"))
     implementation(libs.kotlinx.coroutines.core)
     implementation(project(":utils"))
-    implementation(libs.kotlinx.serialization.json)
 
     testImplementation(testFixtures(project(":backend")))
 }

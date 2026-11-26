@@ -5,7 +5,7 @@
  */
 
 plugins {
-    id("hu.bme.mit.semantifyr.gradle.xtext")
+    id("hu.bme.mit.semantifyr.xtext")
     kotlin("jvm")
 }
 
@@ -17,26 +17,31 @@ dependencies {
             requireFeature("metamodel")
         }
     }
-
-    testRuntimeOnly(libs.slf4j.log4j)
 }
 
-val emfGenDirectory = layout.projectDirectory.dir("src/main/emf-gen")
+val emfGeneratedDirectory = layout.projectDirectory.dir("src/main/emf-gen")
 val modelDirectory = layout.projectDirectory.dir("model")
 
 val generateEPackage = tasks.register<JavaExec>("generateEPackage") {
     classpath(metamodel.runtimeClasspath)
-    mainClass.set("hu.bme.mit.semantifyr.frontends.gamma.lang.metamodel.GenerateGammaModelKt")
+    mainClass = "hu.bme.mit.semantifyr.frontends.gamma.lang.metamodel.GenerateGammaModelKt"
 
-    outputs.dir(emfGenDirectory)
+    outputs.dir(emfGeneratedDirectory)
     outputs.file(modelDirectory.file("gamma.ecore"))
     outputs.file(modelDirectory.file("gamma.genmodel"))
+    outputs.cacheIf {
+        true
+    }
 
-    args(emfGenDirectory.asFile.path, modelDirectory.asFile.path)
+    val projectDirectory = layout.projectDirectory.asFile
+    args(
+        emfGeneratedDirectory.asFile.relativeTo(projectDirectory).path,
+        modelDirectory.asFile.relativeTo(projectDirectory).path,
+    )
 }
 
 sourceSets.main {
-    java.srcDir(files(emfGenDirectory).builtBy(generateEPackage))
+    java.srcDir(files(emfGeneratedDirectory).builtBy(generateEPackage))
 }
 
 xtext {
@@ -49,7 +54,7 @@ tasks.named("generateXtextLanguage") {
 }
 
 tasks.clean {
-    delete(emfGenDirectory)
+    delete(emfGeneratedDirectory)
 }
 
 tasks.named("test") {

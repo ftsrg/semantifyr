@@ -5,7 +5,7 @@
  */
 
 plugins {
-    id("hu.bme.mit.semantifyr.gradle.xtext")
+    id("hu.bme.mit.semantifyr.xtext")
 }
 
 xtext {

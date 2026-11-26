@@ -5,7 +5,7 @@
  */
 
 plugins {
-    id("hu.bme.mit.semantifyr.gradle.conventions.jvm")
+    id("hu.bme.mit.semantifyr.jvm")
     kotlin("jvm")
     kotlin("plugin.serialization")
 }
@@ -20,5 +20,4 @@ dependencies {
 
     testFixturesApi(testFixtures(project(":verifier")))
     testFixturesApi(libs.kotlinx.serialization.json)
-    testFixturesImplementation(project(":theta-executor"))
 }

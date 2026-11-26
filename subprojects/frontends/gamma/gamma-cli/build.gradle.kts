@@ -5,7 +5,7 @@
  */
 
 plugins {
-    id("hu.bme.mit.semantifyr.gradle.conventions.cli")
+    id("hu.bme.mit.semantifyr.distribution-test")
     kotlin("jvm")
 }
 

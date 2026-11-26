@@ -5,8 +5,7 @@
  */
 
 plugins {
-    id("hu.bme.mit.semantifyr.gradle.conventions.jvm")
-    id("hu.bme.mit.semantifyr.gradle.conventions.theta")
+    id("hu.bme.mit.semantifyr.jvm")
     kotlin("jvm")
     kotlin("plugin.serialization")
 }
@@ -19,7 +18,6 @@ dependencies {
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.serialization.json)
 
-    testImplementation(libs.kotlinx.coroutines.core)
     testImplementation(libs.kotlinx.coroutines.test)
 
     testFixturesApi(testFixtures(project(":backend")))
@@ -29,5 +27,6 @@ dependencies {
 }
 
 tasks.test {
+    inputs.dir(rootProject.layout.projectDirectory.dir("oxsts-test-models/simple")).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.dir(rootProject.layout.projectDirectory.dir("oxsts-test-models/witness")).withPathSensitivity(PathSensitivity.RELATIVE)
 }

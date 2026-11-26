@@ -4,17 +4,16 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import hu.bme.mit.semantifyr.gradle.conventions.corpusModels
-import hu.bme.mit.semantifyr.gradle.conventions.oxstsFileExtension
-import hu.bme.mit.semantifyr.gradle.conventions.readsServedExamples
-import hu.bme.mit.semantifyr.gradle.conventions.semantifyrArtifact
+import hu.bme.mit.semantifyr.gradle.corpusModels
+import hu.bme.mit.semantifyr.gradle.oxstsFileExtension
+import hu.bme.mit.semantifyr.gradle.readsServedExamples
+import hu.bme.mit.semantifyr.gradle.semantifyrArtifact
 
 plugins {
-    id("hu.bme.mit.semantifyr.gradle.conventions.application")
-    id("hu.bme.mit.semantifyr.gradle.conventions.theta")
-    id("hu.bme.mit.semantifyr.gradle.conventions.suites")
+    id("hu.bme.mit.semantifyr.cli")
+    id("hu.bme.mit.semantifyr.theta")
+    id("hu.bme.mit.semantifyr.suites")
     kotlin("jvm")
-    kotlin("plugin.serialization")
 }
 
 dependencies {
@@ -23,21 +22,14 @@ dependencies {
 
     implementation(project(":logging"))
     implementation(project(":utils"))
-    implementation(libs.kotlinx.coroutines.core)
-    implementation(libs.kotlinx.serialization.json)
 
-    testFixturesImplementation(libs.kotlinx.serialization.json)
+    testImplementation(libs.kotlinx.serialization.json)
+
     testFixturesImplementation(project(":logging"))
-    testFixturesApi(project(":gamma.lang"))
     testFixturesApi(testFixtures(project(":gamma.lang")))
     testFixturesApi(testFixtures(project(":verifier")))
     testFixturesApi(project(":portfolios"))
     testFixturesApi(testFixtures(project(":portfolios")))
-}
-
-val syncGammaLibrary = tasks.register<Sync>("syncGammaLibrary") {
-    from(layout.projectDirectory.dir("../models/libraries"))
-    into(layout.buildDirectory.dir("libraries"))
 }
 
 val syncGammaTestModels = tasks.register<Sync>("syncGammaTestModels") {
@@ -46,7 +38,7 @@ val syncGammaTestModels = tasks.register<Sync>("syncGammaTestModels") {
 }
 
 tasks.processResources {
-    from(syncGammaLibrary)
+    from(layout.projectDirectory.dir("../models/libraries"))
 }
 
 tasks.named<Test>("integrationTest") {
@@ -57,33 +49,44 @@ tasks.withType<Test>().configureEach {
     inputs.files(syncGammaTestModels)
     inputs.dir(layout.projectDirectory.dir("../models/etc")).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.file(layout.projectDirectory.file("../models/constructs.tsv")).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.files(layout.projectDirectory.dir("../models").asFileTree.matching { include("corpus/**", "semantics/**") }).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.files(
+        layout.projectDirectory.dir("../models").asFileTree.matching {
+            include(
+                "corpus/**",
+                "semantics/**",
+            )
+        },
+    ).withPathSensitivity(PathSensitivity.RELATIVE)
 }
 
-val compiledExamplesDir = layout.buildDirectory.dir("compiled-examples")
-val examplesSourceDir = layout.projectDirectory.dir("../models/examples")
-
-fun gammaExampleTask(name: String) = tasks.register<JavaExec>("compileGammaExample_$name") {
-    val sourceFile = examplesSourceDir.file("$name.gamma")
-    val targetFile = compiledExamplesDir.map { it.file("$name.$oxstsFileExtension") }
-    inputs.file(sourceFile).withPathSensitivity(PathSensitivity.NAME_ONLY)
-    inputs.files(sourceSets["main"].runtimeClasspath).withNormalizer(ClasspathNormalizer::class)
-    outputs.file(targetFile)
-    outputs.cacheIf { true }
-    mainClass.set("hu.bme.mit.semantifyr.frontends.gamma.examples.CompileGammaExampleKt")
-    classpath = sourceSets["main"].runtimeClasspath
-    argumentProviders += CommandLineArgumentProvider {
-        listOf(sourceFile.asFile.absolutePath, targetFile.get().asFile.absolutePath)
-    }
-}
+val compiledExamplesDirectory = layout.buildDirectory.dir("compiled-examples")
+val examplesSourceDirectory = layout.projectDirectory.dir("../models/examples")
 
 // a file that imports another holds a model's further cases, which nothing consumes compiled
-val compileGammaExampleTasks = corpusModels(examplesSourceDir).filter { model ->
-    providers.fileContents(examplesSourceDir.file(model.file)).asText.get().lines().none {
+val compileGammaExampleTasks = corpusModels(examplesSourceDirectory).filter { model ->
+    providers.fileContents(examplesSourceDirectory.file(model.file)).asText.get().lines().none {
         it.startsWith("import ")
     }
-}.map {
-    gammaExampleTask(it.name)
+}.map { model ->
+    tasks.register<JavaExec>("compileGammaExample_${model.name}") {
+        val sourceFile = examplesSourceDirectory.file("${model.name}.gamma")
+        val targetFile = compiledExamplesDirectory.map {
+            it.file("${model.name}.$oxstsFileExtension")
+        }
+        inputs.file(sourceFile).withPathSensitivity(PathSensitivity.NAME_ONLY)
+        outputs.file(targetFile)
+        outputs.cacheIf {
+            true
+        }
+        mainClass = "hu.bme.mit.semantifyr.frontends.gamma.examples.CompileGammaExampleKt"
+        classpath = sourceSets["main"].runtimeClasspath
+        argumentProviders += CommandLineArgumentProvider {
+            listOf(
+                sourceFile.asFile.absolutePath,
+                targetFile.get().asFile.absolutePath,
+            )
+        }
+    }
 }
 
 val compileGammaExamples = tasks.register("compileGammaExamples") {
@@ -92,7 +95,7 @@ val compileGammaExamples = tasks.register("compileGammaExamples") {
 
 configurations.consumable("compiledExamplesElements") {
     attributes(semantifyrArtifact("compiled-examples"))
-    outgoing.artifact(compiledExamplesDir) {
+    outgoing.artifact(compiledExamplesDirectory) {
         builtBy(compileGammaExamples)
     }
 }

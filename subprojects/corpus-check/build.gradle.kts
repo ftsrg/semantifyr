@@ -5,7 +5,7 @@
  */
 
 plugins {
-    id("hu.bme.mit.semantifyr.gradle.conventions.application")
+    id("hu.bme.mit.semantifyr.cli")
     kotlin("jvm")
 }
 
@@ -17,5 +17,4 @@ dependencies {
 
 application {
     mainClass = "hu.bme.mit.semantifyr.corpuscheck.CorpusCheckKt"
-    applicationName = "corpus-check"
 }
