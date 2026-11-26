@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import groovy.json.JsonSlurper
 import hu.bme.mit.semantifyr.gradle.semantifyrArtifact
 import hu.bme.mit.semantifyr.gradle.semantifyrKtlint
 
@@ -75,33 +74,11 @@ val workspaceManifests = workspaceMembers.map {
     layout.projectDirectory.file("$it/package.json")
 }
 
-// npm links each member into node_modules by its package name, and the install must not take in the members' sources and builds
-val workspaceLinks = workspaceManifests.map {
-    (JsonSlurper().parseText(providers.fileContents(it).asText.get()) as Map<*, *>)["name"] as String
-}
-
 tasks.npmInstall {
     inputs.file(layout.projectDirectory.file("package-lock.json")).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(workspaceManifests).withPathSensitivity(PathSensitivity.RELATIVE)
-    val links = workspaceLinks
-    nodeModulesOutputFilter {
-        exclude(links)
-    }
-    // npm installs a member's own versions beside it, where the members' tools also keep their caches
-    outputs.files(
-        workspaceMembers.map {
-            fileTree("$it/node_modules") {
-                exclude(
-                    ".cache",
-                    ".vite",
-                    ".vite-temp",
-                )
-            }
-        },
-    )
 }
 
-// npm's record of the installed tree stands for node_modules, which links back into the members
 configurations.consumable("npmWorkspaceElements") {
     attributes(semantifyrArtifact("npm-workspace"))
     outgoing.artifact(layout.projectDirectory.file("node_modules/.package-lock.json")) {
