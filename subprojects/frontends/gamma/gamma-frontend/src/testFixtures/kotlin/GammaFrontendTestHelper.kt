@@ -6,13 +6,10 @@
 
 package hu.bme.mit.semantifyr.frontends.gamma.testing
 
-import hu.bme.mit.semantifyr.backend.BackendConfig
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
-import hu.bme.mit.semantifyr.backend.scopes.withVerificationScope
 import hu.bme.mit.semantifyr.compiler.SemantifyrCompiler
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.ArtifactConfig
-import hu.bme.mit.semantifyr.compiler.pipeline.context.FlattenedCompilationContext
 import hu.bme.mit.semantifyr.frontends.gamma.GammaFrontend
 import hu.bme.mit.semantifyr.frontends.gamma.GammaVariant
 import hu.bme.mit.semantifyr.frontends.gamma.GammaVerificationCase
@@ -26,12 +23,12 @@ import hu.bme.mit.semantifyr.frontends.gamma.reader.GammaReader
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
 import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup
+import hu.bme.mit.semantifyr.oxsts.lang.semantics.clock.ClockTestAnalysis
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.portfolios.Portfolios
 import hu.bme.mit.semantifyr.verifier.assertVerdict
 import hu.bme.mit.semantifyr.verifier.assumePortfolioAvailable
-import hu.bme.mit.semantifyr.verifier.portfolio.PortfolioLeg
 import hu.bme.mit.semantifyr.verifier.portfolio.VerificationPortfolio
-import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Named
 import org.junit.jupiter.params.provider.Arguments
 import java.nio.file.Path
@@ -124,48 +121,19 @@ class GammaFrontendTestHelper {
         return result
     }
 
-    suspend fun checkTrustedVerdictOrNone(
-        portfolio: VerificationPortfolio,
-        environment: ExecutionEnvironment,
-        outputDirectory: Path,
+    fun compileToOxsts(
         gammaVerificationCase: GammaVerificationCase,
-        expectedVerdict: VerificationVerdict,
-        noTrustedVerdictTimeout: Duration,
-    ) {
-        val trustDirectory = outputDirectory.resolve("trust")
-        val compiledCase = buildFrontend(portfolio, trustDirectory.resolve("gamma"), environment = environment).compile(gammaVerificationCase)
-        val compiledOxsts = SemantifyrCompiler(oxstsInjector, ArtifactConfig.NONE).compile(
+        outputDirectory: Path,
+    ): InlinedOxsts {
+        val compiledCase = buildFrontend(Portfolios.SmartFull, outputDirectory.resolve("gamma")).compile(gammaVerificationCase)
+        return SemantifyrCompiler(oxstsInjector, ArtifactConfig.NONE).compile(
             compiledCase.verificationCase.classDeclaration,
-            trustDirectory.resolve("oxsts").resolve(gammaVerificationCase.qualifiedName),
-        )
-        val givesTrustedVerdict = portfolio.legs.any {
-            it.isAvailable(environment) && isTrustedOn(it, compiledOxsts, expectedVerdict)
-        }
-        if (givesTrustedVerdict) {
-            checkVerificationCase(buildFrontend(portfolio, outputDirectory, environment = environment), gammaVerificationCase, expectedVerdict)
-            return
-        }
-        val frontend = buildFrontend(portfolio, outputDirectory, timeout = noTrustedVerdictTimeout, environment = environment)
-        val result = frontend.verify(gammaVerificationCase).outcome.report.result
-        assertThat(result.verdict)
-            .describedAs("${gammaVerificationCase.qualifiedName} has no trusted verdict on these backends (${result.message ?: "no message"})")
-            .isIn(VerificationVerdict.Inconclusive, VerificationVerdict.Timeout)
+            outputDirectory.resolve("oxsts"),
+        ).inlinedOxsts
     }
 
-    private suspend fun <T : BackendConfig> isTrustedOn(
-        leg: PortfolioLeg<T>,
-        compiledOxsts: FlattenedCompilationContext,
-        verdict: VerificationVerdict,
-    ): Boolean {
-        val inlinedOxsts = compiledOxsts.inlinedOxsts
-        return withVerificationScope {
-            val checker = leg.backend.capabilityChecker(oxstsInjector, leg.config)
-            if (checker.check(inlinedOxsts, compiledOxsts.transitionCallTraces).isNotEmpty()) {
-                return@withVerificationScope false
-            }
-            val soundness = checker.soundness(leg.config.soundness, inlinedOxsts)
-            soundness.trusts(verdict, inlinedOxsts.property.expression)
-        }
+    fun clockTestAnalysis(): ClockTestAnalysis {
+        return oxstsInjector.getInstance(ClockTestAnalysis::class.java)
     }
 
     suspend fun checkVerificationCaseOn(

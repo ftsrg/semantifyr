@@ -395,6 +395,63 @@ class GammaGrammarTest {
     }
 
     @Test
+    fun `a statechart, a synchronous and a cascade composite hold a scheduling constraint in Gamma's words`() {
+        val gammaPackage = parse(
+            """
+                package test
+                statechart Machine {
+                    scheduling-constraint {
+                        minimum-orchestrating-period : 500 ms
+                        maximum-orchestrating-period : 1 s
+                    }
+                }
+                sync System {
+                    component machine : Machine
+                    scheduling-constraint {
+                        minimum-orchestrating-period : 1 s
+                        maximum-orchestrating-period : 1 s
+                    }
+                }
+                cascade Chain {
+                    component machine : Machine
+                    scheduling-constraint {
+                        minimum-orchestrating-period : 2 s
+                        maximum-orchestrating-period : 3000 ms
+                    }
+                }
+            """,
+        ) as GammaModelPackage
+
+        assertThat(
+            gammaPackage.components.map { component ->
+                component.schedulingConstraints.single().let {
+                    listOf(it.minimumPeriod.unit, it.maximumPeriod.unit)
+                }
+            },
+        ).containsExactly(
+            listOf(TimeUnit.MILLISECOND, TimeUnit.SECOND),
+            listOf(TimeUnit.SECOND, TimeUnit.SECOND),
+            listOf(TimeUnit.SECOND, TimeUnit.MILLISECOND),
+        )
+    }
+
+    @Test
+    fun `a scheduling constraint without its maximum does not parse`() {
+        val root = parseHelper.parse(
+            """
+                package test
+                statechart Machine {
+                    scheduling-constraint {
+                        minimum-orchestrating-period : 1 s
+                    }
+                }
+            """.trimIndent(),
+        )
+
+        assertThat(root.eResource().errors).isNotEmpty
+    }
+
+    @Test
     fun `a queue without a capacity does not parse`() {
         val root = parseHelper.parse(
             """

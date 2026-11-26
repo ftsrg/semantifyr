@@ -17,16 +17,12 @@ import hu.bme.mit.semantifyr.verifier.assumeBackendAvailable
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
-import kotlin.time.Duration.Companion.minutes
 
 class GammaServedExampleTests {
 
     companion object {
         private val helper = GammaFrontendTestHelper()
         private val artifactRoot = GammaFrontendTestHelper.testArtifactRoot(GammaServedExampleTests::class.java)
-
-        // no leg can give the expected verdict trusted, so the run only shows that none finds a trusted answer of the other kind
-        private val noTrustedVerdictTimeout = 1.minutes
 
         @JvmStatic
         @BeforeAll
@@ -54,6 +50,7 @@ class GammaServedExampleTests {
         val gammaVerificationCase = helper.discoverInWorkspace(entry.directory, entry.model.file).single {
             it.declaration.name == entry.case.name
         }
-        helper.checkTrustedVerdictOrNone(Portfolios.SmartFull, liveBackends, artifactRoot, gammaVerificationCase, entry.case.expectedVerdict, noTrustedVerdictTimeout)
+        val frontend = helper.buildFrontend(Portfolios.SmartFull, artifactRoot, environment = liveBackends)
+        helper.checkVerificationCase(frontend, gammaVerificationCase, entry.case.expectedVerdict)
     }
 }

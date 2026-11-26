@@ -1,0 +1,124 @@
+/**
+ * The lift with a light curtain in its door: an obstacle in the closing door opens it again, and it retries two seconds later.
+ * A passenger calls the lift and blocks the door whenever they like; the controller still waits three seconds before it starts the motor.
+ * The cases ask whether the lift can move, whether the door is closed whenever the motor runs and whether the controller can set off with the door open.
+ */
+
+package LiftStep4
+
+interface Buttons {
+    out event call
+}
+
+interface DoorSensor {
+    out event obstacle
+}
+
+interface DoorCommands {
+    out event open
+    out event close
+}
+
+interface MotorCommands {
+    out event start
+    out event stop
+}
+
+statechart Door [
+    port sensor : requires DoorSensor,
+    port controller : requires DoorCommands
+] {
+    timeout closing
+
+    region Main {
+        initial MainInitial
+
+        state Open
+        state Closing {
+            entry / set closing := 2 s;
+        }
+        state Reopened {
+            entry / set closing := 2 s;
+        }
+        state Closed
+    }
+
+    transition from MainInitial to Open
+    transition from Open to Closing when controller.close
+    transition from Closing to Closed when timeout closing
+    transition from Closing to Reopened when sensor.obstacle
+    transition from Reopened to Closing when timeout closing
+    transition from Closed to Open when controller.open
+}
+
+statechart Motor [
+    port controller : requires MotorCommands
+] {
+    region Main {
+        initial MainInitial
+
+        state Stopped
+        state Running
+    }
+
+    transition from MainInitial to Stopped
+    transition from Stopped to Running when controller.start
+    transition from Running to Stopped when controller.stop
+}
+
+statechart Controller [
+    port buttons : requires Buttons,
+    port door : provides DoorCommands,
+    port motor : provides MotorCommands
+] {
+    timeout waiting
+
+    region Main {
+        initial MainInitial
+
+        state Idle
+        state ClosingDoor {
+            entry / set waiting := 3 s;
+        }
+        state Moving {
+            entry / set waiting := 3 s;
+        }
+    }
+
+    transition from MainInitial to Idle
+    transition from Idle to ClosingDoor when buttons.call / raise door.close;
+    transition from ClosingDoor to Moving when timeout waiting / raise motor.start;
+    transition from Moving to Idle when timeout waiting / raise motor.stop; raise door.open;
+}
+
+sync Lift [
+    port buttons : requires Buttons,
+    port doorSensor : requires DoorSensor
+] {
+    component controller : Controller
+    component door : Door
+    component motor : Motor
+
+    bind buttons -> controller.buttons
+    bind doorSensor -> door.sensor
+
+    channel [ controller.door ] -o)- [ door.controller ]
+    channel [ controller.motor ] -o)- [ motor.controller ]
+
+    scheduling-constraint {
+        minimum-orchestrating-period : 999 ms
+        maximum-orchestrating-period : 999 ms
+    }
+}
+
+verification case DoorClosedWhileMoving of Lift {
+    AG (not state motor.Main.Running or state door.Main.Closed)
+}
+
+verification case LiftCanMove of Lift {
+    EF (state motor.Main.Running)
+}
+
+verification case CanSetOffWithDoorOpen of Lift {
+    EF (state controller.Main.Moving and not state door.Main.Closed)
+}

@@ -64,6 +64,67 @@
       ]
     },
     {
+      "id": "lift-step1",
+      "language": "gamma",
+      "file": "subprojects/frontends/gamma/models/examples/LiftStep1.gamma",
+      "label": "Lift, step 1",
+      "reason": "A state of the lift that the model verification practice opens.",
+      "cases": [
+        "LiftCanMove"
+      ],
+      "hidden": true
+    },
+    {
+      "id": "lift-step2",
+      "language": "gamma",
+      "file": "subprojects/frontends/gamma/models/examples/LiftStep2.gamma",
+      "label": "Lift, step 2",
+      "reason": "A state of the lift that the model verification practice opens.",
+      "cases": [
+        "DoorClosedWhileMoving",
+        "LiftCanMove"
+      ],
+      "hidden": true
+    },
+    {
+      "id": "lift-step3",
+      "language": "gamma",
+      "file": "subprojects/frontends/gamma/models/examples/LiftStep3.gamma",
+      "label": "Lift, step 3",
+      "reason": "A state of the lift that the model verification practice opens.",
+      "cases": [
+        "DoorClosedWhileMoving",
+        "LiftCanMove"
+      ],
+      "hidden": true
+    },
+    {
+      "id": "lift-step4",
+      "language": "gamma",
+      "file": "subprojects/frontends/gamma/models/examples/LiftStep4.gamma",
+      "label": "Lift, step 4",
+      "reason": "A state of the lift that the model verification practice opens.",
+      "cases": [
+        "DoorClosedWhileMoving",
+        "LiftCanMove",
+        "CanSetOffWithDoorOpen"
+      ],
+      "hidden": true
+    },
+    {
+      "id": "lift",
+      "language": "gamma",
+      "file": "subprojects/frontends/gamma/models/examples/Lift.gamma",
+      "label": "Lift",
+      "reason": "A state of the lift that the model verification practice opens.",
+      "cases": [
+        "DoorClosedWhileMoving",
+        "LiftCanMove",
+        "CanSetOffWithDoorOpen"
+      ],
+      "hidden": true
+    },
+    {
       "id": "room",
       "language": "sysml",
       "file": "subprojects/frontends/sysml/models/tutorial/room.sysml",

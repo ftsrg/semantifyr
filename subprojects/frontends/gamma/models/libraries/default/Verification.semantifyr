@@ -3,15 +3,34 @@ package semantifyr::gamma::verification
 import semantifyr::gamma::components
 import semantifyr::gamma::expressions
 
+class SchedulingConstraint {
+    refers minimumPeriod: int
+    refers maximumPeriod: int
+
+    var timer: clock := 0
+
+    tran waitPeriod() {
+        assume(timer >= minimumPeriod)
+        assume(timer <= maximumPeriod)
+        timer := 0
+    }
+}
+
 class GammaVerificationCase {
     contains component: Component
     contains propertyExpression: Expression
+    contains schedulingConstraint: SchedulingConstraint[0..1]
 
     redefine init {
         inline component.init()
     }
 
+    // without a scheduling constraint any time passes between two steps
     redefine tran {
+        inline for (constraint in schedulingConstraint) {
+            inline constraint.waitPeriod()
+        }
+        inline component.expireTimeouts()
         inline component.resetOutputEvents()
         inline component.havocInputEvents()
         inline component.main()

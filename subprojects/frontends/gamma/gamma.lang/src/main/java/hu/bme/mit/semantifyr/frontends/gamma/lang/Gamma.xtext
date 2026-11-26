@@ -107,6 +107,7 @@ SyncComponentDeclaration:
             components+=ComponentInstance
             | bindings+=PortBinding
             | channels+=Channel
+            | schedulingConstraints+=SchedulingConstraint
         )*
     '}'
 ;
@@ -119,6 +120,7 @@ CascadeComponentDeclaration:
             components+=ComponentInstance
             | bindings+=PortBinding
             | channels+=Channel
+            | schedulingConstraints+=SchedulingConstraint
         )*
         ('execute' executionList+=[ComponentInstance] (',' executionList+=[ComponentInstance])*)?
     '}'
@@ -132,6 +134,7 @@ AsynchronousCompositeComponentDeclaration:
             components+=ComponentInstance
             | bindings+=PortBinding
             | channels+=Channel
+            | schedulingConstraints+=SchedulingConstraint
         )*
     '}'
 ;
@@ -144,6 +147,7 @@ ScheduledAsynchronousCompositeComponentDeclaration:
             components+=ComponentInstance
             | bindings+=PortBinding
             | channels+=Channel
+            | schedulingConstraints+=SchedulingConstraint
         )*
         ('execute' executionList+=[ComponentInstance] (',' executionList+=[ComponentInstance])*)?
     '}'
@@ -158,12 +162,24 @@ AsynchronousAdapterDeclaration:
             clocks+=ClockDeclaration
             | controlSpecifications+=ControlSpecification
             | messageQueues+=MessageQueue
+            | schedulingConstraints+=SchedulingConstraint
         )*
     '}'
 ;
 
 ClockDeclaration:
     'clock' name=ID '(' 'rate' '=' value=AdditiveExpression unit=TimeUnit ')'
+;
+
+SchedulingConstraint:
+    'scheduling-constraint' '{'
+        'minimum-orchestrating-period' ':' minimumPeriod=TimeSpecification
+        'maximum-orchestrating-period' ':' maximumPeriod=TimeSpecification
+    '}'
+;
+
+TimeSpecification:
+    value=AdditiveExpression unit=TimeUnit
 ;
 
 enum ControlFunction:
@@ -283,6 +299,7 @@ StatechartDeclaration:
         (
             variables+=VariableDeclaration
             | timeouts+=TimeoutDeclaration
+            | schedulingConstraints+=SchedulingConstraint
         )*
         (
             regions+=Region

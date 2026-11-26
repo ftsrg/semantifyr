@@ -22,15 +22,20 @@ The Gamma frontend gives a model the meaning Gamma gives it, as the Gamma semant
 
 ### The Step
 
-A verification runs the component of its case in steps, from the state its `init` reaches. Before each step time passes, as the [Semantifyr Language's time](../../language/specification/classes-and-behaviour/time.md) has it, and then the step does three things in order:
+A verification runs the component of its case in steps, from the state its `init` reaches. Before each step time passes, as the [Semantifyr Language's time](../../language/specification/classes-and-behaviour/time.md) has it and the component's scheduling constraint bounds it, and then the step does four things in order:
 
-1. The output events raised in the step before are cleared.
-2. The environment raises any of the component's input events, each with any value of its parameters, or none.
-3. The component runs once, as its kind of composition runs its parts.
+1. Every timeout of the component, at any depth, that has not expired expires or stays, as the next section states.
+2. The output events raised in the step before are cleared.
+3. The environment raises any of the component's input events, each with any value of its parameters, or none.
+4. The component runs once, as its kind of composition runs its parts.
 
 ### Time
 
-Before every step any amount of time passes, zero and fractions included, and a model counts it in one unit: the greatest common divisor in milliseconds of every constant time value in the model and the packages it reaches, or one millisecond when it has none. A timeout is a clock with a flag that says whether it was set. A timeout that was never set is up from the start. Setting a timeout starts its clock from zero, and the timeout is up from the moment its clock reaches its value and stays up until it is set again, so a timeout of 500 ms is up once half a second has passed since it was set, in one step or over several.
+A model counts time in one unit: the greatest common divisor in milliseconds of every constant time value in the model and the packages it reaches, the periods of scheduling constraints included, or one millisecond when it has none.
+
+Without a scheduling constraint any amount of time passes before every step, zero and fractions included. A statechart, a synchronous composite and a cascade composite may hold one scheduling constraint, in Gamma's words, `scheduling-constraint { minimum-orchestrating-period : 1 s maximum-orchestrating-period : 1 s }`, both periods in `ms` or `s` and the maximum not below the minimum. A case that verifies the component then takes its first step no sooner than the minimum and no later than the maximum after the start, and every later step likewise after the one before it, as Gamma's analysis under that constraint does. The constraint of a component that another one runs, a part of a composite or the component under an adapter, bounds nothing, and an asynchronous component takes none.
+
+A timeout is a clock with a flag that says whether it has expired. A timeout that was never set has expired from the start. Setting a timeout starts its clock from zero and clears the flag, and a timeout trigger reads the flag alone. When a step starts, a timeout that has not expired stays while its clock is below its value, expires once the clock is above it, and does either one exactly at it, as a cycle of Gamma's analysis over dense time sees it. So a timeout of 500 ms has expired in the first step that comes more than half a second after it was set, may have in one that comes exactly then, and stays expired until it is set again.
 
 ### Events
 
@@ -50,7 +55,7 @@ A message waits in its queue until a turn takes it. The environment puts message
 
 #### Clocks
 
-A clock counts the time that passes and ticks exactly once every rate: no step waits past its next tick. When the asynchronous component's schedule starts, after time has passed and before any adapter takes its message, every clock that has reached its rate starts counting from zero again and puts a tick into each queue that stores it, so a tick can be taken in the step it is put in.
+A clock counts the time that passes and ticks exactly once every rate: no step waits past its next tick. When the asynchronous component's schedule starts, after time has passed and before any adapter takes its message, a clock that has reached its rate may tick: it starts counting from zero again and puts a tick into each queue that stores it, so a tick can be taken in the step it is put in. A step at the tick's instant may come before the tick, which then comes in a later step at the same instant, as the tick and a cycle interleave in Gamma's analysis over dense time.
 
 #### Events of an Adapter
 
@@ -62,7 +67,7 @@ A queue reset on the same message takes the place of the `reset` control functio
 
 ### What a Verdict Covers
 
-Time passes as in Gamma's analysis without a scheduling constraint: the library keeps every delay. The library's tests of timeouts and clocks are not [closed clock tests](../../language/specification/classes-and-behaviour/time.md#closed-clock-tests), so a proof of a model with a timeout or a clock is trusted only from a backend that verifies over dense time, as [the backends' pages](../../backends/index.mdx) say. Apart from its deviating constructs, the asynchronous composition keeps the runs of Gamma's analysis with the optimization of the environment's queues switched off, the environment's bound on a queue of lower priority included, since that bound is Gamma's own. Gamma's default analysis differs: it shrinks a queue the environment fills to the smaller of its capacity and the adapter's turns in a step, and it gives an adapter at the root no queue, where the library keeps every queue as written. A failed `AG` and a passed `EF` rest on one run the library found, which Gamma admits too unless a deviation is involved in it: then the run may be one Gamma excludes. The table's deviating constructs are these:
+Every test the library makes of a timeout, a clock or a scheduling constraint is a [closed clock test](../../language/specification/classes-and-behaviour/time.md#closed-clock-tests), so a run of a timed model is a run over dense time on every backend, and a proof of it is trusted from every backend configuration that is exact, Theta's included, as [the backends' pages](../../backends/index.mdx) say. Apart from its deviating constructs, the asynchronous composition keeps the runs of Gamma's analysis with the optimization of the environment's queues switched off, the environment's bound on a queue of lower priority included, since that bound is Gamma's own. Gamma's default analysis differs: it shrinks a queue the environment fills to the smaller of its capacity and the adapter's turns in a step, and it gives an adapter at the root no queue, where the library keeps every queue as written. A failed `AG` and a passed `EF` rest on one run the library found, which Gamma admits too unless a deviation is involved in it: then the run may be one Gamma excludes. The table's deviating constructs are these:
 
 <GammaDifferences table={constructs} outcome="deviating" />
 

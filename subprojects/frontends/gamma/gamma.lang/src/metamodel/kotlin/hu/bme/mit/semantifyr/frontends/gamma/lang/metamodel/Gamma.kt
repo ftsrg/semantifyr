@@ -100,6 +100,17 @@ object Gamma : MetaPackage(
 
     object ComponentDeclaration : AbstractMetaClass(NamedElement) {
         val ports by contains(MANY) { PortDeclaration }
+        val schedulingConstraints by contains(MANY) { SchedulingConstraint }
+    }
+
+    object SchedulingConstraint : MetaClass() {
+        val minimumPeriod by contains { TimeSpecification }
+        val maximumPeriod by contains { TimeSpecification }
+    }
+
+    object TimeSpecification : MetaClass() {
+        val value by contains { Expression }
+        val unit by attribute(TimeUnit)
     }
 
     object CompositeComponentDeclaration : AbstractMetaClass(ComponentDeclaration) {

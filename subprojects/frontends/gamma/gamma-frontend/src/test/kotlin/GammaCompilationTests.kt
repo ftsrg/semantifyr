@@ -127,6 +127,78 @@ class GammaCompilationTests {
         assertThat(caseDirectory.resolve("imports").resolve("Control.semantifyr").readText()).startsWith("package _library::_control")
     }
 
+    @Test
+    fun `no main transition compiled from a timed Gamma model holds an unclosed clock test`(@TempDir temporaryDirectory: Path) {
+        val model = temporaryDirectory.resolve("Timed.gamma")
+        model.writeText(
+            """
+                package timed
+                interface Signals {
+                    in event go
+                }
+                @TransitionPriority = order-based
+                statechart Constrained [
+                    port signals : provides Signals
+                ] {
+                    timeout delay
+                    scheduling-constraint {
+                        minimum-orchestrating-period : 500 ms
+                        maximum-orchestrating-period : 1 s
+                    }
+                    region Main {
+                        initial MainInitial
+                        state Waiting {
+                            entry / set delay := 2 s;
+                        }
+                        state Done
+                    }
+                    transition from MainInitial to Waiting
+                    transition from Waiting to Done when timeout delay
+                    transition from Waiting to Done when signals.go
+                }
+                @TransitionPriority = order-based
+                statechart Receiver {
+                    timeout delay
+                    region Main {
+                        initial MainInitial
+                        state Waiting {
+                            entry / set delay := 2 s;
+                        }
+                        state Done
+                    }
+                    transition from MainInitial to Waiting
+                    transition from Waiting to Done when timeout delay
+                }
+                adapter Ticking of component receiver : Receiver {
+                    clock ticker (rate = 1 s)
+                    when ticker / run
+                    queue ticks (priority = 1, capacity = 1) {
+                        ticker
+                    }
+                }
+                verification case ConstrainedDoneReachable of Constrained {
+                    EF state Main.Done
+                }
+                verification case TickedDoneReachable of Ticking {
+                    EF state receiver.Main.Done
+                }
+            """.trimIndent(),
+        )
+        val helper = GammaFrontendTestHelper()
+        val clockTestAnalysis = helper.clockTestAnalysis()
+
+        for (gammaVerificationCase in helper.discover(model)) {
+            val inlinedOxsts = helper.compileToOxsts(gammaVerificationCase, temporaryDirectory.resolve(gammaVerificationCase.qualifiedName))
+
+            assertThat(
+                inlinedOxsts.variables.filter {
+                    clockTestAnalysis.isClock(it)
+                },
+            ).describedAs(gammaVerificationCase.qualifiedName).hasSize(2)
+            assertThat(clockTestAnalysis.unclosedTests(inlinedOxsts.mainTransition)).describedAs(gammaVerificationCase.qualifiedName).isEmpty()
+        }
+    }
+
     private fun compileSimple(temporaryDirectory: Path): Path {
         val gammaModel = gammaReader.readGammaFile(simpleGammaPath.toFile())
         val target = temporaryDirectory.resolve("model.semantifyr")

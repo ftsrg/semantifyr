@@ -89,6 +89,42 @@
                 { "name": "WorkerStatechartStoppedReachable", "verdict": "Passed", "tier": "Integration" },
                 { "name": "WorkerStatechartUnreachable", "verdict": "Passed", "tier": "Integration" }
             ]
+        },
+        {
+            "file": "LiftStep1.gamma",
+            "cases": [
+                { "name": "LiftCanMove", "verdict": "Passed", "tier": "Integration" }
+            ]
+        },
+        {
+            "file": "LiftStep2.gamma",
+            "cases": [
+                { "name": "DoorClosedWhileMoving", "verdict": "Passed", "tier": "Integration" },
+                { "name": "LiftCanMove", "verdict": "Passed", "tier": "Integration" }
+            ]
+        },
+        {
+            "file": "LiftStep3.gamma",
+            "cases": [
+                { "name": "DoorClosedWhileMoving", "verdict": "Failed", "tier": "Integration" },
+                { "name": "LiftCanMove", "verdict": "Passed", "tier": "Integration" }
+            ]
+        },
+        {
+            "file": "LiftStep4.gamma",
+            "cases": [
+                { "name": "DoorClosedWhileMoving", "verdict": "Failed", "tier": "Integration" },
+                { "name": "LiftCanMove", "verdict": "Passed", "tier": "Integration" },
+                { "name": "CanSetOffWithDoorOpen", "verdict": "Passed", "tier": "Integration" }
+            ]
+        },
+        {
+            "file": "Lift.gamma",
+            "cases": [
+                { "name": "DoorClosedWhileMoving", "verdict": "Passed", "tier": "Integration" },
+                { "name": "LiftCanMove", "verdict": "Passed", "tier": "Integration" },
+                { "name": "CanSetOffWithDoorOpen", "verdict": "Failed", "tier": "Integration" }
+            ]
         }
     ]
 }

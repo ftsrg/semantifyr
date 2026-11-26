@@ -19,6 +19,12 @@ abstract class Component {
 
     abstract tran schedule()
 
+    tran expireTimeouts() {
+        inline for (timeout in timeouts) {
+            inline timeout.expire()
+        }
+    }
+
     tran resetInputEvents() {
         inline for (port in ports) {
             inline port.resetInputEvents()
@@ -80,6 +86,16 @@ class Channel {
 abstract class CompositeComponent : Component {
     contains components: Component[0..*]
     contains channels: Channel[0..*]
+
+    redefine tran expireTimeouts() {
+        inline for (timeout in timeouts) {
+            inline timeout.expire()
+        }
+
+        inline for (component in components) {
+            inline component.expireTimeouts()
+        }
+    }
 
     redefine init {
         inline for (component in components) {

@@ -10,6 +10,7 @@ import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.ClockDeclaration
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.GammaModelPackage
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.GammaUtils
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.SetTimeoutAction
+import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.TimeSpecification
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.TimeUnit
 import org.eclipse.xtext.EcoreUtil2
 
@@ -61,6 +62,11 @@ object GammaTime {
                 milliseconds(Math.absExact(it), clock.unit)
             }
         }
-        return timeouts + clocks
+        val periods = EcoreUtil2.getAllContentsOfType(gammaModel, TimeSpecification::class.java).mapNotNull { period ->
+            GammaUtils.evaluateInteger(period.value)?.let {
+                milliseconds(Math.absExact(it), period.unit)
+            }
+        }
+        return timeouts + clocks + periods
     }
 }

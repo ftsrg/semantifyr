@@ -76,10 +76,82 @@ async UntickedSystem [
     channel [ pinger.output ] -o)- [ mover.input ]
 }
 
+@TransitionPriority = order-based
+statechart Restarted [
+    port control : provides Go
+] {
+    timeout late
+
+    region Main {
+        initial MainInitial
+        state Idle {
+            entry / set late := 1 s;
+        }
+        state Late
+        state Early
+    }
+
+    transition from MainInitial to Idle
+    transition from Idle to Late when timeout late
+    transition from Idle to Early when control.go
+}
+
+@TransitionPriority = order-based
+statechart RestartedLater [
+    port control : provides Go
+] {
+    timeout late
+
+    region Main {
+        initial MainInitial
+        state Idle {
+            entry / set late := 1500 ms;
+        }
+        state Late
+        state Early
+    }
+
+    transition from MainInitial to Idle
+    transition from Idle to Late when timeout late
+    transition from Idle to Early when control.go
+}
+
+adapter Restarting of component restarted : Restarted {
+    clock ticker (rate = 1 s)
+    when ticker / reset
+    when control.go / run
+    queue ticks (priority = 2, capacity = 1) {
+        ticker
+    }
+    queue messages (priority = 1, capacity = 1) {
+        control.any
+    }
+}
+
+adapter RestartingLater of component restarted : RestartedLater {
+    clock ticker (rate = 1 s)
+    when ticker / reset
+    when control.go / run
+    queue ticks (priority = 2, capacity = 1) {
+        ticker
+    }
+    queue messages (priority = 1, capacity = 1) {
+        control.any
+    }
+}
+
 verification case AQueuedMessageIsSeenAtTheClockRun of TickedSystem {
     EF state mover -> mover.Main.Moved
 }
 
 verification case AClockTheQueueDoesNotStoreRunsTheComponentUnreachable of UntickedSystem {
     EF state mover -> mover.Main.Moved
+}
+
+verification case AStepAtATicksInstantMayComeBeforeIt of Restarting {
+    EF state restarted.Main.Late
+}
+
+verification case AStepPastATicksInstantBeforeItUnreachable of RestartingLater {
+    EF state restarted.Main.Late
 }
