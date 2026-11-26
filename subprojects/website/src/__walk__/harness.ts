@@ -9,7 +9,7 @@ import { extname, join, resolve } from 'node:path';
 import type { Browser, BrowserContext, Page } from 'playwright';
 import { expect, inject, test as base } from 'vitest';
 import { MockBackend } from '../../../semantifyr-live/frontend/src/__ui__/mock/backend';
-import { launchChromium } from './browser';
+import { launchBrowser } from './browser';
 import { contentTypeOf, fileOf, LIVE } from './staticServer';
 
 export const SITE_URL = inject('siteUrl');
@@ -59,7 +59,7 @@ export const test = base.extend<{ walk: Walk; browser: Browser }>({
     // vitest reads the fixtures a fixture needs from the pattern of its first parameter, and this one needs none
     // eslint-disable-next-line no-empty-pattern
     async ({}, provide) => {
-      const browser = await launchChromium();
+      const browser = await launchBrowser();
       await provide(browser);
       await browser.close();
     },

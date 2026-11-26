@@ -7,7 +7,7 @@
     "typecheck:watch": "tsc --watch",
     "lint": "eslint --format json --output-file build/eslint.json || eslint",
     "test": "vitest run --reporter=default --reporter=junit --outputFile.junit=build/test-results/unit.xml",
-    "walk": "vitest run --config vitest.walk.config.mts --reporter=default --reporter=junit --outputFile.junit=build/test-results/walk.xml",
+    "walk": "vitest run --config vitest.walk.config.mts",
     "check": "npm run typecheck && npm run lint && npm run test",
     "assemble": "docusaurus build --out-dir build/docusaurus",
     "build": "npm run check && npm run assemble",

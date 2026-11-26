@@ -101,7 +101,6 @@ val linkingFiles = (JsonSlurper().parseText(providers.fileContents(linkingFilesF
     isolated.rootProject.projectDirectory.file(it)
 }
 
-// written for the alias @cli-reference
 val cloneCliReference = tasks.register<Sync>("cloneCliReference") {
     from(cliReference)
     into(layout.buildDirectory.dir("cli-reference"))
@@ -119,7 +118,6 @@ val cloneGeneratedWitness = tasks.register<Sync>("cloneGeneratedWitness") {
     into(layout.buildDirectory.dir("generated-witness"))
 }
 
-// written for the alias @phases
 val clonePhaseWalk = tasks.register<Sync>("clonePhaseWalk") {
     from(phaseWalk)
     into(layout.buildDirectory.dir("phases"))
@@ -207,7 +205,6 @@ val npmCheck = tasks.register<NpmTask>("npmCheck") {
     configureSharedInputs()
     inputs.file(linkingFilesFile).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(linkingFiles).withPathSensitivity(PathSensitivity.RELATIVE)
-    // the walk imports live's mock backend and its static server's content types, which the check type-checks
     inputs.files(liveUiMock).withPathSensitivity(PathSensitivity.RELATIVE)
 
     npmCommand = listOf("run", "check")
@@ -220,31 +217,36 @@ val npmCheck = tasks.register<NpmTask>("npmCheck") {
     }
 }
 
-// the walk runs in Chromium alone
-tasks.register<NpmTask>("uiTestChromium") {
-    group = LifecycleBasePlugin.VERIFICATION_GROUP
+listOf(
+    "Chromium",
+    "Firefox",
+    "Webkit",
+).forEach { browser ->
+    val report = "build/test-results/walk-${browser.lowercase()}.xml"
+    tasks.register<NpmTask>("uiTest$browser") {
+        group = LifecycleBasePlugin.VERIFICATION_GROUP
 
-    configureSharedInputs()
-    inputs.file(layout.projectDirectory.file("vitest.walk.config.mts")).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.files(npmAssemble).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.files(liveWebDistribution).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.files(liveUiMock).withPathSensitivity(PathSensitivity.RELATIVE)
+        configureSharedInputs()
+        inputs.file(layout.projectDirectory.file("vitest.walk.config.mts")).withPathSensitivity(PathSensitivity.RELATIVE)
+        inputs.files(npmAssemble).withPathSensitivity(PathSensitivity.RELATIVE)
+        inputs.files(liveWebDistribution).withPathSensitivity(PathSensitivity.RELATIVE)
+        inputs.files(liveUiMock).withPathSensitivity(PathSensitivity.RELATIVE)
 
-    npmCommand = listOf("run", "walk")
+        npmCommand = listOf("run", "walk", "--", "--reporter=default", "--reporter=junit", "--outputFile.junit=$report")
+        environment.put("TEST_BROWSER", browser.lowercase())
 
-    outputs.file(layout.buildDirectory.file("test-results/walk.xml"))
-    outputs.cacheIf {
-        true
+        outputs.file(layout.projectDirectory.file(report))
+        outputs.cacheIf {
+            true
+        }
     }
 }
 
 tasks.named<Test>("test") {
     inputs.dir(layout.projectDirectory.dir("src/docs")).withPathSensitivity(PathSensitivity.RELATIVE)
-    // the completeness test reads the models the pages import through the source aliases
     inputs.file(sourceAliasesFile).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(cloneGeneratedWitness).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(sourceAliasDirectories).withPathSensitivity(PathSensitivity.RELATIVE)
-    // and the served examples the pages embed
     readsServedExamples()
 }
 
