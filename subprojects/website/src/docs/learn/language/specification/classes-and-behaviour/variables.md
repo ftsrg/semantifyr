@@ -11,7 +11,7 @@ Variables hold the **mutable state** of the system. Unlike [features](features.m
 
 ## Variable Declaration 
 
-A variable declaration consists of the `var` keyword, a name, a type and an initializer. Both are required: the validator rejects a variable without a type and one without an initializer. The loop variable of a `for` and the parameters of a transition or property take their values from the range and the arguments and have no initializer. The initializer's value fits the variable's type ([Assignability](../foundations/types.md#assignability)). {/* OXSTS.VARIABLE_WITH_IMPLICIT_TYPE */} {/* OXSTS.MISSING_INITIALIZER */}
+A variable declaration consists of the `var` keyword, a name, a type and an initializer. Both are required: the validator rejects a variable without a type and one without an initializer. The loop variable of a `for` and the parameters of a transition or property take their values from the range and the arguments and have no initializer. The initializer's value fits the variable's type ([Assignability](../foundations/types.md#assignability)).
 
 ```oxsts
 // hide-start

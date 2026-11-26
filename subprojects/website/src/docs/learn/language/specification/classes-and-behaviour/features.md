@@ -9,7 +9,7 @@ description: The features of the Semantifyr Language, the structural relationshi
 
 Features define the **structural relationships** between classes. Unlike [variables](variables.md) (which hold runtime state), features are resolved during instantiation and eliminated during flattening; they do not exist at runtime.
 
-A feature declaration is a kind, a name, `:` and a type with an optional [multiplicity](#multiplicities), then any of `subsets`, `opposite` and `redefines`, and either a [binding](#feature-binding), a block of [nested features](#nested-features) or nothing. Two members of one class cannot share a name. A feature of a record type is rejected; a record value is held by a variable. {/* OXSTS.UNSUPPORTED_FEATURE */}
+A feature declaration is a kind, a name, `:` and a type with an optional [multiplicity](#multiplicities), then any of `subsets`, `opposite` and `redefines`, and either a [binding](#feature-binding), a block of [nested features](#nested-features) or nothing. Two members of one class cannot share a name. A feature of a record type is rejected; a record value is held by a variable.
 
 ## Feature Kinds
 
@@ -85,7 +85,7 @@ class Transition {
 
 ## `features`
 
-The `features` keyword declares an **abstract** feature whose kind is left to subclasses. A subclass redefines it as a concrete `contains` or `refers`, or fills it through features that [subset](#subsets) it: one that is not redefined holds the instances of its subsetters. A concrete class with a `features` that it neither redefines nor subsets is rejected. {/* OXSTS.ABSTRACT_FEATURE_NOT_REALIZED */}
+The `features` keyword declares an **abstract** feature whose kind is left to subclasses. A subclass redefines it as a concrete `contains` or `refers`, or fills it through features that [subset](#subsets) it: one that is not redefined holds the instances of its subsetters. A concrete class with a `features` that it neither redefines nor subsets is rejected.
 
 ```oxsts
 abstract class Container {
@@ -155,7 +155,7 @@ class Wrapper {
 }
 ```
 
-This is the primary way semantic libraries declaratively add instances to a collection defined in a superclass. A redefinition that names no `subsets` keeps the superset of the feature it redefines. A feature and the features that redefine it have the same values, so a subsetter of a feature is a subsetter of each feature that redefines it, through a chain of redefinitions and by `redefine` or `redefines` alike, and a feature that redefines one and subsets another is under the supersets of both. A bound feature (`= expr`) and a `derived refers` hold the instances their expression or opposite gives them, so neither can be subset. {/* OXSTS.INCORRECT_SUBSETS */}
+This is the primary way semantic libraries declaratively add instances to a collection defined in a superclass. A redefinition that names no `subsets` keeps the superset of the feature it redefines. A feature and the features that redefine it have the same values, so a subsetter of a feature is a subsetter of each feature that redefines it, through a chain of redefinitions and by `redefine` or `redefines` alike, and a feature that redefines one and subsets another is under the supersets of both. A bound feature (`= expr`) and a `derived refers` hold the instances their expression or opposite gives them, so neither can be subset.
 
 ## `redefine` and `redefines`
 

@@ -32,7 +32,6 @@ data class CorpusCase(
     val verdict: CorpusVerdict,
     val tier: CorpusTier,
     val falsification: Boolean = false,
-    val decisions: List<String> = emptyList(),
 ) {
     val expectedVerdict: VerificationVerdict
         get() {

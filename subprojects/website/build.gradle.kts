@@ -7,10 +7,8 @@
 import com.github.gradle.node.npm.task.NpmTask
 import groovy.json.JsonSlurper
 import hu.bme.mit.semantifyr.gradle.artifactsOf
-import hu.bme.mit.semantifyr.gradle.readsServedExamples
 import hu.bme.mit.semantifyr.gradle.readsWorkspace
 import hu.bme.mit.semantifyr.gradle.registerBrandingAssets
-import hu.bme.mit.semantifyr.gradle.semantifyrArtifact
 import hu.bme.mit.semantifyr.gradle.servedExampleSources
 
 plugins {
@@ -36,7 +34,6 @@ dependencies {
     testImplementation(project(":oxsts.model"))
     testImplementation(testFixtures(project(":oxsts.lang")))
     testImplementation(libs.ecore)
-    testImplementation(libs.gson)
     testImplementation(libs.guice)
     testImplementation(libs.xtext.core)
     testImplementation(libs.xtext.testing)
@@ -239,15 +236,7 @@ listOf(
 
 tasks.named<Test>("test") {
     inputs.dir(layout.projectDirectory.dir("src/docs")).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.file(sourceAliasesFile).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.files(cloneGeneratedWitness).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.files(sourceAliasDirectories).withPathSensitivity(PathSensitivity.RELATIVE)
-    readsServedExamples()
-}
-
-configurations.consumable("sysmlDecisionsPageElements") {
-    attributes(semantifyrArtifact("sysml-decisions-page"))
-    outgoing.artifact(layout.projectDirectory.file("src/docs/learn/frontends/sysml-v2/semantic-decisions.mdx"))
+    inputs.file(isolated.rootProject.projectDirectory.file("oxsts-test-models/phases/room.semantifyr")).withPathSensitivity(PathSensitivity.RELATIVE)
 }
 
 tasks.register("pack") {

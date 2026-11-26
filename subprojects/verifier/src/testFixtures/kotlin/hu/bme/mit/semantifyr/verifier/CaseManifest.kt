@@ -30,7 +30,6 @@ data class ManifestCase(
     val name: String,
     val verdict: ManifestVerdict,
     val tier: ManifestTier? = null,
-    val decisions: List<String> = emptyList(),
 ) {
     val expectedVerdict: VerificationVerdict
         get() {

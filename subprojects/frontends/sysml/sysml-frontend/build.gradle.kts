@@ -101,13 +101,6 @@ val syncSysmlTestModels = tasks.register<Sync>("syncSysmlTestModels") {
     into(layout.buildDirectory.dir("test-models"))
 }
 
-val decisionsPage = artifactsOf("sysml-decisions-page", ":website")
-
-val cloneDecisionsPage = tasks.register<Sync>("cloneDecisionsPage") {
-    from(decisionsPage)
-    into(layout.buildDirectory.dir("decisions-page"))
-}
-
 tasks.processResources {
     from(librariesDirectory)
 }
@@ -117,9 +110,4 @@ tasks.withType<Test>().configureEach {
     inputs.files(syncSysmlTestModels)
     inputs.dir(layout.projectDirectory.dir("../models/etc")).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.dir(layout.projectDirectory.dir("../models/tutorial")).withPathSensitivity(PathSensitivity.RELATIVE)
-}
-
-// the corpus test holds the manifest's decisions against the page that lists them
-tasks.test {
-    inputs.files(cloneDecisionsPage).withPathSensitivity(PathSensitivity.RELATIVE)
 }

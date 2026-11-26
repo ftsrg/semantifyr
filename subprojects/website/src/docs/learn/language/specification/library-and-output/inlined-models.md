@@ -48,7 +48,7 @@ The rules of the rest of the reference hold, with these differences:
 - The class is found among the declarations the editor or the compiler has loaded, and a class of a file without a package by its simple name.
 - The validator gives no hint in an inlined model.
 - A temporal operator stands at the root of the property, as it does at the root of a property's `return`.
-- Only a witness has a `timescale`, and its integer is at least 1. {/* OXSTS.INCORRECT_TIME_SCALE */}
+- Only a witness has a `timescale`, and its integer is at least 1.
 
 ## Meaning
 

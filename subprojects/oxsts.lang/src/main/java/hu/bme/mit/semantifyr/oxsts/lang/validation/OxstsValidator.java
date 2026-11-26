@@ -155,7 +155,6 @@ public class OxstsValidator extends AbstractOxstsValidator {
     public static final String ABSTRACT_CLASS_INHERITED_MEMBERS_NOT_REDEFINED =
             ISSUE_PREFIX + "ABSTRACT_CLASS_INHERITED_MEMBERS_NOT_REDEFINED";
     // only the commented-out check of a feature's abstract members raises it
-    @InternalIssue
     public static final String ABSTRACT_FEATURE_INHERITED_MEMBERS_NOT_REDEFINED =
             ISSUE_PREFIX + "ABSTRACT_FEATURE_INHERITED_MEMBERS_NOT_REDEFINED";
 

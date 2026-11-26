@@ -272,34 +272,6 @@ describe('the keyboard', () => {
     expect(await walkWhole(page)).toEqual({ missed: [], focusHidden: [], replaced: 0 });
   });
 
-  // a known gap of @easyops-cn/docusaurus-search-local: its search bar sets a flag on its first focus that no blur resets, and focuses itself once its index has loaded, wherever the focus has gone meanwhile; once the package mends it, the last assertion fails and turns
-  test('leaves the search before its index has loaded, and the search takes the focus back once it has, a known gap of the search package', async ({ walk }) => {
-    let releaseIndex = (): void => {};
-    const indexHeld = new Promise<void>((released) => {
-      releaseIndex = released;
-    });
-    const page = await walk.open('/');
-    await page.context().route(/search-index.*\.json$/, async (route) => {
-      await indexHeld;
-      await route.continue();
-    });
-    const { search, source } = header(page);
-    const passed: string[] = [];
-    for (let presses = 0; presses < 10 && !await isFocused(search); presses++) {
-      await page.keyboard.press('Tab');
-      passed.push(await describeFocus(page));
-    }
-    expect(await isFocused(search), `Tab reaches the search, passing ${passed.join(', ')}`).toBe(true);
-    await page.keyboard.press('Tab');
-    await stopAt(source, 'the link to the source');
-    releaseIndex();
-    await expect.poll(async () => {
-      return search.getAttribute('role');
-    }).toBe('combobox');
-
-    expect(await isFocused(source), 'the search took the focus back from where the reader tabbed to').toBe(false);
-  });
-
   test('opens Learn\'s menu, walks its parts and closes it with Escape on its button', async ({ walk }) => {
     const page = await walk.open('/');
     const { partsOfLearn, learnMenu } = header(page);

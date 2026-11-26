@@ -282,8 +282,8 @@ class Buffer {
 These rules bind the arguments of a property call and of an inline call; the first, the second and the last bind the arguments of an [annotation](../library-and-output/annotations.md#with-arguments) too:
 
 - An argument is positional or named, `name = value`. A positional argument binds the parameter at its position, a named one the parameter of its name.
-- Every named argument follows all positional ones, and a parameter is bound at most once, by position or by name. {/* OXSTS.POSITIONAL_ARGUMENT_AFTER_NAMED */}
-- A parameter whose multiplicity has the lower bound 0, such as `[0..1]`, is optional and binds `nothing` when it is left out. Every other parameter must be bound, and a call has no more arguments than parameters; a required parameter is declared before every optional one, or the declaration is rejected. {/* OXSTS.INVALID_CALL_ARGUMENTS_COUNT */}
+- Every named argument follows all positional ones, and a parameter is bound at most once, by position or by name.
+- A parameter whose multiplicity has the lower bound 0, such as `[0..1]`, is optional and binds `nothing` when it is left out. Every other parameter must be bound, and a call has no more arguments than parameters; a required parameter is declared before every optional one, or the declaration is rejected.
 - Each argument fits its parameter's type ([Assignability](types.md#assignability)).
 
 A property call's value is the value of the property's body with every parameter replaced by its argument, read against the instance the call names; an inline call passes its arguments by value ([Inline Call](../classes-and-behaviour/inline-operations.md#inline-call)).
@@ -459,7 +459,7 @@ class Bounded {
 // hide-end
 ```
 
-A temporal operator is only allowed as the whole expression a property returns: one in a transition (`flag := AG true`), below another operator or nested in another temporal operator (`AG (EF on)`) is rejected. {/* OXSTS.MISPLACED_TEMPORAL_OPERATOR */}
+A temporal operator is only allowed as the whole expression a property returns: one in a transition (`flag := AG true`), below another operator or nested in another temporal operator (`AG (EF on)`) is rejected.
 
 <Planned table={constructs} construct="CTL* properties">
 

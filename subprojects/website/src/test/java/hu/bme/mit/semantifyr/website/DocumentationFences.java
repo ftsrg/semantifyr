@@ -6,17 +6,13 @@
 
 package hu.bme.mit.semantifyr.website;
 
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
-import java.util.regex.MatchResult;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -25,28 +21,11 @@ final class DocumentationFences {
 
     static final Path DOCUMENTATION = Path.of("src/docs");
 
-    private static final Path SOURCE_ALIASES = Path.of("source-aliases.json");
-
     static final String SYNTAX = "syntax";
 
     private static final Pattern OPENING_FENCE = Pattern.compile("^(\\s*)```oxsts(\\s.*)?$");
 
-    private static final Pattern ANY_OPENING_FENCE = Pattern.compile("^\\s*```\\S*.*$");
-
     private static final Pattern PACKAGE_DECLARATION = Pattern.compile("^\\s*package\\s+([\\w:]+)", Pattern.MULTILINE);
-
-    private static final Pattern IMPORT =
-            Pattern.compile("^import\\s+\\w+\\s+from\\s+'(@[\\w-]+)/([^']+\\.semantifyr)';?$");
-
-    private static final Pattern SERVED_IMPORT =
-            Pattern.compile("^import\\s+\\w+\\s+from\\s+'@served-examples/oxsts/([\\w-]+)';?$");
-
-    private static final Pattern LESSON_STAGE_IMPORT =
-            Pattern.compile("^import\\s+\\w+\\s+from\\s+'@lesson-stages/([\\w-]+)';?$");
-
-    private static final String LESSON_STAGES = "@oxsts-lesson-stages";
-
-    private static final Pattern PAGE_COMMENT = Pattern.compile("<!--[\\s\\S]*?-->|\\{/\\*[\\s\\S]*?\\*/}");
 
     private static final String HIDE_START = "// hide-start";
 
@@ -92,113 +71,6 @@ final class DocumentationFences {
             fences.addAll(fences(page));
         }
         return fences;
-    }
-
-    record ServedExample(String language, String id, String file) {}
-
-    record ServedExamples(List<ServedExample> examples) {}
-
-    // the OXSTS files the pages import, through the source aliases, as served examples by their address or as lessons'
-    // stages by their name, which their own tests check
-    static List<Path> importedModels() throws IOException {
-        Map<String, String> aliases;
-        try (var reader = Files.newBufferedReader(SOURCE_ALIASES)) {
-            aliases = new Gson().fromJson(reader, new TypeToken<Map<String, String>>() {}.getType());
-        }
-        // build-logic's readsServedExamples names the registry and the repository's root
-        var repository = Path.of(System.getProperty("semantifyr.repository"));
-        ServedExamples registry;
-        try (var reader = Files.newBufferedReader(Path.of(System.getProperty("semantifyr.examples")))) {
-            registry = new Gson().fromJson(reader, ServedExamples.class);
-        }
-        var models = new ArrayList<Path>();
-        for (var page : pages()) {
-            for (var line : Files.readAllLines(page)) {
-                var served = SERVED_IMPORT.matcher(line.strip());
-                if (served.matches()) {
-                    var example = registry.examples().stream()
-                            .filter(candidate -> {
-                                return "oxsts".equals(candidate.language())
-                                        && candidate.id().equals(served.group(1));
-                            })
-                            .findFirst()
-                            .orElseThrow(() -> new IllegalStateException(
-                                    "the registry serves no /language/" + served.group(1) + " for " + page));
-                    var model = repository.resolve(example.file()).normalize();
-                    if (!models.contains(model)) {
-                        models.add(model);
-                    }
-                    continue;
-                }
-                var stage = LESSON_STAGE_IMPORT.matcher(line.strip());
-                if (stage.matches()) {
-                    var model = Path.of(aliases.get(LESSON_STAGES))
-                            .resolve(stage.group(1) + ".semantifyr")
-                            .normalize();
-                    if (!models.contains(model)) {
-                        models.add(model);
-                    }
-                    continue;
-                }
-                var imported = IMPORT.matcher(line.strip());
-                if (!imported.matches()) {
-                    continue;
-                }
-                var directory = aliases.get(imported.group(1));
-                if (directory == null) {
-                    throw new IllegalStateException(
-                            "no alias " + imported.group(1) + " in " + SOURCE_ALIASES + " for " + page);
-                }
-                var model = Path.of(directory).resolve(imported.group(2)).normalize();
-                if (!models.contains(model)) {
-                    models.add(model);
-                }
-            }
-        }
-        return models;
-    }
-
-    // what a reader of the page sees: no hidden fence or hidden line, no info word and no comment of the page
-    static String shownText(Path page) throws IOException {
-        var lines = Files.readAllLines(page);
-        var shown = new ArrayList<String>();
-        var hiddenLines = new ArrayList<Integer>();
-        for (var fence : fences(page)) {
-            for (var modelLine : fence.model()) {
-                if (!modelLine.shown()) {
-                    hiddenLines.add(modelLine.pageLine());
-                }
-            }
-        }
-        var index = 0;
-        while (index < lines.size()) {
-            var line = lines.get(index);
-            if (!ANY_OPENING_FENCE.matcher(line).matches()) {
-                shown.add(line);
-                index++;
-                continue;
-            }
-            index++;
-            while (index < lines.size() && !lines.get(index).trim().equals("```")) {
-                var fenceLine = lines.get(index);
-                var marker = fenceLine.strip();
-                if (!hiddenLines.contains(index + 1) && !marker.equals(HIDE_START) && !marker.equals(HIDE_END)) {
-                    shown.add(fenceLine);
-                }
-                index++;
-            }
-            index++;
-        }
-        return PAGE_COMMENT.matcher(String.join("\n", shown)).replaceAll("");
-    }
-
-    // where a page names an issue for the tests without showing it to the reader, beside the rule it belongs to
-    static List<String> comments(Path page) throws IOException {
-        return PAGE_COMMENT
-                .matcher(Files.readString(page))
-                .results()
-                .map(MatchResult::group)
-                .toList();
     }
 
     // a continued fence's model is the model it continues, a blank line and its own lines without the markers

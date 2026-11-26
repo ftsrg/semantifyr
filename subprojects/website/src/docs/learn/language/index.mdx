@@ -1,14 +1,14 @@
 ---
 title: Semantifyr Language
-description: The Semantifyr Language, Semantifyr's language for semantics, who writes it, and its specification, its lessons and its compilation.
+description: The language semantic libraries and the models verified on them are written in, with its lessons, specification, and compilation.
 ---
 
 # Semantifyr Language
 
-The Semantifyr Language is Semantifyr's language for semantics: the semantic libraries are written in it, and so is every model Semantifyr verifies, by hand or as a [frontend](../frontends/index.mdx)'s translation onto its language's library.
+The Semantifyr Language is the language in which Semantifyr defines semantics. A language's semantics is written once, as a [semantic library](lessons/semantic-libraries.md), and every model of that language becomes a Semantifyr model on the library, which Semantifyr compiles and verifies. The [frontends](../frontends/index.mdx) work this way: the SysML v2 and Gamma libraries are written in it, and each frontend maps a model onto its library.
 
-It is written by the author of a language's semantic library, as the frontends' authors are, and by someone whose language has no frontend, who writes the library and the models directly.
+Write in it to define the semantics of a language of your own, or to model a system directly.
 
-- [Specification](specification/index.md): look a construct up, one construct a page.
-- [Lessons](lessons/index.md): learn the language on a junction of traffic lights, lesson by lesson, each step running in Live.
-- [Compilation](compilation/index.mdx): see how the compiler turns a model into the transition system a backend checks, in three phases.
+- [Lessons](lessons/index.md): learn the language on a junction of traffic lights, building each step in Live.
+- [Specification](specification/index.md): look up a construct, one construct a page.
+- [Compilation](compilation/index.mdx): see how the compiler turns a model into the transition system a backend checks.
