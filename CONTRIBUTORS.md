@@ -1,16 +1,15 @@
 <!--
-  SPDX-FileCopyrightText: 2023-2024 The Semantifyr Authors
-  
+  SPDX-FileCopyrightText: 2023-2026 The Semantifyr Authors
+
   SPDX-License-Identifier: EPL-2.0
 -->
 
-## Contributors
+# Contributors
 
-### Semantifyr Authors
-
-**Project leader** Vince, Molnár <molnar.vince@vik.bme.hu>
+## The Semantifyr Authors
 
 Contributors (in alphabetical order):
 
-- Ármin, Zavada <zavadaarmin@edu.bme.hu>
 - Marussy, Kristóf <marussy@mit.bme.hu>
+- Molnár, Vince <molnar.vince@vik.bme.hu>
+- Zavada, Ármin <zavadaarmin@edu.bme.hu>

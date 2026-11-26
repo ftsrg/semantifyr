@@ -6,11 +6,11 @@
 
 # Semantifyr for VS Code
 
-Edit and verify Semantifyr and Gamma models with [Semantifyr](https://semantifyr.org/), a framework to support the declarative definition of engineering model semantics.
+Edit and verify Semantifyr and Gamma models with [Semantifyr](https://semantifyr.org/), a framework to declaratively define the semantics of engineering modeling languages.
 
 ## Features
 
-- Editing the Semantifyr Language and Gamma: highlighting, diagnostics, completion, hover, navigation and formatting.
+- Editing the Semantifyr Language and Gamma: highlighting, diagnostics, completion, hover, navigation, and formatting.
 - Verification: each case is a test in the Testing view.
 - Witness and trace: **Show Witness** opens the witness of a verdict beside the model, and **Validate Witness** verifies it again.
 - **Semantifyr: Compile Gamma File** writes the Semantifyr model that a Gamma model compiles to.
@@ -20,10 +20,6 @@ Edit and verify Semantifyr and Gamma models with [Semantifyr](https://semantifyr
 - VS Code 1.109 or newer.
 - Java 25 or newer.
 - At least one backend on `PATH`: Theta (`theta-xsts-cli`, or Docker), nuXmv, Spin with gcc, or Uppaal's `verifyta`.
-
-SysML v2 has an extension of its own; verify SysML v2 models in [Semantifyr Live](https://live.semantifyr.org) or with the `semantifyr-sysml` launcher.
-
-The [website](https://semantifyr.org/) describes the settings. This is version 0.1.0 of a research prototype; please report what you meet on the [issue tracker](https://github.com/ftsrg/semantifyr/issues).
 
 ## License
 

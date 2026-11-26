@@ -5,7 +5,6 @@
 cff-version: 1.2.0
 message: To cite Semantifyr, please cite the paper that introduced its approach.
 title: Semantifyr
-abstract: A framework to support the declarative definition of engineering model semantics.
 type: software
 authors:
   - name: The Semantifyr Authors
