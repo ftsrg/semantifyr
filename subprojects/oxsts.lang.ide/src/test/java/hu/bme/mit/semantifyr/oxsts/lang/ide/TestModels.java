@@ -14,7 +14,7 @@ import java.util.TreeMap;
 
 public final class TestModels {
 
-    private static final Path GAMMA_LIBRARY = Path.of("../frontends/gamma/models/libraries/default");
+    private static final Path GAMMA_LIBRARY = Path.of("build/libraries/gamma");
 
     private TestModels() {}
 

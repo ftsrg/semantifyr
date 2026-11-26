@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
+import hu.bme.mit.semantifyr.gradle.semantifyrArtifact
+
 plugins {
     id("hu.bme.mit.semantifyr.xtext")
     kotlin("jvm")
@@ -49,8 +51,22 @@ xtext {
     xtextFile = "src/main/java/hu/bme/mit/semantifyr/frontends/gamma/lang/Gamma.xtext"
 }
 
-tasks.named("generateXtextLanguage") {
+val textMateDirectory = layout.buildDirectory.dir("generated/textmate")
+
+val generateXtextLanguage = tasks.named("generateXtextLanguage") {
     inputs.files(generateEPackage).withPathSensitivity(PathSensitivity.RELATIVE)
+    outputs.dir(textMateDirectory)
+}
+
+configurations.consumable("textMateGrammarElements") {
+    attributes(semantifyrArtifact("textmate-grammar"))
+    outgoing.artifact(
+        textMateDirectory.map {
+            it.file("gamma.tmLanguage.json")
+        },
+    ) {
+        builtBy(generateXtextLanguage)
+    }
 }
 
 tasks.clean {
@@ -58,7 +74,5 @@ tasks.clean {
 }
 
 tasks.named("test") {
-    inputs.dir(layout.projectDirectory.dir("../models/corpus"))
-        .withPropertyName("gammaCorpus")
-        .withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.dir(layout.projectDirectory.dir("../models/corpus")).withPathSensitivity(PathSensitivity.RELATIVE)
 }

@@ -13,8 +13,6 @@ dependencies {
     api(project(":lang-ide-common"))
     api(project(":gamma.lang"))
     implementation(project(":gamma-frontend"))
-
-    ideGenerated(project(":gamma.lang"))
 }
 
 application {
