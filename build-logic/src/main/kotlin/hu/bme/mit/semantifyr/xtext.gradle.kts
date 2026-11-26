@@ -26,14 +26,12 @@ dependencies {
     mwe2(libs.mwe2.launch)
     mwe2(libs.xtext.generator)
     mwe2(libs.xtext.generator.antlr)
+    mwe2(libs.xtext.xbase)
     // the TextMate fragment's JSON writer, which the generator imports optionally and does not depend on
     mwe2(libs.gson)
 
-    api(libs.slf4j.api)
     api(platform(libs.xtext.bom))
     api(libs.xtext.core)
-
-    testFixturesApi(libs.xtext.testing)
 }
 
 val extension = extensions.create<XtextPluginConfiguration>("xtext")

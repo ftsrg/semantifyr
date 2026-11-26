@@ -34,7 +34,14 @@ val phaseWalk = artifactsOf("phase-walk", ":semantifyr-cli")
 
 dependencies {
     testImplementation(project(":oxsts.lang"))
+    testImplementation(project(":oxsts.model"))
     testImplementation(testFixtures(project(":oxsts.lang")))
+    testImplementation(libs.ecore)
+    testImplementation(libs.gson)
+    testImplementation(libs.guice)
+    testImplementation(libs.xtext.core)
+    testImplementation(libs.xtext.testing)
+    testImplementation(libs.xtext.util)
 
     listOf(
         ":backend",

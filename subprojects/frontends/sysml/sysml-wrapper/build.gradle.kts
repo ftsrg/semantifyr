@@ -21,6 +21,22 @@ plugins {
 dependencies {
     implementation(project(":utils"))
     implementation(project(":logging"))
+    implementation(libs.slf4j.api)
+}
+
+testing {
+    suites {
+        named<JvmTestSuite>("integrationTest") {
+            dependencies {
+                implementation(project(":compiler"))
+                implementation(project(":oxsts.model"))
+                implementation(testFixtures(project(":oxsts.lang")))
+                implementation(libs.ecore)
+                implementation(libs.emf.common)
+                implementation(libs.guice)
+            }
+        }
+    }
 }
 
 val sysmlCommit = "569fe43143fe23f96eb668dc9e87af2d5b9cf8c7" // feat: a transition whose first names the entry action of its state is initial

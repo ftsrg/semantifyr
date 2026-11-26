@@ -10,9 +10,27 @@ plugins {
 }
 
 dependencies {
-    api(project(":lang-ide-common"))
-    api(project(":gamma.lang"))
+    implementation(project(":backend"))
+    implementation(project(":compiler"))
     implementation(project(":gamma-frontend"))
+    implementation(project(":gamma.lang"))
+    implementation(project(":lang-ide-common"))
+    implementation(project(":oxsts.lang"))
+    implementation(project(":verifier"))
+    implementation(libs.antlr.runtime)
+    implementation(libs.ecore)
+    implementation(libs.emf.common)
+    implementation(libs.guava)
+    implementation(libs.guice)
+    implementation(libs.kotlin.stdlib)
+    implementation(libs.lsp4j)
+    implementation(libs.slf4j.api)
+    implementation(libs.xtext.core)
+    implementation(libs.xtext.ide)
+    implementation(libs.xtext.util)
+
+    testImplementation(project(":portfolios"))
+    testImplementation(libs.gson)
 }
 
 application {

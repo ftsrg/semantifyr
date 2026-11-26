@@ -12,12 +12,46 @@ plugins {
 }
 
 dependencies {
+    implementation(project(":backend"))
+    implementation(project(":compiler"))
+    implementation(project(":logging"))
+    implementation(project(":oxsts.lang"))
+    implementation(project(":portfolios"))
     implementation(project(":sysml-frontend"))
     implementation(project(":sysml-wrapper"))
-    implementation(project(":logging"))
+    implementation(project(":verifier"))
+    implementation(libs.clikt)
+    implementation(libs.clikt.core)
+    implementation(libs.guice)
+    implementation(libs.slf4j.api)
+    implementation(libs.xtext.core)
 
-    testFixturesApi(project(":cli-common"))
-    testFixturesApi(testFixtures(project(":cli-common")))
+    testFixturesApi(project(":verifier"))
+    testFixturesApi(libs.clikt)
+    testFixturesImplementation(project(":cli-common"))
+    testFixturesImplementation(project(":oxsts.lang"))
+    testFixturesImplementation(project(":portfolios"))
+    testFixturesImplementation(libs.clikt.core)
+    testFixturesImplementation(libs.guice)
+    testFixturesImplementation(libs.junit.api)
+    testFixturesImplementation(libs.mordant.core)
+    testFixturesImplementation(libs.xtext.core)
+
+    testImplementation(libs.mordant.core)
+}
+
+testing {
+    suites {
+        named<JvmTestSuite>("integrationTest") {
+            dependencies {
+                implementation(project(":backend"))
+                implementation(testFixtures(project(":cli-common")))
+                implementation(libs.clikt)
+                implementation(libs.kotlinx.serialization.core)
+                implementation(libs.kotlinx.serialization.json)
+            }
+        }
+    }
 }
 
 application {

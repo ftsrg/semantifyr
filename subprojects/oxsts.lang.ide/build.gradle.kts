@@ -13,11 +13,50 @@ plugins {
 }
 
 dependencies {
-    api(project(":oxsts.lang"))
-    api(project(":lang-ide-common"))
-    implementation(project(":portfolios"))
+    implementation(project(":backend"))
+    implementation(project(":compiler"))
+    implementation(project(":lang-ide-common"))
+    implementation(project(":oxsts.lang"))
+    implementation(project(":oxsts.model"))
+    implementation(project(":verifier"))
+    implementation(libs.antlr.runtime)
+    implementation(libs.ecore)
+    implementation(libs.eclipse.equinox.common)
+    implementation(libs.emf.common)
+    implementation(libs.gson)
+    implementation(libs.guava)
+    implementation(libs.guice)
+    implementation(libs.kotlin.stdlib)
+    implementation(libs.lsp4j)
+    implementation(libs.lsp4j.jsonrpc)
+    implementation(libs.slf4j.api)
+    implementation(libs.xtext.core)
+    implementation(libs.xtext.ide)
+    implementation(libs.xtext.util)
+    implementation(libs.xtext.xbase.lib)
 
     testImplementation(libs.xtext.testing)
+}
+
+testing {
+    suites {
+        named<JvmTestSuite>("integrationTest") {
+            dependencies {
+                implementation(project(":backend"))
+                implementation(project(":compiler"))
+                implementation(project(":lang-ide-common"))
+                implementation(project(":oxsts.model"))
+                implementation(libs.ecore)
+                implementation(libs.emf.common)
+                implementation(libs.guice)
+                implementation(libs.lsp4j)
+                implementation(libs.xtext.core)
+                implementation(libs.xtext.ide)
+                implementation(libs.xtext.util)
+                implementation(libs.xtext.xbase.lib)
+            }
+        }
+    }
 }
 
 application {

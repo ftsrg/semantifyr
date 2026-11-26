@@ -11,4 +11,5 @@ plugins {
 
 dependencies {
     implementation(project(":logging"))
+    implementation(libs.slf4j.api)
 }

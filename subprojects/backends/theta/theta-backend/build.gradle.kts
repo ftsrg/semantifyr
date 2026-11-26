@@ -21,22 +21,77 @@ val benchmark = sourceSets["benchmark"]
 dependencies {
     api(project(":backend"))
     api(project(":cex.lang"))
+    api(project(":compiler"))
+    api(project(":oxsts.lang"))
+    api(project(":oxsts.model"))
     api(project(":xsts.lang"))
     api(project(":theta-executor"))
+    api(libs.ecore)
+    api(libs.emf.common)
+    api(libs.guice)
     api(libs.guice.extensions.assistedinject)
 
+    implementation(project(":guice-common"))
     implementation(project(":logging"))
     implementation(libs.kotlinx.coroutines.core)
+    implementation(libs.slf4j.api)
+    implementation(libs.xtext.core)
 
     testImplementation(testFixtures(project(":backend")))
+    testImplementation(testFixtures(project(":oxsts.lang")))
 
-    add(benchmark.implementationConfigurationName, project(":verifier"))
-    add(benchmark.implementationConfigurationName, project(":compiler")) {
+    add(benchmark.apiConfigurationName, project(":backend"))
+    add(benchmark.apiConfigurationName, project(":compiler"))
+    add(benchmark.apiConfigurationName, project(":compiler")) {
         capabilities {
             requireFeature("benchmark")
         }
     }
+    add(benchmark.apiConfigurationName, project(":theta-executor"))
+    add(benchmark.apiConfigurationName, libs.kotlinx.serialization.core)
+    add(benchmark.implementationConfigurationName, project(":logging"))
+    add(benchmark.implementationConfigurationName, project(":oxsts.model"))
+    add(benchmark.implementationConfigurationName, project(":verifier"))
+    add(benchmark.implementationConfigurationName, libs.guice)
     add(benchmark.implementationConfigurationName, libs.kotlinx.coroutines.core)
+    add(benchmark.implementationConfigurationName, libs.kotlinx.serialization.json)
+    add(benchmark.implementationConfigurationName, libs.slf4j.api)
+}
+
+testing {
+    suites {
+        named<JvmTestSuite>("adapterTest") {
+            dependencies {
+                implementation(project(":compiler"))
+                implementation(project(":oxsts.lang"))
+                implementation(libs.guice)
+            }
+        }
+
+        named<JvmTestSuite>("integrationTest") {
+            dependencies {
+                implementation(project(":oxsts.lang"))
+                implementation(libs.guice)
+            }
+        }
+
+        named<JvmTestSuite>("nightlyTest") {
+            dependencies {
+                implementation(project(":compiler"))
+                implementation(project(":oxsts.lang"))
+                implementation(libs.guice)
+            }
+        }
+
+        named<JvmTestSuite>("semanticTest") {
+            dependencies {
+                implementation(project(":compiler"))
+                implementation(project(":oxsts.lang"))
+                implementation(testFixtures(project(":oxsts.lang")))
+                implementation(libs.guice)
+            }
+        }
+    }
 }
 
 val sysmlCompiledCorpus = artifactsOf("compiled-corpus", ":sysml-wrapper")

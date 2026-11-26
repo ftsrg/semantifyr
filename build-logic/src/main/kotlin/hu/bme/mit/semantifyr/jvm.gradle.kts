@@ -7,6 +7,7 @@
 package hu.bme.mit.semantifyr
 
 import hu.bme.mit.semantifyr.gradle.javaRuntimeLibrary
+import hu.bme.mit.semantifyr.gradle.semantifyrKtlint
 import org.gradle.accessors.dm.LibrariesForLibs
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 
@@ -32,6 +33,34 @@ plugins {
 
 val libs = the<LibrariesForLibs>()
 
+spotless {
+    kotlin {
+        target(
+            fileTree("src") {
+                include("**/*.kt")
+                exclude(
+                    "**/xtext-gen/**",
+                    "**/emf-gen/**",
+                )
+            },
+        )
+        semantifyrKtlint(libs.versions.ktlint.get())
+    }
+
+    java {
+        target(
+            fileTree("src") {
+                include("**/*.java")
+                exclude(
+                    "**/xtext-gen/**",
+                    "**/emf-gen/**",
+                )
+            },
+        )
+        palantirJavaFormat(libs.versions.palantirJavaFormat.get())
+    }
+}
+
 val mockitoAgent = configurations.dependencyScope("mockitoAgent")
 val mockitoAgentClasspath = configurations.resolvable("mockitoAgentClasspath") {
     extendsFrom(mockitoAgent.get())
@@ -40,10 +69,6 @@ val mockitoAgentClasspath = configurations.resolvable("mockitoAgentClasspath") {
 }
 
 dependencies {
-    testFixturesApi(libs.bundles.junit.fixtures)
-    testFixturesApi(libs.assertj.core)
-    testFixturesApi(libs.bundles.mockito)
-
     mockitoAgent(libs.mockito.core)
 }
 
@@ -76,6 +101,9 @@ testing {
             useJUnitJupiter(libs.versions.junit)
 
             dependencies {
+                implementation.bundle(libs.bundles.junit.fixtures)
+                implementation(libs.assertj.core)
+                implementation.bundle(libs.bundles.mockito)
                 runtimeOnly(libs.slf4j.log4j)
             }
         }
@@ -98,13 +126,19 @@ sonar {
             it.sources
         }
 
-        property("sonar.tests", testSourceSets.flatMap {
-            it.allSource.srcDirs
-        }.filter {
-            it.exists()
-        })
-        property("sonar.java.test.binaries", testSourceSets.flatMap {
-            it.output.classesDirs.files
-        })
+        property(
+            "sonar.tests",
+            testSourceSets.flatMap {
+                it.allSource.srcDirs
+            }.filter {
+                it.exists()
+            },
+        )
+        property(
+            "sonar.java.test.binaries",
+            testSourceSets.flatMap {
+                it.output.classesDirs.files
+            },
+        )
     }
 }

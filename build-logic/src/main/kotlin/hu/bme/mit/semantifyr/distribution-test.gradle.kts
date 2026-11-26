@@ -26,12 +26,6 @@ val unzipDistribution = tasks.register<Sync>("unzipDistribution") {
 
 testing {
     suites {
-        named<JvmTestSuite>("test") {
-            dependencies {
-                implementation(testFixtures(project(":cli-common")))
-            }
-        }
-
         named<JvmTestSuite>("endToEndTest") {
             dependencies {
                 implementation(testFixtures(project(":cli-common")))

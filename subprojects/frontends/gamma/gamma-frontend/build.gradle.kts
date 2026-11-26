@@ -18,19 +18,71 @@ plugins {
 }
 
 dependencies {
+    api(project(":backend"))
+    api(project(":compiler"))
     api(project(":gamma.lang"))
     api(project(":verifier"))
+    api(libs.ecore)
+    api(libs.guice)
+    api(libs.xtext.core)
 
     implementation(project(":logging"))
+    implementation(project(":oxsts.lang"))
+    implementation(project(":oxsts.model"))
     implementation(project(":utils"))
+    implementation(libs.emf.common)
+    implementation(libs.slf4j.api)
 
+    testImplementation(testFixtures(project(":gamma.lang")))
+    testImplementation(testFixtures(project(":verifier")))
+    testImplementation(libs.kotlinx.serialization.core)
     testImplementation(libs.kotlinx.serialization.json)
+    testImplementation(libs.xtext.testing)
 
-    testFixturesImplementation(project(":logging"))
-    testFixturesApi(testFixtures(project(":gamma.lang")))
+    testFixturesApi(project(":backend"))
+    testFixturesApi(project(":compiler"))
+    testFixturesApi(project(":oxsts.lang"))
+    testFixturesApi(project(":oxsts.model"))
+    testFixturesApi(project(":verifier"))
     testFixturesApi(testFixtures(project(":verifier")))
-    testFixturesApi(project(":portfolios"))
-    testFixturesApi(testFixtures(project(":portfolios")))
+    testFixturesApi(libs.junit.params)
+    testFixturesImplementation(project(":logging"))
+    testFixturesImplementation(project(":portfolios"))
+    testFixturesImplementation(libs.guice)
+    testFixturesImplementation(libs.junit.api)
+    testFixturesImplementation(libs.slf4j.api)
+}
+
+testing {
+    suites {
+        named<JvmTestSuite>("integrationTest") {
+            dependencies {
+                implementation(project(":backend"))
+                implementation(project(":compiler"))
+                implementation(project(":spin-executor"))
+                implementation(project(":theta-executor"))
+                implementation(testFixtures(project(":portfolios")))
+                implementation(libs.emf.common)
+            }
+        }
+
+        named<JvmTestSuite>("nightlyTest") {
+            dependencies {
+                implementation(project(":backend"))
+                implementation(project(":compiler"))
+            }
+        }
+
+        named<JvmTestSuite>("semanticTest") {
+            dependencies {
+                implementation(project(":backend"))
+                implementation(project(":compiler"))
+                implementation(project(":oxsts.lang"))
+                implementation(libs.guice)
+                implementation(libs.xtext.core)
+            }
+        }
+    }
 }
 
 val exampleLogging = configurations.dependencyScope("exampleLogging")

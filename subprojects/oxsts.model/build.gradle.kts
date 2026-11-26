@@ -21,10 +21,14 @@ java {
 
 dependencies {
     api(libs.ecore)
+    api(libs.emf.common)
 
-    add(metamodel.implementationConfigurationName, libs.ecore)
+    add(metamodel.apiConfigurationName, libs.ecore)
     add(metamodel.implementationConfigurationName, libs.ecore.codegen)
+    add(metamodel.implementationConfigurationName, libs.ecore.xmi)
+    add(metamodel.implementationConfigurationName, libs.emf.common)
     add(metamodel.implementationConfigurationName, libs.mwe2.lib)
+    add(metamodel.implementationConfigurationName, libs.mwe2.runtime)
     add(metamodel.runtimeOnlyConfigurationName, libs.mwe.utils)
     add(metamodel.runtimeOnlyConfigurationName, libs.reload4j)
 }

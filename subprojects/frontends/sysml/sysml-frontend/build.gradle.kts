@@ -19,19 +19,68 @@ plugins {
 val generate = sourceSets.create("generate")
 
 dependencies {
-    api(project(":portfolios"))
+    api(project(":backend"))
+    api(project(":compiler"))
+    api(project(":verifier"))
+    api(libs.guice)
 
+    implementation(project(":oxsts.lang"))
     implementation(project(":sysml-wrapper"))
     implementation(project(":logging"))
     implementation(libs.kotlinx.coroutines.core)
+    implementation(libs.slf4j.api)
+    implementation(libs.xtext.core)
 
-    testFixturesApi(testFixtures(project(":portfolios")))
-    testFixturesApi(testFixtures(project(":verifier")))
+    testImplementation(project(":oxsts.model"))
+    testImplementation(testFixtures(project(":portfolios")))
+    testImplementation(libs.ecore)
+    testImplementation(libs.emf.common)
+
+    testFixturesApi(project(":backend"))
+    testFixturesApi(project(":compiler"))
+    testFixturesApi(project(":verifier"))
+    testFixturesApi(libs.kotlinx.serialization.core)
     testFixturesImplementation(project(":logging"))
+    testFixturesImplementation(project(":oxsts.lang"))
+    testFixturesImplementation(testFixtures(project(":portfolios")))
+    testFixturesImplementation(testFixtures(project(":verifier")))
+    testFixturesImplementation(libs.assertj.core)
+    testFixturesImplementation(libs.guice)
     testFixturesImplementation(libs.kotlinx.serialization.json)
+    testFixturesImplementation(libs.slf4j.api)
 
     add(generate.implementationConfigurationName, testFixtures(project(":verifier")))
+    add(generate.implementationConfigurationName, libs.kotlinx.serialization.core)
     add(generate.implementationConfigurationName, libs.kotlinx.serialization.json)
+}
+
+testing {
+    suites {
+        named<JvmTestSuite>("integrationTest") {
+            dependencies {
+                implementation(project(":backend"))
+                implementation(project(":compiler"))
+                implementation(testFixtures(project(":portfolios")))
+            }
+        }
+
+        named<JvmTestSuite>("nightlyTest") {
+            dependencies {
+                implementation(project(":backend"))
+                implementation(project(":compiler"))
+            }
+        }
+
+        named<JvmTestSuite>("semanticTest") {
+            dependencies {
+                implementation(project(":backend"))
+                implementation(project(":compiler"))
+                implementation(project(":oxsts.lang"))
+                implementation(libs.guice)
+                implementation(libs.xtext.core)
+            }
+        }
+    }
 }
 
 val librariesDirectory = layout.projectDirectory.dir("../models/libraries")
@@ -100,8 +149,10 @@ val decisionCases = tasks.register<JavaExec>("generatedReference_decision-cases"
         true
     }
     val module = projectDir
+    val examples = examplesDirectory
+    val page = decisionsPage
     argumentProviders += CommandLineArgumentProvider {
-        listOf(examplesDirectory.asFile.relativeTo(module).invariantSeparatorsPath, decisionsPage.singleFile.relativeTo(module).invariantSeparatorsPath)
+        listOf(examples.asFile.relativeTo(module).invariantSeparatorsPath, page.singleFile.relativeTo(module).invariantSeparatorsPath)
     }
 }
 

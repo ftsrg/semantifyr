@@ -16,24 +16,18 @@ val ideGeneratedFiles = artifactsOf("xtext-ide-sources", path.removeSuffix(".ide
 
 val xtextGeneratedDirectory = layout.projectDirectory.dir("src/main/xtext-gen")
 
-sourceSets {
-    main {
-        java.srcDir(xtextGeneratedDirectory)
-        resources.srcDir(xtextGeneratedDirectory)
-    }
-}
-
 val cloneIdeGenerated = tasks.register<Sync>("cloneIdeGenerated") {
     from(ideGeneratedFiles)
     into(xtextGeneratedDirectory)
 }
 
-tasks.compileJava {
-    inputs.files(cloneIdeGenerated)
-}
+val ideGeneratedSources = files(xtextGeneratedDirectory).builtBy(cloneIdeGenerated)
 
-tasks.processResources {
-    inputs.files(cloneIdeGenerated)
+sourceSets {
+    main {
+        java.srcDir(ideGeneratedSources)
+        resources.srcDir(ideGeneratedSources)
+    }
 }
 
 tasks.clean {
