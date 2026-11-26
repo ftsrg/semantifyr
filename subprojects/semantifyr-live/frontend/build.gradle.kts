@@ -5,18 +5,18 @@
  */
 
 import com.github.gradle.node.npm.task.NpmTask
-import hu.bme.mit.semantifyr.gradle.conventions.ExampleDescriptions
-import hu.bme.mit.semantifyr.gradle.conventions.oxstsFileExtension
-import hu.bme.mit.semantifyr.gradle.conventions.registerBrandingAssets
-import hu.bme.mit.semantifyr.gradle.conventions.semantifyrArtifact
-import hu.bme.mit.semantifyr.gradle.conventions.servedExamples
-import hu.bme.mit.semantifyr.gradle.conventions.stampOnSuccess
-import hu.bme.mit.semantifyr.gradle.conventions.testBrowser
-import hu.bme.mit.semantifyr.gradle.conventions.testChromium
+import hu.bme.mit.semantifyr.gradle.ExampleDescriptions
+import hu.bme.mit.semantifyr.gradle.oxstsFileExtension
+import hu.bme.mit.semantifyr.gradle.registerBrandingAssets
+import hu.bme.mit.semantifyr.gradle.semantifyrArtifact
+import hu.bme.mit.semantifyr.gradle.servedExamples
+import hu.bme.mit.semantifyr.gradle.stampOnSuccess
+import hu.bme.mit.semantifyr.gradle.testBrowser
+import hu.bme.mit.semantifyr.gradle.testChromium
 import org.gradle.api.file.RegularFile
 
 plugins {
-    id("hu.bme.mit.semantifyr.gradle.conventions.nodejs")
+    id("hu.bme.mit.semantifyr.nodejs")
 }
 
 val editorCommon = configurations.dependencyScope("editorCommon")
@@ -57,9 +57,9 @@ dependencies {
     sysmlWorker(project(":sysml-wrapper"))
 }
 
-val importedSnippetsDir = project.layout.projectDirectory.dir("src/snippets/imported")
-val importedVscodeDir = project.layout.projectDirectory.dir("src/vscode/imported")
-val publicDir = project.layout.projectDirectory.dir("public")
+val importedSnippetsDirectory = layout.projectDirectory.dir("src/snippets/imported")
+val importedVscodeDirectory = layout.projectDirectory.dir("src/vscode/imported")
+val publicDirectory = layout.projectDirectory.dir("public")
 
 fun servedFiles(language: String): List<RegularFile> {
     return servedExamples(language).map {
@@ -79,7 +79,7 @@ val cloneGammaTestModels = tasks.register<Sync>("cloneGammaTestModels") {
     from(gammaCompiledExamplesFiles) {
         include(compiledFiles("gamma"))
     }
-    into(importedSnippetsDir.dir("gamma"))
+    into(importedSnippetsDirectory.dir("gamma"))
 }
 
 val cloneSysmlv2TestModels = tasks.register<Sync>("cloneSysmlv2TestModels") {
@@ -87,18 +87,18 @@ val cloneSysmlv2TestModels = tasks.register<Sync>("cloneSysmlv2TestModels") {
     from(sysmlCompiledExamplesFiles) {
         include(compiledFiles("sysml"))
     }
-    into(importedSnippetsDir.dir("sysmlv2"))
+    into(importedSnippetsDirectory.dir("sysmlv2"))
 }
 
 val cloneTutorialSnippets = tasks.register<Sync>("cloneTutorialSnippets") {
     from(servedFiles("oxsts"))
-    into(importedSnippetsDir.dir("tutorial"))
+    into(importedSnippetsDirectory.dir("tutorial"))
 }
 
 // live's menu shows the first line of a model's comment under its label
 val exampleDescriptions = tasks.register<ExampleDescriptions>("exampleDescriptions") {
     models.from(servedFiles("sysml"), servedFiles("gamma"), servedFiles("oxsts"))
-    outputDirectory.set(importedSnippetsDir.dir("descriptions"))
+    outputDirectory = importedSnippetsDirectory.dir("descriptions")
 }
 
 // the load test sends a served SysML v2 model as the OXSTS it compiles to, the tutorial's among them
@@ -112,10 +112,6 @@ val cloneLoadTestModels = tasks.register<Sync>("cloneLoadTestModels") {
     into(layout.buildDirectory.dir("load-test-models/sysml"))
 }
 
-val cloneTestModels = tasks.register("cloneTestModels") {
-    dependsOn(cloneGammaTestModels, cloneSysmlv2TestModels, cloneTutorialSnippets, exampleDescriptions)
-}
-
 val cloneVscodeLanguageAssets = tasks.register<Sync>("cloneVscodeLanguageAssets") {
     from(rootProject.layout.projectDirectory.dir("subprojects/semantifyr-vscode")) {
         include("language-configuration.json")
@@ -125,7 +121,7 @@ val cloneVscodeLanguageAssets = tasks.register<Sync>("cloneVscodeLanguageAssets"
         include("sysml.tmLanguage.json")
         into("syntaxes")
     }
-    into(importedVscodeDir)
+    into(importedVscodeDirectory)
 }
 
 val cloneSysmlWorker = tasks.register<Sync>("cloneSysmlWorker") {
@@ -133,7 +129,7 @@ val cloneSysmlWorker = tasks.register<Sync>("cloneSysmlWorker") {
     into(layout.buildDirectory.dir("sysml-worker"))
 }
 
-val cloneBrandingAssets = registerBrandingAssets(publicDir)
+val cloneBrandingAssets = registerBrandingAssets(publicDirectory)
 
 tasks.npmInstall {
     workingDir = rootProject.projectDir
@@ -152,50 +148,52 @@ fun NpmTask.configureSharedInputs() {
     inputs.file(rootProject.layout.projectDirectory.file("gradle.properties"))
     inputs.files(tasks.npmInstall)
     inputs.files(editorCommonFiles)
-    inputs.files(cloneTestModels)
+    inputs.files(cloneGammaTestModels)
+    inputs.files(cloneSysmlv2TestModels)
+    inputs.files(cloneTutorialSnippets)
+    inputs.files(exampleDescriptions)
     inputs.files(cloneVscodeLanguageAssets)
     inputs.files(cloneBrandingAssets)
 }
 
 val npmAssemble = tasks.register<NpmTask>("npmAssemble") {
-    group = "build"
+    group = LifecycleBasePlugin.BUILD_GROUP
 
     configureSharedInputs()
-    inputs.dir(project.layout.projectDirectory.dir("public"))
-    inputs.file(project.layout.projectDirectory.file("index.html"))
+    inputs.file(layout.projectDirectory.file("index.html"))
 
-    npmCommand.set(listOf("run", "assemble"))
-    outputs.dir(project.layout.projectDirectory.dir("dist"))
+    npmCommand = listOf("run", "assemble")
+    outputs.dir(layout.projectDirectory.dir("dist"))
 }
 
 configurations.consumable("webDistributionElements") {
     attributes(semantifyrArtifact("web-distribution"))
-    outgoing.artifact(project.layout.projectDirectory.dir("dist")) {
+    outgoing.artifact(layout.projectDirectory.dir("dist")) {
         builtBy(npmAssemble)
     }
 }
 
 val npmCheck = tasks.register<NpmTask>("npmCheck") {
-    group = "verification"
+    group = LifecycleBasePlugin.VERIFICATION_GROUP
 
     configureSharedInputs()
     // an example's page is tested against live's head and the rights the REUSE file gives, and the load test's models are read as it sends them
-    inputs.file(project.layout.projectDirectory.file("index.html")).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.file(layout.projectDirectory.file("index.html")).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.file(rootProject.layout.projectDirectory.file("REUSE.toml")).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(cloneLoadTestModels).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.file(project(":oxsts.lang").layout.projectDirectory.file("src/main/java/hu/bme/mit/semantifyr/oxsts/lang/GenerateOxsts.mwe2")).withPathSensitivity(PathSensitivity.NONE)
 
-    npmCommand.set(listOf("run", "check"))
+    npmCommand = listOf("run", "check")
 
     stampOnSuccess()
 }
 
 tasks.register<NpmTask>("integrationTest") {
-    group = "verification"
+    group = LifecycleBasePlugin.VERIFICATION_GROUP
 
     configureSharedInputs()
 
-    npmCommand.set(listOf("run", "test:integration"))
+    npmCommand = listOf("run", "test:integration")
 
     stampOnSuccess()
 }
@@ -203,16 +201,15 @@ tasks.register<NpmTask>("integrationTest") {
 val testBrowser = testBrowser()
 
 fun NpmTask.runInTestBrowser(script: String, configuration: String) {
-    group = "verification"
+    group = LifecycleBasePlugin.VERIFICATION_GROUP
 
     configureSharedInputs()
-    inputs.file(project.layout.projectDirectory.file(configuration))
-    inputs.property("testBrowser", testBrowser)
+    inputs.file(layout.projectDirectory.file(configuration))
 
-    npmCommand.set(listOf("run", script))
+    npmCommand = listOf("run", script)
     environment.put("TEST_BROWSER", testBrowser)
 
-    val buildDirectory = project.layout.buildDirectory
+    val buildDirectory = layout.buildDirectory
     val taskName = name
     val stamp = testBrowser.flatMap {
         buildDirectory.file("$taskName-$it.stamp")
@@ -225,7 +222,7 @@ fun NpmTask.runInTestBrowser(script: String, configuration: String) {
 
 val screenTest = tasks.register<NpmTask>("screenTest") {
     runInTestBrowser("screens", "vitest.screen.config.ts")
-    val buildDirectory = project.layout.buildDirectory
+    val buildDirectory = layout.buildDirectory
     outputs.dir(
         testBrowser.flatMap {
             buildDirectory.dir("screens/$it")
@@ -240,12 +237,12 @@ val applicationTest = tasks.register<NpmTask>("applicationTest") {
 }
 
 val uiTest = tasks.register("uiTest") {
-    group = "verification"
+    group = LifecycleBasePlugin.VERIFICATION_GROUP
     dependsOn(screenTest, applicationTest)
 }
 
 tasks.register("continuousIntegration") {
-    group = "verification"
+    group = LifecycleBasePlugin.VERIFICATION_GROUP
     dependsOn(uiTest)
 }
 
@@ -253,22 +250,23 @@ tasks.register("continuousIntegration") {
 val screenshotBrowser = testChromium("The screenshots need")
 
 val screenshots = tasks.register<NpmTask>("screenshots") {
-    group = "build"
+    group = LifecycleBasePlugin.BUILD_GROUP
 
     configureSharedInputs()
-    inputs.file(project.layout.projectDirectory.file("vitest.screenshots.config.ts")).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.file(layout.projectDirectory.file("vitest.screenshots.config.ts")).withPathSensitivity(PathSensitivity.RELATIVE)
     // dist/ carries its build time, so the build's sources key the cache and the build itself only runs first
-    inputs.dir(project.layout.projectDirectory.dir("public")).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.file(project.layout.projectDirectory.file("index.html")).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.file(layout.projectDirectory.file("index.html")).withPathSensitivity(PathSensitivity.RELATIVE)
     dependsOn(npmAssemble)
     inputs.files(cloneSysmlWorker).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.property("screenshotBrowser", screenshotBrowser)
 
-    npmCommand.set(listOf("run", "screenshots"))
+    npmCommand = listOf("run", "screenshots")
     environment.put("TEST_BROWSER", "chromium")
-    val screenshotsDirectory = project.layout.buildDirectory.dir("screenshots")
+    val screenshotsDirectory = layout.buildDirectory.dir("screenshots")
     outputs.dir(screenshotsDirectory)
-    outputs.cacheIf { true }
+    outputs.cacheIf {
+        true
+    }
     doFirst {
         screenshotsDirectory.get().asFile.deleteRecursively()
     }
@@ -276,37 +274,35 @@ val screenshots = tasks.register<NpmTask>("screenshots") {
 
 configurations.consumable("screenshotsElements") {
     attributes(semantifyrArtifact("screenshots"))
-    outgoing.artifact(project.layout.buildDirectory.dir("screenshots")) {
+    outgoing.artifact(layout.buildDirectory.dir("screenshots")) {
         builtBy(screenshots)
     }
 }
 
 tasks.register<NpmTask>("runDev") {
-    group = "application"
+    group = ApplicationPlugin.APPLICATION_GROUP
 
     configureSharedInputs()
 
-    npmCommand.set(listOf("run", "dev"))
+    npmCommand = listOf("run", "dev")
 }
 
 tasks.register<NpmTask>("loadTest") {
-    group = "verification"
+    group = LifecycleBasePlugin.VERIFICATION_GROUP
 
     inputs.files(tasks.npmInstall)
     inputs.files(cloneLoadTestModels)
 
-    npmCommand.set(listOf("run", "load-test", "--"))
-    args.set(
-        providers.gradleProperty("loadTest.args").map { value ->
-            value.split(" ").filter {
-                it.isNotBlank()
-            }
-        }.orElse(emptyList()),
-    )
+    npmCommand = listOf("run", "load-test", "--")
+    args = providers.gradleProperty("loadTest.args").map { value ->
+        value.split(" ").filter {
+            it.isNotBlank()
+        }
+    }.orElse(emptyList())
 }
 
 tasks {
-    pack {
+    register("pack") {
         dependsOn(npmAssemble, cloneSysmlWorker)
     }
 
@@ -316,8 +312,8 @@ tasks {
 
     clean {
         delete("dist")
-        delete(importedSnippetsDir)
-        delete(importedVscodeDir)
-        delete(publicDir)
+        delete(importedSnippetsDirectory)
+        delete(importedVscodeDirectory)
+        delete(publicDirectory)
     }
 }

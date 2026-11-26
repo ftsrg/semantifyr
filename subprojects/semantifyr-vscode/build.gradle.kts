@@ -5,12 +5,12 @@
  */
 
 import com.github.gradle.node.npm.task.NpmTask
-import hu.bme.mit.semantifyr.gradle.conventions.registerRenderPictures
-import hu.bme.mit.semantifyr.gradle.conventions.semantifyrArtifact
-import hu.bme.mit.semantifyr.gradle.conventions.stampOnSuccess
+import hu.bme.mit.semantifyr.gradle.registerRenderPictures
+import hu.bme.mit.semantifyr.gradle.semantifyrArtifact
+import hu.bme.mit.semantifyr.gradle.stampOnSuccess
 
 plugins {
-    id("hu.bme.mit.semantifyr.gradle.conventions.nodejs")
+    id("hu.bme.mit.semantifyr.nodejs")
 }
 
 val languageServers = configurations.dependencyScope("languageServers")
@@ -78,7 +78,7 @@ fun NpmTask.configureSharedInputs() {
 val npmAssemble = tasks.register<NpmTask>("npmAssemble") {
     configureSharedInputs()
 
-    npmCommand.set(listOf("run", "assemble"))
+    npmCommand = listOf("run", "assemble")
 
     outputs.dir("dist")
 }
@@ -88,19 +88,14 @@ val npmCheck = tasks.register<NpmTask>("npmCheck") {
 
     inputs.file(project(":oxsts.lang").layout.projectDirectory.file("src/main/java/hu/bme/mit/semantifyr/oxsts/lang/GenerateOxsts.mwe2")).withPathSensitivity(PathSensitivity.NONE)
 
-    npmCommand.set(listOf("run", "check"))
+    npmCommand = listOf("run", "check")
 
     stampOnSuccess()
 }
 
-val thetaDirectory = layout.buildDirectory.dir("theta-xsts-cli")
+val thetaDirectory = files(thetaFiles)
 
-val cloneTheta = tasks.register<Sync>("cloneTheta") {
-    from(thetaFiles)
-    into(thetaDirectory)
-}
-
-val vsixFile = project.layout.buildDirectory.file("semantifyr-${project.version}.vsix")
+val vsixFile = layout.buildDirectory.file("semantifyr-$version.vsix")
 
 val bundleExtension = tasks.register<NpmTask>("bundleExtension") {
     val version = project.version.toString()
@@ -113,9 +108,11 @@ val bundleExtension = tasks.register<NpmTask>("bundleExtension") {
     inputs.file(project.layout.projectDirectory.file("eslint.config.js"))
     inputs.file(project.layout.projectDirectory.file("language-configuration.json"))
     inputs.file(project.layout.projectDirectory.file("tsconfig.json"))
+    inputs.file(project.layout.projectDirectory.file("package.json"))
     inputs.files(renderIcons)
     inputs.file(project.layout.projectDirectory.file("README.md"))
     inputs.file(project.layout.projectDirectory.file("CHANGELOG.md"))
+    inputs.file(project.layout.projectDirectory.file("LICENSE"))
     inputs.file(rootProject.layout.projectDirectory.file("tsconfig.base.json"))
     inputs.file(rootProject.layout.projectDirectory.file("eslint.config.base.js"))
     inputs.file(rootProject.layout.projectDirectory.file("package.json"))
@@ -123,7 +120,7 @@ val bundleExtension = tasks.register<NpmTask>("bundleExtension") {
     inputs.files(tasks.npmInstall)
     inputs.files(editorCommonFiles)
 
-    npmCommand.set(listOf("run", "bundle", "--", version, "--no-git-tag-version", "--no-update-package-json"))
+    npmCommand = listOf("run", "bundle", "--", version, "--no-git-tag-version", "--no-update-package-json")
     // both write dist, and the package must not take a development build written beside it
     mustRunAfter(npmAssemble)
 
@@ -131,27 +128,27 @@ val bundleExtension = tasks.register<NpmTask>("bundleExtension") {
 }
 
 tasks.register<NpmTask>("endToEndTest") {
-    group = "verification"
+    group = LifecycleBasePlugin.VERIFICATION_GROUP
 
     configureSharedInputs()
     inputs.files(bundleExtension)
-    inputs.files(cloneTheta)
+    inputs.files(thetaDirectory)
     inputs.file(rootProject.layout.projectDirectory.file("oxsts-test-models/smoke/smoke.semantifyr"))
 
-    npmCommand.set(listOf("run", "test:end-to-end"))
+    npmCommand = listOf("run", "test:end-to-end")
     environment.put("SEMANTIFYR_VSIX", vsixFile.map {
         it.asFile.absolutePath
     })
-    environment.put("PATH", thetaDirectory.zip(providers.environmentVariable("PATH")) { directory, path ->
-        "${directory.asFile.absolutePath}${File.pathSeparator}$path"
+    environment.put("PATH", thetaDirectory.elements.zip(providers.environmentVariable("PATH")) { directories, path ->
+        "${directories.single().asFile.absolutePath}${File.pathSeparator}$path"
     })
 
     stampOnSuccess()
 }
 
 tasks {
-    pack {
-        dependsOn(cloneDistribution, npmAssemble, bundleExtension)
+    register("pack") {
+        dependsOn(npmAssemble, bundleExtension)
     }
 
     check {
@@ -159,7 +156,7 @@ tasks {
     }
 
     clean {
-        delete("dist", "build", "icons")
+        delete("dist", "icons")
     }
 }
 

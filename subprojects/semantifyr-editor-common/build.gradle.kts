@@ -5,11 +5,11 @@
  */
 
 import com.github.gradle.node.npm.task.NpmTask
-import hu.bme.mit.semantifyr.gradle.conventions.semantifyrArtifact
-import hu.bme.mit.semantifyr.gradle.conventions.stampOnSuccess
+import hu.bme.mit.semantifyr.gradle.semantifyrArtifact
+import hu.bme.mit.semantifyr.gradle.stampOnSuccess
 
 plugins {
-    id("hu.bme.mit.semantifyr.gradle.conventions.nodejs")
+    id("hu.bme.mit.semantifyr.nodejs")
 }
 
 tasks.npmInstall {
@@ -17,11 +17,11 @@ tasks.npmInstall {
 }
 
 val npmCheck = tasks.register<NpmTask>("npmCheck") {
-    inputs.dir(project.layout.projectDirectory.dir("src"))
-    inputs.file(project.layout.projectDirectory.file("tsconfig.json"))
-    inputs.file(project.layout.projectDirectory.file("eslint.config.js"))
-    inputs.file(project.layout.projectDirectory.file("vitest.config.ts"))
-    inputs.file(project.layout.projectDirectory.file("package.json"))
+    inputs.dir(layout.projectDirectory.dir("src"))
+    inputs.file(layout.projectDirectory.file("tsconfig.json"))
+    inputs.file(layout.projectDirectory.file("eslint.config.js"))
+    inputs.file(layout.projectDirectory.file("vitest.config.ts"))
+    inputs.file(layout.projectDirectory.file("package.json"))
     inputs.file(rootProject.layout.projectDirectory.file("tsconfig.base.json"))
     inputs.file(rootProject.layout.projectDirectory.file("eslint.config.base.js"))
     inputs.file(rootProject.layout.projectDirectory.file("package.json"))
@@ -36,14 +36,14 @@ val npmCheck = tasks.register<NpmTask>("npmCheck") {
         inputs.dir(rootProject.layout.projectDirectory.dir(it)).withPathSensitivity(PathSensitivity.RELATIVE)
     }
 
-    npmCommand.set(listOf("run", "check"))
+    npmCommand = listOf("run", "check")
 
     stampOnSuccess()
 }
 
 configurations.consumable("npmPackageElements") {
     attributes(semantifyrArtifact("npm-package"))
-    outgoing.artifact(project.layout.projectDirectory.dir("src"))
+    outgoing.artifact(layout.projectDirectory.dir("src"))
 }
 
 tasks.check {

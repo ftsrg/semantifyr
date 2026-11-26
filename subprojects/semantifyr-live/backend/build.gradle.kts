@@ -4,14 +4,14 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import hu.bme.mit.semantifyr.gradle.conventions.commitHash
-import hu.bme.mit.semantifyr.gradle.conventions.semantifyrArtifact
+import hu.bme.mit.semantifyr.gradle.commitHash
+import hu.bme.mit.semantifyr.gradle.semantifyrArtifact
 import java.time.Instant
 
 plugins {
-    id("hu.bme.mit.semantifyr.gradle.conventions.application")
-    id("hu.bme.mit.semantifyr.gradle.conventions.suites")
-    id("hu.bme.mit.semantifyr.gradle.conventions.theta")
+    id("hu.bme.mit.semantifyr.cli")
+    id("hu.bme.mit.semantifyr.suites")
+    id("hu.bme.mit.semantifyr.theta")
     kotlin("jvm")
     kotlin("plugin.serialization")
 }
@@ -79,25 +79,25 @@ application {
 }
 
 val generateBuildInfo = tasks.register("generateBuildInfo") {
-    val outputDir = layout.buildDirectory.dir("generated/buildinfo")
+    val outputDirectory = layout.buildDirectory.dir("generated/buildinfo")
     val version = project.version.toString()
     val commitHash = commitHash()
     inputs.property("version", version)
     inputs.property("commitHash", commitHash)
-    outputs.dir(outputDir)
+    outputs.dir(outputDirectory)
 
     doLast {
         val buildTime = Instant.now().toString()
 
-        outputDir.get().asFile.mkdirs()
-        outputDir.get().file("build-info.properties").asFile.writeText(
+        outputDirectory.get().asFile.mkdirs()
+        outputDirectory.get().file("build-info.properties").asFile.writeText(
             "version=$version\ncommit=${commitHash.get()}\nbuildTime=$buildTime\n",
         )
     }
 }
 
 sourceSets.main {
-    resources.srcDir(generateBuildInfo.map { it.outputs.files.singleFile })
+    resources.srcDir(generateBuildInfo)
 }
 
 val cloneSemanticLibraries = tasks.register<Sync>("cloneSemanticLibraries") {
@@ -139,82 +139,52 @@ val cloneWebDistributions = tasks.register<Sync>("cloneWebDistributions") {
     into(layout.buildDirectory.dir("staging/web"))
 }
 
-// the Theta the image ships and a local run puts on its path
-val theta = configurations.dependencyScope("theta")
-val thetaFiles = configurations.resolvable("thetaFiles") {
-    extendsFrom(theta.get())
-    attributes(semantifyrArtifact("theta-xsts-cli"))
-}
-
-dependencies {
-    theta(project(":theta-executor"))
-}
-
-val cloneShippedTheta = tasks.register<Sync>("cloneShippedTheta") {
-    from(thetaFiles)
-    into(layout.buildDirectory.dir("shipped-theta-xsts-cli"))
-}
-
 tasks.named<JavaExec>("run") {
-    group = "application"
+    group = ApplicationPlugin.APPLICATION_GROUP
 
     inputs.files(cloneSemanticLibraries)
     inputs.files(cloneWebDistributions)
-    inputs.files(cloneShippedTheta)
 
-    val thetaCliDir = cloneShippedTheta.map { it.destinationDir.absolutePath }
-
-    val stagingDir = layout.buildDirectory.dir("staging").get().asFile
-    val workDir = layout.buildDirectory.dir("work").get().asFile
+    val stagingDirectory = layout.buildDirectory.dir("staging").get().asFile
+    val workDirectory = layout.buildDirectory.dir("work").get().asFile
 
     args = listOf("start")
 
-    environment("SEMANTIFYR_LIVE_SEMANTIC_LIBRARIES_DIR", stagingDir.resolve("semantic-libraries").absolutePath)
-    environment("SEMANTIFYR_LIVE_WEB_ROOT_DIR", stagingDir.resolve("web").absolutePath)
+    environment("SEMANTIFYR_LIVE_SEMANTIC_LIBRARIES_DIR", stagingDirectory.resolve("semantic-libraries").absolutePath)
+    environment("SEMANTIFYR_LIVE_WEB_ROOT_DIR", stagingDirectory.resolve("web").absolutePath)
     environment("SEMANTIFYR_LIVE_PORT", "18080")
     environment("SEMANTIFYR_LIVE_METRICS_PORT", "18081")
-    environment("SEMANTIFYR_LIVE_ROOT_WORK_DIR", workDir.absolutePath)
-
-    doFirst {
-        environment("PATH", "${thetaCliDir.get()}${File.pathSeparator}${System.getenv("PATH")}")
-    }
+    environment("SEMANTIFYR_LIVE_ROOT_WORK_DIR", workDirectory.absolutePath)
 }
 
 tasks.register<JavaExec>("runDev") {
-    group = "application"
+    group = ApplicationPlugin.APPLICATION_GROUP
 
     classpath = sourceSets["main"].runtimeClasspath
     mainClass = application.mainClass
     jvmArgs(application.applicationDefaultJvmArgs)
 
     inputs.files(cloneSemanticLibraries)
-    inputs.files(cloneShippedTheta)
 
-    val thetaCliDir = cloneShippedTheta.map { it.destinationDir.absolutePath }
-
-    val stagingDir = layout.buildDirectory.dir("staging").get().asFile
-    val workDir = layout.buildDirectory.dir("work").get().asFile
+    val stagingDirectory = layout.buildDirectory.dir("staging").get().asFile
+    val workDirectory = layout.buildDirectory.dir("work").get().asFile
 
     args = listOf("start")
 
-    environment("SEMANTIFYR_LIVE_SEMANTIC_LIBRARIES_DIR", stagingDir.resolve("semantic-libraries").absolutePath)
+    environment("SEMANTIFYR_LIVE_SEMANTIC_LIBRARIES_DIR", stagingDirectory.resolve("semantic-libraries").absolutePath)
     environment("SEMANTIFYR_LIVE_PORT", "18080")
     environment("SEMANTIFYR_LIVE_METRICS_PORT", "18081")
-    environment("SEMANTIFYR_LIVE_ROOT_WORK_DIR", workDir.absolutePath)
-
-    doFirst {
-        environment("PATH", "${thetaCliDir.get()}${File.pathSeparator}${System.getenv("PATH")}")
-    }
+    environment("SEMANTIFYR_LIVE_ROOT_WORK_DIR", workDirectory.absolutePath)
 }
 
-val stagingDirectory = "build/staging"
+val relativeStagingDirectory = "build/staging"
 
-tasks.test {
+tasks.withType<Test>().configureEach {
     inputs.files(cloneSemanticLibraries)
     inputs.files(cloneGammaTestModels)
 
-    systemProperty("semantifyr.live.semanticLibraries", "$stagingDirectory/semantic-libraries")
-    systemProperty("semantifyr.live.gammaTestModels", "$stagingDirectory/gamma-test-models")
+    systemProperty("semantifyr.live.semanticLibraries", "$relativeStagingDirectory/semantic-libraries")
+    systemProperty("semantifyr.live.gammaTestModels", "$relativeStagingDirectory/gamma-test-models")
 }
 
 testing {
@@ -224,31 +194,18 @@ testing {
                 implementation(project(":logging"))
                 implementation(project(":oxsts.lang.ide"))
             }
-
-            targets.all {
-                testTask.configure {
-                    inputs.files(cloneSemanticLibraries)
-                    inputs.files(cloneGammaTestModels)
-                    inputs.files(cloneOxstsTestModels)
-                    inputs.files(cloneGammaLibraryModels)
-                    inputs.files(cloneSysmlLibraryModels)
-
-                    systemProperty("semantifyr.live.semanticLibraries", "$stagingDirectory/semantic-libraries")
-                    systemProperty("semantifyr.live.gammaTestModels", "$stagingDirectory/gamma-test-models")
-                    systemProperty("semantifyr.live.oxstsTestModels", "$stagingDirectory/oxsts-test-models")
-                    systemProperty("semantifyr.live.gammaLibraryModels", "$stagingDirectory/gamma-library-models")
-                    systemProperty("semantifyr.live.sysmlLibraryModels", "$stagingDirectory/sysml-library-models")
-                }
-            }
         }
     }
 }
 
-tasks.register("prepareDockerBuild") {
-    inputs.files(cloneSemanticLibraries)
-    inputs.files(cloneWebDistributions)
-    inputs.files(cloneShippedTheta)
-    inputs.files(tasks.installDist)
+tasks.named<Test>("integrationTest") {
+    inputs.files(cloneOxstsTestModels)
+    inputs.files(cloneGammaLibraryModels)
+    inputs.files(cloneSysmlLibraryModels)
+
+    systemProperty("semantifyr.live.oxstsTestModels", "$relativeStagingDirectory/oxsts-test-models")
+    systemProperty("semantifyr.live.gammaLibraryModels", "$relativeStagingDirectory/gamma-library-models")
+    systemProperty("semantifyr.live.sysmlLibraryModels", "$relativeStagingDirectory/sysml-library-models")
 }
 
 val liveImageContext = tasks.register<Tar>("liveImageContext") {
@@ -266,7 +223,7 @@ val liveImageContext = tasks.register<Tar>("liveImageContext") {
     from(cloneWebDistributions) {
         into("build/staging/web")
     }
-    from(cloneShippedTheta) {
+    from(configurations.named("thetaFiles")) {
         into("build/shipped-theta-xsts-cli")
     }
 }

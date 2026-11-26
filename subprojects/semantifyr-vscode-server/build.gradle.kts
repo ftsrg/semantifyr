@@ -4,12 +4,12 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import hu.bme.mit.semantifyr.gradle.conventions.corpusModels
-import hu.bme.mit.semantifyr.gradle.conventions.semantifyrArtifact
+import hu.bme.mit.semantifyr.gradle.corpusModels
+import hu.bme.mit.semantifyr.gradle.semantifyrArtifact
 
 plugins {
-    id("hu.bme.mit.semantifyr.gradle.conventions.formatting")
-    id("hu.bme.mit.semantifyr.gradle.conventions.pack")
+    base
+    id("hu.bme.mit.semantifyr.formatting")
 }
 
 val vscodeExtensions = configurations.dependencyScope("vscodeExtensions")
@@ -65,14 +65,14 @@ val cloneGammaTestModels = tasks.register<Sync>("cloneGammaTestModels") {
     into("examples/gamma/TestModels")
 }
 
-val sysmlCorpusDir = rootProject.layout.projectDirectory.dir("subprojects/frontends/sysml/models/examples")
+val sysmlCorpusDirectory = rootProject.layout.projectDirectory.dir("subprojects/frontends/sysml/models/examples")
 
 val cloneSysMLTestModels = tasks.register<Sync>("cloneSysMLTestModels") {
-    from(sysmlCorpusDir) {
+    from(sysmlCorpusDirectory) {
         // the corpus models share its isStateActive and eventually
         include("Verification.sysml")
         include(
-            corpusModels(sysmlCorpusDir).map {
+            corpusModels(sysmlCorpusDirectory).map {
                 it.file
             },
         )
@@ -112,6 +112,6 @@ val vscodeServerImageContext = tasks.register<Tar>("vscodeServerImageContext") {
     }
 }
 
-tasks.pack {
+tasks.register("pack") {
     dependsOn(vscodeServerImageContext)
 }
