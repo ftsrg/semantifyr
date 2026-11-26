@@ -5,8 +5,6 @@ sidebar_position: 0
 description: The specification of the Semantifyr Language, the language Semantifyr's semantics are written in, with its constructs at a glance, its two evaluation phases and the conventions of these pages.
 ---
 
-import ServedExamples from '@site/src/components/ServedExamples';
-
 # Semantifyr Language Specification
 
 The Semantifyr Language is the **declarative-operational** language of Semantifyr, in which the [semantic libraries](../../index.mdx) of the framework and the models verified on them are written. A Semantifyr model is a collection of classes, features, transitions, and properties that the compiler unfolds into a flat transition system and hands to a backend, the model checker that verifies it.
@@ -50,9 +48,3 @@ A pervasive distinction throughout the language is **compile-time vs runtime**. 
 - The **internals** of the compiler, which the [architecture](../../../develop/index.md) sketches and the code holds.
 - The **frontends** that translate SysML v2 and Gamma models into the language, each with its part of Learn: [SysML v2](../../frontends/sysml-v2/index.mdx) and [Gamma](../../frontends/gamma/index.mdx).
 - What a **backend** does with a construct, which each [backend's page](../../backends/index.mdx) states, and the input languages of the backends.
-
-## Examples in Live
-
-The Semantifyr model Live serves beside the lessons' models, opening in Live by its own address:
-
-<ServedExamples />

@@ -16,8 +16,6 @@
       "language": "sysml",
       "file": "subprojects/frontends/sysml/models/examples/level_crossing.sysml",
       "label": "Level crossing",
-      "reason": "The simplest model, four small state machines that pass items, and the one requirement a reader checks first.",
-      "page": "learn/frontends/sysml-v2",
       "cases": [
         "BarrierDownWhileTrainInCrossing",
         "TwoTrainsCanBeInTheCrossing"
@@ -28,8 +26,6 @@
       "language": "sysml",
       "file": "subprojects/frontends/sysml/models/examples/crossroads.sysml",
       "label": "Crossroads",
-      "reason": "Nested states, entry and exit actions and timed transitions, in two lights that one controller cycles by items.",
-      "page": "learn/frontends/sysml-v2",
       "cases": [
         "PoliceCanInterrupt",
         "LightACanBlink",
@@ -42,8 +38,6 @@
       "language": "sysml",
       "file": "subprojects/frontends/sysml/models/examples/compressedspacecraft.sysml",
       "label": "Spacecraft",
-      "reason": "Parallel regions and integer attributes with guards and assignments, in a spacecraft that transmits while its battery recharges.",
-      "page": "learn/frontends/sysml-v2",
       "cases": [
         "TransmissionCanStart",
         "ChargeNeverBelow40",
@@ -55,8 +49,6 @@
       "language": "sysml",
       "file": "subprojects/frontends/sysml/models/examples/landing_gear.sysml",
       "label": "Landing gear",
-      "reason": "A sequence of doors and gear that the pilot may reverse at any moment, from a known verification benchmark, in plain state machines that exchange items.",
-      "page": "learn/frontends/sysml-v2",
       "cases": [
         "GearCanBeRetracted",
         "BayClosedInCruise",
@@ -68,7 +60,6 @@
       "language": "gamma",
       "file": "subprojects/frontends/gamma/models/examples/LiftStep1.gamma",
       "label": "Lift, step 1",
-      "reason": "A state of the lift that the model verification practice opens.",
       "cases": [
         "LiftCanMove"
       ],
@@ -79,7 +70,6 @@
       "language": "gamma",
       "file": "subprojects/frontends/gamma/models/examples/LiftStep2.gamma",
       "label": "Lift, step 2",
-      "reason": "A state of the lift that the model verification practice opens.",
       "cases": [
         "DoorClosedWhileMoving",
         "LiftCanMove"
@@ -91,7 +81,6 @@
       "language": "gamma",
       "file": "subprojects/frontends/gamma/models/examples/LiftStep3.gamma",
       "label": "Lift, step 3",
-      "reason": "A state of the lift that the model verification practice opens.",
       "cases": [
         "DoorClosedWhileMoving",
         "LiftCanMove"
@@ -103,7 +92,6 @@
       "language": "gamma",
       "file": "subprojects/frontends/gamma/models/examples/LiftStep4.gamma",
       "label": "Lift, step 4",
-      "reason": "A state of the lift that the model verification practice opens.",
       "cases": [
         "DoorClosedWhileMoving",
         "LiftCanMove",
@@ -116,7 +104,6 @@
       "language": "gamma",
       "file": "subprojects/frontends/gamma/models/examples/Lift.gamma",
       "label": "Lift",
-      "reason": "A state of the lift that the model verification practice opens.",
       "cases": [
         "DoorClosedWhileMoving",
         "LiftCanMove",
@@ -129,8 +116,6 @@
       "language": "sysml",
       "file": "subprojects/frontends/sysml/models/tutorial/room.sysml",
       "label": "Room",
-      "reason": "A switch and a lamp, the model the SysML v2 lesson builds and runs from its page.",
-      "page": "learn/frontends/sysml-v2/lesson",
       "cases": [
         "LampLitReachable",
         "LampNeverLitViolated",
@@ -143,8 +128,6 @@
       "language": "gamma",
       "file": "subprojects/frontends/gamma/models/examples/LevelCrossing.gamma",
       "label": "Level crossing",
-      "reason": "The simplest model, small statecharts that pass events over channels, and the one requirement a reader checks first, which the Gamma lesson reads.",
-      "page": "learn/frontends/gamma/lesson",
       "cases": [
         "BarrierDownWhileTrainInCrossing",
         "TwoTrainsCanBeInTheCrossing"
@@ -155,8 +138,6 @@
       "language": "gamma",
       "file": "subprojects/frontends/gamma/models/examples/Crossroads.gamma",
       "label": "Crossroads",
-      "reason": "Hierarchical states, entry and exit actions and timeouts, in two lights that one controller cycles by events over channels.",
-      "page": "learn/frontends/gamma",
       "cases": [
         "PoliceCanInterrupt",
         "LightACanBlink",
@@ -169,8 +150,6 @@
       "language": "gamma",
       "file": "subprojects/frontends/gamma/models/examples/Spacecraft.gamma",
       "label": "Spacecraft",
-      "reason": "Orthogonal regions and integer variables with guards and assignments, in a spacecraft that transmits while its battery recharges.",
-      "page": "learn/frontends/gamma",
       "cases": [
         "TransmissionCanStart",
         "ChargeNeverBelow40",
@@ -182,8 +161,6 @@
       "language": "gamma",
       "file": "subprojects/frontends/gamma/models/examples/LandingGear.gamma",
       "label": "Landing gear",
-      "reason": "A sequence of doors and gear that the pilot may reverse at any moment, from a known verification benchmark, in plain statecharts that exchange events.",
-      "page": "learn/frontends/gamma",
       "cases": [
         "GearCanBeRetracted",
         "BayClosedInCruise",
@@ -195,8 +172,6 @@
       "language": "oxsts",
       "file": "oxsts-test-models/tutorial/level-crossing.semantifyr",
       "label": "Level crossing",
-      "reason": "The simplest model, four small classes, and the one requirement a reader checks first.",
-      "page": "learn/language/specification",
       "cases": [
         "BarrierDownWhileTrainInCrossing",
         "TwoTrainsCanBeInTheCrossing"
@@ -207,8 +182,6 @@
       "language": "oxsts",
       "file": "oxsts-test-models/tutorial/modeling-and-verification.semantifyr",
       "label": "Lesson 1: Modeling and Verification",
-      "reason": "The model the first lesson ends in: two traffic lights and the sensors of their roads modelled directly in one class, the requirements of the junction, and the guard that a trace showed to be too weak.",
-      "page": "learn/language/lessons/modeling-and-verification",
       "cases": [
         "NorthCanTurnGreen",
         "NeverBothGreen",
@@ -220,8 +193,6 @@
       "language": "oxsts",
       "file": "oxsts-test-models/tutorial/semantic-libraries.semantifyr",
       "label": "Lesson 2: Semantic Libraries",
-      "reason": "The model the second lesson ends in: a small statechart library of states, transitions and guards, and the junction with a crosswalk written as data on it.",
-      "page": "learn/language/lessons/semantic-libraries",
       "cases": [
         "NorthCanTurnGreen",
         "NeverBothGreen",
@@ -235,8 +206,6 @@
       "language": "oxsts",
       "file": "oxsts-test-models/tutorial/semantic-variants.semantifyr",
       "label": "Lesson 3: Semantic Variants",
-      "reason": "The model the third lesson ends in: the junction and its crosswalk, unchanged, on a library whose parts all step at once, each reacting to the state before the step.",
-      "page": "learn/language/lessons/semantic-variants",
       "cases": [
         "NorthCanTurnGreen",
         "NeverBothGreen",
@@ -250,8 +219,6 @@
       "language": "oxsts",
       "file": "oxsts-test-models/tutorial/extending-the-library.semantifyr",
       "label": "Lesson 4: Extending the Library",
-      "reason": "The model the fourth lesson ends in: a statechart library extended with time, a light that stays green for at least three steps, and a case that counts on its own.",
-      "page": "learn/language/lessons/extending-the-library",
       "cases": [
         "NorthCanTurnGreen",
         "NeverBothGreen",

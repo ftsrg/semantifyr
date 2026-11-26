@@ -45,8 +45,6 @@ data class ServedExample(
     val language: ExampleLanguage,
     val file: String,
     val label: String,
-    val reason: String,
-    val page: String? = null,
     val cases: List<String>,
     val hidden: Boolean = false,
 ) {
