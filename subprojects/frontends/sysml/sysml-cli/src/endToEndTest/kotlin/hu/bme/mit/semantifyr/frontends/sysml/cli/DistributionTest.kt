@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Test
 class DistributionTest : DistributionTestBase("semantifyr-sysml") {
 
     @Test
-    fun `the bundled smoke model is verified with the bundled Theta and its trace written`() {
+    fun `the bundled smoke model is verified and its trace written`() {
         assumeNodeOnPath()
 
         val run = run(

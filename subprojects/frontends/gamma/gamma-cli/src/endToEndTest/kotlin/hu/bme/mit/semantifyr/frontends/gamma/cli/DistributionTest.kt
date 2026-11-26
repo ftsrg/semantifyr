@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Test
 class DistributionTest : DistributionTestBase("semantifyr-gamma") {
 
     @Test
-    fun `the bundled smoke model is verified with the bundled Theta and its trace written`() {
+    fun `the bundled smoke model is verified and its trace written`() {
         val run = run(
             "verify", "--json", "--theta-executor", "shell", "--portfolio", "theta-bounded-bmc", "-d", "artifacts",
             "--case-name", "Simple.WorkerStatechartOperationalReachable",

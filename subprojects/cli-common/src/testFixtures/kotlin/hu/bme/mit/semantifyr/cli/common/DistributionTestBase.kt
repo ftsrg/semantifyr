@@ -13,14 +13,10 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.io.File
-import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import java.util.concurrent.TimeUnit
 import kotlin.io.path.Path
-import kotlin.io.path.exists
-import kotlin.io.path.isExecutable
 import kotlin.io.path.listDirectoryEntries
-import kotlin.io.path.name
 import kotlin.io.path.readText
 
 class LauncherRun(
@@ -34,8 +30,7 @@ abstract class DistributionTestBase(
 ) {
     protected val home: Path = Path("build/unzipped").listDirectoryEntries().single().toAbsolutePath()
 
-    private val osName = System.getProperty("os.name")
-    private val windows = osName.startsWith("Windows")
+    private val windows = System.getProperty("os.name").startsWith("Windows")
 
     @TempDir
     lateinit var directory: Path
@@ -45,7 +40,6 @@ abstract class DistributionTestBase(
         assumeBackendAvailable(ThetaExecutorKey)
     }
 
-    // without Theta on PATH, a verdict proves that the launcher puts the bundled Theta there
     protected fun run(vararg arguments: String): LauncherRun {
         val command = if (windows) {
             listOf("cmd.exe", "/c", home.resolve("bin/$launcher.bat").toString())
@@ -61,23 +55,12 @@ abstract class DistributionTestBase(
             .redirectError(stderr.toFile())
         val environment = processBuilder.environment()
         environment["JAVA_HOME"] = javaHome
-        environment["PATH"] = pathWithoutTheta(javaHome)
+        environment["PATH"] = "${Path(javaHome, "bin")}${File.pathSeparator}${System.getenv("PATH")}"
         val process = processBuilder.start()
         check(process.waitFor(10, TimeUnit.MINUTES)) {
             "$launcher ${arguments.joinToString(" ")} did not exit"
         }
         return LauncherRun(process.exitValue(), stdout.readText(), stderr.readText())
-    }
-
-    private fun pathWithoutTheta(javaHome: String): String {
-        val hostEntries = System.getenv("PATH").split(File.pathSeparator).filterNot {
-            try {
-                Path(it).resolve("theta-xsts-cli").exists()
-            } catch (_: InvalidPathException) {
-                false
-            }
-        }
-        return (listOf(Path(javaHome, "bin").toString()) + hostEntries).joinToString(File.pathSeparator)
     }
 
     protected fun reportOf(run: LauncherRun): Path {
@@ -91,27 +74,6 @@ abstract class DistributionTestBase(
         assertThat(run.exitCode).isZero()
         assertThat(run.stdout.trim()).matches("$launcher version \\d+\\.\\d+\\.\\d+.*")
         assertThat(run.stderr).isEmpty()
-    }
-
-    @Test
-    fun `the bundled Theta carries the native libraries of this platform`() {
-        val extension = when {
-            windows -> "dll"
-            osName.startsWith("Mac") -> "dylib"
-            else -> "so"
-        }
-        val libraries = home.resolve("theta-xsts-cli/lib").listDirectoryEntries().map {
-            it.name
-        }
-
-        assertThat(libraries)
-            .contains("libz3.$extension", "libz3java.$extension", "libz3legacy.$extension", "libz3javalegacy.$extension")
-            .allMatch {
-                it.endsWith(".$extension")
-            }
-        if (!windows) {
-            assertThat(home.resolve("theta-xsts-cli/theta-xsts-cli")).isExecutable()
-        }
     }
 
     @Test

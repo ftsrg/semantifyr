@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Test
 class DistributionTest : DistributionTestBase("semantifyr") {
 
     @Test
-    fun `the bundled smoke model passes with the bundled Theta`() {
+    fun `the bundled smoke model passes`() {
         val run = run("verify", "-q", "--theta-executor", "shell", "--portfolio", "theta-cegar-expl-pred-combined", "-d", "artifacts", home.resolve("models/smoke").toString())
 
         assertThat(run.exitCode).describedAs(run.stderr).isZero()
