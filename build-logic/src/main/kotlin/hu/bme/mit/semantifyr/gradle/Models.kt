@@ -39,7 +39,10 @@ class CorpusModel(
 }
 
 fun Project.corpusModels(corpusDirectory: Directory): List<CorpusModel> {
-    val manifest = providers.fileContents(corpusDirectory.file("manifest.json")).asText.get()
+    return corpusModels(providers.fileContents(corpusDirectory.file("manifest.json")).asText.get())
+}
+
+fun corpusModels(manifest: String): List<CorpusModel> {
     val models = (JsonSlurper().parseText(manifest) as Map<*, *>)["models"] as List<*>
     return models.map {
         val model = it as Map<*, *>

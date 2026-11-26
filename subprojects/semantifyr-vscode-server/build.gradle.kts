@@ -54,14 +54,15 @@ val cloneGammaTestModels = tasks.register<Sync>("cloneGammaTestModels") {
 }
 
 val cloneSysMLTestModels = tasks.register<Sync>("cloneSysMLTestModels") {
-    from(sysmlExamples) {
+    val examples = sysmlExamples
+    from(examples) {
         // the corpus models share its isStateActive and eventually
-        include("Verification.sysml")
-        include(
-            corpusModels(layout.projectDirectory.dir(sysmlExamples.singleFile.path)).map {
+        include { element ->
+            val modelFiles = corpusModels(examples.singleFile.resolve("manifest.json").readText()).map {
                 it.file
-            },
-        )
+            }
+            element.isDirectory || element.name == "Verification.sysml" || element.relativePath.pathString in modelFiles
+        }
     }
     into("examples/sysml/TestModels")
 }
