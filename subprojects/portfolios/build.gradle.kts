@@ -29,5 +29,5 @@ dependencies {
 
 tasks.named<Test>("integrationTest") {
     readsServedExamples()
-    inputs.dir(rootProject.layout.projectDirectory.dir("oxsts-test-models/tutorial")).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.dir(isolated.rootProject.projectDirectory.dir("oxsts-test-models/tutorial")).withPathSensitivity(PathSensitivity.RELATIVE)
 }

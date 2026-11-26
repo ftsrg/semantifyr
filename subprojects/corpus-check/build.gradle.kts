@@ -18,3 +18,8 @@ dependencies {
 application {
     mainClass = "hu.bme.mit.semantifyr.corpuscheck.CorpusCheckKt"
 }
+
+tasks.register("pack") {
+    group = LifecycleBasePlugin.BUILD_GROUP
+    dependsOn(tasks.distZip)
+}

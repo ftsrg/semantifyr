@@ -5,12 +5,13 @@
  */
 
 import hu.bme.mit.semantifyr.gradle.corpusModels
+import hu.bme.mit.semantifyr.gradle.javaRuntimeLibrary
 import hu.bme.mit.semantifyr.gradle.oxstsFileExtension
 import hu.bme.mit.semantifyr.gradle.readsServedExamples
 import hu.bme.mit.semantifyr.gradle.semantifyrArtifact
 
 plugins {
-    id("hu.bme.mit.semantifyr.cli")
+    id("hu.bme.mit.semantifyr.jvm")
     id("hu.bme.mit.semantifyr.theta")
     id("hu.bme.mit.semantifyr.suites")
     kotlin("jvm")
@@ -30,6 +31,17 @@ dependencies {
     testFixturesApi(testFixtures(project(":verifier")))
     testFixturesApi(project(":portfolios"))
     testFixturesApi(testFixtures(project(":portfolios")))
+}
+
+val exampleLogging = configurations.dependencyScope("exampleLogging")
+val exampleLoggingClasspath = configurations.resolvable("exampleLoggingClasspath") {
+    extendsFrom(exampleLogging.get())
+    shouldResolveConsistentlyWith(configurations.runtimeClasspath.get())
+    attributes(javaRuntimeLibrary())
+}
+
+dependencies {
+    exampleLogging(libs.slf4j.log4j)
 }
 
 val syncGammaTestModels = tasks.register<Sync>("syncGammaTestModels") {
@@ -79,7 +91,7 @@ val compileGammaExampleTasks = corpusModels(examplesSourceDirectory).filter { mo
             true
         }
         mainClass = "hu.bme.mit.semantifyr.frontends.gamma.examples.CompileGammaExampleKt"
-        classpath = sourceSets["main"].runtimeClasspath
+        classpath = files(sourceSets["main"].runtimeClasspath, exampleLoggingClasspath)
         argumentProviders += CommandLineArgumentProvider {
             listOf(
                 sourceFile.asFile.absolutePath,
@@ -91,6 +103,16 @@ val compileGammaExampleTasks = corpusModels(examplesSourceDirectory).filter { mo
 
 val compileGammaExamples = tasks.register("compileGammaExamples") {
     inputs.files(compileGammaExampleTasks)
+}
+
+configurations.consumable("gammaLibraryElements") {
+    attributes(semantifyrArtifact("gamma-library"))
+    outgoing.artifact(layout.projectDirectory.dir("../models/libraries/default"))
+}
+
+configurations.consumable("gammaExamplesElements") {
+    attributes(semantifyrArtifact("gamma-examples"))
+    outgoing.artifact(examplesSourceDirectory)
 }
 
 configurations.consumable("compiledExamplesElements") {

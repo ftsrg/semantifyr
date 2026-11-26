@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
+import hu.bme.mit.semantifyr.gradle.artifactsOf
 import hu.bme.mit.semantifyr.gradle.oxstsFileExtension
-import hu.bme.mit.semantifyr.gradle.semantifyrArtifact
 
 plugins {
     id("hu.bme.mit.semantifyr.suites")
@@ -24,7 +24,7 @@ dependencies {
     implementation(project(":logging"))
     implementation(libs.kotlinx.serialization.json)
 
-    testFixturesApi(testFixtures(project(":oxsts.lang")))
+    testImplementation(testFixtures(project(":oxsts.lang")))
 }
 
 listOf(
@@ -32,9 +32,7 @@ listOf(
     "integrationTest",
 ).forEach {
     tasks.named(it) {
-        inputs.dir(rootProject.layout.projectDirectory.dir("oxsts-test-models"))
-            .withPropertyName("oxstsTestModels")
-            .withPathSensitivity(PathSensitivity.RELATIVE)
+        inputs.dir(isolated.rootProject.projectDirectory.dir("oxsts-test-models")).withPathSensitivity(PathSensitivity.RELATIVE)
     }
 }
 
@@ -42,28 +40,22 @@ testing {
     suites {
         named<JvmTestSuite>("integrationTest") {
             dependencies {
+                implementation(testFixtures(project(":oxsts.lang")))
                 implementation(libs.kotlinx.coroutines.core)
             }
         }
     }
 }
 
-val benchmarkSysmlCorpus = configurations.dependencyScope("benchmarkSysmlCorpus")
-val benchmarkSysmlCorpusFiles = configurations.resolvable("benchmarkSysmlCorpusFiles") {
-    extendsFrom(benchmarkSysmlCorpus.get())
-    attributes(semantifyrArtifact("compiled-corpus"))
-}
-
-dependencies {
-    benchmarkSysmlCorpus(project(":sysml-wrapper"))
-}
+val sysmlCompiledCorpus = artifactsOf("compiled-corpus", ":sysml-wrapper")
+val sysmlLibrary = artifactsOf("sysml-library", ":sysml-frontend")
 
 val syncBenchmarkModels = tasks.register<Sync>("syncBenchmarkModels") {
-    from(benchmarkSysmlCorpusFiles) {
+    from(sysmlCompiledCorpus) {
         include("crossroads.$oxstsFileExtension")
         include("compressedspacecraft.$oxstsFileExtension")
     }
-    from(rootProject.layout.projectDirectory.dir("subprojects/frontends/sysml/models/libraries/default")) {
+    from(sysmlLibrary) {
         into("library")
     }
     into(layout.buildDirectory.dir("benchmark-models"))
