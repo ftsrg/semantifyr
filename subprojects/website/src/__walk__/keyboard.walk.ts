@@ -218,7 +218,7 @@ function header(page: Page) {
     partsOfLearn: navigation.getByRole('button', { name: 'Parts of Learn' }),
     learnMenu: page.locator('.site-menu'),
     search: searchOf(page),
-    source: navigation.getByRole('link', { name: 'Source', exact: true }),
+    source: navigation.getByRole('link', { name: 'GitHub', exact: true }),
     live: navigation.getByRole('link', { name: 'Open Live', exact: true }),
     theme: (label: string): Locator => {
       return navigation.getByRole('group', { name: 'Theme' }).getByRole('button', { name: label, exact: true });

@@ -7,7 +7,6 @@
 import com.github.gradle.node.npm.task.NpmTask
 import groovy.json.JsonSlurper
 import hu.bme.mit.semantifyr.gradle.artifactsOf
-import hu.bme.mit.semantifyr.gradle.commitHash
 import hu.bme.mit.semantifyr.gradle.readsServedExamples
 import hu.bme.mit.semantifyr.gradle.readsWorkspace
 import hu.bme.mit.semantifyr.gradle.registerBrandingAssets
@@ -170,7 +169,6 @@ fun NpmTask.configureSharedInputs() {
     inputs.file(layout.projectDirectory.file("eslint.config.mjs")).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.file(layout.projectDirectory.file("vitest.config.mts")).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.file(layout.projectDirectory.file("package.json")).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.file(isolated.rootProject.projectDirectory.file("gradle.properties")).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.file(isolated.rootProject.projectDirectory.file(".nvmrc")).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.file(isolated.rootProject.projectDirectory.file("deploy/live/env.example")).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(vscodeManifest).withPathSensitivity(PathSensitivity.RELATIVE)
@@ -186,9 +184,6 @@ fun NpmTask.configureSharedInputs() {
 val npmAssemble = tasks.register<NpmTask>("npmAssemble") {
     configureSharedInputs()
     inputs.property("liveBackendUrl", providers.environmentVariable("SEMANTIFYR_LIVE_URL").orElse(""))
-    environment.put("SEMANTIFYR_SITE_COMMIT", commitHash())
-    // the deploying workflow names its tag when it is a release
-    inputs.property("siteTag", providers.environmentVariable("SEMANTIFYR_SITE_TAG").orElse(""))
     inputs.files(cloneCliReference).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(cloneGeneratedReference).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(clonePhaseWalk).withPathSensitivity(PathSensitivity.RELATIVE)

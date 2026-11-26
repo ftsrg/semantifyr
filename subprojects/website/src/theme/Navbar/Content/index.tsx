@@ -31,7 +31,6 @@ function Brand(): React.JSX.Element {
   return (
     <Link to="/" className="site-header-brand">
       <ThemedImage className="site-header-logo" alt="Semantifyr" sources={{ light, dark }} />
-      <span className="site-header-product">Docs</span>
     </Link>
   );
 }
@@ -246,7 +245,7 @@ export default function NavbarContent(): React.JSX.Element {
       <div className="site-header-group site-header-end">
         <a href={SOURCE_CODE} className="site-button">
           <GithubMark />
-          Source
+          GitHub
         </a>
         <a href={liveUrl} className="site-button">
           <Icon name="external" />

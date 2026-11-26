@@ -1,11 +1,11 @@
 ---
-title: What Live's Server Keeps and Logs
+title: Privacy
 slug: /learn/live/privacy
 sidebar_position: 1
 description: What Semantifyr Live's server keeps of your model, what it logs and who can see it.
 ---
 
-# What Live's Server Keeps and Logs
+# Privacy
 
 [Semantifyr Live](https://live.semantifyr.org) verifies your model on its server. This page says what the server keeps of it, what its log holds and who can see what. It describes the server's code and its deployment as the repository holds them.
 
