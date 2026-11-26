@@ -24,8 +24,10 @@ function pageExists(page: string): boolean {
 }
 
 describe('the pages the examples name', () => {
-  it.each(servedExamples.map((example) => {
-    return [`/${example.language}/${example.id}`, example.page] as const;
+  it.each(servedExamples.filter((example) => {
+    return example.page !== undefined;
+  }).map((example) => {
+    return [`/${example.language}/${example.id}`, example.page!] as const;
   }))('the page explaining %s, %s, exists', (_, page) => {
     expect(pageExists(page)).toBe(true);
   });

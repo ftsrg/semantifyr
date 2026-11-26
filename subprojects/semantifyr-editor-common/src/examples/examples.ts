@@ -24,7 +24,7 @@ export interface ServedExample {
   file: string;
   label: string;
   reason: string;
-  page: string;
+  page?: string;
   cases: string[];
   // a model its page runs, which live's menu does not list
   hidden?: boolean;
