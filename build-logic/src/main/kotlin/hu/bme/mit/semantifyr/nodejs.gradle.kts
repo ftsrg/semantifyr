@@ -7,16 +7,17 @@
 package hu.bme.mit.semantifyr
 
 import com.github.gradle.node.npm.proxy.ProxySettings
-import hu.bme.mit.semantifyr.gradle.registerNpmInstallService
+import hu.bme.mit.semantifyr.gradle.artifactsOf
 
 plugins {
     base
     id("com.github.node-gradle.node")
+    id("hu.bme.mit.semantifyr.formatting")
 }
 
 node {
     // .nvmrc is the one Node.js version: the workflows' set-up and the website read it too
-    version = providers.fileContents(layout.settingsDirectory.file(".nvmrc")).asText.get().trim()
+    version = providers.fileContents(isolated.rootProject.projectDirectory.file(".nvmrc")).asText.get().trim()
     download = true
     // the Node.js repository is declared in settings, which forbids project repositories
     distBaseUrl = null
@@ -24,9 +25,10 @@ node {
     nodeProxySettings = ProxySettings.OFF
 }
 
-val npmInstallServiceProvider = gradle.sharedServices.registerNpmInstallService()
-
-// the npm modules share one workspace root, and parallel installs into it corrupt node_modules
-tasks.npmInstall {
-    usesService(npmInstallServiceProvider)
+// the root installs the one npm workspace, which the members' tasks read through readsWorkspace()
+if (isolated != isolated.rootProject) {
+    tasks.npmInstall {
+        enabled = false
+    }
+    artifactsOf("npm-workspace", ":")
 }

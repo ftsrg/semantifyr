@@ -19,11 +19,3 @@ fun BuildServiceRegistry.registerBackendRunService(limit: Provider<Int>): Provid
         maxParallelUsages = limit
     }
 }
-
-abstract class NpmInstallService : BuildService<BuildServiceParameters.None>
-
-fun BuildServiceRegistry.registerNpmInstallService(): Provider<NpmInstallService> {
-    return registerIfAbsent("npmInstallService", NpmInstallService::class.java) {
-        maxParallelUsages = 1
-    }
-}

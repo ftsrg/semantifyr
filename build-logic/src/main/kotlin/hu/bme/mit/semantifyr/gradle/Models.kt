@@ -25,7 +25,7 @@ import org.gradle.api.tasks.testing.Test
 // the grammar workflow lists the language's file extensions, the one Semantifyr writes first
 val Project.oxstsFileExtension: String
     get() {
-        val workflow = providers.fileContents(rootProject.layout.projectDirectory.file("subprojects/oxsts.lang/src/main/java/hu/bme/mit/semantifyr/oxsts/lang/GenerateOxsts.mwe2")).asText.get()
+        val workflow = providers.fileContents(isolated.rootProject.projectDirectory.file("subprojects/oxsts.lang/src/main/java/hu/bme/mit/semantifyr/oxsts/lang/GenerateOxsts.mwe2")).asText.get()
         val extensions = Regex("""fileExtensions = "([^"]+)"""").find(workflow) ?: error("The grammar workflow lists no file extension")
         return extensions.groupValues[1].substringBefore(',')
     }
@@ -91,7 +91,7 @@ class ServedExample(
 }
 
 private val Project.servedExamplesFile: RegularFile
-    get() = rootProject.layout.projectDirectory.file("subprojects/semantifyr-editor-common/src/examples/examples.json")
+    get() = isolated.rootProject.projectDirectory.file("subprojects/semantifyr-editor-common/src/examples/examples.json")
 
 private fun Project.servedExamples(): List<ServedExample> {
     val registry = providers.fileContents(servedExamplesFile).asText.get()
@@ -113,7 +113,7 @@ fun Project.servedExamples(language: String): List<ServedExample> {
 
 // the served models and the manifests beside them, which hold their cases' expected verdicts
 fun Project.servedExampleSources(): List<RegularFile> {
-    val root = rootProject.layout.projectDirectory
+    val root = isolated.rootProject.projectDirectory
     return servedExamples().flatMap {
         listOf(
             it.file,
@@ -128,7 +128,8 @@ fun Project.servedExampleSources(): List<RegularFile> {
 fun Test.readsServedExamples() {
     val module = project.projectDir.toPath()
     inputs.file(project.servedExamplesFile).withPathSensitivity(PathSensitivity.RELATIVE)
-    systemProperty("semantifyr.repository", module.relativize(project.rootDir.toPath()).joinToString("/"))
+    inputs.files(project.servedExampleSources()).withPathSensitivity(PathSensitivity.RELATIVE)
+    systemProperty("semantifyr.repository", module.relativize(project.isolated.rootProject.projectDirectory.asFile.toPath()).joinToString("/"))
     systemProperty("semantifyr.examples", module.relativize(project.servedExamplesFile.asFile.toPath()).joinToString("/"))
 }
 

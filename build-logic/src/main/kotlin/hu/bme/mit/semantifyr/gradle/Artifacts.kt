@@ -13,6 +13,7 @@ import org.gradle.api.attributes.AttributeContainer
 import org.gradle.api.attributes.Category
 import org.gradle.api.attributes.LibraryElements
 import org.gradle.api.attributes.Usage
+import org.gradle.api.file.FileCollection
 import org.gradle.kotlin.dsl.named
 
 private val SEMANTIFYR_ARTIFACT_ATTRIBUTE = Attribute.of("hu.bme.mit.semantifyr.artifact", String::class.java)
@@ -23,6 +24,32 @@ fun Project.semantifyrArtifact(kind: String): Action<AttributeContainer> {
         attribute(Category.CATEGORY_ATTRIBUTE, objects.named(Category.LIBRARY))
         attribute(SEMANTIFYR_ARTIFACT_ATTRIBUTE, kind)
     }
+}
+
+// one pair of configurations per kind and projects, however many tasks read them
+fun Project.artifactsOf(kind: String, vararg projectPaths: String): FileCollection {
+    val words = (listOf(kind) + projectPaths).flatMap {
+        it.split(Regex("[^A-Za-z0-9]"))
+    }.filter {
+        it.isNotEmpty()
+    }
+    val name = words.first() + words.drop(1).joinToString("") { word ->
+        word.replaceFirstChar {
+            it.uppercase()
+        }
+    }
+    val filesName = "${name}Files"
+    if (filesName !in configurations.names) {
+        val dependencyScope = configurations.dependencyScope(name)
+        projectPaths.forEach {
+            dependencies.add(name, dependencies.project(it))
+        }
+        configurations.resolvable(filesName) {
+            extendsFrom(dependencyScope.get())
+            attributes(semantifyrArtifact(kind))
+        }
+    }
+    return files(configurations.named(filesName))
 }
 
 fun Project.javaRuntimeLibrary(): Action<AttributeContainer> {

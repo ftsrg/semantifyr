@@ -6,17 +6,13 @@
 
 package hu.bme.mit.semantifyr
 
-import hu.bme.mit.semantifyr.gradle.semantifyrArtifact
+import hu.bme.mit.semantifyr.gradle.artifactsOf
 
 plugins {
     id("hu.bme.mit.semantifyr.jvm")
 }
 
-val ideGenerated = configurations.dependencyScope("ideGenerated")
-val ideGeneratedFiles = configurations.resolvable("ideGeneratedFiles") {
-    extendsFrom(ideGenerated.get())
-    attributes(semantifyrArtifact("xtext-ide-sources"))
-}
+val ideGeneratedFiles = artifactsOf("xtext-ide-sources", path.removeSuffix(".ide"))
 
 val xtextGeneratedDirectory = layout.projectDirectory.dir("src/main/xtext-gen")
 

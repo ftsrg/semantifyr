@@ -15,7 +15,7 @@ import org.gradle.api.tasks.TaskProvider
 import org.gradle.kotlin.dsl.assign
 
 fun Project.registerBrandingAssets(outputDirectory: Directory): TaskProvider<Sync> {
-    val brandingDirectory = rootProject.layout.projectDirectory.dir("branding")
+    val brandingDirectory = isolated.rootProject.projectDirectory.dir("branding")
     val renderBrandingPictures = registerRenderPictures(
         "renderBrandingPictures",
         layout.buildDirectory.dir("branding").get(),
@@ -46,7 +46,7 @@ fun Project.registerRenderPictures(
     outputDirectory: Directory,
     specifications: List<String>,
 ): TaskProvider<NodeTask> {
-    val brandingDirectory = rootProject.layout.projectDirectory.dir("branding")
+    val brandingDirectory = isolated.rootProject.projectDirectory.dir("branding")
     val renderScript = brandingDirectory.file("render.mjs")
 
     return tasks.register(taskName, NodeTask::class.java) {
@@ -56,8 +56,7 @@ fun Project.registerRenderPictures(
             },
         ).withPathSensitivity(PathSensitivity.RELATIVE)
         inputs.file(renderScript).withPathSensitivity(PathSensitivity.NONE)
-        inputs.file(rootProject.layout.projectDirectory.file("package-lock.json")).withPathSensitivity(PathSensitivity.NONE)
-        dependsOn(tasks.named("npmInstall"))
+        readsWorkspace()
         outputs.dir(outputDirectory)
         outputs.cacheIf {
             true
