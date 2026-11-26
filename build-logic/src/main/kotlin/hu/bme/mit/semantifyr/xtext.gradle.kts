@@ -26,6 +26,8 @@ dependencies {
     mwe2(libs.mwe2.launch)
     mwe2(libs.xtext.generator)
     mwe2(libs.xtext.generator.antlr)
+    // the TextMate fragment's JSON writer, which the generator imports optionally and does not depend on
+    mwe2(libs.gson)
 
     api(libs.slf4j.api)
     api(platform(libs.xtext.bom))
@@ -86,11 +88,9 @@ configurations.consumable("ideGeneratedElements") {
     }
 }
 
-tasks {
-    clean {
-        delete(xtextGeneratedDirectory)
-        delete(testFixturesXtextGeneratedDirectory)
-    }
+tasks.clean {
+    delete(xtextGeneratedDirectory)
+    delete(testFixturesXtextGeneratedDirectory)
 }
 
 interface XtextPluginConfiguration {

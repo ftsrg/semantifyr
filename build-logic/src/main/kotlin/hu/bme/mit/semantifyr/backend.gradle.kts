@@ -10,11 +10,6 @@ plugins {
     id("hu.bme.mit.semantifyr.suites")
 }
 
-val cloneOxstsTestModels = tasks.register<Sync>("cloneOxstsTestModels") {
-    from(isolated.rootProject.projectDirectory.dir("oxsts-test-models"))
-    into(layout.buildDirectory.dir("test-models"))
-}
-
 tasks.withType<Test>().configureEach {
-    inputs.files(cloneOxstsTestModels)
+    inputs.dir(isolated.rootProject.projectDirectory.dir("oxsts-test-models")).withPathSensitivity(PathSensitivity.RELATIVE)
 }

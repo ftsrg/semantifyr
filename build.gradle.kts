@@ -60,12 +60,14 @@ sonar {
     }
 }
 
-val workspaceManifests = listOf(
+val workspaceMembers = listOf(
     "subprojects/semantifyr-editor-common",
     "subprojects/semantifyr-live/frontend",
     "subprojects/semantifyr-vscode",
     "subprojects/website",
-).map {
+)
+
+val workspaceManifests = workspaceMembers.map {
     layout.projectDirectory.file("$it/package.json")
 }
 
@@ -81,6 +83,18 @@ tasks.npmInstall {
     nodeModulesOutputFilter {
         exclude(links)
     }
+    // npm installs a member's own versions beside it, where the members' tools also keep their caches
+    outputs.files(
+        workspaceMembers.map {
+            fileTree("$it/node_modules") {
+                exclude(
+                    ".cache",
+                    ".vite",
+                    ".vite-temp",
+                )
+            }
+        },
+    )
 }
 
 // npm's record of the installed tree stands for node_modules, which links back into the members
@@ -103,6 +117,9 @@ spotless {
     kotlinGradle {
         target(
             fileTree(".") {
+                include("*.gradle.kts")
+            },
+            fileTree("build-logic") {
                 include("*.gradle.kts")
             },
             fileTree("build-logic/src") {

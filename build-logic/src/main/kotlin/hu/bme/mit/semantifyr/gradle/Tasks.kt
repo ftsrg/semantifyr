@@ -58,7 +58,6 @@ fun Project.registerCliReference(references: Map<String, List<String>>) {
             }
             classpath = mainSourceSet.get().runtimeClasspath
             mainClass = application.mainClass
-            jvmArgs(application.applicationDefaultJvmArgs)
             args(arguments)
             writesStandardOutputTo(outputFile)
             outputs.cacheIf {

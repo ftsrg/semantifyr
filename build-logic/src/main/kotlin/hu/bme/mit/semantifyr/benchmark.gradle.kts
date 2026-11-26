@@ -23,9 +23,9 @@ java {
 }
 
 dependencies {
-    "benchmarkApi"(project())
-    "benchmarkApi"(project(":benchmark"))
-    "benchmarkRuntimeOnly"(libs.slf4j.log4j)
+    add(benchmark.apiConfigurationName, project())
+    add(benchmark.apiConfigurationName, project(":benchmark"))
+    add(benchmark.runtimeOnlyConfigurationName, libs.slf4j.log4j)
 }
 
 tasks.named("check") {

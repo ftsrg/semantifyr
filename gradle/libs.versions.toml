@@ -37,6 +37,7 @@ mathsat5 = "5.6.11-sosy1"
 cvc5 = "1.2.1-g8594a8e4dc"
 bitwuzla = "0.7.0-13.1-g595512ae"
 opensmt = "2.9.0-gef441e1c"
+gson = "2.13.2"
 
 [libraries]
 ecore = { group = "org.eclipse.emf", name = "org.eclipse.emf.ecore", version.ref = "ecore" }
@@ -60,6 +61,7 @@ xtext-ide = { group = "org.eclipse.xtext", name = "org.eclipse.xtext.ide", versi
 xtext-generator-antlr = { group = "org.eclipse.xtext", name = "xtext-antlr-generator", version.ref = "xtextAntlrGenerator" }
 xtext-generator = { group = "org.eclipse.xtext", name = "org.eclipse.xtext.xtext.generator", version.ref = "xtext" }
 xtext-testing = { group = "org.eclipse.xtext", name = "org.eclipse.xtext.testing", version.ref = "xtext" }
+gson = { group = "com.google.code.gson", name = "gson", version.ref = "gson" }
 clikt = { group = "com.github.ajalt.clikt", name = "clikt", version.ref = "cliKt" }
 kotlinx-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "kotlinxCoroutines" }
 kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "kotlinxCoroutines" }

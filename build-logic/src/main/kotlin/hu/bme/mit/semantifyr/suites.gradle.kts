@@ -31,7 +31,9 @@ testing {
                 dependencies {
                     implementation(testFixtures(project()))
                     implementation(testFixtures(project(":verifier")))
-                    implementation(project(":portfolios"))
+                    if (isolated.path != ":portfolios") {
+                        implementation(project(":portfolios"))
+                    }
                 }
 
                 targets.all {

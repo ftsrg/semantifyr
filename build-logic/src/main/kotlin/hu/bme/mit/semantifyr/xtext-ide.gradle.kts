@@ -23,21 +23,19 @@ sourceSets {
     }
 }
 
-tasks {
-    val cloneIdeGenerated = register<Sync>("cloneIdeGenerated") {
-        from(ideGeneratedFiles)
-        into(xtextGeneratedDirectory)
-    }
+val cloneIdeGenerated = tasks.register<Sync>("cloneIdeGenerated") {
+    from(ideGeneratedFiles)
+    into(xtextGeneratedDirectory)
+}
 
-    compileJava {
-        inputs.files(cloneIdeGenerated)
-    }
+tasks.compileJava {
+    inputs.files(cloneIdeGenerated)
+}
 
-    processResources {
-        inputs.files(cloneIdeGenerated)
-    }
+tasks.processResources {
+    inputs.files(cloneIdeGenerated)
+}
 
-    clean {
-        delete(xtextGeneratedDirectory)
-    }
+tasks.clean {
+    delete(xtextGeneratedDirectory)
 }
