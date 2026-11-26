@@ -31,6 +31,12 @@ sonarqube = "7.5.0.8588"
 ktor = "3.6.1"
 micrometer = "1.17.2"
 dokka = "2.2.0"
+theta = "8.6.0"
+z3 = "4.14.0"
+mathsat5 = "5.6.11-sosy1"
+cvc5 = "1.2.1-g8594a8e4dc"
+bitwuzla = "0.7.0-13.1-g595512ae"
+opensmt = "2.9.0-gef441e1c"
 
 [libraries]
 ecore = { group = "org.eclipse.emf", name = "org.eclipse.emf.ecore", version.ref = "ecore" }
@@ -54,7 +60,6 @@ xtext-ide = { group = "org.eclipse.xtext", name = "org.eclipse.xtext.ide", versi
 xtext-generator-antlr = { group = "org.eclipse.xtext", name = "xtext-antlr-generator", version.ref = "xtextAntlrGenerator" }
 xtext-generator = { group = "org.eclipse.xtext", name = "org.eclipse.xtext.xtext.generator", version.ref = "xtext" }
 xtext-testing = { group = "org.eclipse.xtext", name = "org.eclipse.xtext.testing", version.ref = "xtext" }
-xtext-xbase = { group = "org.eclipse.xtext", name = "org.eclipse.xtext.xbase", version.ref = "xtext" }
 clikt = { group = "com.github.ajalt.clikt", name = "clikt", version.ref = "cliKt" }
 kotlinx-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "kotlinxCoroutines" }
 kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "kotlinxCoroutines" }
@@ -84,6 +89,14 @@ node-plugin = { group = "com.github.node-gradle", name = "gradle-node-plugin", v
 spotless-plugin = { group = "com.diffplug.spotless", name = "spotless-plugin-gradle", version.ref = "spotless" }
 sonarqube-plugin = { group = "org.sonarqube", name = "org.sonarqube.gradle.plugin", version.ref = "sonarqube" }
 dokka-plugin = { group = "org.jetbrains.dokka", name = "dokka-gradle-plugin", version.ref = "dokka" }
+theta-xsts-cli = { group = "hu.bme.mit.ftsrg.theta", name = "theta-xsts-cli", version.ref = "theta" }
+theta-libz3legacy = { group = "hu.bme.mit.ftsrg.theta.lib", name = "libz3legacy", version.ref = "theta" }
+theta-libz3javalegacy = { group = "hu.bme.mit.ftsrg.theta.lib", name = "libz3javalegacy", version.ref = "theta" }
+javasmt-z3 = { group = "org.sosy-lab", name = "javasmt-solver-z3", version.ref = "z3" }
+javasmt-mathsat5 = { group = "org.sosy-lab", name = "javasmt-solver-mathsat5", version.ref = "mathsat5" }
+javasmt-cvc5 = { group = "org.sosy-lab", name = "javasmt-solver-cvc5", version.ref = "cvc5" }
+javasmt-bitwuzla = { group = "org.sosy-lab", name = "javasmt-solver-bitwuzla", version.ref = "bitwuzla" }
+javasmt-opensmt = { group = "org.sosy-lab", name = "javasmt-solver-opensmt", version.ref = "opensmt" }
 
 [bundles]
 junit-fixtures = ["junit-api", "junit-params"]
