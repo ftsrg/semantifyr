@@ -129,8 +129,8 @@
       "language": "sysml",
       "file": "subprojects/frontends/sysml/models/tutorial/room.sysml",
       "label": "Room",
-      "reason": "A switch and a lamp, the model Verifying SysML v2 Models walks through and runs from its page.",
-      "page": "learn/frontends/sysml-v2/verifying",
+      "reason": "A switch and a lamp, the model the SysML v2 lesson builds and runs from its page.",
+      "page": "learn/frontends/sysml-v2/lesson",
       "cases": [
         "LampLitReachable",
         "LampNeverLitViolated",

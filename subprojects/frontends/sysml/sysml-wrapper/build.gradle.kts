@@ -371,6 +371,8 @@ tasks.named("integrationTest") {
         layout.projectDirectory.file("../models/etc/crossroads-green.trace.sysml"),
         layout.projectDirectory.file("../models/etc/crossroads-green.report.json"),
         layout.projectDirectory.file("../models/etc/crossroads-green.witness.semantifyr"),
+        layout.projectDirectory.file("../models/etc/room-lamp-lit.trace.sysml"),
+        layout.projectDirectory.file("../models/tutorial/room.sysml"),
     ).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.dir(layout.projectDirectory.dir("../models/libraries/default")).withPathSensitivity(PathSensitivity.RELATIVE)
 }

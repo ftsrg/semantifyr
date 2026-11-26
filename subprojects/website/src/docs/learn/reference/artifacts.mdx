@@ -27,7 +27,7 @@ A case directory is named after the model file without its extension and the qua
 - `witness.semantifyr`, for a verdict with a trace: the [witness](../language/specification/library-and-output/inlined-models.md#witnesses), derived from the report. `semantifyr-sysml` writes `trace.sysml` beside it ([SysML v2 traces](../frontends/sysml-v2/traces.mdx)), `semantifyr-gamma` `trace.get` ([Gamma traces](../frontends/gamma/traces.mdx)).
 - `validation/`: the case directory of the last [witness validation](../backends/portfolios-and-verdicts.mdx#validation), with the same files, its `report.json` the validation's own.
 
-`semantifyr-sysml` writes the translation of the model into `compiled/default/<model>.semantifyr` at the top of the artifact directory, with its [name map](../frontends/sysml-v2/traces.mdx#the-name-map), `<model>.names.json`, beside it, and the case directories next to `compiled/`. `semantifyr-gamma` gives every case a directory named after its Gamma qualified name, holding the compiled model, `model.semantifyr`, one package of the Semantifyr Language per imported Gamma package under `imports/`, and the case directory under `verification/`.
+`semantifyr-sysml` writes the translation of the model into `compiled/default/<model>.semantifyr` at the top of the artifact directory, and the case directories next to `compiled/`. `semantifyr-gamma` gives every case a directory named after its Gamma qualified name, holding the compiled model, `model.semantifyr`, one package of the Semantifyr Language per imported Gamma package under `imports/`, and the case directory under `verification/`.
 
 ## The report
 

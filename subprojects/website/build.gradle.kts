@@ -27,7 +27,7 @@ val liveWebDistribution = artifactsOf("web-distribution", ":semantifyr-live-fron
 val liveUiMock = artifactsOf("live-ui-mock", ":semantifyr-live-frontend")
 val vscodeManifest = artifactsOf("vscode-manifest", ":semantifyr-vscode")
 val cliReference = artifactsOf("cli-reference", ":semantifyr-cli", ":sysml-cli", ":gamma-cli")
-val generatedReference = artifactsOf("generated-reference", ":cli-common", ":verifier", ":sysml-frontend")
+val generatedReference = artifactsOf("generated-reference", ":cli-common", ":verifier")
 val generatedWitness = artifactsOf("generated-witness", ":verifier")
 val phaseWalk = artifactsOf("phase-walk", ":semantifyr-cli")
 

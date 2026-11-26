@@ -9,7 +9,7 @@ description: Verify the cases of a Semantifyr or a Gamma model in VS Code.
 
 The VS Code lets you edit and verify Semantifyr and Gamma models in your workspace, using the backends installed on your machine. To install it, see [Install](install.md#the-vs-code-extension).
 
-For SysML v2, install the [SysIDE fork's extension](https://github.com/arminzavada/sysml-2ls/releases/latest) beside it. It compiles a SysML v2 model into a Semantifyr model.
+For SysML v2, install the [sysml-2ls extension](https://github.com/arminzavada/sysml-2ls/releases/latest) beside it. It compiles a SysML v2 model into a Semantifyr model.
 
 Usage:
 

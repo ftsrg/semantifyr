@@ -13,7 +13,7 @@ import NodeVersion from '@site/src/components/NodeVersion';
 
 Requirements: VS Code 1.109 or newer, Java 25, and at least one backend: [Theta](../backends/theta.mdx), [nuXmv](../backends/nuxmv.mdx), [Spin](../backends/spin.mdx), or [Uppaal](../backends/uppaal.mdx).
 
-Install [Semantifyr](https://marketplace.visualstudio.com/items?itemName=ftsrg.semantifyr) from the Visual Studio Marketplace or [Open VSX](https://open-vsx.org/extension/ftsrg/semantifyr). For SysML v2, also install the [SysIDE fork's extension](https://github.com/arminzavada/sysml-2ls/releases/latest).
+Install [Semantifyr](https://marketplace.visualstudio.com/items?itemName=ftsrg.semantifyr) from the Visual Studio Marketplace or [Open VSX](https://open-vsx.org/extension/ftsrg/semantifyr). For SysML v2, also install the [sysml-2ls extension](https://github.com/arminzavada/sysml-2ls/releases/latest).
 
 ## The Command Line
 
