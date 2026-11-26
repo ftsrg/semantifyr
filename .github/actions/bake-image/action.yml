@@ -1,0 +1,68 @@
+# SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+#
+# SPDX-License-Identifier: EPL-2.0
+
+name: bake-image
+description: Builds and loads an image from the context the build job packed.
+inputs:
+  name:
+    description: The image, live or vscode-server.
+    required: true
+  save:
+    description: Whether to upload the image for the push job.
+    required: true
+outputs:
+  tag:
+    description: The snapshot tag.
+    value: ${{ steps.version.outputs.snapshot }}
+  reference:
+    description: The image with its snapshot tag.
+    value: docker.io/ftsrgbot/semantifyr-${{ inputs.name }}:${{ steps.version.outputs.snapshot }}
+runs:
+  using: composite
+  steps:
+    - name: Set up Buildx
+      uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+    - name: Download the image context
+      uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+      with:
+        name: ${{ inputs.name }}-image-context
+        path: ${{ runner.temp }}
+    - name: Unpack the image context
+      shell: sh
+      env:
+        NAME: ${{ inputs.name }}
+      run: mkdir "$RUNNER_TEMP/context" && tar -xzf "$RUNNER_TEMP/$NAME-image-context.tar.gz" -C "$RUNNER_TEMP/context"
+    - name: Read the version
+      id: version
+      shell: sh
+      run: .github/scripts/read-version.sh "$GITHUB_SHA"
+    - name: Build
+      uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+      with:
+        context: ${{ runner.temp }}/context
+        load: true
+        provenance: false
+        tags: |
+          docker.io/ftsrgbot/semantifyr-${{ inputs.name }}:${{ steps.version.outputs.snapshot }}
+          docker.io/ftsrgbot/semantifyr-${{ inputs.name }}:snapshot
+        labels: |
+          org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+          org.opencontainers.image.revision=${{ github.sha }}
+          org.opencontainers.image.version=${{ steps.version.outputs.snapshot }}
+        cache-from: type=gha,scope=${{ inputs.name }}-image
+        cache-to: type=gha,mode=max,scope=${{ inputs.name }}-image
+    - name: Save the image
+      if: ${{ inputs.save == 'true' }}
+      shell: sh
+      env:
+        NAME: ${{ inputs.name }}
+      run: docker save "docker.io/ftsrgbot/semantifyr-$NAME" | gzip > "$RUNNER_TEMP/$NAME-image.tar.gz"
+    - name: Upload the image
+      if: ${{ inputs.save == 'true' }}
+      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+      with:
+        name: ${{ inputs.name }}-image
+        path: ${{ runner.temp }}/${{ inputs.name }}-image.tar.gz
+        compression-level: 0
+        retention-days: 1

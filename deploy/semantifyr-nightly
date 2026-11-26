@@ -35,7 +35,7 @@ case "$action" in
         git clean -ffdxq
         export PATH="$HOME/tools/bin:$PATH"
         export THETA_JAVA_OPTS="-Xss512M -Xms256M -Xmx1500M"
-        .github/scripts/check-engines.sh spin nuxmv uppaal
+        .github/scripts/check-backends.sh spin nuxmv uppaal
         # half the cores at low priority keeps headroom for live; a daemon idling until the next night would hold memory
         # sshd keeps a dropped session's command running, so the run ends itself before the job's 240 minutes; --foreground keeps a manual terminal run from stopping on SIGTTIN
         status=0

@@ -8,15 +8,15 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
-    rebase-strategy: "disabled"
     groups:
       minor-and-patch:
         update-types: [ "minor", "patch" ]
   - package-ecosystem: "github-actions"
-    directory: "/"
+    directories:
+      - "/"
+      - "/.github/actions/*"
     schedule:
       interval: "weekly"
-    rebase-strategy: "disabled"
     groups:
       minor-and-patch:
         update-types: [ "minor", "patch" ]
@@ -24,7 +24,6 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
-    rebase-strategy: "disabled"
     groups:
       minor-and-patch:
         update-types: [ "minor", "patch" ]
@@ -34,11 +33,9 @@ updates:
       - "/subprojects/semantifyr-vscode-server"
     schedule:
       interval: "weekly"
-    rebase-strategy: "disabled"
   - package-ecosystem: "docker-compose"
     directories:
       - "/deploy/edge"
       - "/deploy/observability"
     schedule:
       interval: "weekly"
-    rebase-strategy: "disabled"

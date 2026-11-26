@@ -1,0 +1,40 @@
+# SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+#
+# SPDX-License-Identifier: EPL-2.0
+
+name: configure-ssh
+description: Configures SSH to fured as the host fured.
+inputs:
+  key:
+    description: The private key.
+    required: true
+  known-hosts:
+    description: The known hosts.
+    required: true
+  host:
+    description: The address.
+    required: true
+  port:
+    description: The port.
+    required: true
+  user:
+    description: The user.
+    required: true
+runs:
+  using: composite
+  steps:
+    - name: Configure SSH
+      shell: sh
+      env:
+        SSH_KEY: ${{ inputs.key }}
+        SSH_KNOWN_HOSTS: ${{ inputs.known-hosts }}
+        SSH_HOST: ${{ inputs.host }}
+        SSH_PORT: ${{ inputs.port }}
+        SSH_USER: ${{ inputs.user }}
+      run: |
+        install -d -m 700 ~/.ssh
+        printf '%s\n' "$SSH_KEY" > ~/.ssh/fured
+        chmod 600 ~/.ssh/fured
+        printf '%s\n' "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+        printf 'Host fured\n  HostName %s\n  Port %s\n  User %s\n  IdentityFile ~/.ssh/fured\n  ServerAliveInterval 60\n' \
+          "$SSH_HOST" "$SSH_PORT" "$SSH_USER" > ~/.ssh/config

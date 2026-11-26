@@ -13,7 +13,7 @@ permissions: {}
 jobs:
   deploy:
     name: Deploy Production
-    uses: ./.github/workflows/deploy-live.yml
+    uses: ./.github/workflows/deploy-live-instance.yml
     permissions:
       contents: read
     with:

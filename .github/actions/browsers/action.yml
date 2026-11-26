@@ -23,7 +23,7 @@ runs:
         mkdir -p "$HOME/.cache/apt-archives/partial"
         printf 'Dir::Cache::Archives "%s";\nAPT::Keep-Downloaded-Packages "true";\n' "$HOME/.cache/apt-archives" | sudo tee /etc/apt/apt.conf.d/90-cached-archives > /dev/null
     - name: Restore the browser cache
-      uses: actions/cache@v6
+      uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
       with:
         path: |
           ~/.cache/ms-playwright
@@ -35,6 +35,5 @@ runs:
         BROWSERS: ${{ inputs.browsers }}
         VERSION: ${{ steps.cache-key.outputs.version }}
       run: |
-        npm install --prefix "$RUNNER_TEMP/playwright" --no-save --ignore-scripts "playwright@$VERSION"
-        "$RUNNER_TEMP/playwright/node_modules/.bin/playwright" install --with-deps $BROWSERS
+        npx --yes "playwright@$VERSION" install --with-deps $BROWSERS
         sudo chmod -R a+rX "$HOME/.cache/apt-archives"

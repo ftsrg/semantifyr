@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: EPL-2.0
 
 name: install-backends
-description: Installs Spin and nuXmv and tests them.
+description: Installs Spin and nuXmv.
 runs:
   using: composite
   steps:
@@ -20,4 +20,4 @@ runs:
         echo "$HOME/tools/nuXmv-2.1.0-linux64/bin" >> "$GITHUB_PATH"
     - name: Check the backends and Docker
       shell: sh
-      run: .github/scripts/check-engines.sh spin nuxmv docker
+      run: .github/scripts/check-backends.sh spin nuxmv docker
