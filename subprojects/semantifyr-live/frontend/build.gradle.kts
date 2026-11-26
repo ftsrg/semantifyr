@@ -275,6 +275,11 @@ tasks.register("pack") {
     dependsOn(npmAssemble, cloneSysmlWorker)
 }
 
+tasks.register("continuousIntegration") {
+    group = LifecycleBasePlugin.VERIFICATION_GROUP
+    dependsOn(tasks.named("integrationTest"))
+}
+
 tasks.named("check") {
     dependsOn(npmCheck)
 }

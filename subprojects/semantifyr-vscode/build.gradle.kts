@@ -110,6 +110,11 @@ tasks.register("pack") {
     dependsOn(bundleExtension)
 }
 
+tasks.register("continuousIntegration") {
+    group = LifecycleBasePlugin.VERIFICATION_GROUP
+    dependsOn(tasks.named("endToEndTest"))
+}
+
 tasks.named("check") {
     dependsOn(npmCheck)
 }
