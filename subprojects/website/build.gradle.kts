@@ -7,7 +7,6 @@
 import com.github.gradle.node.npm.task.NpmTask
 import groovy.json.JsonSlurper
 import hu.bme.mit.semantifyr.gradle.artifactsOf
-import hu.bme.mit.semantifyr.gradle.commitHash
 import hu.bme.mit.semantifyr.gradle.readsServedExamples
 import hu.bme.mit.semantifyr.gradle.readsWorkspace
 import hu.bme.mit.semantifyr.gradle.registerBrandingAssets
@@ -28,7 +27,7 @@ val liveWebDistribution = artifactsOf("web-distribution", ":semantifyr-live-fron
 val liveUiMock = artifactsOf("live-ui-mock", ":semantifyr-live-frontend")
 val vscodeManifest = artifactsOf("vscode-manifest", ":semantifyr-vscode")
 val cliReference = artifactsOf("cli-reference", ":semantifyr-cli", ":sysml-cli", ":gamma-cli")
-val generatedReference = artifactsOf("generated-reference", ":cli-common", ":verifier", ":sysml-frontend")
+val generatedReference = artifactsOf("generated-reference", ":cli-common", ":verifier")
 val generatedWitness = artifactsOf("generated-witness", ":verifier")
 val phaseWalk = artifactsOf("phase-walk", ":semantifyr-cli")
 
@@ -168,7 +167,6 @@ fun NpmTask.configureSharedInputs() {
     inputs.file(layout.projectDirectory.file("eslint.config.mjs")).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.file(layout.projectDirectory.file("vitest.config.mts")).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.file(layout.projectDirectory.file("package.json")).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.file(isolated.rootProject.projectDirectory.file("gradle.properties")).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.file(isolated.rootProject.projectDirectory.file(".nvmrc")).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.file(isolated.rootProject.projectDirectory.file("deploy/live/env.example")).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(vscodeManifest).withPathSensitivity(PathSensitivity.RELATIVE)
@@ -184,9 +182,6 @@ fun NpmTask.configureSharedInputs() {
 val npmAssemble = tasks.register<NpmTask>("npmAssemble") {
     configureSharedInputs()
     inputs.property("liveBackendUrl", providers.environmentVariable("SEMANTIFYR_LIVE_URL").orElse(""))
-    environment.put("SEMANTIFYR_SITE_COMMIT", commitHash())
-    // the deploying workflow names its tag when it is a release
-    inputs.property("siteTag", providers.environmentVariable("SEMANTIFYR_SITE_TAG").orElse(""))
     inputs.files(cloneCliReference).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(cloneGeneratedReference).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(clonePhaseWalk).withPathSensitivity(PathSensitivity.RELATIVE)
@@ -252,7 +247,7 @@ tasks.named<Test>("test") {
 
 configurations.consumable("sysmlDecisionsPageElements") {
     attributes(semantifyrArtifact("sysml-decisions-page"))
-    outgoing.artifact(layout.projectDirectory.file("src/docs/learn/frontends/sysml-v2/decisions.mdx"))
+    outgoing.artifact(layout.projectDirectory.file("src/docs/learn/frontends/sysml-v2/semantic-decisions.mdx"))
 }
 
 tasks.register("pack") {

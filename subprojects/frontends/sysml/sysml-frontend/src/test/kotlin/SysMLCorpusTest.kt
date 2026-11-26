@@ -27,7 +27,7 @@ class SysMLCorpusTest {
     private val caseDeclaration = Regex("""^\s*verification\s+def\s+(\w+)""", RegexOption.MULTILINE)
     private val blockComment = Regex("""/\*.*?\*/""", RegexOption.DOT_MATCHES_ALL)
 
-    private val decisionsPage = Path("build", "decisions-page", "decisions.mdx")
+    private val decisionsPage = Path("build", "decisions-page", "semantic-decisions.mdx")
     private val decisionHeading = Regex("""^### .+ \{#([a-z]+(?:-[a-z]+)*)}$""", RegexOption.MULTILINE)
 
     private fun declaredCases(model: Path): List<String> {

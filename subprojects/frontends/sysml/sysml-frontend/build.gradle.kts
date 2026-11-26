@@ -7,7 +7,6 @@
 import hu.bme.mit.semantifyr.gradle.artifactsOf
 import hu.bme.mit.semantifyr.gradle.readsServedExamples
 import hu.bme.mit.semantifyr.gradle.semantifyrArtifact
-import hu.bme.mit.semantifyr.gradle.writesStandardOutputTo
 
 plugins {
     id("hu.bme.mit.semantifyr.theta")
@@ -15,8 +14,6 @@ plugins {
     kotlin("jvm")
     kotlin("plugin.serialization")
 }
-
-val generate = sourceSets.create("generate")
 
 dependencies {
     api(project(":backend"))
@@ -48,10 +45,6 @@ dependencies {
     testFixturesImplementation(libs.guice)
     testFixturesImplementation(libs.kotlinx.serialization.json)
     testFixturesImplementation(libs.slf4j.api)
-
-    add(generate.implementationConfigurationName, testFixtures(project(":verifier")))
-    add(generate.implementationConfigurationName, libs.kotlinx.serialization.core)
-    add(generate.implementationConfigurationName, libs.kotlinx.serialization.json)
 }
 
 testing {
@@ -129,34 +122,4 @@ tasks.withType<Test>().configureEach {
 // the corpus test holds the manifest's decisions against the page that lists them
 tasks.test {
     inputs.files(cloneDecisionsPage).withPathSensitivity(PathSensitivity.RELATIVE)
-}
-
-val generatedReferenceDirectory = layout.buildDirectory.dir("generated-reference")
-
-val decisionCases = tasks.register<JavaExec>("generatedReference_decision-cases") {
-    classpath = generate.runtimeClasspath
-    mainClass = "hu.bme.mit.semantifyr.frontends.sysml.GenerateDecisionCasesKt"
-    inputs.file(examplesDirectory.file("manifest.json")).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.files(decisionsPage).withPathSensitivity(PathSensitivity.RELATIVE)
-    writesStandardOutputTo(
-        generatedReferenceDirectory.map {
-            it.file("decision-cases.json")
-        },
-    )
-    outputs.cacheIf {
-        true
-    }
-    val module = projectDir
-    val examples = examplesDirectory
-    val page = decisionsPage
-    argumentProviders += CommandLineArgumentProvider {
-        listOf(examples.asFile.relativeTo(module).invariantSeparatorsPath, page.singleFile.relativeTo(module).invariantSeparatorsPath)
-    }
-}
-
-configurations.consumable("generatedReferenceElements") {
-    attributes(semantifyrArtifact("generated-reference"))
-    outgoing.artifact(generatedReferenceDirectory) {
-        builtBy(decisionCases)
-    }
 }

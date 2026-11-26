@@ -1,0 +1,19 @@
+---
+title: SysML v2 Language Support
+sidebar_label: Language Support
+sidebar_position: 3
+description: The SysML v2 constructs the frontend reads, each with its outcome, generated from the frontend's registry.
+---
+
+import SysmlConstructTable from '@site/src/components/SysmlConstructs';
+import constructs from '@sysml-constructs/constructs.tsv';
+
+# SysML v2 Language Support
+
+The SysML v2 frontend supports the part of the language that describes behaviour at the level of states: part and port definitions with their usages, items sent over flows between ports, attributes of type Integer and Boolean, exhibited state machines, and verification cases whose objectives are requirements over a part.
+
+The table lists every SysML v2 construct the frontend reads, with its outcome. A planned or unsupported construct is reported on the construct, and the model is not translated. Every other construct is translated unless its detail says otherwise, and one with a warning says what to watch for.
+
+<SysmlConstructTable table={constructs} />
+
+Their semantics are on [Semantic Decisions](semantic-decisions.mdx).

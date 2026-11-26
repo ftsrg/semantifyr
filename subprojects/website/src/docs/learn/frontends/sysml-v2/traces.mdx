@@ -1,49 +1,23 @@
 ---
 title: SysML v2 Traces
 sidebar_label: Traces
-sidebar_position: 4
-description: The form of trace.sysml, the SysML v2 model a case's run is written as, what it shows and its name map.
+sidebar_position: 5
+description: How the run of a case is represented as a SysML v2 model.
 ---
 
 import CodeBlock from '@theme/CodeBlock';
-import trace from '@sysml-reference-trace/crossroads-green.trace.sysml';
+import trace from '@sysml-reference-trace/room-lamp-lit.trace.sysml';
 
 # SysML v2 Traces
 
-`semantifyr-sysml verify` and Live's SysML v2 language show the run of a case as a SysML v2 model, `trace.sysml` beside the case's [`report.json`](../../reference/artifacts.mdx#the-report): a package `<Case>Trace` with a part definition `Run` that specializes the verified part's definition and states which states each part was in over which stretch of time, which transitions fired in which step, which items were sent, and how much time passed. Every declaration narrows the model, so the trace is a refinement of it, and a SysML v2 tool reads it next to the model.
+`semantifyr-sysml verify` and Live show the run of a case as a SysML v2 model, `trace.sysml`. It is a package `<Case>Trace` whose part definition `Run` specializes the verified part's definition and states which states each part was in, which transitions fired with the items they sent, and how much time passed. Since `Run` refines the model, any SysML v2 tool reads the trace next to it. A run that cannot be expressed in SysML v2 keeps its verdict and gets no trace.
 
-The trace is generated from the report, its states, traced calls and elapsed times, and the [name map](#the-name-map) of the translation, and validated against the model before it is written: a run that cannot be expressed keeps its verdict and gets no trace, and the log names the place in the input the error comes from, such as `report.json.trace.steps[3].calls[0].self`.
-
-## What the trace shows
-
-The SysML v2 library traces transition firing, state entry and exit and item sending, and the report holds the time that passed before each step.
-
-- The active states, from the `activeState` values of the report's states and an exhibited state's `performing` flag, and where the optimizer removed a flag, from the traced `enter` and `exit` of `State` and `ParallelState`, whose argument is the closest common state.
-- A state occurrence starts where its state turns active or is entered again, and ends where it turns inactive or is left.
-- The fired transitions, from the traced `Transition::fire` calls, and the sends, from the traced `SendItemAction::send` calls. A send belongs to the entry, exit or effect that holds its send action.
-- The time that passed before a step is a dwell. Other traced calls are not shown.
-
-## Form
-
-The reference trace, of the case `TrafficLightABehaviorNormalGreenUnreachableViolated` of the crossroads model, which the SysML v2 frontend's tests generate from its [report](../../reference/artifacts.mdx#the-report) and validate:
+The trace of `LampLitOnlyWhileSwitchOnViolated` from the [lesson](lesson.md):
 
 <CodeBlock language="sysmlv2">{trace}</CodeBlock>
 
-- The verification usage `witness` redefines the subject to `Run` and binds the verdict: `fail` for a witness that breaks `mustAlways`, `pass` for one that reaches what `eventually` asks for, a negation flipping either (`VerificationCases::VerificationCase`).
-- `Run` specializes the system definition (SysML 7.6.2, 8.4.7), so its values are the system lives the witness is a prefix of.
-- The timeline is `init`, then for step K a `dwellK` for the time that passed before it, unless it passed none, and a `stepK` when a transition fired in it, each a `timeslice` with `[1]` asserting its `DurationOf` (SysML 7.9.3, 8.4.5.2; `Time::DurationOf`), consecutive ones ordered by `succession : HappensJustBefore [1]` (SysML 8.4.9.4). A reaction is a time slice of zero duration, not a snapshot: a fired transition orders the source's exit before the effect and the effect before the target's entry (SysML 8.4.14.3), which a snapshot cannot contain. `bind init.startShot = self.startShot` puts time 0 at the start of the run.
-- What happened in a reaction is an `event` usage in its slice: the start of every exhibited state in `init`, every fired transition in `stepK` (SysML 7.9.5, 8.4.5.3). An event occurrence usage subsets `timeEnclosedOccurrences`, so it states "happens during" without a connection; a `connection` typed by `HappensWhile` or `HappensDuring` has an empty type, since `HappensLink` is disjoint from `Occurrence` (SysML 8.3.13.4).
-- Parts and exhibited states redefine the model's under their names; a region of a parallel state is `state R :>> R [1]`; an instance of a part with multiplicity `[n]` subsets it, `part machines2 [1] :> machines`.
-- An entered state is a `[1]` occurrence subsetting its state inside the occurrence of its owner, numbered within that owner (`bothRed1`, `bothRed2`). A leaf occurrence states the dwells it lasts, when it lasts any, with `firstDwell` and `lastDwell`; one enclosing the first and the last dwell encloses every dwell between them.
-- A fired transition is a `[1]` transition usage in the occurrence of the state that declares it, with the source occurrence after `first`, the model's trigger and guard copied, the sends of its effect in `do action`, and the target occurrence after `then` (SysML 8.4.14.3). A named transition subsets its model transition; an unnamed one is named after its source and target and identified by its owner, ends, trigger and guard, which the translation warns about when two unnamed transitions share all of them.
-- Sends of an entry or exit action are the `entry action` or `exit action` of the state occurrence that performed them, never a redefinition of the model's (SysML 8.4.14.1).
-- Every declared occurrence, event, transition and succession has `[1]`: they default to `[0..*]` (SysML 7.6.3), and without a lower bound they assert nothing.
-- The names the trace declares stay apart from the model's features: a clash gets the next free index.
-
-## Time and order
-
-A dwell lasts the step's elapsed time from the report, an exact fraction, counted in ticks: the tick is the duration the translation computes from the model, the largest duration in seconds, minutes, hours or days that divides every literal `after` duration of the model, one second when it has none, so `DurationOf(dwell2) == 2 [s]` above and `(1 / 2) [s]` for a wait of half a tick of one second. Two transitions fired in one step are two events of the same slice, with no order between them, and a site traced twice in one step shows once, as the report lists it once.
-
-## The name map
-
-The translation writes a name map beside the Semantifyr model it makes, `<model>.names.json`, which the trace is generated through. It holds a hash of the model text, the tick, and one entry per translated element: its path in the SysML v2 model (names joined by `::`, an unnamed element by its index `#n` among its owner's elements, an instance of a usage with multiplicity `[n]` by `[k]`), its path in the Semantifyr model, and for parts and subjects the class their features continue in. A name map whose hash does not match the model is refused, and the shapes of the name map and the report are checked before they are read.
+- The verification usage `witness` redefines the subject to `Run` and binds the verdict: `fail` for a run that breaks `mustAlways`, `pass` for one that reaches what `eventually` asks for.
+- `Run` specializes the system definition, so its values are the system lives the run is a prefix of.
+- The timeline is `init`, then for each step K a `dwellK` for the time that passed before it, if any, and a `stepK` when a transition fired in it, each a `timeslice`, ordered by `succession`.
+- An entered state is an occurrence of its state inside the occurrence of its owner, numbered within that owner (`off1`, `off2`).
+- A fired transition is a transition usage in the occurrence of the state that declares it, with its source occurrence, the model's trigger and guard, the sends of its effect, and its target occurrence.

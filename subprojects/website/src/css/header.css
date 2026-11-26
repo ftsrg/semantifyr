@@ -81,12 +81,6 @@
   width: auto;
 }
 
-.site-header-product {
-  color: var(--text-tertiary);
-  font-size: 15px;
-  font-weight: var(--weight-semibold);
-}
-
 .site-segmented {
   display: inline-flex;
   align-items: center;
@@ -270,10 +264,6 @@
 
   .site-header-logo {
     height: 19px;
-  }
-
-  .site-header-product {
-    font-size: 13px;
   }
 
   .site-header-phone-menu {

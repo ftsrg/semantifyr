@@ -31,6 +31,15 @@ class ReferenceTraceTest {
         SysMLv2Compiler(temporaryDirectory.resolve("cache")).validate(trace)
     }
 
+    @Test
+    fun `the room reference trace validates against the room model`() {
+        val workspace = temporaryDirectory.resolve("workspace").createDirectories()
+        MODELS.resolve("tutorial").resolve(ROOM).copyTo(workspace.resolve(ROOM))
+        val trace = MODELS.resolve("etc").resolve(ROOM_TRACE).copyTo(workspace.resolve(ROOM_TRACE))
+
+        SysMLv2Compiler(temporaryDirectory.resolve("cache")).validate(trace)
+    }
+
     // the fork's golden test compares the text whole, the command writes it only when SysIDE validates it
     @Test
     fun `the bundled trace command generates a valid trace of the reference report`() {
@@ -77,5 +86,7 @@ class ReferenceTraceTest {
         private const val TRACE = "crossroads-green.trace.sysml"
         private val REPORT = MODELS.resolve("etc").resolve("crossroads-green.report.json")
         private const val CASE = "TrafficLightABehaviorNormalGreenUnreachableViolated"
+        private const val ROOM = "room.sysml"
+        private const val ROOM_TRACE = "room-lamp-lit.trace.sysml"
     }
 }

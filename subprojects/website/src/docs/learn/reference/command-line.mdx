@@ -94,7 +94,7 @@ The portfolio ids are listed under [Portfolios](portfolios.mdx).
 
 ## `semantifyr-sysml`
 
-`semantifyr-sysml` verifies SysML v2 models. Its distribution, `semantifyr-sysml-<version>.zip`, carries Theta, the SysML v2 semantic library in `libraries/sysmlv2` and the model of [Verifying SysML v2 Models](../frontends/sysml-v2/verifying.md) as `models/smoke/room.sysml`. It translates a model to a Semantifyr model with the bundled SysIDE fork, which runs on Node.js, so it needs `node` on `PATH`; without it, translating fails with exit code 4 and a message naming `node`. The translator reads every `.sysml` and `.kerml` file below the model's directory as the model's workspace, so keep other models and the artifact directory out of that directory. Translations are cached under `~/.semantifyr/sysml-cache`, keyed by the model and its workspace ([Folders](#folders)).
+`semantifyr-sysml` verifies SysML v2 models. Its distribution, `semantifyr-sysml-<version>.zip`, carries Theta, the SysML v2 semantic library in `libraries/sysmlv2` and the model of the [SysML v2 lesson](../frontends/sysml-v2/lesson.md) as `models/smoke/room.sysml`. It translates a model to a Semantifyr model with the bundled sysml-2ls, which runs on Node.js, so it needs `node` on `PATH`; without it, translating fails with exit code 4 and a message naming `node`. The frontend reads every `.sysml` and `.kerml` file below the model's directory as the model's workspace, so keep other models and the artifact directory out of that directory. Translations are cached under `~/.semantifyr/sysml-cache`, keyed by the model and its workspace ([Folders](#folders)).
 
 <CodeBlock language="text">{sysmlHelp}</CodeBlock>
 
@@ -102,7 +102,7 @@ The portfolio ids are listed under [Portfolios](portfolios.mdx).
 
 <CodeBlock language="text">{sysmlVerify}</CodeBlock>
 
-`verify` translates the model and verifies its cases with the options, output and [exit codes](#exit-codes) of [`semantifyr verify`](#verify). The case names start with `semantifyr::sysml::model`, the package the translator gives every model. The translated model stays under the artifact directory, and for each case with a witness `verify` writes the witness as a SysML v2 model, `trace.sysml`, next to the case's `report.json` ([Artifacts](artifacts.mdx), [SysML v2 traces](../frontends/sysml-v2/traces.mdx)); a witness the generator cannot express keeps its verdict, gets no `trace.sysml` and a warning in the log.
+`verify` translates the model and verifies its cases with the options, output and [exit codes](#exit-codes) of [`semantifyr verify`](#verify). The case names start with `semantifyr::sysml::model`, the package the frontend gives every model. The translated model stays under the artifact directory, and for each case with a witness `verify` writes the witness as a SysML v2 model, `trace.sysml`, next to the case's `report.json` ([Artifacts](artifacts.mdx), [SysML v2 traces](../frontends/sysml-v2/traces.mdx)); a witness the generator cannot express keeps its verdict, gets no `trace.sysml` and a warning in the log.
 
 The translation is verified on top of the bundled SysML v2 semantic library, the state-level library in `libraries/sysmlv2`. `--library` loads files of the Semantifyr Language in addition to it and does not replace it.
 
@@ -110,11 +110,11 @@ The translation is verified on top of the bundled SysML v2 semantic library, the
 
 <CodeBlock language="text">{sysmlCompile}</CodeBlock>
 
-`compile` writes the translation of the model, a Semantifyr model, to `--output`, by default next to the model with the `.semantifyr` extension, and the name map from the model's elements to the Semantifyr model beside it with the `.names.json` extension. A construct the translator refuses is an error at its line and no Semantifyr model is written; a warning is printed and the translation written ([Supported Language](../frontends/sysml-v2/supported.mdx)). `semantifyr` verifies it together with that library: `semantifyr verify -l <semantifyr-sysml distribution>/libraries/sysmlv2 room.semantifyr`.
+`compile` writes the translation of the model, a Semantifyr model, to `--output`, by default next to the model with the `.semantifyr` extension, and the name map from the model's elements to the Semantifyr model beside it with the `.names.json` extension. A construct the frontend refuses is an error at its line and no Semantifyr model is written; a warning is printed and the translation written ([Language Support](../frontends/sysml-v2/language-support.mdx)). `semantifyr` verifies it together with that library: `semantifyr verify -l <semantifyr-sysml distribution>/libraries/sysmlv2 room.semantifyr`.
 
 ## `semantifyr-gamma`
 
-`semantifyr-gamma` verifies Gamma models, `.gamma` or `.gcd` files in the [sub-language of Gamma](../frontends/gamma/supported.mdx) the frontend supports, written in Gamma's syntax: statecharts, their composition and their verification cases. The Gamma models in the model's directory are its workspace, in which its imports resolve; `--workspace <directory>` makes the `.gamma` and `.gcd` files of that directory, recursively, the workspace instead, for a model that imports from another directory. It compiles a model to a Semantifyr model on top of the bundled Gamma semantic library. Its distribution, `semantifyr-gamma-<version>.zip`, carries Theta, the library in `libraries/gamma` and the example model `models/smoke/Simple.gamma`.
+`semantifyr-gamma` verifies Gamma models, `.gamma` or `.gcd` files in the [sub-language of Gamma](../frontends/gamma/language-support.mdx) the frontend supports, written in Gamma's syntax: statecharts, their composition and their verification cases. The Gamma models in the model's directory are its workspace, in which its imports resolve; `--workspace <directory>` makes the `.gamma` and `.gcd` files of that directory, recursively, the workspace instead, for a model that imports from another directory. It compiles a model to a Semantifyr model on top of the bundled Gamma semantic library. Its distribution, `semantifyr-gamma-<version>.zip`, carries Theta, the library in `libraries/gamma` and the example model `models/smoke/Simple.gamma`.
 
 <CodeBlock language="text">{gammaHelp}</CodeBlock>
 
@@ -139,8 +139,8 @@ Under `~/.semantifyr` it unpacks what it carries, each into a folder named by th
 - `builtin/<digest>/`: the standard library, `standard.semantifyr`, unpacked by every launcher.
 - `gamma/default/<digest>/`: the Gamma semantic library, unpacked by `semantifyr-gamma`.
 - `sysmlv2/default/<digest>/`: the SysML v2 semantic library, unpacked by `semantifyr-sysml verify`.
-- `sysml-cli/<digest>/`: the SysML v2 translator with the SysML v2 standard library, unpacked by `semantifyr-sysml`.
-- `sysml-cache/<translator digest>/`: the translations of `semantifyr-sysml`, a Semantifyr model and its name map for each model, named after the model file and a digest of every `.sysml` and `.kerml` file in the model's directory and below it, so a model is translated again only when one of those files or the translator changes.
+- `sysml-cli/<digest>/`: the SysML v2 frontend with the SysML v2 standard library, unpacked by `semantifyr-sysml`.
+- `sysml-cache/<frontend digest>/`: the translations of `semantifyr-sysml`, a Semantifyr model and its name map for each model, named after the model file and a digest of every `.sysml` and `.kerml` file in the model's directory and below it, so a model is translated again only when one of those files or the frontend changes.
 
 In the temporary directory, `verify` and `compile` without `--artifact-directory` write the artifacts into a new `semantifyr-<number>` directory, which they leave in place; `metrics` compiles in a `semantifyr-metrics-<number>` directory, which it deletes when it ends.
 

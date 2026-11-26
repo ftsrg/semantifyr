@@ -144,17 +144,6 @@ function pageHeadsPlugin(): Plugin {
   };
 }
 
-// the build's constants, which every page that states one takes from here: the version from gradle.properties
-function gradleProperty(name: string): string {
-  const properties = readFileSync(path.resolve(__dirname, '../../gradle.properties'), 'utf8');
-  const value = new RegExp(`^${name}=(.*)$`, 'm').exec(properties)?.[1]?.trim();
-  if (value === undefined) {
-    throw new Error(`gradle.properties sets no ${name}`);
-  }
-  return value;
-}
-
-const version = gradleProperty('version');
 const nodeVersion = readFileSync(path.resolve(__dirname, '../../.nvmrc'), 'utf8').trim();
 
 // the limit of the public instance, as the deployment's example configuration sets it
@@ -163,25 +152,10 @@ if (liveLimitSeconds === undefined) {
   throw new Error('deploy/live/env.example sets no VERIFY_TIMEOUT_SECONDS');
 }
 
-const commit = process.env.SEMANTIFYR_SITE_COMMIT ?? '';
-const released = process.env.SEMANTIFYR_SITE_TAG === `v${version}`;
-
-// the one place the site says which state of the tool it describes
-function siteState(): string {
-  if (released) {
-    return `These pages describe Semantifyr ${version}.`;
-  }
-  if (commit === '') {
-    return 'These pages describe the development branch of Semantifyr.';
-  }
-  return `These pages describe the development branch of Semantifyr at commit <a href="https://github.com/ftsrg/semantifyr/commit/${commit}"><code>${commit.slice(0, 8)}</code></a>.`;
-}
-
 const baseUrl = '/';
 
 export default {
   title: 'Semantifyr',
-  tagline: 'A framework to support the declarative definition of engineering model semantics',
   favicon: 'img/favicon.ico',
   url: 'https://semantifyr.org',
   baseUrl,
@@ -342,7 +316,7 @@ export default {
           return { label: section.label, to: section.to, position: 'left' as const };
         }),
         {
-          label: 'Source code',
+          label: 'GitHub',
           href: SOURCE_CODE,
           position: 'right',
         },
@@ -372,15 +346,15 @@ export default {
           href: liveBackendUrl,
         },
         {
-          label: 'What Live\'s Server Keeps',
+          label: 'Privacy',
           to: '/learn/live/privacy/',
         },
         {
-          label: 'Source code',
+          label: 'GitHub',
           href: SOURCE_CODE,
         },
       ],
-      copyright: `${siteState()}<br/>Copyright &copy; 2023-2026 <a href="https://github.com/ftsrg/semantifyr/blob/main/CONTRIBUTORS.md" target="_blank">The Semantifyr Authors</a>. Available under the <a href="https://www.eclipse.org/legal/epl-2.0/">Eclipse Public License - v 2.0</a>.`,
+      copyright: `Copyright &copy; 2023-2026 <a href="https://github.com/ftsrg/semantifyr/blob/main/CONTRIBUTORS.md" target="_blank">The Semantifyr Authors</a>. Available under the <a href="https://www.eclipse.org/legal/epl-2.0/" target="_blank">Eclipse Public License - v 2.0</a>.`,
     },
   } satisfies UserThemeConfig,
   future: {

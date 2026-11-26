@@ -1,0 +1,19 @@
+---
+title: Gamma Language Support
+sidebar_label: Language Support
+sidebar_position: 3
+description: Every construct and variation point of Gamma, with its outcome in the Gamma frontend.
+---
+
+import GammaConstructTable from '@site/src/components/GammaConstructs';
+import constructs from '@gamma-models/constructs.tsv';
+
+# Gamma Language Support
+
+The Gamma frontend supports Gamma's statecharts, their synchronous, cascade and asynchronous composition, and verification cases written in the model, in Gamma's syntax with Gamma's packages and imports.
+
+The table lists every construct and variation point of Gamma, with its outcome. One with a warning draws a warning from the validator.
+
+<GammaConstructTable table={constructs} />
+
+Their semantics are on [Semantic Decisions](semantic-decisions.mdx).

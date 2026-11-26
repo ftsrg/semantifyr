@@ -55,17 +55,5 @@ describe('the screenshots', () => {
 
       await shoot(page, `live-${theme}`)
     })
-
-    test(`the embedded editor on the first lesson, verified, ${theme}`, async ({ ui }) => {
-      const page = await ui.open(`/language/modeling-and-verification?view=embed&theme=${theme}`, { width: 800, height: 720 })
-      const cases = page.locator('.embed-case')
-      await expect.poll(async () => {
-        return cases.count()
-      }).toBeGreaterThan(0)
-      await page.getByRole('button', { name: 'Verify all', exact: true }).click()
-      await verdictsShown(page, cases)
-
-      await shoot(page, `embed-${theme}`)
-    })
   }
 })
