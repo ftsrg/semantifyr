@@ -10,7 +10,35 @@ import com.github.gradle.node.task.NodeTask
 import org.gradle.api.Project
 import org.gradle.api.file.Directory
 import org.gradle.api.tasks.PathSensitivity
+import org.gradle.api.tasks.Sync
 import org.gradle.api.tasks.TaskProvider
+
+fun Project.registerBrandingAssets(outputDirectory: Directory): TaskProvider<Sync> {
+    val brandingDirectory = rootProject.layout.projectDirectory.dir("branding")
+    val renderBrandingPictures = registerRenderPictures(
+        "renderBrandingPictures",
+        layout.buildDirectory.dir("branding").get(),
+        listOf(
+            "favicon.ico=logo@16,32,48",
+            "apple-touch-icon.png=logo@180",
+            "logo-192.png=logo@192",
+            "logo-512.png=logo@512",
+            "social-card.png=social-card@1200",
+        ),
+    )
+
+    return tasks.register("cloneBrandingAssets", Sync::class.java) {
+        from(renderBrandingPictures)
+        from(brandingDirectory) {
+            include(
+                "logo.svg",
+                "logo-full-light.svg",
+                "logo-full-dark.svg",
+            )
+        }
+        into(outputDirectory)
+    }
+}
 
 fun Project.registerRenderPictures(
     taskName: String,

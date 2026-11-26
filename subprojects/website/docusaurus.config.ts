@@ -182,7 +182,7 @@ const baseUrl = '/';
 export default {
   title: 'Semantifyr',
   tagline: 'A framework to support the declarative definition of engineering model semantics',
-  favicon: 'favicon.ico',
+  favicon: 'img/favicon.ico',
   url: 'https://semantifyr.org',
   baseUrl,
   baseUrlIssueBanner: false,

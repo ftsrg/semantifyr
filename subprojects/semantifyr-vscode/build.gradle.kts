@@ -44,8 +44,8 @@ val renderIcons = registerRenderPictures(
     "renderIcons",
     layout.projectDirectory.dir("icons"),
     listOf(
-        "icon.png=semantifyr-logo@128",
-        "semantifyr-file-icon.png=semantifyr-logo@128+104",
+        "icon.png=logo@128",
+        "semantifyr-file-icon.png=logo@128+104",
         "gamma-file-icon.png=gamma@128+104",
     ),
 )

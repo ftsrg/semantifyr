@@ -7,7 +7,7 @@
 import com.github.gradle.node.npm.task.NpmTask
 import hu.bme.mit.semantifyr.gradle.conventions.ExampleDescriptions
 import hu.bme.mit.semantifyr.gradle.conventions.oxstsFileExtension
-import hu.bme.mit.semantifyr.gradle.conventions.registerRenderPictures
+import hu.bme.mit.semantifyr.gradle.conventions.registerBrandingAssets
 import hu.bme.mit.semantifyr.gradle.conventions.semantifyrArtifact
 import hu.bme.mit.semantifyr.gradle.conventions.servedExamples
 import hu.bme.mit.semantifyr.gradle.conventions.stampOnSuccess
@@ -59,7 +59,6 @@ dependencies {
 
 val importedSnippetsDir = project.layout.projectDirectory.dir("src/snippets/imported")
 val importedVscodeDir = project.layout.projectDirectory.dir("src/vscode/imported")
-val brandingDir = rootProject.layout.projectDirectory.dir("branding")
 val publicDir = project.layout.projectDirectory.dir("public")
 
 fun servedFiles(language: String): List<RegularFile> {
@@ -134,34 +133,7 @@ val cloneSysmlWorker = tasks.register<Sync>("cloneSysmlWorker") {
     into(layout.buildDirectory.dir("sysml-worker"))
 }
 
-val renderBrandingPictures = registerRenderPictures(
-    "renderBrandingPictures",
-    layout.buildDirectory.dir("branding").get(),
-    listOf(
-        "favicon.ico=semantifyr-logo@16,32,48",
-        "pwa-192.png=semantifyr-logo@192",
-        "pwa-512.png=semantifyr-logo@512",
-        "apple-touch-icon.png=semantifyr-logo@180",
-        "social-card.png=social-card@1200",
-    ),
-)
-
-val cloneBrandingAssets = tasks.register<Sync>("cloneBrandingAssets") {
-    from(renderBrandingPictures)
-    from(brandingDir) {
-        include("semantifyr-logo.svg")
-        rename { "pwa.svg" }
-    }
-    from(brandingDir) {
-        include("semantifyr-full-light.svg")
-        rename { "logo-full-light.svg" }
-    }
-    from(brandingDir) {
-        include("semantifyr-full-dark.svg")
-        rename { "logo-full-dark.svg" }
-    }
-    into(publicDir)
-}
+val cloneBrandingAssets = registerBrandingAssets(publicDir)
 
 tasks.npmInstall {
     workingDir = rootProject.projectDir

@@ -10,7 +10,7 @@ import hu.bme.mit.semantifyr.gradle.conventions.commitHash
 import hu.bme.mit.semantifyr.gradle.conventions.javaRuntimeLibrary
 import hu.bme.mit.semantifyr.gradle.conventions.oxstsFileExtension
 import hu.bme.mit.semantifyr.gradle.conventions.readsServedExamples
-import hu.bme.mit.semantifyr.gradle.conventions.registerRenderPictures
+import hu.bme.mit.semantifyr.gradle.conventions.registerBrandingAssets
 import hu.bme.mit.semantifyr.gradle.conventions.semantifyrArtifact
 import hu.bme.mit.semantifyr.gradle.conventions.servedExampleSources
 import hu.bme.mit.semantifyr.gradle.conventions.stampOnSuccess
@@ -241,40 +241,9 @@ tasks.npmInstall {
     workingDir = rootProject.projectDir
 }
 
-val brandingDir = rootProject.layout.projectDirectory.dir("branding")
 val importedBrandingDir = project.layout.projectDirectory.dir("static-imported-branding")
 
-val renderBrandingPictures = registerRenderPictures(
-    "renderBrandingPictures",
-    layout.buildDirectory.dir("branding").get(),
-    listOf(
-        "favicon.ico=semantifyr-logo@16,32,48",
-        "img/logo-192.png=semantifyr-logo@192",
-        "img/logo-512.png=semantifyr-logo@512",
-        "img/apple-touch-icon.png=semantifyr-logo@180",
-        "img/social-card.png=social-card@1200",
-    ),
-)
-
-val cloneBrandingAssets = tasks.register<Sync>("cloneBrandingAssets") {
-    from(renderBrandingPictures)
-    from(brandingDir) {
-        include("semantifyr-logo.svg")
-        rename { "logo.svg" }
-        into("img")
-    }
-    from(brandingDir) {
-        include("semantifyr-full-light.svg")
-        rename { "logo-full-light.svg" }
-        into("img")
-    }
-    from(brandingDir) {
-        include("semantifyr-full-dark.svg")
-        rename { "logo-full-dark.svg" }
-        into("img")
-    }
-    into(importedBrandingDir)
-}
+val cloneBrandingAssets = registerBrandingAssets(importedBrandingDir.dir("img"))
 
 // written for the alias @sysml-constructs
 val cloneSysmlConstructs = tasks.register<Sync>("cloneSysmlConstructs") {
