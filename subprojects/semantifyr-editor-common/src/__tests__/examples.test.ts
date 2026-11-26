@@ -79,7 +79,6 @@ function caseText(file: string, language: ExampleLanguage, name: string): string
   return text.slice(starts[position]!.index, starts[position + 1]?.index ?? text.length);
 }
 
-// a model describes itself in a comment at its top: a `/** */` documentation comment in OXSTS and Gamma, a `doc` comment in SysML v2
 const OPENING_COMMENT: Readonly<Record<ExampleLanguage, RegExp>> = {
   oxsts: /^\s*\/\*\*[\s*]*[^\s*/]/,
   gamma: /^\s*\/\*\*[\s*]*[^\s*/]/,

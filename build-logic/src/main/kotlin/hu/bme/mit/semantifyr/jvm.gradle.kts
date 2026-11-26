@@ -85,7 +85,6 @@ tasks.jar {
 tasks.withType<Test>().configureEach {
     testLogging.showStandardStreams = true
     testLogging.exceptionFormat = TestExceptionFormat.FULL
-    // the JVM warnings the cli convention silences
     jvmArgs("--enable-native-access=ALL-UNNAMED")
     systemProperty("guice_bytecode_gen_option", "DISABLED")
 }

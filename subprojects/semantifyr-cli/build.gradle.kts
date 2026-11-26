@@ -68,7 +68,6 @@ distributions.main {
     }
 }
 
-// the room the compilation pages walk, compiled with its debug artifacts
 val phasesModel = rootDirectory.file("oxsts-test-models/phases/room.semantifyr")
 val phasesDirectory = layout.buildDirectory.dir("phases")
 
@@ -81,7 +80,6 @@ val phases = tasks.register<JavaExec>("phases") {
         true
     }
     val outputDirectory = phasesDirectory.get().asFile
-    // relative paths keep the arguments, and so the cache key, the same in every checkout
     workingDir = outputDirectory
     args("compile", "--artifacts=debug", "--disable-artifact=mapping", "--artifact-directory=.", "--output=compiled.$oxstsFileExtension", phasesModel.asFile.relativeTo(outputDirectory).invariantSeparatorsPath)
     doFirst {

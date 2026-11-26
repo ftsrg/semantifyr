@@ -72,7 +72,6 @@ tasks.test {
 
 val generatedReferenceDirectory = layout.buildDirectory.dir("generated-reference")
 
-// what the website's pages show of a type, generated from it
 val generatedReference = tasks.register<JavaExec>("generatedReference_report-fields") {
     classpath = generate.runtimeClasspath
     mainClass = "hu.bme.mit.semantifyr.verifier.GenerateReferenceKt"
@@ -94,7 +93,6 @@ configurations.consumable("generatedReferenceElements") {
     }
 }
 
-// the witness model the verifier derives from the stored timed report
 val generatedWitnessDirectory = layout.buildDirectory.dir("generated-witness")
 
 val generatedWitness = tasks.register<JavaExec>("generatedWitness") {
@@ -107,7 +105,6 @@ val generatedWitness = tasks.register<JavaExec>("generatedWitness") {
         true
     }
     val outputDirectory = generatedWitnessDirectory.get().asFile
-    // relative paths keep the arguments, and so the cache key, the same in every checkout
     workingDir = outputDirectory
     args(witnessDirectory.file("blinker.semantifyr").asFile.relativeTo(outputDirectory).invariantSeparatorsPath, witnessDirectory.file("blinker.report.json").asFile.relativeTo(outputDirectory).invariantSeparatorsPath, "blinker.witness.$oxstsFileExtension")
     doFirst {

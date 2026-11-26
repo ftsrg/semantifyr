@@ -26,7 +26,6 @@ fun Project.semantifyrArtifact(kind: String): Action<AttributeContainer> {
     }
 }
 
-// one pair of configurations per kind and projects, however many tasks read them
 fun Project.artifactsOf(kind: String, vararg projectPaths: String): FileCollection {
     val words = (listOf(kind) + projectPaths).flatMap {
         it.split(Regex("[^A-Za-z0-9]"))

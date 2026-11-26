@@ -103,7 +103,6 @@ configurations.consumable("sysmlExamplesElements") {
 
 val sysmlCorpus = artifactsOf("sysml-corpus", ":sysml-wrapper")
 
-// the corpus as the tests read it, each served model with its further cases appended
 val syncSysmlTestModels = tasks.register<Sync>("syncSysmlTestModels") {
     from(sysmlCorpus)
     into(layout.buildDirectory.dir("test-models"))
@@ -134,7 +133,6 @@ tasks.test {
 
 val generatedReferenceDirectory = layout.buildDirectory.dir("generated-reference")
 
-// the cases the corpus manifest ties to each decision of the decisions page
 val decisionCases = tasks.register<JavaExec>("generatedReference_decision-cases") {
     classpath = generate.runtimeClasspath
     mainClass = "hu.bme.mit.semantifyr.frontends.sysml.GenerateDecisionCasesKt"

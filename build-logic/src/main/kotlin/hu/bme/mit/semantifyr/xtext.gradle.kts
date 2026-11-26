@@ -27,7 +27,7 @@ dependencies {
     mwe2(libs.xtext.generator)
     mwe2(libs.xtext.generator.antlr)
     mwe2(libs.xtext.xbase)
-    // the TextMate fragment's JSON writer, which the generator imports optionally and does not depend on
+    // the TextMate fragment needs gson, which Xtext does not declare
     mwe2(libs.gson)
 
     api(platform(libs.xtext.bom))

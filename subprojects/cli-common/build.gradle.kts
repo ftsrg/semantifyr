@@ -50,7 +50,6 @@ dependencies {
 
 val generatedReferenceDirectory = layout.buildDirectory.dir("generated-reference")
 
-// what the website's pages show of a type, generated from it
 val generatedReference = listOf(
     "exit-codes",
     "verdicts",

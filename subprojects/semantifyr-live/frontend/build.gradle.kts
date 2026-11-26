@@ -123,7 +123,6 @@ val npmAssemble = tasks.register<NpmTask>("npmAssemble") {
 
     configureSharedInputs()
     inputs.file(layout.projectDirectory.file("index.html")).withPathSensitivity(PathSensitivity.RELATIVE)
-    // the build names the commit it is built from
     inputs.property("commit", commitHash())
 
     npmCommand = listOf("run", "assemble")

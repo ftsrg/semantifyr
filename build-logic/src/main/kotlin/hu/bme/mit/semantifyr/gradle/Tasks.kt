@@ -63,7 +63,6 @@ fun Project.registerCliReference(references: Map<String, List<String>>) {
             outputs.cacheIf {
                 true
             }
-            // the help ends its lines with the platform's separator, and the reference is the same on every platform
             doLast {
                 val file = outputFile.get().asFile
                 file.writeText(file.readText().replace("\r\n", "\n"))

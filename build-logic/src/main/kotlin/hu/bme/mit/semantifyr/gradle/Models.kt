@@ -22,7 +22,6 @@ import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.testing.Test
 
-// the grammar workflow lists the language's file extensions, the one Semantifyr writes first
 val Project.oxstsFileExtension: String
     get() {
         val workflow = providers.fileContents(isolated.rootProject.projectDirectory.file("subprojects/oxsts.lang/src/main/java/hu/bme/mit/semantifyr/oxsts/lang/GenerateOxsts.mwe2")).asText.get()
@@ -114,7 +113,6 @@ fun Project.servedExamples(language: String): List<ServedExample> {
     }
 }
 
-// the served models and the manifests beside them, which hold their cases' expected verdicts
 fun Project.servedExampleSources(): List<RegularFile> {
     val root = isolated.rootProject.projectDirectory
     return servedExamples().flatMap {
@@ -136,7 +134,6 @@ fun Test.readsServedExamples() {
     systemProperty("semantifyr.examples", module.relativize(project.servedExamplesFile.asFile.toPath()).joinToString("/"))
 }
 
-// a model describes itself in a comment at its top: a `/** */` documentation comment in OXSTS and Gamma, a `doc` comment in SysML v2
 private fun descriptionOf(text: String): String? {
     val opening = text.trimStart()
     if (!opening.startsWith("/**") && !opening.startsWith("doc")) {
