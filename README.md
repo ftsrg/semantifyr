@@ -14,7 +14,7 @@
   <img src="branding/logo-full-light.svg" alt="Semantifyr" width="400">
 </picture>
 
-Semantifyr is a framework to declaratively define the semantics of engineering modeling languages. A language's semantics is written once, as a library in the [Semantifyr Language](https://semantifyr.org/learn/language/), and its models are verified through that library. [SysML v2](https://semantifyr.org/learn/frontends/sysml-v2/) and [Gamma](https://semantifyr.org/learn/frontends/gamma/) are its frontends, and models are verified with
+Semantifyr is a framework to declaratively define the semantics of engineering modeling languages. A language's semantics is written once, as a library in the [Semantifyr Language](https://semantifyr.org/learn/language/), and its models are verified through that library. Currently it has frontends for the [SysML v2](https://semantifyr.org/learn/frontends/sysml-v2/) and [Gamma](https://semantifyr.org/learn/frontends/gamma/) languages, and it verifies models with
 - [Theta](https://semantifyr.org/learn/backends/theta/), a configurable model checking framework,
 - [nuXmv](https://semantifyr.org/learn/backends/nuxmv/), a symbolic model checker,
 - [Spin](https://semantifyr.org/learn/backends/spin/), a model checker for concurrent software, or
@@ -71,7 +71,7 @@ The [publications page](https://semantifyr.org/publications/) lists the papers o
 
 ## License
 
-Copyright (c) 2023-2026 [The Semantifyr Authors](CONTRIBUTORS.md). Semantifyr is available under the [Eclipse Public License 2.0](https://www.eclipse.org/legal/epl-2.0/). It follows the [REUSE Specification](https://reuse.software/): every file carries its copyright and license in its header, and the license texts are in [LICENSES](LICENSES).
+Copyright (c) 2023-2026 [The Semantifyr Authors](CONTRIBUTORS.md). Semantifyr is available under the [Eclipse Public License - v 2.0](https://www.eclipse.org/legal/epl-2.0/). It follows the [REUSE Specification](https://reuse.software/): every file carries its copyright and license in its header, and the license texts are in [LICENSES](LICENSES).
 
 ## Support
 

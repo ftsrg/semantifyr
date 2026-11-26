@@ -23,4 +23,4 @@ Edit and verify Semantifyr and Gamma models with [Semantifyr](https://semantifyr
 
 ## License
 
-Copyright (c) 2023-2026 [The Semantifyr Authors](https://github.com/ftsrg/semantifyr/blob/main/CONTRIBUTORS.md). Available under the [Eclipse Public License 2.0](https://www.eclipse.org/legal/epl-2.0/).
+Copyright (c) 2023-2026 [The Semantifyr Authors](https://github.com/ftsrg/semantifyr/blob/main/CONTRIBUTORS.md). Available under the [Eclipse Public License - v 2.0](https://www.eclipse.org/legal/epl-2.0/).

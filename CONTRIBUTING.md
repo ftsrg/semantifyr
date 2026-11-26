@@ -25,7 +25,7 @@ Fork, branch from `main`, and open a pull request against `main`.
 
 ## Licensing
 
-Contributions are licensed under the [Eclipse Public License 2.0](LICENSE). Every new file carries an SPDX header in the [REUSE](https://reuse.software/) format.
+Contributions are licensed under the [Eclipse Public License - v 2.0](LICENSE). Every new file carries an SPDX header in the [REUSE](https://reuse.software/) format.
 
 ## Code of conduct
 
