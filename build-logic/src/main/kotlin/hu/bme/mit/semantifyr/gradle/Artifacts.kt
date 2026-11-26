@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.gradle.conventions
+package hu.bme.mit.semantifyr.gradle
 
 import org.gradle.api.Action
 import org.gradle.api.Project

@@ -4,12 +4,12 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.gradle.conventions
+package hu.bme.mit.semantifyr
 
 import org.gradle.accessors.dm.LibrariesForLibs
 
 plugins {
-    id("hu.bme.mit.semantifyr.gradle.conventions.jvm")
+    id("hu.bme.mit.semantifyr.jvm")
 }
 
 val libs = the<LibrariesForLibs>()
@@ -19,7 +19,6 @@ val benchmark = sourceSets.create("benchmark")
 java {
     registerFeature("benchmark") {
         usingSourceSet(benchmark)
-        disablePublication()
     }
 }
 
@@ -37,10 +36,9 @@ val runexec = providers.gradleProperty("runexec")
 
 tasks.register<JavaExec>("benchmark") {
     group = "benchmark"
-    description = "Runs the benchmark class named by the first of --args and its analysis, or only its analysis over the files named by the rest."
+    description = "Runs a benchmark and its analysis."
     classpath = benchmark.runtimeClasspath
     mainClass = "hu.bme.mit.semantifyr.benchmark.BenchmarkRunnerKt"
-    workingDir = layout.projectDirectory.asFile
     jvmArgs("--enable-native-access=ALL-UNNAMED")
     systemProperty("log4j2.configurationFile", "log4j2-benchmark.properties")
     systemProperty("benchmark.output", layout.buildDirectory.dir("benchmark").get().asFile.absolutePath)

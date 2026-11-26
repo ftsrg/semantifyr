@@ -4,12 +4,13 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.gradle.conventions
+package hu.bme.mit.semantifyr
 
+import hu.bme.mit.semantifyr.gradle.semantifyrArtifact
 import org.gradle.accessors.dm.LibrariesForLibs
 
 plugins {
-    id("hu.bme.mit.semantifyr.gradle.conventions.jvm")
+    id("hu.bme.mit.semantifyr.jvm")
     application
 }
 
@@ -20,8 +21,10 @@ dependencies {
 }
 
 application {
-    // JNA (Mordant's terminal, docker-java's socket) loads native code, Guice's bytecode generation calls sun.misc.Unsafe; both warn on every run
-    applicationDefaultJvmArgs = listOf("--enable-native-access=ALL-UNNAMED", "-Dguice_bytecode_gen_option=DISABLED")
+    applicationDefaultJvmArgs = listOf(
+        "--enable-native-access=ALL-UNNAMED",
+        "-Dguice_bytecode_gen_option=DISABLED",
+    )
 }
 
 // cmd.exe rejects a line over 8191 characters, which the expanded jar list exceeds under a long install path
@@ -68,8 +71,12 @@ tasks.startScripts {
     }
 }
 
-tasks.named("pack") {
-    dependsOn(tasks.distZip, tasks.distTar)
+tasks.distTar {
+    enabled = false
+}
+
+tasks.register("pack") {
+    dependsOn(tasks.distZip)
 }
 
 configurations.consumable("distributionElements") {

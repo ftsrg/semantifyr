@@ -4,12 +4,13 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.gradle.conventions
+package hu.bme.mit.semantifyr
 
 import com.github.gradle.node.npm.proxy.ProxySettings
+import hu.bme.mit.semantifyr.gradle.registerNpmInstallService
 
 plugins {
-    id("hu.bme.mit.semantifyr.gradle.conventions.pack")
+    base
     id("com.github.node-gradle.node")
 }
 

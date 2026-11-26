@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.gradle.conventions
+package hu.bme.mit.semantifyr.gradle
 
 import com.github.gradle.node.task.NodeTask
 import org.gradle.api.Project
@@ -12,6 +12,7 @@ import org.gradle.api.file.Directory
 import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.Sync
 import org.gradle.api.tasks.TaskProvider
+import org.gradle.kotlin.dsl.assign
 
 fun Project.registerBrandingAssets(outputDirectory: Directory): TaskProvider<Sync> {
     val brandingDirectory = rootProject.layout.projectDirectory.dir("branding")
@@ -62,8 +63,10 @@ fun Project.registerRenderPictures(
             true
         }
 
-        workingDir.set(projectDir)
-        script.set(renderScript.asFile)
-        args.set(listOf(projectDir.toPath().relativize(outputDirectory.asFile.toPath()).toString()) + specifications)
+        workingDir = projectDir
+        script = renderScript
+        args = listOf(
+            projectDir.toPath().relativize(outputDirectory.asFile.toPath()).toString(),
+        ) + specifications
     }
 }

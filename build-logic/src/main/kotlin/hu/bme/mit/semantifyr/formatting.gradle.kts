@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.gradle.conventions
+package hu.bme.mit.semantifyr
 
 import org.gradle.accessors.dm.LibrariesForLibs
 
@@ -16,13 +16,11 @@ val libs = the<LibrariesForLibs>()
 
 spotless {
     val ktlintVersion = libs.versions.ktlint.get()
-    val palantirVersion = libs.versions.palantirJavaFormat.get()
 
     kotlin {
         target(
             fileTree("src") {
                 include("**/*.kt")
-                exclude("**/xtext-gen/**", "**/emf-gen/**")
             },
         )
         ktlint(ktlintVersion).editorConfigOverride(
@@ -33,7 +31,7 @@ spotless {
                 "ktlint_standard_no-empty-first-line-at-start-in-class-body" to "disabled",
                 "ktlint_standard_no-blank-line-before-rbrace" to "disabled",
                 "ktlint_standard_unary-op-spacing" to "disabled",
-                "ij_kotlin_packages_to_use_import_on_demand" to "java.util.*,kotlinx.android.synthetic.**,io.ktor.**",
+                "ij_kotlin_packages_to_use_import_on_demand" to "io.ktor.**",
                 "ij_kotlin_line_break_after_multiline_when_entry" to "false",
                 "ktlint_function_signature_rule_force_multiline_when_parameter_count_greater_or_equal_than" to "3",
             ),
@@ -43,8 +41,7 @@ spotless {
     kotlinGradle {
         target(
             fileTree(".") {
-                include("*.gradle.kts", "src/**/*.gradle.kts")
-                exclude("build/**", "**/xtext-gen/**", "**/emf-gen/**")
+                include("*.gradle.kts")
             },
         )
         ktlint(ktlintVersion)
@@ -54,9 +51,12 @@ spotless {
         target(
             fileTree("src") {
                 include("**/*.java")
-                exclude("**/xtext-gen/**", "**/emf-gen/**")
+                exclude(
+                    "**/xtext-gen/**",
+                    "**/emf-gen/**",
+                )
             },
         )
-        palantirJavaFormat(palantirVersion)
+        palantirJavaFormat(libs.versions.palantirJavaFormat.get())
     }
 }

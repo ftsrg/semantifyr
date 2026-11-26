@@ -4,12 +4,12 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.gradle.conventions
+package hu.bme.mit.semantifyr
 
-import org.gradle.accessors.dm.LibrariesForLibs
+import hu.bme.mit.semantifyr.gradle.registerBackendRunService
 
 plugins {
-    id("hu.bme.mit.semantifyr.gradle.conventions.jvm")
+    id("hu.bme.mit.semantifyr.jvm")
 }
 
 val backendRuns = providers.gradleProperty("backendRuns").map {
@@ -17,8 +17,6 @@ val backendRuns = providers.gradleProperty("backendRuns").map {
 }.orElse(1)
 
 val backendRunServiceProvider = gradle.sharedServices.registerBackendRunService(backendRuns)
-
-val libs = the<LibrariesForLibs>()
 
 testing {
     suites {
@@ -30,14 +28,10 @@ testing {
             "nightlyTest",
         ).forEach { suite ->
             register<JvmTestSuite>(suite) {
-                useJUnitJupiter(libs.versions.junit)
-
                 dependencies {
-                    implementation(project())
                     implementation(testFixtures(project()))
                     implementation(testFixtures(project(":verifier")))
                     implementation(project(":portfolios"))
-                    runtimeOnly(libs.slf4j.log4j)
                 }
 
                 targets.all {

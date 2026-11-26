@@ -4,8 +4,9 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.gradle.conventions
+package hu.bme.mit.semantifyr
 
+import hu.bme.mit.semantifyr.gradle.javaRuntimeLibrary
 import org.gradle.accessors.dm.LibrariesForLibs
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 
@@ -13,7 +14,10 @@ class MockitoAgentArgumentProvider(
     @get:Classpath val agent: FileCollection,
 ) : CommandLineArgumentProvider {
     override fun asArguments(): Iterable<String> {
-        return listOf("-javaagent:${agent.asPath}", "-Xshare:off")
+        return listOf(
+            "-javaagent:${agent.asPath}",
+            "-Xshare:off",
+        )
     }
 }
 
@@ -21,9 +25,9 @@ plugins {
     `java-library`
     `java-test-fixtures`
     jacoco
-    id("hu.bme.mit.semantifyr.gradle.conventions.formatting")
-    id("hu.bme.mit.semantifyr.gradle.conventions.pack")
+    id("hu.bme.mit.semantifyr.formatting")
     id("org.sonarqube")
+    id("org.jetbrains.dokka")
 }
 
 val libs = the<LibrariesForLibs>()
@@ -54,11 +58,9 @@ tasks.jar {
 }
 
 tasks.withType<Test>().configureEach {
-    useJUnitPlatform()
     testLogging.showStandardStreams = true
     testLogging.exceptionFormat = TestExceptionFormat.FULL
-    workingDir = layout.projectDirectory.asFile
-    // the JVM warnings the application convention silences
+    // the JVM warnings the cli convention silences
     jvmArgs("--enable-native-access=ALL-UNNAMED")
     systemProperty("guice_bytecode_gen_option", "DISABLED")
 }
@@ -67,25 +69,8 @@ tasks.withType<JavaExec>().configureEach {
     systemProperty("guice_bytecode_gen_option", "DISABLED")
 }
 
-plugins.withId("org.jetbrains.kotlin.jvm") {
-    apply(plugin = "org.jetbrains.dokka")
-}
-
-tasks.javadoc {
-    // EMF and Xtext generate Javadoc that doclint rejects
-    (options as StandardJavadocDocletOptions).addBooleanOption("Xdoclint:none", true)
-    destinationDir = layout.buildDirectory.dir("javadoc/${project.name}").get().asFile
-}
-
-configurations.consumable("javadocDirectoryElements") {
-    attributes(semantifyrArtifact("javadoc"))
-    outgoing.artifact(layout.buildDirectory.dir("javadoc")) {
-        builtBy(tasks.javadoc)
-    }
-}
-
 tasks.withType<JacocoReport>().configureEach {
-    group = "verification"
+    group = LifecycleBasePlugin.VERIFICATION_GROUP
     sourceSets(sourceSets.main.get())
     reports {
         xml.required = true
@@ -95,13 +80,15 @@ tasks.withType<JacocoReport>().configureEach {
 
 testing {
     suites {
-        named<JvmTestSuite>("test") {
+        withType<JvmTestSuite>().configureEach {
             useJUnitJupiter(libs.versions.junit)
 
             dependencies {
                 runtimeOnly(libs.slf4j.log4j)
             }
+        }
 
+        named<JvmTestSuite>("test") {
             targets.all {
                 testTask.configure {
                     jvmArgumentProviders.add(MockitoAgentArgumentProvider(files(mockitoAgentClasspath)))

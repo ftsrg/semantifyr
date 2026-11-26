@@ -4,12 +4,11 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.gradle.conventions
+package hu.bme.mit.semantifyr
 
 plugins {
-    id("hu.bme.mit.semantifyr.gradle.conventions.jvm")
-    id("hu.bme.mit.semantifyr.gradle.conventions.theta")
-    id("hu.bme.mit.semantifyr.gradle.conventions.suites")
+    id("hu.bme.mit.semantifyr.theta")
+    id("hu.bme.mit.semantifyr.suites")
 }
 
 val cloneOxstsTestModels = tasks.register<Sync>("cloneOxstsTestModels") {
