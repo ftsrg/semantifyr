@@ -75,10 +75,6 @@ tasks.distTar {
     enabled = false
 }
 
-tasks.register("pack") {
-    dependsOn(tasks.distZip)
-}
-
 configurations.consumable("distributionElements") {
     attributes(semantifyrArtifact("application-distribution"))
     outgoing.artifact(layout.buildDirectory.dir("install")) {

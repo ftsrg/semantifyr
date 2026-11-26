@@ -66,16 +66,8 @@ tasks.withType<Test>().configureEach {
 }
 
 tasks.withType<JavaExec>().configureEach {
+    jvmArgs("--enable-native-access=ALL-UNNAMED")
     systemProperty("guice_bytecode_gen_option", "DISABLED")
-}
-
-tasks.withType<JacocoReport>().configureEach {
-    group = LifecycleBasePlugin.VERIFICATION_GROUP
-    sourceSets(sourceSets.main.get())
-    reports {
-        xml.required = true
-        html.required = true
-    }
 }
 
 testing {
@@ -98,24 +90,20 @@ testing {
     }
 }
 
-tasks.jacocoTestReport {
-    inputs.files(tasks.test)
-}
-
 // plain values only, as the plugin is not yet updated to providers
 // FIXME: when the plugin is updated
 sonar {
     properties {
-        val nonMainSourceSets = sourceSets.filter {
-            it.name != "main" && it.name != "testFixtures"
+        val testSourceSets = testing.suites.withType<JvmTestSuite>().map {
+            it.sources
         }
 
-        property("sonar.tests", nonMainSourceSets.flatMap {
+        property("sonar.tests", testSourceSets.flatMap {
             it.allSource.srcDirs
         }.filter {
             it.exists()
         })
-        property("sonar.java.test.binaries", nonMainSourceSets.flatMap {
+        property("sonar.java.test.binaries", testSourceSets.flatMap {
             it.output.classesDirs.files
         })
     }

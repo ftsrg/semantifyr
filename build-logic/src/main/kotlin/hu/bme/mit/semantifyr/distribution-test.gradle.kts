@@ -12,6 +12,10 @@ plugins {
     id("hu.bme.mit.semantifyr.suites")
 }
 
+dependencies {
+    implementation(project(":cli-common"))
+}
+
 val unzipDistribution = tasks.register<Sync>("unzipDistribution") {
     val distributionArchive = tasks.distZip.flatMap {
         it.archiveFile
@@ -22,6 +26,12 @@ val unzipDistribution = tasks.register<Sync>("unzipDistribution") {
 
 testing {
     suites {
+        named<JvmTestSuite>("test") {
+            dependencies {
+                implementation(testFixtures(project(":cli-common")))
+            }
+        }
+
         named<JvmTestSuite>("endToEndTest") {
             dependencies {
                 implementation(testFixtures(project(":cli-common")))
@@ -34,4 +44,9 @@ testing {
             }
         }
     }
+}
+
+tasks.register("pack") {
+    group = LifecycleBasePlugin.BUILD_GROUP
+    dependsOn(tasks.distZip)
 }

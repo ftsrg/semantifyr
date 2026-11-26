@@ -39,7 +39,6 @@ tasks.register<JavaExec>("benchmark") {
     description = "Runs a benchmark and its analysis."
     classpath = benchmark.runtimeClasspath
     mainClass = "hu.bme.mit.semantifyr.benchmark.BenchmarkRunnerKt"
-    jvmArgs("--enable-native-access=ALL-UNNAMED")
     systemProperty("log4j2.configurationFile", "log4j2-benchmark.properties")
     systemProperty("benchmark.output", layout.buildDirectory.dir("benchmark").get().asFile.absolutePath)
     if (runexec.isPresent) {

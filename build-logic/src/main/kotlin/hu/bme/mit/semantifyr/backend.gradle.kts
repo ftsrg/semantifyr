@@ -7,12 +7,11 @@
 package hu.bme.mit.semantifyr
 
 plugins {
-    id("hu.bme.mit.semantifyr.theta")
     id("hu.bme.mit.semantifyr.suites")
 }
 
 val cloneOxstsTestModels = tasks.register<Sync>("cloneOxstsTestModels") {
-    from(rootProject.layout.projectDirectory.dir("oxsts-test-models"))
+    from(isolated.rootProject.projectDirectory.dir("oxsts-test-models"))
     into(layout.buildDirectory.dir("test-models"))
 }
 
