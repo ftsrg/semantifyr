@@ -1,47 +1,29 @@
 ---
 title: Portfolios and Verdicts
 sidebar_position: 1
-description: How a portfolio runs the backends side by side and in stages, in which direction each answer is trusted, how the verdict is decided from their answers, and how a witness is validated.
+description: How a portfolio runs the backends side by side, how far each answer is trusted, how the verdict is decided, and how a witness is validated.
 ---
 
 # Portfolios and Verdicts
 
-Verifying a case [compiles](../language/compilation/index.mdx) it to a transition system and hands that to a portfolio. A portfolio is a strategy for the backend runs: which backends run under which configurations, how they run side by side and in stages, and how the verdict is decided from their answers. Where a backend found a run that shows the verdict, its [witness](../language/specification/library-and-output/inlined-models.md#witnesses) comes back with the verdict. The command line, Live and the VS Code extension all verify this way; `smart` is the default portfolio everywhere.
-
-## Backends side by side
-
-A portfolio is made of legs, each one backend under one configuration. A portfolio runs every leg whose backend is installed, each writing its files to a directory of its own in the case's directory, as many at once as a bound allows, by default the number of the machine's processors; a leg beyond the bound waits for a free place. Which legs take the places first is not fixed, so on a machine with fewer places than legs the outcome can differ between runs. Before its backend runs, a leg checks whether the backend can translate the model, and answers Not supported, naming the constructs it refuses, when it cannot; each [backend's page](index.mdx) lists what it refuses. A model left with no variable, no `init` and no transition is decided without any backend.
-
-## Stages
-
-A portfolio may run its legs in stages, one after another, each stage starting when the one before it ends. A stage may have a window, a time counted from its start and never past the case's time limit: when it closes, the legs of the stage still running are stopped and those still waiting for a place do not run. A stage without a window runs until the case's time runs out. A portfolio may also run legs beside its stages, outside any stage's window, sharing the same places. A leg that runs again in a later stage starts over, in a directory of its own under that stage's directory.
-
-`smart` runs one race of every installed configuration when there are no more of them than places, and three stages otherwise, the quick legs first and the strong ones last; the first trusted answer of any of them, or of a leg running beside them, is the verdict:
-
-- The first stage, within ten seconds, holds the legs that answer within seconds when they answer at all: `theta:bounded-bmc`, `spin:safe-dfs`, `uppaal:over-approximation`, `nuxmv:ic3-invar`, `uppaal:default`, `theta:bounded-kinduction`, `nuxmv:kinduction-invar`, `theta:cegar-expl` and `nuxmv:bdd-invar`.
-- The second, within thirty seconds, holds the provers that need tens of seconds: `theta:cegar-expl`, `theta:cegar-pred-cart`, `theta:chc`, `nuxmv:ic3-invar`, `theta:bounded-imc` and `theta:cegar-expl-pred-combined`.
-- The last runs until the case's time runs out: `theta:cegar-expl`, `nuxmv:ic3-invar`, `theta:cegar-pred-cart`, `theta:chc`, `uppaal:over-approximation`, `theta:ic3`, `spin:collapse` and `spin:bitstate`, Spin's two only when `spin:safe-dfs` was stopped or never started in the first stage.
-
-A configuration listed in stages that follow one another, `theta:cegar-expl` and `nuxmv:ic3-invar` from the first and `theta:cegar-pred-cart` and `theta:chc` from the second, starts once with the first of them and runs beside the stages until the case's time runs out, so no window stops it; its files go under the stage it starts in, and with the second stage skipped, `theta:cegar-pred-cart` and `theta:chc` start with the last. A stage ends at its window or when its own legs have all ended. `uppaal:over-approximation`, listed in the first and the last stage only, runs in each and starts over in the last. A leg that ended on its own, with an answer, a refusal or an error, does not run again in a later stage. The two windows together take at most a third of the time the portfolio is given, which is what the compilation left of the case's time limit. The first stage runs on every case, within ten seconds or that third when it is shorter; the second gets what is left of the third, up to thirty seconds, and is skipped when that is under ten seconds.
+A portfolio is a set of backend configurations that Semantifyr runs on a verification case, and a rule that decides the verdict from their answers. No backend is best on every model, so running several side by side gives a verdict more often and sooner. Each configuration in a portfolio is a leg; a portfolio runs the legs whose backend is installed, by default one per processor. The command line, Live, and the VS Code extension all verify this way, with `smart` as the default portfolio. [Portfolios](../reference/portfolios.mdx) lists each portfolio with its legs.
 
 ## Soundness directions
 
-Each leg is one backend configuration, listed with the direction in which its verdicts can be trusted; a run may declare a narrower direction for its model, as the backend's page says. An exact leg is trusted both ways. An under-approximating leg explores only part of the behaviour, so it is trusted when it finds a trace (a Failed `AG` or a Passed `EF` property) and not when it reports that none exists. An over-approximating leg is trusted the other way round. Each [backend's page](index.mdx) says which of its verdicts a portfolio trusts.
+Each leg is trusted in one direction. An exact leg is trusted both ways. An under-approximating leg explores only part of the behaviour, so it is trusted when it finds a trace, a Failed `AG` or a Passed `EF` property, and not when it finds none. An over-approximating leg is trusted the other way round. A run may declare a narrower direction for its model, as each [backend's page](index.mdx) says.
 
 ## The verdict from the answers
 
-How the answers become one verdict is what tells the portfolios apart:
+- `smart` and `theta` race their legs: the first trusted answer is the verdict, and the other legs are stopped.
+- `all-agree` waits for every leg and reports the verdict its trusted legs agree on. Trusted legs that disagree make the case Errored, since one of them is unsound.
+- A single-backend portfolio reports its leg's verdict when the leg's direction trusts it, and Inconclusive otherwise, such as for Spin's Passed on an `AG` property.
 
-- `smart` and `theta` race their legs, `smart` in stages: the first answer that its leg's direction trusts is the verdict, and the legs still running are stopped. An answer that is not trusted does not end the race.
-- `all-agree` waits for every leg and reports the verdict its trusted legs agree on, naming any untrusted leg it overrules. Trusted legs that disagree make the case Errored, since one of them is unsound.
-- A single-backend portfolio reports its configuration's verdict when the leg's direction trusts it; otherwise the case is Inconclusive without a witness, and the message names the verdict it withheld, such as Spin's Passed on an `AG` property.
+An answer counts only when its witness reads back into the model. When no trusted answer comes, the case is Timeout when a leg ran out of time, Errored when every leg failed, Not supported when every leg refused the model, and Inconclusive otherwise, and the message lists how every leg ended. The [command line reference](../reference/command-line.mdx#verdicts) says how each verdict is reported.
 
-A leg's answer counts only with its witness: a leg whose witness cannot be read back into the model fails as Errored, and the portfolio goes on with its other legs.
+## How `smart` runs
 
-When no trusted answer comes, the case is decided by how every leg last ended: Timeout when a leg ran out of time, was stopped at a window or at the time limit, or never got a place, Errored when every leg failed, Not supported when every leg refused the model, naming each leg and the constructs it refused, and Inconclusive otherwise; the message lists how every leg ended, for `smart` in every stage it ran. The time limit holds for the whole case, the compilation and the back-annotation of the witness included. The [command line's reference](../reference/command-line.mdx#verdicts) says how each verdict is reported, and [the portfolios](../reference/portfolios.mdx) lists each portfolio with its legs.
+`smart` runs every leg at once when there are no more legs than processors, and in three stages otherwise. The first stage gives the quick configurations up to ten seconds, the second gives the provers up to thirty, and the last runs the rest until the case's time runs out. Some provers start early and keep running through the later stages. The first trusted answer of any leg is the verdict.
 
 ## Validation
 
-A witness is checked by verifying it again, which is called validation: the witness model goes through the same compilation and a portfolio, the validation portfolio, the verification's own or another one, into the `validation/` directory of its case, so that the verification's artifacts and the open witness stay as they are. The witness is valid when that verification passes, since the replayed run then exists in the model and shows what the verdict says. The result is invalid when the witness verifies `FAILED`, inconclusive when it verifies `INCONCLUSIVE`, `TIMEOUT` or `NOT_SUPPORTED`, and errored when it verifies `ERRORED`, the case has no witness or the witness does not load. It carries that verdict, the portfolio, the message and the validation's own [report](../reference/artifacts.mdx#the-report), written into `validation/`, which names the backend that answered, how long it took and how far its verdict is trusted.
-
-The VS Code extension validates after every verdict with a witness while `semantifyr.verification.autoValidate` is on, and from **Validate Witness** on the case. Live validates every case with a witness while auto-validation is on, and from **Validate** in the case's row. The settings of both choose the validation portfolio. A witness of a Semantifyr model is named by its location in `witness.semantifyr`, a Gamma witness by the location of its case, whose last verification left the witness among its artifacts.
+A witness is validated by verifying it again, with the same compilation and a validation portfolio. The witness is valid when that verification passes, since the run it replays then exists in the model. The VS Code extension and Live validate every witness while auto-validation is on in their settings, and on request from the case.

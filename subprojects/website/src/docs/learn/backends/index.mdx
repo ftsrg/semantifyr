@@ -1,16 +1,15 @@
 ---
 title: Backends
-description: What a backend is, what it receives from the compiler, what it refuses before it runs, how far its verdict is trusted and the witness it gives back, and Theta, nuXmv, Spin and Uppaal, the currently implemented backends.
+description: "The model checkers Semantifyr verifies with: Theta, nuXmv, Spin, and Uppaal."
 ---
 
 # Backends
 
-A backend is a model checker that Semantifyr runs on the formal model of a verification case. It never sees the engineering language: whatever the frontend, the compiler hands it the case as a [transition system](../language/compilation/index.mdx), which the backend translates into its own input language, and [Artifacts](../reference/artifacts.mdx) lists what each run writes.
+A backend is a model checker that verifies the [transition system](../language/compilation/index.mdx) a verification case compiles to. Semantifyr runs the backends in [portfolios](portfolios-and-verdicts.mdx), which decide the verdict from the answers they trust.
 
-Before it runs, a backend checks that it can translate the model, and answers Not supported, naming each construct it refuses, when it cannot; each backend's page lists what it refuses and why.
+- [Theta](theta.mdx): needs `theta-xsts-cli` on `PATH`, or Docker. Its verdicts are exact on models whose clock tests are closed.
+- [nuXmv](nuxmv.mdx): needs `nuXmv` on `PATH`. Its verdicts are exact.
+- [Spin](spin.mdx): needs `spin` and `gcc` on `PATH`. A trace it finds is trusted, a proof is not.
+- [Uppaal](uppaal.mdx): needs `verifyta` on `PATH`. A trace it finds is trusted, a proof only from its `over-approximation` configuration.
 
-A backend's answer is a verdict on the case's property, trusted in the direction of the configuration that gave it: an exact one both ways, an under-approximating one when it finds a trace, an over-approximating one when it finds none. A portfolio runs the backends side by side and decides the verdict from the answers it trusts, as [Portfolios and Verdicts](portfolios-and-verdicts.mdx) explains.
-
-Where the verdict rests on a run the backend found, the run comes back with it into the [report](../reference/artifacts.mdx#the-report), from which the trace is read and the [witness](../language/specification/library-and-output/inlined-models.md#witnesses) of the model is derived.
-
-Currently implemented backends: [Theta](theta.mdx), [nuXmv](nuxmv.mdx), [Spin](spin.mdx), [Uppaal](uppaal.mdx).
+A backend that cannot translate a model answers Not supported and names each construct it refuses. Each backend's page lists them.

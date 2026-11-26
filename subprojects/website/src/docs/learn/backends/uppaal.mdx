@@ -1,17 +1,34 @@
 ---
 title: Uppaal
 sidebar_position: 6
-backend: true
-description: The Uppaal backend, its clocks, its under-approximating configurations and the one that over-approximates the clock zones, which of their verdicts a portfolio trusts, its integer ranges and the constructs it refuses before it runs.
+description: The Uppaal backend, what it needs, which of its verdicts are trusted, how it handles time and integers, and what it refuses.
 ---
 
 # Uppaal
 
-[Uppaal](https://uppaal.org/) verifies the timed-automaton translation of a case and realizes the [wait before every main step](../language/specification/classes-and-behaviour/time.md#the-wait-before-a-step) over dense time with Uppaal's own clocks. It needs `verifyta` on `PATH`. Uppaal's trace is a path through clock zones that names no times; the backend reads back the earliest times that path allows, so the elapsed times and clock values of its trace are one run along the path Uppaal found. It havocs an integer only among candidate values, so its configurations are under-approximating, and a portfolio trusts them when they find a trace, except `over-approximation` (`-A`, the convex hull of clock zones), which over-approximates the clock zones and is trusted when it finds none. It declares every integer with its static bound, or with a 31-bit range when it has none within 32 bits, so that an increment or a doubling cannot wrap before Uppaal checks the range, and stops a run as Not supported, naming the variable, when a value leaves the declared range, so a trace it finds never passes through a wrapped value; a proof over a counter without a guard such as `if (counter < 10) { counter := counter + 1 }` counts through that whole range and does not finish in practice. Before it runs, it reports a case Not supported when the case holds a construct listed below, naming each construct, or the variable it concerns, and its source line.
+[Uppaal](https://uppaal.org/) is a model checker for networks of timed automata. The backend translates a case into a timed automaton.
+
+## Install
+
+[Install Uppaal](https://uppaal.org/) and put its `verifyta` on `PATH`; a typical install has it under `<uppaal>/bin-Linux/verifyta`.
+
+## Verdicts
+
+Uppaal havocs an integer only among candidate values, so its configurations are under-approximating: a portfolio trusts a trace they find, not a proof. The exception is `over-approximation` (`-A`, the convex hull of clock zones), which over-approximates the clock zones and is trusted when it finds no trace.
+
+## Time
+
+Uppaal realizes the [wait before every main step](../language/specification/classes-and-behaviour/time.md#the-wait-before-a-step) over dense time with its own clocks. Its trace is a path through clock zones that names no times; the backend reads back the earliest times that path allows, so the elapsed times and clock values of its trace are one run along the path Uppaal found.
+
+## Integers
+
+The backend declares every integer with its static bound, or with a 31-bit range when it has none within 32 bits, so that an increment or a doubling cannot wrap before Uppaal checks the range. When a value leaves the declared range, the run stops as Not supported, naming the variable, so a trace never passes through a wrapped value. A proof over a counter without a guard, such as `if (counter < 10) { counter := counter + 1 }`, counts through the whole range and does not finish in practice.
 
 ## What the backend refuses
 
-- Variables of type `real`, `string` or `any`: the Uppaal translation declares integer, boolean, enumeration and clock variables only.
+The backend answers Not supported, naming each construct, or the variable it concerns, and its source line, when a case holds one of these:
+
+- Variables of type `real`, `string`, or `any`: the Uppaal translation declares integer, boolean, enumeration, and clock variables only.
 - For-operations: the Uppaal translation has no loop.
 - String literals: Uppaal has no strings.
 - Array literals: the backend receives arrays split into one variable per slot and has no form for an array value.
