@@ -4,13 +4,14 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
+import hu.bme.mit.semantifyr.gradle.registerCliReference
+
 plugins {
     id("hu.bme.mit.semantifyr.distribution-test")
     kotlin("jvm")
 }
 
 dependencies {
-    implementation(project(":cli-common"))
     implementation(project(":sysml-frontend"))
     implementation(project(":sysml-wrapper"))
     implementation(project(":logging"))
@@ -23,6 +24,14 @@ application {
     mainClass = "hu.bme.mit.semantifyr.frontends.sysml.cli.SemantifyrSysMLCliKt"
     applicationName = "semantifyr-sysml"
 }
+
+registerCliReference(
+    mapOf(
+        "sysml-help" to listOf("--help"),
+        "sysml-verify" to listOf("verify", "--help"),
+        "sysml-compile" to listOf("compile", "--help"),
+    ),
+)
 
 val rootDirectory = isolated.rootProject.projectDirectory
 
@@ -42,11 +51,7 @@ listOf(
     "integrationTest",
 ).forEach {
     tasks.named(it) {
-        inputs.dir(layout.projectDirectory.dir("../models/tutorial"))
-            .withPropertyName("sysmlTutorialModels")
-            .withPathSensitivity(PathSensitivity.RELATIVE)
-        inputs.dir(rootDirectory.dir("oxsts-test-models/semantic"))
-            .withPropertyName("oxstsSemanticModels")
-            .withPathSensitivity(PathSensitivity.RELATIVE)
+        inputs.dir(layout.projectDirectory.dir("../models/tutorial")).withPathSensitivity(PathSensitivity.RELATIVE)
+        inputs.dir(rootDirectory.dir("oxsts-test-models/semantic")).withPathSensitivity(PathSensitivity.RELATIVE)
     }
 }

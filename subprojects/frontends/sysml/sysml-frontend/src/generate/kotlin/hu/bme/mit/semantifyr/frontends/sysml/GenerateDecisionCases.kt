@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.website
+package hu.bme.mit.semantifyr.frontends.sysml
 
 import hu.bme.mit.semantifyr.verifier.CaseManifest
 import kotlinx.serialization.Serializable

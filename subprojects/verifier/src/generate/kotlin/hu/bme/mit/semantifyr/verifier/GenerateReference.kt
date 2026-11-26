@@ -4,26 +4,14 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.website
+package hu.bme.mit.semantifyr.verifier
 
-import hu.bme.mit.semantifyr.backend.VerificationVerdict
-import hu.bme.mit.semantifyr.cli.common.ExitCode
-import hu.bme.mit.semantifyr.cli.common.verdictTag
-import hu.bme.mit.semantifyr.verifier.FractionSerializer
-import hu.bme.mit.semantifyr.verifier.ReportValueSerializer
-import hu.bme.mit.semantifyr.verifier.VerificationReport
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.descriptors.PrimitiveKind
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.descriptors.SerialKind
 import kotlinx.serialization.descriptors.StructureKind
 import kotlinx.serialization.json.Json
-
-@Serializable
-data class ExitCodeEntry(
-    val code: Int,
-    val meaning: String,
-)
 
 @Serializable
 data class ReportField(
@@ -127,34 +115,14 @@ private fun fieldsOf(descriptor: SerialDescriptor, enclosing: Set<String>): List
     }
 }
 
-private fun exitCodes(): String {
-    val entries = ExitCode.entries.map {
-        ExitCodeEntry(it.code, it.meaning)
-    }
-    return json.encodeToString(entries)
-}
-
-private fun verdicts(): String {
-    val tags = VerificationVerdict.entries.map {
-        verdictTag(it)
-    }
-    return json.encodeToString(tags)
-}
-
 private fun fieldsOf(descriptor: SerialDescriptor): String {
     return json.encodeToString(fieldsOf(descriptor, emptySet()))
 }
 
 fun main(arguments: Array<String>) {
     val output = when (val reference = arguments.single()) {
-        "exit-codes" -> {
-            exitCodes()
-        }
         "report-fields" -> {
             fieldsOf(VerificationReport.serializer().descriptor)
-        }
-        "verdicts" -> {
-            verdicts()
         }
         else -> {
             error("No reference $reference")
