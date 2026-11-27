@@ -4,21 +4,14 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-interface HeightMessage {
-  type: 'semantifyr-live:height'
-  height: number
-}
-
-interface ShownMessage {
-  type: 'semantifyr-live:shown'
-}
+import type { LiveHeightMessage, LiveShownMessage } from '@semantifyr/editor-common'
 
 // the height is no secret, so any page may frame the embed; the page checks that the message comes from its frame
 export function reportHeight(height: number): void {
   if (window.parent === window) {
     return
   }
-  const message: HeightMessage = { type: 'semantifyr-live:height', height }
+  const message: LiveHeightMessage = { type: 'semantifyr-live:height', height }
   window.parent.postMessage(message, '*')
 }
 
@@ -27,6 +20,6 @@ export function reportShown(): void {
   if (window.parent === window) {
     return
   }
-  const message: ShownMessage = { type: 'semantifyr-live:shown' }
+  const message: LiveShownMessage = { type: 'semantifyr-live:shown' }
   window.parent.postMessage(message, '*')
 }

@@ -10,5 +10,5 @@
     "allowImportingTsExtensions": true,
     "paths": { "@site/*": ["./*"], "@grammars/*": ["./build/grammars/*"] }
   },
-  "include": ["src", "docusaurus.config.ts", "sidebars.ts", "vitest.config.mts", "vitest.ui.config.mts"]
+  "include": ["src", "docusaurus.config.ts", "sidebars.ts", "vitest.config.mts"]
 }

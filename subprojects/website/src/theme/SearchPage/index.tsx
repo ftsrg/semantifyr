@@ -12,7 +12,7 @@ export default function SearchPageWithDescription(): React.JSX.Element {
   return (
     <>
       <Head>
-        <meta name="description" content="Search the pages of the Semantifyr site, in your browser." />
+        <meta name="description" content="Search the pages of the Semantifyr site." />
       </Head>
       <SearchPage />
     </>

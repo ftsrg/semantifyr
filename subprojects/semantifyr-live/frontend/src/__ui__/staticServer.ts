@@ -14,7 +14,7 @@ const FRONTEND = resolve(import.meta.dirname, '../..')
 const DIST = join(FRONTEND, 'dist')
 const SYSML_WORKER = join(FRONTEND, 'build/sysml-worker')
 
-export const CONTENT_TYPES: Readonly<Record<string, string>> = {
+const CONTENT_TYPES: Readonly<Record<string, string>> = {
   '.html': 'text/html; charset=utf-8',
   '.js': 'text/javascript; charset=utf-8',
   '.cjs': 'text/javascript; charset=utf-8',

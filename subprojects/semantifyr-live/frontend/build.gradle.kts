@@ -139,13 +139,6 @@ configurations.consumable("webDistributionElements") {
     }
 }
 
-configurations.consumable("liveUiMockElements") {
-    attributes(semantifyrArtifact("live-ui-mock"))
-    outgoing.artifact(layout.projectDirectory.dir("src/__ui__/mock"))
-    outgoing.artifact(layout.projectDirectory.file("src/__ui__/staticServer.ts"))
-    outgoing.artifact(layout.projectDirectory.file("src/lib/api/types.ts"))
-}
-
 val npmCheck = tasks.register<NpmTask>("npmCheck") {
     group = LifecycleBasePlugin.VERIFICATION_GROUP
 

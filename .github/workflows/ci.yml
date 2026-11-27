@@ -218,9 +218,7 @@ jobs:
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: ui-evidence-${{ matrix.browser }}
-          path: |
-            subprojects/semantifyr-live/frontend/build/evidence/
-            subprojects/website/build/evidence/
+          path: subprojects/semantifyr-live/frontend/build/evidence/
           if-no-files-found: ignore
 
   reuse-check:

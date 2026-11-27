@@ -8,7 +8,7 @@ import type React from 'react';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import CodeBlock from '@theme/CodeBlock';
 import { useColorMode } from '@docusaurus/theme-common';
-import { liveEditorUrl, liveExampleUrl, normalizeBaseUrl, type LiveEditorLines, type LiveEditorView } from '@semantifyr/editor-common';
+import { liveEditorUrl, liveExampleUrl, normalizeBaseUrl, type LiveEditorLines, type LiveEditorView, type LiveEmbedMessage } from '@semantifyr/editor-common';
 import type { ExampleLanguage } from '@semantifyr/editor-common/examples';
 import { terms } from '@semantifyr/editor-common/terms';
 import { FenceContext } from '@site/src/lib/fence';
@@ -44,7 +44,7 @@ function EmbedFrame({ url, initialHeight, onShown }: FrameProps): React.JSX.Elem
   useEffect(() => {
     const origin = new URL(url).origin;
     const receive = (event: MessageEvent): void => {
-      const message = event.data as { type?: string; height?: unknown } | null;
+      const message = event.data as LiveEmbedMessage | null;
       if (event.source !== frame.current?.contentWindow || event.origin !== origin) {
         return;
       }

@@ -20,19 +20,12 @@ val editorCommon = artifactsOf("npm-package", ":semantifyr-editor-common")
 val sysmlWorker = artifactsOf("sysml-worker", ":sysml-wrapper")
 val grammars = artifactsOf("textmate-grammar", ":oxsts.lang", ":gamma.lang")
 val liveScreenshots = artifactsOf("screenshots", ":semantifyr-live-frontend")
-val liveWebDistribution = artifactsOf("web-distribution", ":semantifyr-live-frontend")
-val liveUiMock = artifactsOf("live-ui-mock", ":semantifyr-live-frontend")
 val generatedWitness = artifactsOf("generated-witness", ":verifier")
 
 dependencies {
-    testImplementation(project(":oxsts.lang"))
+    testImplementation(project(":compiler"))
     testImplementation(testFixtures(project(":oxsts.lang")))
-    testImplementation(libs.ecore)
     testImplementation(libs.gson)
-    testImplementation(libs.guice)
-    testImplementation(libs.xtext.core)
-    testImplementation(libs.xtext.testing)
-    testImplementation(libs.xtext.util)
 
     listOf(
         ":backend",
@@ -121,7 +114,7 @@ val cloneApiDocs = tasks.register<Sync>("cloneApiDocs") {
     into(layout.buildDirectory.dir("api-static/api"))
 }
 
-fun NpmTask.readsPackage() {
+fun NpmTask.readsSite() {
     readsWorkspace()
     inputs.files(
         layout.projectDirectory.dir("src").asFileTree.matching {
@@ -132,10 +125,6 @@ fun NpmTask.readsPackage() {
     inputs.file(layout.projectDirectory.file("package.json")).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.file(isolated.rootProject.projectDirectory.file(".nvmrc")).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(editorCommon).withPathSensitivity(PathSensitivity.RELATIVE)
-}
-
-fun NpmTask.readsSite() {
-    readsPackage()
     inputs.file(layout.projectDirectory.file("docusaurus.config.ts")).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.file(layout.projectDirectory.file("sidebars.ts")).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.file(sourceAliasesFile).withPathSensitivity(PathSensitivity.RELATIVE)
@@ -179,8 +168,6 @@ val npmCheck = tasks.register<NpmTask>("npmCheck") {
     readsSite()
     inputs.file(layout.projectDirectory.file("eslint.config.mjs")).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.file(layout.projectDirectory.file("vitest.config.mts")).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.file(layout.projectDirectory.file("vitest.ui.config.mts")).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.files(liveUiMock).withPathSensitivity(PathSensitivity.RELATIVE)
 
     npmCommand = listOf("run", "check")
 
@@ -192,29 +179,10 @@ val npmCheck = tasks.register<NpmTask>("npmCheck") {
     }
 }
 
-tasks.register<NpmTask>("uiTestChromium") {
-    group = LifecycleBasePlugin.VERIFICATION_GROUP
-
-    readsPackage()
-    inputs.file(layout.projectDirectory.file("vitest.ui.config.mts")).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.files(npmAssemble).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.files(liveWebDistribution).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.files(liveUiMock).withPathSensitivity(PathSensitivity.RELATIVE)
-
-    val report = "build/test-results/ui-chromium.xml"
-    npmCommand = listOf("run", "ui", "--", "--reporter=default", "--reporter=junit", "--outputFile.junit=$report")
-
-    outputs.file(layout.projectDirectory.file(report))
-    outputs.cacheIf {
-        true
-    }
-}
-
 val extractFences = tasks.register<NpmTask>("extractFences") {
     readsWorkspace()
     inputs.dir(layout.projectDirectory.dir("src/docs")).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.dir(layout.projectDirectory.dir("src/plugins")).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.file(sourceAliasesFile).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.file(layout.projectDirectory.file("package.json")).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.file(isolated.rootProject.projectDirectory.file(".nvmrc")).withPathSensitivity(PathSensitivity.RELATIVE)
 
@@ -228,8 +196,6 @@ val extractFences = tasks.register<NpmTask>("extractFences") {
 
 tasks.named<Test>("test") {
     inputs.files(extractFences).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.files(cloneGeneratedWitness).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.files(sourceAliasDirectories).withPathSensitivity(PathSensitivity.RELATIVE)
 }
 
 tasks.register("pack") {

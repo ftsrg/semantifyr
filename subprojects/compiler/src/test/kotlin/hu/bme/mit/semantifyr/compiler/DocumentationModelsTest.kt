@@ -25,18 +25,23 @@ import kotlin.io.path.isRegularFile
 import kotlin.io.path.name
 import kotlin.io.path.walk
 
-class TutorialModelsTest {
+class DocumentationModelsTest {
 
     companion object {
 
         private val injector = OxstsStandaloneSetup().createInjectorAndDoEMFRegistration()
         private val loader = injector.getInstance(SemantifyrLoader::class.java)
         private val validator = injector.getInstance(IResourceValidator::class.java)
-        private val tutorial = Path("../../oxsts-test-models/tutorial")
+        private val directories = listOf(
+            Path("../../oxsts-test-models/tutorial"),
+            Path("../../oxsts-test-models/phases"),
+        )
 
-        // every step of a tutorial is a model of its own, loaded alone as the website's live editor loads it
+        // every model the website shows is loaded alone, as the website's live editor loads it
         private val contexts: Map<Path, SemantifyrModelContext> by lazy {
-            tutorial.walk().filter {
+            directories.flatMap {
+                it.walk()
+            }.filter {
                 it.isRegularFile() && it.extension == "semantifyr"
             }.sorted().associateWith {
                 loader.loadStandaloneModel(it)
@@ -44,7 +49,7 @@ class TutorialModelsTest {
         }
 
         @JvmStatic
-        fun `Tutorial Models Validate Without Warnings`(): List<Arguments> {
+        fun `Documentation Models Validate Without Warnings`(): List<Arguments> {
             return contexts.keys.map {
                 Arguments.of(Named.of(it.name, it))
             }
@@ -53,7 +58,7 @@ class TutorialModelsTest {
 
     @ParameterizedTest
     @MethodSource
-    fun `Tutorial Models Validate Without Warnings`(model: Path) {
+    fun `Documentation Models Validate Without Warnings`(model: Path) {
         val resource = contexts.getValue(model).modelResources.single()
         val issues = validator.validate(resource, CheckMode.ALL, CancelIndicator.NullImpl).filter {
             it.severity == Severity.ERROR || it.severity == Severity.WARNING
