@@ -21,7 +21,6 @@ import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.MetaConstantExpress
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 
-// Spin and Uppaal compute in 32-bit integers that wrap, so every integer the property depends on must stay within 32 bits
 @VerificationScoped
 class IntegerRangeChecker @Inject constructor(
     private val builtinSymbolResolver: BuiltinSymbolResolver,
@@ -62,7 +61,6 @@ class IntegerRangeChecker @Inject constructor(
         return variables + leavingArithmetic(bounds, cone, outOfRange.keys)
     }
 
-    // Uppaal stops on an assignment outside a variable's declared range, so only its arithmetic can wrap
     fun checkArithmetic(
         inlinedOxsts: InlinedOxsts,
         transitionCallTraces: TransitionCallTraceMap,
@@ -72,7 +70,6 @@ class IntegerRangeChecker @Inject constructor(
         return leavingArithmetic(bounds, coneOf(inlinedOxsts, transitionCallTraces), emptySet())
     }
 
-    // the engines choose a havoced integer among HavocValueCollector's candidates, so the ranges hold for the engine's model
     private fun computeBounds(inlinedOxsts: InlinedOxsts, limit: (VariableDeclaration) -> IntegerRange): VariableBoundsInfo {
         return VariableBoundsComputation(
             inlinedOxsts = inlinedOxsts,

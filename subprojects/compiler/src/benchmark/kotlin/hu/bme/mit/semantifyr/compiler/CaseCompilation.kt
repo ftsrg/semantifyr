@@ -40,7 +40,6 @@ class CompiledPhases(
     val flattened: FlattenedCompilationContext,
 )
 
-// one injector per JVM, since Xtext injectors are not safe to create twice
 val oxstsInjector: Injector by lazy {
     OxstsStandaloneSetup().createInjectorAndDoEMFRegistration()
 }

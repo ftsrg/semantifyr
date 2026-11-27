@@ -113,7 +113,6 @@ abstract class DockerBasedBackendExecutor(
                 .exec(StreamLoggerCallback(logStream, errorStream))
                 .await()
         } catch (throwable: Throwable) {
-            // Log streaming failures do not fail the execution.
             logger.debug(throwable) { "Failed to stream logs for Docker container ${container.id}." }
         }
     }
