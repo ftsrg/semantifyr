@@ -3,7 +3,6 @@
 # SPDX-License-Identifier: EPL-2.0
 
 [versions]
-ecore = "2.43.0"
 junit = "6.1.3"
 assertj = "3.27.7"
 mockito = "5.24.0"
@@ -42,8 +41,8 @@ opensmt = "2.9.0-gef441e1c"
 gson = "2.13.2"
 
 [libraries]
-ecore = { group = "org.eclipse.emf", name = "org.eclipse.emf.ecore", version.ref = "ecore" }
-ecore-codegen = { group = "org.eclipse.emf", name = "org.eclipse.emf.codegen.ecore", version.ref = "ecore" }
+ecore = { group = "org.eclipse.emf", name = "org.eclipse.emf.ecore" }
+ecore-codegen = { group = "org.eclipse.emf", name = "org.eclipse.emf.codegen.ecore" }
 ecore-xmi = { group = "org.eclipse.emf", name = "org.eclipse.emf.ecore.xmi" }
 emf-common = { group = "org.eclipse.emf", name = "org.eclipse.emf.common" }
 junit-api = { group = "org.junit.jupiter", name = "junit-jupiter-api", version.ref = "junit" }

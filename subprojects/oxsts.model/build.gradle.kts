@@ -20,9 +20,11 @@ java {
 }
 
 dependencies {
+    api(platform(libs.xtext.bom))
     api(libs.ecore)
     api(libs.emf.common)
 
+    add(metamodel.apiConfigurationName, platform(libs.xtext.bom))
     add(metamodel.apiConfigurationName, libs.ecore)
     add(metamodel.implementationConfigurationName, libs.ecore.codegen)
     add(metamodel.implementationConfigurationName, libs.ecore.xmi)
