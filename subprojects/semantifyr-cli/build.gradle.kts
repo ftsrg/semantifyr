@@ -30,10 +30,6 @@ tasks.named<Test>("test") {
     readsTestModels()
 }
 
-distributions.main {
-    contents {
-        from(isolated.rootProject.projectDirectory.dir("oxsts-test-models/smoke")) {
-            into("models/smoke")
-        }
-    }
+tasks.named("endToEndTest") {
+    inputs.file(isolated.rootProject.projectDirectory.file("oxsts-test-models/smoke/smoke.semantifyr")).withPathSensitivity(PathSensitivity.RELATIVE)
 }
