@@ -11,6 +11,5 @@ import { baseConfig } from '../../../eslint.config.base.js';
 
 export default baseConfig({
   tsconfigRootDir: path.dirname(fileURLToPath(import.meta.url)),
-  ignores: ['public/', 'src/snippets/imported/', 'src/vscode/imported/'],
   react: true,
 });

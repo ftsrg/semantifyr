@@ -7,7 +7,7 @@
 import type React from 'react'
 
 import type { LiveFlavor } from '../examples'
-import type { VerificationCaseState } from '../lib/verification/engine'
+import type { VerificationCaseState } from '../lib/verification/state'
 
 export interface TraceSlotProps {
   caseState: VerificationCaseState

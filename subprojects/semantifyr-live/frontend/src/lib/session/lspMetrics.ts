@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import type { CancellationToken, LspClient } from '../verification/engine';
+import type { CancellationToken, LspClient } from '../verification/runs';
 
 export interface LspMetrics {
   requestCount: number;

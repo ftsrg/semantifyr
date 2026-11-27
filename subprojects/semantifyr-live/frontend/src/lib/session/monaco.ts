@@ -31,10 +31,10 @@ import { DERIVED_SCHEME, fileUriOfLibrary, isLibraryFileUri, LIBRARY_SCHEME, lib
 import { OXSTS_EXTENSIONS } from '../workspace/files';
 
 // Synced from :semantifyr-vscode by the cloneVscodeLanguageAssets Gradle task.
-import oxstsGrammar from '../../vscode/imported/syntaxes/oxsts.tmLanguage.json';
-import gammaGrammar from '../../vscode/imported/syntaxes/gamma.tmLanguage.json';
-import sysmlGrammar from '../../vscode/imported/syntaxes/sysml.tmLanguage.json';
-import languageConfiguration from '../../vscode/imported/language-configuration.json';
+import oxstsGrammar from '../../../build/imported/vscode/syntaxes/oxsts.tmLanguage.json';
+import gammaGrammar from '../../../build/imported/vscode/syntaxes/gamma.tmLanguage.json';
+import sysmlGrammar from '../../../build/imported/vscode/syntaxes/sysml.tmLanguage.json';
+import languageConfiguration from '../../../build/imported/vscode/language-configuration.json';
 
 const EDITOR_USER_CONFIG = {
   'editor.guides.bracketPairsHorizontal': 'active',

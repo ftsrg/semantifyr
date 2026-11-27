@@ -7,7 +7,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { VerificationCaseSpecification } from '@semantifyr/editor-common'
 import { InitializationSteps, isInitialized, type InitializationState } from '../../lib/stores/initialization'
-import type { LspClient } from '../../lib/verification/engine'
+import type { LspClient } from '../../lib/verification/runs'
 import { createTestLive, type TestLive } from '../helpers/live'
 
 // Goal: a session's initialization always ends with the cases listed or with the reason they are not, whatever the session answers to the discovery

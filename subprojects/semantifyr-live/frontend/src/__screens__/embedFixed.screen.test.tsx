@@ -9,7 +9,7 @@ import { describe, expect, it, onTestFinished } from 'vitest'
 import { commands, page, server, userEvent } from 'vitest/browser'
 
 import { connectionLost, INITIAL_CONNECTION } from '../lib/stores/connection'
-import type { VerificationCaseState, VerificationState } from '../lib/verification/engine'
+import type { VerificationCaseState, VerificationState } from '../lib/verification/state'
 import { documentKey } from '../lib/workspace/live'
 import { ShellRoot } from '../shells/ShellRoot'
 import { CaseTrace } from '../trace/CaseTrace'

@@ -9,7 +9,7 @@ import { beforeAll, describe, expect, it, onTestFinished } from 'vitest'
 import { page, server } from 'vitest/browser'
 
 import type { PortfolioInfo } from '@semantifyr/editor-common'
-import type { VerificationCaseState, VerificationState } from '../lib/verification/engine'
+import type { VerificationCaseState, VerificationState } from '../lib/verification/state'
 import { ShellRoot } from '../shells/ShellRoot'
 import { CaseTrace } from '../trace/CaseTrace'
 import { caseOf, finished, seedLive, type Seed, type Seeded } from './seededLive'

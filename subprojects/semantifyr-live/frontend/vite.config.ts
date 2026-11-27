@@ -16,7 +16,7 @@ const backendProxyTarget = process.env.VITE_BACKEND_PROXY_TARGET ?? 'http://loca
 
 // a model without a comment has no description file
 function commentOf(fileName: string): string | null {
-  const file = new URL(`./src/snippets/imported/descriptions/${fileName}.description`, import.meta.url);
+  const file = new URL(`./build/imported/snippets/descriptions/${fileName}.description`, import.meta.url);
   return existsSync(file) ? readFileSync(file, 'utf-8').trim() : null;
 }
 
@@ -115,6 +115,7 @@ export default defineConfig({
       '/sysml-worker': { target: backendProxyTarget, changeOrigin: true },
     },
   },
+  publicDir: 'build/imported/public',
   build: {
     outDir: 'dist',
     sourcemap: false,

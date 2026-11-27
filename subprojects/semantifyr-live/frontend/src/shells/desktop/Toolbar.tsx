@@ -9,7 +9,7 @@ import { Menu } from '@base-ui/react/menu'
 import { liveEditorUrl, parseLiveEditorUrl } from '@semantifyr/editor-common'
 import { LanguageMark } from '@semantifyr/editor-common/marks'
 
-import { listedExamples, type LiveExample, type LiveFlavor } from '../../examples'
+import { defaultExampleOf, listedExamples, type LiveExample, type LiveFlavor } from '../../examples'
 import { LANGUAGE_ORDER, presentationOf } from '../../lib/language/presentation'
 import type { LanguageUnit } from '../../lib/language/types'
 import { changeSettings } from '../../lib/stores/settings'
@@ -109,7 +109,7 @@ function LanguageSwitch(): React.JSX.Element | null {
               title={presentation.detail}
               onClick={() => {
                 if (first && flavor?.languageId !== unit.id) {
-                  live.selectModel(first.id, first.examples[0]?.id ?? '')
+                  live.selectModel(first.id, defaultExampleOf(first)?.id ?? '')
                 }
               }}
             >
@@ -146,7 +146,7 @@ function FlavourMenu({ flavor, flavors }: { flavor: LiveFlavor, flavors: readonl
                     className={`menu-item${current ? ' is-current' : ''}`}
                     onClick={() => {
                       if (!current) {
-                        live.selectModel(candidate.id, candidate.examples[0]?.id ?? '')
+                        live.selectModel(candidate.id, defaultExampleOf(candidate)?.id ?? '')
                       }
                     }}
                   >

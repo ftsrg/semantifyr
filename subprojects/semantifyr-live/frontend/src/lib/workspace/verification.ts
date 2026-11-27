@@ -12,22 +12,24 @@ import { failStep, finishStep, InitializationSteps, isReadyToVerify } from '../s
 import type { Settings } from '../stores/settings'
 import { createStore, type ReadableStore } from '../stores/store'
 import {
-  applyServerReport,
   discoverVerificationCases,
   dispatchAutoValidation,
-  markEdited,
-  markQueued,
-  mergeDiscoveredCases,
   runAllVerifications,
-  unmarkQueued,
   verifySingleCase,
   witnessValidationLocation,
   type AutoValidateRequest,
   type LspClient,
   type RunVerificationHandle,
+} from '../verification/runs'
+import {
+  applyServerReport,
+  markEdited,
+  markQueued,
+  mergeDiscoveredCases,
+  unmarkQueued,
   type VerificationCaseState,
   type VerificationState,
-} from '../verification/engine'
+} from '../verification/state'
 
 export const NO_VERIFICATION: VerificationState = {
   phase: 'idle',

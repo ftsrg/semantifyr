@@ -29,7 +29,7 @@ const SESSIONS: SessionInfo[] = [
   {
     sessionId: '3f9c1a52-7b0e-4d1e-9a64-0c7d2b5e8f11',
     remoteIp: '84.236.12.40',
-    flavorId: 'oxsts-with-sysmlv2-library',
+    flavorId: 'oxsts-with-sysml-library',
     kind: 'full',
     languageId: 'sysml',
     uptime: 'PT12M30S',
@@ -80,7 +80,7 @@ const SESSIONS: SessionInfo[] = [
   {
     sessionId: 'e9b3c6a0-4d15-4e78-92f6-7a0d1c5b8e34',
     remoteIp: '84.236.12.40',
-    flavorId: 'oxsts-with-sysmlv2-library',
+    flavorId: 'oxsts-with-sysml-library',
     kind: 'embed',
     languageId: 'sysml',
     uptime: 'PT7M2S',

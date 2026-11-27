@@ -12,7 +12,7 @@ import type { ConnectionState } from '../stores/connection'
 import type { InitializationState } from '../stores/initialization'
 import type { ReadableStore, Store } from '../stores/store'
 import type { ResolvedColorMode } from '../util/colorMode'
-import type { LspClient } from '../verification/engine'
+import type { LspClient } from '../verification/runs'
 
 export interface RuntimeContext {
   backendUrl: string

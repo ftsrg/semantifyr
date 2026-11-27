@@ -80,7 +80,7 @@ describe('the SysML language', () => {
     })).toEqual([
       'oxsts',
       'oxsts-with-gamma-library',
-      'oxsts-with-sysmlv2-library',
+      'oxsts-with-sysml-library',
     ])
     expect(registry.unitOf('sysml')?.flavors.map((flavor) => {
       return flavor.id
@@ -142,7 +142,7 @@ describe('the SysML language', () => {
     })
 
     expect(workers.started).toBe(before + 1)
-    expect(workers.sockets.at(-1)).toBe('oxsts-with-sysmlv2-library sysml')
+    expect(workers.sockets.at(-1)).toBe('oxsts-with-sysml-library sysml')
     expect(second.initialization.get().steps.find((step) => {
       return step.id === 'server'
     })?.state).toBe('done')

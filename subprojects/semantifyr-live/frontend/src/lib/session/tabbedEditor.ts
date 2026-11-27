@@ -10,7 +10,7 @@ import type { LiveEditorLines, Range } from '@semantifyr/editor-common'
 
 import type { ReadableStore } from '../stores/store'
 import type { ResolvedColorMode } from '../util/colorMode'
-import type { VerificationCaseState } from '../verification/engine'
+import type { VerificationCaseState } from '../verification/state'
 import { caseRowOf } from '../workspace/caseRows'
 import type { DocumentTabsState, ReadOnlyDocument } from '../workspace/documentTabs'
 import { libraryTabOf } from '../workspace/libraryTabs'

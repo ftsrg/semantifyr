@@ -10,11 +10,9 @@ import hu.bme.mit.semantifyr.gradle.artifactsOf
 import hu.bme.mit.semantifyr.gradle.commitHash
 import hu.bme.mit.semantifyr.gradle.oxstsFileExtension
 import hu.bme.mit.semantifyr.gradle.readsPackage
-import hu.bme.mit.semantifyr.gradle.readsWorkspace
 import hu.bme.mit.semantifyr.gradle.registerBrandingAssets
 import hu.bme.mit.semantifyr.gradle.registerNpmCheck
 import hu.bme.mit.semantifyr.gradle.semantifyrArtifact
-import hu.bme.mit.semantifyr.gradle.servedExampleSources
 import hu.bme.mit.semantifyr.gradle.servedExamples
 import org.gradle.api.file.RegularFile
 
@@ -25,14 +23,14 @@ plugins {
 val editorCommon = artifactsOf("npm-package", ":semantifyr-editor-common")
 val gammaCompiledExamples = artifactsOf("compiled-examples", ":gamma-frontend")
 val sysmlCompiledExamples = artifactsOf("compiled-examples", ":sysml-wrapper")
-val sysmlCompiledTutorial = artifactsOf("compiled-tutorial", ":sysml-wrapper")
 val sysmlWorker = artifactsOf("sysml-worker", ":sysml-wrapper")
 val grammars = artifactsOf("textmate-grammar", ":oxsts.lang", ":gamma.lang")
 val languageConfiguration = artifactsOf("language-configuration", ":semantifyr-vscode")
 
-val importedSnippetsDirectory = layout.projectDirectory.dir("src/snippets/imported")
-val importedVscodeDirectory = layout.projectDirectory.dir("src/vscode/imported")
-val publicDirectory = layout.projectDirectory.dir("public")
+val importedDirectory = layout.buildDirectory.dir("imported").get()
+val importedSnippetsDirectory = importedDirectory.dir("snippets")
+val importedVscodeDirectory = importedDirectory.dir("vscode")
+val publicDirectory = importedDirectory.dir("public")
 
 fun servedFiles(language: String): List<RegularFile> {
     return servedExamples(language).map {
@@ -60,29 +58,18 @@ val cloneSysmlExamples = tasks.register<Sync>("cloneSysmlExamples") {
     from(sysmlCompiledExamples) {
         include(compiledFiles("sysml"))
     }
-    into(importedSnippetsDirectory.dir("sysmlv2"))
+    into(importedSnippetsDirectory.dir("sysml"))
 }
 
-val cloneTutorialSnippets = tasks.register<Sync>("cloneTutorialSnippets") {
+val cloneOxstsExamples = tasks.register<Sync>("cloneOxstsExamples") {
     from(servedFiles("oxsts"))
-    into(importedSnippetsDirectory.dir("tutorial"))
+    into(importedSnippetsDirectory.dir("oxsts"))
 }
 
 // live's menu shows the first line of a model's comment under its label
 val exampleDescriptions = tasks.register<ExampleDescriptions>("exampleDescriptions") {
     models.from(servedFiles("sysml"), servedFiles("gamma"), servedFiles("oxsts"))
     outputDirectory = importedSnippetsDirectory.dir("descriptions")
-}
-
-// the load test sends a served SysML v2 model as the OXSTS it compiles to, the tutorial's among them
-val cloneLoadTestModels = tasks.register<Sync>("cloneLoadTestModels") {
-    from(sysmlCompiledExamples) {
-        include(compiledFiles("sysml"))
-    }
-    from(sysmlCompiledTutorial) {
-        include(compiledFiles("sysml"))
-    }
-    into(layout.buildDirectory.dir("load-test-models/sysml"))
 }
 
 val cloneVscodeLanguageAssets = tasks.register<Sync>("cloneVscodeLanguageAssets") {
@@ -108,7 +95,7 @@ fun NpmTask.configureSharedInputs() {
     inputs.files(editorCommon).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(cloneGammaExamples).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(cloneSysmlExamples).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.files(cloneTutorialSnippets).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.files(cloneOxstsExamples).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(exampleDescriptions).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(cloneVscodeLanguageAssets).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(cloneBrandingAssets).withPathSensitivity(PathSensitivity.RELATIVE)
@@ -144,11 +131,9 @@ configurations.consumable("webDistributionElements") {
 
 registerNpmCheck {
     configureSharedInputs()
-    // an example's page is tested against live's head and the rights the REUSE file gives, and the load test's models are read as it sends them
+    // an example's page is tested against live's head and the rights the REUSE file gives
     inputs.file(layout.projectDirectory.file("index.html")).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.file(isolated.rootProject.projectDirectory.file("REUSE.toml")).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.files(cloneLoadTestModels).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.files(servedExampleSources()).withPathSensitivity(PathSensitivity.RELATIVE)
 }
 
 tasks.register<NpmTask>("integrationTest") {
@@ -256,20 +241,6 @@ tasks.register<NpmTask>("runDev") {
     npmCommand = listOf("run", "dev")
 }
 
-tasks.register<NpmTask>("loadTest") {
-    group = LifecycleBasePlugin.VERIFICATION_GROUP
-
-    readsWorkspace()
-    inputs.files(cloneLoadTestModels).withPathSensitivity(PathSensitivity.RELATIVE)
-
-    npmCommand = listOf("run", "load-test", "--")
-    args = providers.gradleProperty("loadTest.args").map { value ->
-        value.split(" ").filter {
-            it.isNotBlank()
-        }
-    }.orElse(emptyList())
-}
-
 tasks.register("pack") {
     group = LifecycleBasePlugin.BUILD_GROUP
     dependsOn(npmAssemble)
@@ -281,10 +252,5 @@ tasks.register("continuousIntegration") {
 }
 
 tasks.named<Delete>("clean") {
-    delete(
-        "dist",
-        importedSnippetsDirectory,
-        importedVscodeDirectory,
-        publicDirectory,
-    )
+    delete("dist")
 }

@@ -11,7 +11,7 @@ import { page, server } from 'vitest/browser'
 
 import { toVscodeDiagnostics } from '../lib/session/problems'
 import { connectionLost, INITIAL_CONNECTION } from '../lib/stores/connection'
-import type { VerificationCaseState, VerificationState } from '../lib/verification/engine'
+import type { VerificationCaseState, VerificationState } from '../lib/verification/state'
 import { ShellRoot } from '../shells/ShellRoot'
 import { caseOf, finished, seedLive, type Seed } from './seededLive'
 import { settledOn } from './settled'

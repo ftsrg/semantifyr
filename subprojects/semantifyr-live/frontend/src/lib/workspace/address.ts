@@ -6,7 +6,7 @@
 
 import { decodeCompressedBase64Url, decodeLiveVerdicts, languageOfAddressName, parseLiveEditorUrl, type LiveEditorAddress } from '@semantifyr/editor-common'
 
-import { bundledExamplesOf, findExample, listedExamples, type LiveExample, type LiveFlavor } from '../../examples'
+import { bundledExamplesOf, defaultExampleOf, findExample, type LiveExample, type LiveFlavor } from '../../examples'
 import { LANGUAGE_ORDER } from '../language/presentation'
 import type { LanguageRegistry } from '../language/registry'
 import type { DocumentFile } from './files'
@@ -16,7 +16,7 @@ import { verdictsOf, type SharedResults } from './sharedResults'
 // the flavours of a language that add a library, by the library's name in the address
 const LIBRARIES: Readonly<Record<string, string>> = {
   'oxsts-with-gamma-library': 'gamma',
-  'oxsts-with-sysmlv2-library': 'sysml',
+  'oxsts-with-sysml-library': 'sysml',
 }
 
 export function libraryOf(flavorId: string): string | undefined {
@@ -45,7 +45,7 @@ export function addressedModel(address: LiveEditorAddress, defaultLanguageId: st
   const flavorId = withLibrary?.[0] ?? languageId
   const examples = bundledExamplesOf(flavorId)
   const compressedModel = address.compressedModel
-  const example = compressedModel !== null && address.example === null ? null : findExample({ examples }, address.example) ?? listedExamples({ examples })[0] ?? examples[0] ?? null
+  const example = compressedModel !== null && address.example === null ? null : findExample({ examples }, address.example) ?? defaultExampleOf({ examples }) ?? null
   return { languageId, flavorId, library: withLibrary?.[1], examples, example, compressedModel }
 }
 
@@ -104,7 +104,7 @@ export async function resolveAddress(address: LiveEditorAddress, registry: Langu
   const language = languageId === undefined ? undefined : flavorOfLanguage(registry, languageId, null)
   const withLibrary = language && address.library !== null ? flavorOfLanguage(registry, language.languageId, address.library) : undefined
   const flavor = withLibrary ?? language ?? defaultFlavor
-  const fallback = listedExamples(flavor)[0] ?? flavor.examples[0]
+  const fallback = defaultExampleOf(flavor)
   if (!fallback) {
     throw new Error(`flavor ${flavor.id} has no examples`)
   }

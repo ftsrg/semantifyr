@@ -8,7 +8,7 @@ import { createRoot } from 'react-dom/client'
 import { describe, expect, it, onTestFinished } from 'vitest'
 import { page, server } from 'vitest/browser'
 
-import type { VerificationCaseState, VerificationState } from '../lib/verification/engine'
+import type { VerificationCaseState, VerificationState } from '../lib/verification/state'
 import { ShellRoot } from '../shells/ShellRoot'
 import { caseOf, finished, seedLive, type Seed } from './seededLive'
 import { settledOn } from './settled'

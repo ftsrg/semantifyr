@@ -82,7 +82,7 @@ export const LIBRARY = {
   choices: {
     'oxsts': { label: 'None', detail: null },
     'oxsts-with-gamma-library': { label: 'Gamma', detail: 'Gamma\'s semantics' },
-    'oxsts-with-sysmlv2-library': { label: 'SysML v2', detail: 'SysML v2\'s semantics' },
+    'oxsts-with-sysml-library': { label: 'SysML v2', detail: 'SysML v2\'s semantics' },
   } as Readonly<Record<string, { label: string, detail: string | null }>>,
 }
 

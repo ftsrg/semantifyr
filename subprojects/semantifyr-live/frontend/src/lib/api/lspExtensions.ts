@@ -5,7 +5,7 @@
  */
 
 import type { ActiveVerificationInfo, SessionInfo } from './types'
-import type { LspClient } from '../verification/engine'
+import type { LspClient } from '../verification/runs'
 
 // Keep in sync with the backend's SemantifyrLiveMethods.
 export const SemantifyrLiveMethods = {

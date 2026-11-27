@@ -31,7 +31,7 @@ const LISTING: LibrariesResponse = {
       'Ports.semantifyr',
       'Statecharts.semantifyr',
     ],
-    'oxsts-with-sysmlv2-library': [
+    'oxsts-with-sysml-library': [
       'States.semantifyr',
     ],
     'gamma': [

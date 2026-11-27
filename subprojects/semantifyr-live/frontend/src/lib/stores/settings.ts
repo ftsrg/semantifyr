@@ -13,7 +13,7 @@ import {
   readPersistedString,
 } from '../util/persistence'
 import type { ColorModePreference, ResolvedColorMode } from '../util/colorMode'
-import { DEFAULT_VALIDATION_PORTFOLIO_ID } from '../verification/engine'
+import { DEFAULT_VALIDATION_PORTFOLIO_ID } from '../verification/runs'
 import { createStore, type ReadableStore, type Store } from './store'
 
 export interface Settings {

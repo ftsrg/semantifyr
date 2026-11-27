@@ -6,7 +6,7 @@
 
 import { verdictOfStatus } from '@semantifyr/editor-common/terms'
 
-import type { VerificationCaseState, VerificationState } from '../verification/engine'
+import type { VerificationCaseState, VerificationState } from '../verification/state'
 import { VERDICT_WORDS } from '../../texts'
 import type { CaseRow } from './caseRows'
 
