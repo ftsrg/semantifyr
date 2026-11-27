@@ -116,7 +116,7 @@ class ApiRoutesHandlerTest {
 
         val flavors = client.get("/api/flavors").body<FlavorsResponse>()
         val ids = flavors.flavors.map { it.id }
-        assertThat(ids).containsExactly("oxsts", "oxsts-with-gamma-library", "oxsts-with-sysmlv2-library", "gamma")
+        assertThat(ids).containsExactly("oxsts", "oxsts-with-gamma-library", "oxsts-with-sysml-library", "gamma")
     }
 
     @Test
@@ -161,7 +161,7 @@ class ApiRoutesHandlerTest {
             mapOf(
                 "oxsts" to "snippet.semantifyr",
                 "oxsts-with-gamma-library" to "snippet.semantifyr",
-                "oxsts-with-sysmlv2-library" to "snippet.semantifyr",
+                "oxsts-with-sysml-library" to "snippet.semantifyr",
                 "gamma" to "snippet.gamma",
             ),
         )
@@ -222,7 +222,7 @@ class ApiRoutesHandlerTest {
         val files = listOf(
             "semantic-libraries/gamma/Statecharts.semantifyr",
             "semantic-libraries/gamma/Ports.semantifyr",
-            "semantic-libraries/sysmlv2/States.semantifyr",
+            "semantic-libraries/sysml/States.semantifyr",
             "web/sysml-worker/library/Verification.sysml",
             "web/sysml-worker/library/Kernel Libraries/Kernel Data Type Library/ScalarValues.kerml",
             "web/sysml-worker/library/Kernel Libraries/Kernel Data Type Library/.meta.json",
@@ -247,9 +247,9 @@ class ApiRoutesHandlerTest {
         val libraries = jsonClient().get("/api/libraries").body<LibrariesResponse>()
 
         assertThat(libraries.builtin).containsExactly("standard.semantifyr")
-        assertThat(libraries.semantic).containsOnlyKeys("oxsts-with-gamma-library", "oxsts-with-sysmlv2-library", "gamma")
+        assertThat(libraries.semantic).containsOnlyKeys("oxsts-with-gamma-library", "oxsts-with-sysml-library", "gamma")
         assertThat(libraries.semantic["gamma"]).containsExactly("Ports.semantifyr", "Statecharts.semantifyr")
-        assertThat(libraries.semantic["oxsts-with-sysmlv2-library"]).containsExactly("States.semantifyr")
+        assertThat(libraries.semantic["oxsts-with-sysml-library"]).containsExactly("States.semantifyr")
         assertThat(libraries.sysml).containsExactly("Kernel Libraries/Kernel Data Type Library/ScalarValues.kerml", "Verification.sysml")
     }
 }

@@ -138,7 +138,7 @@ class AdminHandlerTest {
         val testSession = SessionInfo(
             sessionId = "test-session",
             remoteIp = "127.0.0.1",
-            flavorId = "oxsts-with-sysmlv2-library",
+            flavorId = "oxsts-with-sysml-library",
             kind = "embed",
             languageId = "sysml",
             uptime = 30.seconds,

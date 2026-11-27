@@ -17,12 +17,13 @@ plugins {
 }
 
 val frontendDistribution = artifactsOf("web-distribution", ":semantifyr-live-frontend")
-val gammaCompiledExamples = artifactsOf("compiled-examples", ":gamma-frontend")
-val sysmlCompiledExamples = artifactsOf("compiled-examples", ":sysml-wrapper")
+val gammaCompiledSmoke = artifactsOf("compiled-smoke", ":gamma-frontend")
+val sysmlCompiledSmoke = artifactsOf("compiled-smoke", ":sysml-wrapper")
 val sysmlWorker = artifactsOf("sysml-worker", ":sysml-wrapper")
-val gammaLibrary = artifactsOf("gamma-library", ":gamma-frontend")
-val sysmlLibrary = artifactsOf("sysml-library", ":sysml-frontend")
-val gammaExamples = artifactsOf("gamma-examples", ":gamma-frontend")
+val gammaLibrary = isolated.rootProject.projectDirectory.dir("subprojects/frontends/gamma/models/libraries/default")
+val sysmlLibrary = isolated.rootProject.projectDirectory.dir("subprojects/frontends/sysml/models/libraries/default")
+val gammaSmoke = isolated.rootProject.projectDirectory.dir("subprojects/frontends/gamma/models/smoke")
+val sysmlSmoke = isolated.rootProject.projectDirectory.dir("subprojects/frontends/sysml/models/smoke")
 val theta = artifactsOf("theta-xsts-cli", ":theta-executor")
 
 dependencies {
@@ -80,40 +81,16 @@ tasks.jar {
 }
 
 val semanticLibrariesDirectory = layout.buildDirectory.dir("staging/semantic-libraries")
-val gammaExamplesDirectory = layout.buildDirectory.dir("staging/gamma-examples")
-val oxstsTestModelsDirectory = layout.buildDirectory.dir("staging/oxsts-test-models")
-val gammaCompiledExamplesDirectory = layout.buildDirectory.dir("staging/gamma-compiled-examples")
-val sysmlCompiledExamplesDirectory = layout.buildDirectory.dir("staging/sysml-compiled-examples")
 val webDirectory = layout.buildDirectory.dir("staging/web")
 
 val cloneSemanticLibraries = tasks.register<Sync>("cloneSemanticLibraries") {
     from(sysmlLibrary) {
-        into("sysmlv2")
+        into("sysml")
     }
     from(gammaLibrary) {
         into("gamma")
     }
     into(semanticLibrariesDirectory)
-}
-
-val cloneGammaExamples = tasks.register<Sync>("cloneGammaExamples") {
-    from(gammaExamples)
-    into(gammaExamplesDirectory)
-}
-
-val cloneOxstsTestModels = tasks.register<Sync>("cloneOxstsTestModels") {
-    from(isolated.rootProject.projectDirectory.dir("oxsts-test-models/smoke"))
-    into(oxstsTestModelsDirectory)
-}
-
-val cloneGammaCompiledExamples = tasks.register<Sync>("cloneGammaCompiledExamples") {
-    from(gammaCompiledExamples)
-    into(gammaCompiledExamplesDirectory)
-}
-
-val cloneSysmlCompiledExamples = tasks.register<Sync>("cloneSysmlCompiledExamples") {
-    from(sysmlCompiledExamples)
-    into(sysmlCompiledExamplesDirectory)
 }
 
 val cloneWebDistributions = tasks.register<Sync>("cloneWebDistributions") {
@@ -160,15 +137,20 @@ tasks.register<JavaExec>("runDev") {
     mainClass = application.mainClass
 }
 
-fun Test.readsStaged(
+fun Test.readsPath(
     property: String,
-    sync: TaskProvider<Sync>,
-    directory: Provider<Directory>,
+    path: FileCollection,
 ) {
-    inputs.files(sync).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.files(path).withPathSensitivity(PathSensitivity.RELATIVE)
     val module = layout.projectDirectory.asFile
     jvmArgumentProviders += CommandLineArgumentProvider {
-        listOf("-D$property=${directory.get().asFile.relativeTo(module).invariantSeparatorsPath}")
+        listOf("-D$property=${path.singleFile.relativeTo(module).invariantSeparatorsPath}")
+    }
+}
+
+fun FileCollection.named(name: String): FileCollection {
+    return filter {
+        it.name == name
     }
 }
 
@@ -190,17 +172,16 @@ testing {
 }
 
 tasks.named<Test>("integrationTest") {
-    readsStaged("semantifyr.live.semanticLibraries", cloneSemanticLibraries, semanticLibrariesDirectory)
-    readsStaged("semantifyr.live.gammaExamples", cloneGammaExamples, gammaExamplesDirectory)
-    readsStaged("semantifyr.live.oxstsTestModels", cloneOxstsTestModels, oxstsTestModelsDirectory)
-    readsStaged("semantifyr.live.gammaCompiledExamples", cloneGammaCompiledExamples, gammaCompiledExamplesDirectory)
-    readsStaged("semantifyr.live.sysmlCompiledExamples", cloneSysmlCompiledExamples, sysmlCompiledExamplesDirectory)
+    readsPath("semantifyr.live.semanticLibraries", files(cloneSemanticLibraries))
+    readsPath("semantifyr.live.gammaCompiledModel", gammaCompiledSmoke.named("smoke.semantifyr"))
+    readsPath("semantifyr.live.sysmlCompiledModel", sysmlCompiledSmoke.named("smoke.semantifyr"))
+    inputs.file(isolated.rootProject.projectDirectory.file("oxsts-test-models/smoke/smoke.semantifyr")).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.files(gammaSmoke.file("smoke.gamma"), gammaSmoke.file("manifest.json"), sysmlSmoke.file("manifest.json")).withPathSensitivity(PathSensitivity.RELATIVE)
 }
 
 val liveImageContext = tasks.register<Tar>("liveImageContext") {
     archiveFileName = "live-image-context.tar.gz"
     compression = Compression.GZIP
-    // the image runs the start script and theta-xsts-cli, whose execute bits Gradle's archives drop by default
     useFileSystemPermissions()
     from(layout.projectDirectory.file("Dockerfile"))
     from(tasks.installDist) {

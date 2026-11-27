@@ -13,7 +13,6 @@ import hu.bme.mit.semantifyr.live.backend.lsp.service.SemantifyrLiveMethods
 import hu.bme.mit.semantifyr.live.backend.testing.LspWire
 import hu.bme.mit.semantifyr.live.backend.testing.StagedTestSupport
 import hu.bme.mit.semantifyr.live.backend.testing.StagedTestSupport.config
-import hu.bme.mit.semantifyr.live.backend.testing.StagedTestSupport.stagedModel
 import hu.bme.mit.semantifyr.live.backend.testing.awaitResponseFor
 import hu.bme.mit.semantifyr.live.backend.testing.resultAs
 import hu.bme.mit.semantifyr.live.backend.testing.withRealServer
@@ -29,6 +28,7 @@ import org.eclipse.lsp4j.TextDocumentIdentifier
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Path
+import kotlin.io.path.readText
 
 class LiveCompiledOxstsTest {
 
@@ -50,17 +50,17 @@ class LiveCompiledOxstsTest {
     @Test
     suspend fun `the gamma flavor returns the compiled oxsts of its document and follows its edits`(@TempDir temporaryDirectory: Path) {
         StagedTestSupport.assumeStaged()
-        val modelSource = stagedModel(StagedTestSupport.gammaExamplesDirectory, "semantifyr.live.gammaExamples", "Simple.gamma")
+        val modelSource = StagedTestSupport.gammaSmokeDirectory.resolve("smoke.gamma").readText()
         withRealServer(config(temporaryDirectory)) { client, port ->
             client.webSocket("ws://localhost:$port/ws/lsp/gamma") {
                 openGammaModel(modelSource)
 
                 val compiled = compiledOxsts(id = 2)
                 assertThat(compiled.status()).isEqualTo(CompiledOxstsResult.COMPILED)
-                assertThat(compiled.oxsts()).startsWith("package _Simple")
+                assertThat(compiled.oxsts()).startsWith("package _smoke")
 
-                send(Frame.Text(LspWire.didChangeNotification(documentUri, 2, modelSource.replace("package Simple", "package Renamed"))))
-                assertThat(compiledOxsts(id = 3).oxsts()).startsWith("package _Renamed")
+                send(Frame.Text(LspWire.didChangeNotification(documentUri, 2, modelSource.replace("package smoke", "package renamed"))))
+                assertThat(compiledOxsts(id = 3).oxsts()).startsWith("package _renamed")
             }
         }
     }
@@ -99,8 +99,8 @@ class LiveCompiledOxstsTest {
     @Test
     suspend fun `the compiled oxsts given to the gamma session goes to its definitions in the gamma library and on inside it`(@TempDir temporaryDirectory: Path) {
         StagedTestSupport.assumeStaged()
-        val modelSource = stagedModel(StagedTestSupport.gammaExamplesDirectory, "semantifyr.live.gammaExamples", "Simple.gamma")
-        val compiledUri = "file:///workspace/.live-derived/model-oxsts/Simple.semantifyr"
+        val modelSource = StagedTestSupport.gammaSmokeDirectory.resolve("smoke.gamma").readText()
+        val compiledUri = "file:///workspace/.live-derived/model-oxsts/smoke.semantifyr"
         withRealServer(config(temporaryDirectory)) { client, port ->
             client.webSocket("ws://localhost:$port/ws/lsp/gamma") {
                 openGammaModel(modelSource)

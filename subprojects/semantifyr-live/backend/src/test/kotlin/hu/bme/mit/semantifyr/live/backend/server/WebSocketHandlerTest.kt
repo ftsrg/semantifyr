@@ -144,9 +144,9 @@ class WebSocketHandlerTest {
             install(ClientWebSockets)
         }
         val addresses = listOf(
-            "oxsts-with-sysmlv2-library?language=sysml",
-            "oxsts-with-sysmlv2-library?language=gamma",
-            "oxsts-with-sysmlv2-library",
+            "oxsts-with-sysml-library?language=sysml",
+            "oxsts-with-sysml-library?language=gamma",
+            "oxsts-with-sysml-library",
             "oxsts?language=sysml",
             "gamma?language=gamma",
         )

@@ -18,8 +18,8 @@ import hu.bme.mit.semantifyr.live.backend.lsp.service.ReadDocumentResult
 import hu.bme.mit.semantifyr.live.backend.lsp.service.SemantifyrLiveMethods
 import hu.bme.mit.semantifyr.live.backend.testing.LspWire
 import hu.bme.mit.semantifyr.live.backend.testing.StagedTestSupport
+import hu.bme.mit.semantifyr.live.backend.testing.StagedTestSupport.compiledModel
 import hu.bme.mit.semantifyr.live.backend.testing.StagedTestSupport.config
-import hu.bme.mit.semantifyr.live.backend.testing.StagedTestSupport.stagedModel
 import hu.bme.mit.semantifyr.live.backend.testing.awaitPublishDiagnostics
 import hu.bme.mit.semantifyr.live.backend.testing.awaitResponseFor
 import hu.bme.mit.semantifyr.live.backend.testing.discoverCases
@@ -39,6 +39,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Files
 import java.nio.file.Path
+import kotlin.io.path.readText
 import kotlin.time.Duration.Companion.minutes
 
 class LiveVerificationTest {
@@ -47,7 +48,7 @@ class LiveVerificationTest {
     suspend fun `an oxsts witness validates twice as valid, leaves the witness as it was and keeps its report beside the case's artifacts`(@TempDir temporaryDirectory: Path) {
         StagedTestSupport.assumeStaged()
         val documentUri = "file:///workspace/snippet.semantifyr"
-        val modelSource = stagedModel(StagedTestSupport.oxstsTestModelsDirectory, "semantifyr.live.oxstsTestModels", "smoke.semantifyr")
+        val modelSource = StagedTestSupport.oxstsSmokeModel.readText()
         withRealServer(config(temporaryDirectory)) { client, port ->
             client.webSocket("ws://localhost:$port/ws/lsp/oxsts") {
                 send(Frame.Text(LspWire.initializeRequest()))
@@ -126,7 +127,7 @@ class LiveVerificationTest {
     suspend fun `a gamma verification returns its gamma trace, which opens without errors, and a witness that re-verifies`(@TempDir temporaryDirectory: Path) {
         StagedTestSupport.assumeStaged()
         val documentUri = "file:///workspace/snippet.gamma"
-        val modelSource = stagedModel(StagedTestSupport.gammaExamplesDirectory, "semantifyr.live.gammaExamples", "Simple.gamma")
+        val modelSource = StagedTestSupport.gammaSmokeDirectory.resolve("smoke.gamma").readText()
         withRealServer(config(temporaryDirectory)) { client, port ->
             client.webSocket("ws://localhost:$port/ws/lsp/gamma") {
                 send(Frame.Text(LspWire.initializeRequest()))
@@ -135,19 +136,19 @@ class LiveVerificationTest {
                 send(Frame.Text(LspWire.didOpenNotification(uri = documentUri, languageId = "gamma", text = modelSource)))
 
                 val cases = discoverCases(id = 2, command = "gamma.case.discover", documentUri = documentUri, flavor = "gamma")
-                val selectedCase = cases.pickByLabel("LeaderStatechartIdleReachable")
+                val selectedCase = cases.pickByLabel("OnReachable")
                 val request = VerificationCaseRequest(documentUri, selectedCase.location().range, "smart")
 
                 send(Frame.Text(LspWire.executeCommandRequest(id = 3, command = "gamma.case.verify", arguments = listOf(request))))
                 val verifyResult = awaitResponseFor(id = 3, timeout = 2.minutes).resultAs(VerificationCaseResult::class.java)
-                assertThat(verifyResult.outcomeStatus()).isEqualTo(expectedStatus("Simple.gamma", "LeaderStatechartIdleReachable"))
+                assertThat(verifyResult.outcomeStatus()).isEqualTo(expectedStatus(StagedTestSupport.gammaSmokeDirectory, "smoke.gamma", "OnReachable"))
                 val traceUri = verifyResult.traceUri()
                     ?: error("verify produced no trace URI: $verifyResult")
                 assertThat(traceUri).startsWith("file:///workspace/").endsWith("/trace.get")
 
                 send(Frame.Text(LspWire.request(id = 4, method = SemantifyrLiveMethods.READ_DOCUMENT, params = ReadDocumentParams(traceUri))))
                 val traceText = awaitResponseFor(id = 4).resultAs(ReadDocumentResult::class.java).text
-                assertThat(traceText).contains("trace LeaderStatechartIdleReachableTrace of LeaderStatechartIdleReachable")
+                assertThat(traceText).contains("trace OnReachableTrace of OnReachable")
                 send(Frame.Text(LspWire.didOpenNotification(uri = traceUri, languageId = "gamma", text = checkNotNull(traceText))))
                 val diagnostics = awaitPublishDiagnostics(traceUri).paramsAs(PublishDiagnosticsParams::class.java).diagnostics
                 assertThat(diagnostics).noneMatch {
@@ -165,7 +166,7 @@ class LiveVerificationTest {
                     .isEqualTo(WitnessValidationStatus.VALID)
                 assertThat(validation.report()?.result?.verdict).isEqualTo(VerificationVerdict.Passed)
                 assertThat(validation.portfolioId()).isEqualTo("smart")
-                assertThat(artifactsOnDisk(temporaryDirectory, "model._Simple._LeaderStatechartIdleReachable")).contains(
+                assertThat(artifactsOnDisk(temporaryDirectory, "model._smoke._OnReachable")).contains(
                     "report.json",
                     "witness.semantifyr",
                     "trace.get",
@@ -176,30 +177,34 @@ class LiveVerificationTest {
     }
 
     @Test
-    suspend fun `oxsts-with-gamma-library verifies a compiled gamma example`(@TempDir temporaryDirectory: Path) {
+    suspend fun `oxsts-with-gamma-library verifies the compiled gamma smoke model`(@TempDir temporaryDirectory: Path) {
         verifyCompiledCase(
             temporaryDirectory = temporaryDirectory,
             flavor = "oxsts-with-gamma-library",
-            modelSource = stagedModel(StagedTestSupport.gammaCompiledExamplesDirectory, "semantifyr.live.gammaCompiledExamples", "Simple.semantifyr"),
-            caseName = "LeaderStatechartIdleReachable",
-            expectedStatus = expectedStatus("Simple.gamma", "LeaderStatechartIdleReachable"),
+            modelSource = compiledModel(StagedTestSupport.gammaCompiledModel, "semantifyr.live.gammaCompiledModel"),
+            caseName = "OnReachable",
+            expectedStatus = expectedStatus(StagedTestSupport.gammaSmokeDirectory, "smoke.gamma", "OnReachable"),
         )
     }
 
     @Test
-    suspend fun `oxsts-with-sysmlv2-library verifies a compiled sysml example`(@TempDir temporaryDirectory: Path) {
+    suspend fun `oxsts-with-sysml-library verifies the compiled sysml smoke model`(@TempDir temporaryDirectory: Path) {
         verifyCompiledCase(
             temporaryDirectory = temporaryDirectory,
-            flavor = "oxsts-with-sysmlv2-library",
-            modelSource = stagedModel(StagedTestSupport.sysmlCompiledExamplesDirectory, "semantifyr.live.sysmlCompiledExamples", "door_access.semantifyr"),
-            caseName = "LockedReachable",
-            expectedStatus = "passed",
+            flavor = "oxsts-with-sysml-library",
+            modelSource = compiledModel(StagedTestSupport.sysmlCompiledModel, "semantifyr.live.sysmlCompiledModel"),
+            caseName = "SwitchOnReachable",
+            expectedStatus = expectedStatus(StagedTestSupport.sysmlSmokeDirectory, "smoke.sysml", "SwitchOnReachable"),
         )
     }
 
-    // the wire's status of a case's expected verdict, which the manifest beside the staged Gamma models states
-    private fun expectedStatus(file: String, caseName: String): String {
-        return CaseManifest.load(checkNotNull(StagedTestSupport.gammaExamplesDirectory)).expectedVerdict(file, caseName).name.lowercase()
+    // the wire's status of a case's expected verdict, which the smoke model's manifest states
+    private fun expectedStatus(
+        directory: Path,
+        file: String,
+        caseName: String,
+    ): String {
+        return CaseManifest.load(directory).expectedVerdict(file, caseName).name.lowercase()
     }
 
     private fun caseDirectoryName(modelStem: String, case: VerificationCaseSpecification): String {

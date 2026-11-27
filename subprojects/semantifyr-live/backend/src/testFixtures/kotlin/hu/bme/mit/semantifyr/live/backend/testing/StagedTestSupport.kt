@@ -16,11 +16,13 @@ import java.nio.file.Path
 
 object StagedTestSupport {
 
+    val oxstsSmokeModel: Path = Path.of("../../../oxsts-test-models/smoke/smoke.semantifyr")
+    val gammaSmokeDirectory: Path = Path.of("../../frontends/gamma/models/smoke")
+    val sysmlSmokeDirectory: Path = Path.of("../../frontends/sysml/models/smoke")
+
     val semanticLibrariesDirectory = systemPropertyPath("semantifyr.live.semanticLibraries")
-    val oxstsTestModelsDirectory = systemPropertyPath("semantifyr.live.oxstsTestModels")
-    val gammaExamplesDirectory = systemPropertyPath("semantifyr.live.gammaExamples")
-    val gammaCompiledExamplesDirectory = systemPropertyPath("semantifyr.live.gammaCompiledExamples")
-    val sysmlCompiledExamplesDirectory = systemPropertyPath("semantifyr.live.sysmlCompiledExamples")
+    val gammaCompiledModel = systemPropertyPath("semantifyr.live.gammaCompiledModel")
+    val sysmlCompiledModel = systemPropertyPath("semantifyr.live.sysmlCompiledModel")
 
     private fun systemPropertyPath(name: String): Path? {
         return System.getProperty(name)?.let {
@@ -51,12 +53,11 @@ object StagedTestSupport {
         )
     }
 
-    fun stagedModel(
-        directory: Path?,
+    fun compiledModel(
+        model: Path?,
         propertyName: String,
-        filename: String,
     ): String {
-        assumeTrue(directory != null, "$propertyName system property not set")
-        return Files.readString(checkNotNull(directory).resolve(filename))
+        assumeTrue(model != null, "$propertyName system property not set")
+        return Files.readString(checkNotNull(model))
     }
 }
