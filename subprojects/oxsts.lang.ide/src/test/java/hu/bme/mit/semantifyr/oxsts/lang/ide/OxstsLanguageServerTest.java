@@ -46,7 +46,6 @@ public abstract class OxstsLanguageServerTest extends AbstractLanguageServerTest
     @Override
     protected Module getServerModule() {
         return Modules2.mixin(new OxstsServerModule(), new OxstsRuntimeModule(), new OxstsIdeModule(), binder -> {
-            // Answers each request on the test thread before the call returns.
             binder.bind(IRequestManager.class).to(DirectRequestManager.class);
         });
     }
@@ -56,7 +55,6 @@ public abstract class OxstsLanguageServerTest extends AbstractLanguageServerTest
         return SemantifyrLanguageClient.class;
     }
 
-    // The server indexes the workspace when openModel initializes it, so library files are added before.
     protected String addLibraryFile(String fileName, String text) {
         return writeFile(LIBRARY_DIRECTORY_NAME + "/" + fileName, text);
     }

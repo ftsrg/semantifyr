@@ -20,7 +20,6 @@ import org.junit.jupiter.api.Test;
 
 class OxstsDocumentSymbolTest extends OxstsLanguageServerTest {
 
-    // VS Code and Monaco ask for the outline as a tree.
     @Override
     protected InitializeResult initialize() {
         return initialize(params -> {

@@ -41,7 +41,6 @@ public class RedefinitionChainCollector {
             return Set.of(element);
         }
 
-        // RedefinersFinder scans the resource set, so a redefiner in a file nobody opened is found only once loaded.
         loadIndexedResources(declaration.eResource().getResourceSet());
 
         var root = declaration;

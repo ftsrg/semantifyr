@@ -32,7 +32,6 @@ public class OxstsContentAssistService extends ContentAssistService {
         return item;
     }
 
-    // Xtext keeps placeholders as document offsets beside the plain proposal; LSP carries them in snippet syntax.
     private String toSnippet(ContentAssistEntry entry, int start) {
         var proposal = entry.getProposal();
         var snippet = new StringBuilder();

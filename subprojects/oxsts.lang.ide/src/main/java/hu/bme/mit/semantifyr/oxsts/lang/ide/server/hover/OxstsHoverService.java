@@ -82,7 +82,6 @@ public class OxstsHoverService extends HoverService {
         return null;
     }
 
-    // An uncommented redefinition inherits the comment of what it redefines, as a Kotlin override does.
     protected String getDocumentation(EObject element) {
         var visited = new HashSet<EObject>();
         var current = element;

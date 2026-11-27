@@ -74,7 +74,6 @@ public class OxstsWorkspaceSymbolService extends WorkspaceSymbolService {
         return symbols;
     }
 
-    // The libraries live in the resource set, outside the index.
     private void collectResourceSetSymbols(
             ResourceSet resourceSet,
             String query,
