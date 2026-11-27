@@ -33,7 +33,7 @@ class OptionalInliningTest : InliningTestBase() {
                     redefine tran {
                         inline leaves?.bump()
                     }
-                    prop {
+                    redefine prop {
                         return EF leaf.count == 3
                     }
                 }
@@ -67,7 +67,7 @@ class OptionalInliningTest : InliningTestBase() {
                         assume(count < 1)
                         count := count + 1
                     }
-                    prop {
+                    redefine prop {
                         return EF count == 1
                     }
                 }
@@ -99,7 +99,7 @@ class OptionalInliningTest : InliningTestBase() {
                     redefine tran {
                         inline (leaf as Leaf).bump()
                     }
-                    prop {
+                    redefine prop {
                         return EF true
                     }
                 }
@@ -124,7 +124,7 @@ class OptionalInliningTest : InliningTestBase() {
                     redefine tran {
                         inline leaves?.bump()
                     }
-                    prop {
+                    redefine prop {
                         return EF true
                     }
                 }
@@ -167,7 +167,7 @@ class OptionalInliningTest : InliningTestBase() {
                             inline recorder.store(7, marker)
                         }
                     }
-                    prop {
+                    redefine prop {
                         return EF (recorder.value == 5 && !recorder.marked)
                     }
                 }

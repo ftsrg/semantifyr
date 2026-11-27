@@ -19,7 +19,7 @@ class Incrementing {
         x := x + 1
     }
 
-    prop {
+    redefine prop {
         return EF x == 10
     }
 }
@@ -33,7 +33,7 @@ class StaysAtOne {
         x := 1
     }
 
-    prop {
+    redefine prop {
         return EF x == 0
     }
 }
@@ -51,7 +51,7 @@ class FlipFlopInvariant {
         }
     }
 
-    prop {
+    redefine prop {
         return AG (state == 0 || state == 1)
     }
 }
@@ -65,7 +65,7 @@ class CounterExceedsBound {
         x := x + 1
     }
 
-    prop {
+    redefine prop {
         return AG x < 5
     }
 }

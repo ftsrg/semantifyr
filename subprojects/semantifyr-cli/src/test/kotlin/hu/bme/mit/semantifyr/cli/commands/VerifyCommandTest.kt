@@ -167,7 +167,7 @@ class VerifyCommandTest {
                     counter := 1
                 }
 
-                prop {
+                redefine prop {
                     return counter == 1
                 }
             }
@@ -180,7 +180,7 @@ class VerifyCommandTest {
                     counter := 1
                 }
 
-                prop {
+                redefine prop {
                     return EF counter == 1
                 }
             }
@@ -224,7 +224,7 @@ class VerifyCommandTest {
                     counter := 1
                 }
 
-                prop {
+                redefine prop {
                     return counter == 1
                 }
             }

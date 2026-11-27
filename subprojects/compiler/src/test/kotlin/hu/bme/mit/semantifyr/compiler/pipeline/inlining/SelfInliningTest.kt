@@ -39,7 +39,7 @@ class SelfInliningTest : InliningTestBase() {
                     redefine init {
                         inline member.init()
                     }
-                    prop {
+                    redefine prop {
                         return AG member.joined
                     }
                 }

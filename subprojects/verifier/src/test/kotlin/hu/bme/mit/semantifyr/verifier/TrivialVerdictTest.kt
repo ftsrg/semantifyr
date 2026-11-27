@@ -36,7 +36,7 @@ class TrivialVerdictTest {
                 package trivial::tests
                 @VerificationCase
                 class TrivialPass {
-                    prop {
+                    redefine prop {
                         return AG true
                     }
                 }
@@ -53,7 +53,7 @@ class TrivialVerdictTest {
                 package trivial::tests
                 @VerificationCase
                 class TrivialFailAG {
-                    prop {
+                    redefine prop {
                         return AG false
                     }
                 }
@@ -70,7 +70,7 @@ class TrivialVerdictTest {
                 package trivial::tests
                 @VerificationCase
                 class TrivialPassEF {
-                    prop {
+                    redefine prop {
                         return EF true
                     }
                 }
@@ -87,7 +87,7 @@ class TrivialVerdictTest {
                 package trivial::tests
                 @VerificationCase
                 class TrivialFailEF {
-                    prop {
+                    redefine prop {
                         return EF false
                     }
                 }
@@ -105,7 +105,7 @@ class TrivialVerdictTest {
                 @VerificationCase
                 class DispatchOnVar {
                     var counter: int := 0
-                    prop {
+                    redefine prop {
                         return AG (counter >= 0)
                     }
                 }
@@ -125,7 +125,7 @@ class TrivialVerdictTest {
                     redefine init {
                         counter := 1
                     }
-                    prop {
+                    redefine prop {
                         return AG (counter >= 0)
                     }
                 }
@@ -145,7 +145,7 @@ class TrivialVerdictTest {
                     redefine tran {
                         counter := counter + 1
                     }
-                    prop {
+                    redefine prop {
                         return AG (counter >= 0)
                     }
                 }

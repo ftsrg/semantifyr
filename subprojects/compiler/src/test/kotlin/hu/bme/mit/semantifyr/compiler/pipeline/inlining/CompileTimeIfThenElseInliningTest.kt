@@ -37,7 +37,7 @@ class CompileTimeIfThenElseInliningTest : InliningTestBase() {
                 contains store: Store {
                     redefine refers capacity: int = $capacity
                 }
-                prop {
+                redefine prop {
                     return AG !store.hasHead(item)
                 }
             }
@@ -47,7 +47,7 @@ class CompileTimeIfThenElseInliningTest : InliningTestBase() {
                 contains store: Store {
                     redefine refers capacity: int = $capacity
                 }
-                prop {
+                redefine prop {
                     return AG !store.maybeHead(item)
                 }
             }
@@ -105,7 +105,7 @@ class CompileTimeIfThenElseInliningTest : InliningTestBase() {
                     inline put(3)
                     inline put(value)
                 }
-                prop {
+                redefine prop {
                     return AG (above(value) || above(1))
                 }
             }
@@ -127,7 +127,7 @@ class CompileTimeIfThenElseInliningTest : InliningTestBase() {
                 redefine tran {
                     result := if workers[0] == first then 1 else 2
                 }
-                prop {
+                redefine prop {
                     return AG result >= 0
                 }
             }
@@ -159,7 +159,7 @@ class CompileTimeIfThenElseInliningTest : InliningTestBase() {
                 redefine tran {
                     inline store.put(value)
                 }
-                prop {
+                redefine prop {
                     return AG store.count >= 0
                 }
             }

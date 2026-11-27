@@ -34,7 +34,7 @@ class FeatureInliningTest : InliningTestBase() {
                             inline item.act()
                         }
                     }
-                    prop {
+                    redefine prop {
                         return AG true
                     }
                 }
@@ -72,7 +72,7 @@ class FeatureInliningTest : InliningTestBase() {
                             inline item.act()
                         }
                     }
-                    prop {
+                    redefine prop {
                         return AG true
                     }
                 }
@@ -117,7 +117,7 @@ class FeatureInliningTest : InliningTestBase() {
                             inline item.act()
                         }
                     }
-                    prop {
+                    redefine prop {
                         return AG true
                     }
                 }
@@ -160,7 +160,7 @@ class FeatureInliningTest : InliningTestBase() {
                     redefine tran {
                         inline pair.run()
                     }
-                    prop {
+                    redefine prop {
                         return AG true
                     }
                 }
@@ -200,7 +200,7 @@ class FeatureInliningTest : InliningTestBase() {
                     redefine tran {
                         inline button.press()
                     }
-                    prop {
+                    redefine prop {
                         return AG true
                     }
                 }
@@ -236,7 +236,7 @@ class FeatureInliningTest : InliningTestBase() {
                         inline plain.step()
                         inline raised.step()
                     }
-                    prop {
+                    redefine prop {
                         return AG true
                     }
                 }
@@ -280,7 +280,7 @@ class FeatureInliningTest : InliningTestBase() {
                             edge.used := true
                         }
                     }
-                    prop {
+                    redefine prop {
                         return AG true
                     }
                 }
@@ -320,7 +320,7 @@ class FeatureInliningTest : InliningTestBase() {
                     redefine tran {
                         inline slot.run()
                     }
-                    prop {
+                    redefine prop {
                         return AG true
                     }
                 }
@@ -353,7 +353,7 @@ class FeatureInliningTest : InliningTestBase() {
                             inline item.act()
                         }
                     }
-                    prop {
+                    redefine prop {
                         return AG true
                     }
                 }
@@ -393,7 +393,7 @@ class FeatureInliningTest : InliningTestBase() {
                     redefine tran {
                         inline slot.run()
                     }
-                    prop {
+                    redefine prop {
                         return AG true
                     }
                 }
@@ -422,7 +422,7 @@ class FeatureInliningTest : InliningTestBase() {
                     redefine tran {
                         inline alias.step()
                     }
-                    prop {
+                    redefine prop {
                         return AG true
                     }
                 }
@@ -455,7 +455,7 @@ class FeatureInliningTest : InliningTestBase() {
                             counter := 2
                         }
                     }
-                    prop {
+                    redefine prop {
                         return AG true
                     }
                 }
@@ -487,7 +487,7 @@ class FeatureInliningTest : InliningTestBase() {
                             counter := 2
                         }
                     }
-                    prop {
+                    redefine prop {
                         return AG true
                     }
                 }

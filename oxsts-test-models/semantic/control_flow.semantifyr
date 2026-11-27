@@ -19,7 +19,7 @@ class ChoiceBranch1Reach {
         }
     }
 
-    prop {
+    redefine prop {
         return EF x == 1
     }
 }
@@ -37,7 +37,7 @@ class ChoiceBranch2Reach {
         }
     }
 
-    prop {
+    redefine prop {
         return EF x == 2
     }
 }
@@ -55,7 +55,7 @@ class ChoiceBound {
         }
     }
 
-    prop {
+    redefine prop {
         return AG (x == 0 || x == 1 || x == 2)
     }
 }
@@ -70,7 +70,7 @@ class AssumeReach {
         x := x + 1
     }
 
-    prop {
+    redefine prop {
         return EF x == 3
     }
 }
@@ -85,7 +85,7 @@ class AssumeBound {
         x := x + 1
     }
 
-    prop {
+    redefine prop {
         return AG (x <= 3)
     }
 }
@@ -100,7 +100,7 @@ class HavocNarrowedReach {
         assume(x >= 0 && x <= 5)
     }
 
-    prop {
+    redefine prop {
         return EF x == 5
     }
 }
@@ -115,7 +115,7 @@ class HavocNarrowedBound {
         assume(x >= 0 && x <= 5)
     }
 
-    prop {
+    redefine prop {
         return AG (x >= 0 && x <= 5)
     }
 }
@@ -134,7 +134,7 @@ class IfThenReach {
         }
     }
 
-    prop {
+    redefine prop {
         return EF taken == 1
     }
 }
@@ -153,7 +153,7 @@ class IfElseReach {
         }
     }
 
-    prop {
+    redefine prop {
         return EF taken == 2
     }
 }
@@ -173,7 +173,7 @@ class IfBound {
         }
     }
 
-    prop {
+    redefine prop {
         return AG (taken == 0 || taken == 1 || taken == 2)
     }
 }
@@ -191,7 +191,7 @@ class ChoiceUnreachable {
         }
     }
 
-    prop {
+    redefine prop {
         return EF x == 3
     }
 }
@@ -206,7 +206,7 @@ class AssumeViolated {
         x := x + 1
     }
 
-    prop {
+    redefine prop {
         return AG x <= 2
     }
 }
@@ -221,7 +221,7 @@ class HavocNarrowedViolated {
         assume(x >= 0 && x <= 5)
     }
 
-    prop {
+    redefine prop {
         return AG x <= 4
     }
 }
@@ -241,7 +241,7 @@ class IfViolated {
         }
     }
 
-    prop {
+    redefine prop {
         return AG taken != 1
     }
 }
@@ -259,7 +259,7 @@ class IfWithoutElseBound {
         }
     }
 
-    prop {
+    redefine prop {
         return AG (taken == 0 || taken == 1)
     }
 }
@@ -277,7 +277,7 @@ class IfWithoutElseKeepsValueViolated {
         }
     }
 
-    prop {
+    redefine prop {
         return AG taken == 0
     }
 }
@@ -294,7 +294,7 @@ class AssumeAfterWriteBound {
         assume(y == 1)
     }
 
-    prop {
+    redefine prop {
         return AG (x == 0 || y == 1)
     }
 }
@@ -311,7 +311,7 @@ class AssumeAfterWriteViolated {
         assume(y == 1)
     }
 
-    prop {
+    redefine prop {
         return AG x == 0
     }
 }

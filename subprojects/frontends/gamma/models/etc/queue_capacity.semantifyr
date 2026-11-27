@@ -86,7 +86,7 @@ class QueueOfNone : QueueHarness {
 @VerificationCase
 @Tag("expect-pass")
 class QueueOfThreeDeliversInOrderTestCase : QueueOfThree {
-    prop {
+    redefine prop {
         return AG inOrder
     }
 }
@@ -94,7 +94,7 @@ class QueueOfThreeDeliversInOrderTestCase : QueueOfThree {
 @VerificationCase
 @Tag("expect-pass")
 class QueueOfThreeHoldsThreeTestCase : QueueOfThree {
-    prop {
+    redefine prop {
         return EF (queue.size == 3 && received == 1)
     }
 }
@@ -102,7 +102,7 @@ class QueueOfThreeHoldsThreeTestCase : QueueOfThree {
 @VerificationCase
 @Tag("expect-fail")
 class QueueOfThreeHoldingFourUnreachableTestCase : QueueOfThree {
-    prop {
+    redefine prop {
         return EF queue.size > 3
     }
 }
@@ -110,7 +110,7 @@ class QueueOfThreeHoldingFourUnreachableTestCase : QueueOfThree {
 @VerificationCase
 @Tag("expect-pass")
 class QueueOfOneDeliversInOrderTestCase : QueueOfOne {
-    prop {
+    redefine prop {
         return AG inOrder
     }
 }
@@ -118,7 +118,7 @@ class QueueOfOneDeliversInOrderTestCase : QueueOfOne {
 @VerificationCase
 @Tag("expect-pass")
 class QueueOfOneDeliversEveryMessageTestCase : QueueOfOne {
-    prop {
+    redefine prop {
         return EF received == 5
     }
 }
@@ -126,7 +126,7 @@ class QueueOfOneDeliversEveryMessageTestCase : QueueOfOne {
 @VerificationCase
 @Tag("expect-fail")
 class QueueOfOneHoldingTwoUnreachableTestCase : QueueOfOne {
-    prop {
+    redefine prop {
         return EF queue.size > 1
     }
 }
@@ -134,7 +134,7 @@ class QueueOfOneHoldingTwoUnreachableTestCase : QueueOfOne {
 @VerificationCase
 @Tag("expect-pass")
 class QueueOfNoneHoldsNothingTestCase : QueueOfNone {
-    prop {
+    redefine prop {
         return AG (queue.size == 0 && received == 0)
     }
 }
@@ -142,7 +142,7 @@ class QueueOfNoneHoldsNothingTestCase : QueueOfNone {
 @VerificationCase
 @Tag("expect-pass")
 class DroppingQueueOfThreeKeepsTheOrderTestCase : DroppingQueueOfThree {
-    prop {
+    redefine prop {
         return AG inOrder
     }
 }
@@ -150,7 +150,7 @@ class DroppingQueueOfThreeKeepsTheOrderTestCase : DroppingQueueOfThree {
 @VerificationCase
 @Tag("expect-pass")
 class DroppingQueueOfThreeDropsTheOldestTestCase : DroppingQueueOfThree {
-    prop {
+    redefine prop {
         return EF (received == 1 && lastValue == 1)
     }
 }
@@ -158,7 +158,7 @@ class DroppingQueueOfThreeDropsTheOldestTestCase : DroppingQueueOfThree {
 @VerificationCase
 @Tag("expect-pass")
 class DroppingQueueOfOneDropsTheOldestTestCase : DroppingQueueOfOne {
-    prop {
+    redefine prop {
         return EF (received == 1 && lastValue == 4)
     }
 }
@@ -166,7 +166,7 @@ class DroppingQueueOfOneDropsTheOldestTestCase : DroppingQueueOfOne {
 @VerificationCase
 @Tag("expect-fail")
 class DroppingQueueOfOneKeepingTheOldestUnreachableTestCase : DroppingQueueOfOne {
-    prop {
+    redefine prop {
         return EF (sent == 2 && received == 0 && queue.numbered.value.values[0] == 0)
     }
 }

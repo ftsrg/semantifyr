@@ -45,7 +45,7 @@ class ConcurrentVerificationTest {
                 }
             }
 
-            prop {
+            redefine prop {
                 return EF x == 3
             }
         }
@@ -60,7 +60,7 @@ class ConcurrentVerificationTest {
                 }
             }
 
-            prop {
+            redefine prop {
                 return EF x == 2
             }
         }
@@ -75,7 +75,7 @@ class ConcurrentVerificationTest {
                 }
             }
 
-            prop {
+            redefine prop {
                 return AG x < 3
             }
         }

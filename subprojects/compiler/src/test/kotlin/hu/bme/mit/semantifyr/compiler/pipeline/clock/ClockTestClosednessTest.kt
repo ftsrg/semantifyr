@@ -114,7 +114,7 @@ class ClockTestClosednessTest : FlatteningTestBase() {
                     }
                 }
 
-                prop {
+                redefine prop {
                     return AG true
                 }
             }
@@ -129,7 +129,7 @@ class ClockTestClosednessTest : FlatteningTestBase() {
                     assume(current.elapsed < 5)
                 }
 
-                prop {
+                redefine prop {
                     return AG true
                 }
             }
@@ -143,7 +143,7 @@ class ClockTestClosednessTest : FlatteningTestBase() {
                     inline timer.check()
                 }
 
-                prop {
+                redefine prop {
                     return AG true
                 }
             }

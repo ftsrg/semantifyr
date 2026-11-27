@@ -30,7 +30,7 @@ public class OrderingComparisonTest {
                 var count: int := 0
                 var flag: bool := false
                 var label: string := "a"
-                prop {
+                redefine prop {
                     return AG %s
                 }
             }

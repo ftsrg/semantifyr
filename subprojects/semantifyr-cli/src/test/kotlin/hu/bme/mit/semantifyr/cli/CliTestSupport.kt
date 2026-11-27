@@ -58,7 +58,7 @@ fun writeSameStemModels(directory: Path): Path {
                     counter := 1
                 }
 
-                prop {
+                redefine prop {
                     return EF counter == 1
                 }
             }

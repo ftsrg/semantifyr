@@ -26,7 +26,7 @@ class PackageInliningOperationTest : InliningTestBase() {
                     redefine tran {
                         counter := counter + 1
                     }
-                    prop {
+                    redefine prop {
                         return EF counter == 1
                     }
                 }
@@ -52,7 +52,7 @@ class PackageInliningOperationTest : InliningTestBase() {
                     redefine tran {
                         inline step()
                     }
-                    prop {
+                    redefine prop {
                         return EF counter == 1
                     }
                 }
@@ -79,7 +79,7 @@ class PackageInliningOperationTest : InliningTestBase() {
                     redefine tran {
                         inline self.step()
                     }
-                    prop {
+                    redefine prop {
                         return EF counter == 1
                     }
                 }
@@ -109,7 +109,7 @@ class PackageInliningOperationTest : InliningTestBase() {
                     redefine tran {
                         inline worker.step()
                     }
-                    prop {
+                    redefine prop {
                         return EF worker.done
                     }
                 }
@@ -142,7 +142,7 @@ class PackageInliningOperationTest : InliningTestBase() {
                     redefine tran {
                         inline middle.leaf.bump()
                     }
-                    prop {
+                    redefine prop {
                         return EF middle.leaf.value == 1
                     }
                 }
@@ -183,7 +183,7 @@ class PackageInliningOperationTest : InliningTestBase() {
                     redefine tran {
                         inline bases.act()
                     }
-                    prop {
+                    redefine prop {
                         return EF leaf.leafValue == 2
                     }
                 }
@@ -212,7 +212,7 @@ class PackageInliningOperationTest : InliningTestBase() {
                     redefine tran {
                         inline addBy(base + 2)
                     }
-                    prop {
+                    redefine prop {
                         return EF counter == 5
                     }
                 }
@@ -252,7 +252,7 @@ class PackageInliningOperationTest : InliningTestBase() {
                     redefine tran {
                         inline apply(Command::Increment)
                     }
-                    prop {
+                    redefine prop {
                         return EF counter == 3
                     }
                 }
@@ -286,7 +286,7 @@ class PackageInliningOperationTest : InliningTestBase() {
                         inline step()
                         inline step()
                     }
-                    prop {
+                    redefine prop {
                         return EF counter == 2
                     }
                 }
@@ -325,7 +325,7 @@ class PackageInliningOperationTest : InliningTestBase() {
                     redefine tran {
                         inline set(second = 2, first = 1)
                     }
-                    prop {
+                    redefine prop {
                         return EF left == 1
                     }
                 }
@@ -360,7 +360,7 @@ class PackageInliningOperationTest : InliningTestBase() {
                     redefine tran {
                         inline leaf.set(second = 2, first = 1)
                     }
-                    prop {
+                    redefine prop {
                         return EF leaf.left == 1
                     }
                 }
@@ -390,7 +390,7 @@ class PackageInliningOperationTest : InliningTestBase() {
                     redefine tran {
                         inline select()
                     }
-                    prop {
+                    redefine prop {
                         return EF current == nothing
                     }
                 }
@@ -422,7 +422,7 @@ class PackageInliningOperationTest : InliningTestBase() {
                     redefine tran {
                         inline leaf.set()
                     }
-                    prop {
+                    redefine prop {
                         return EF leaf.counter == 1
                     }
                 }

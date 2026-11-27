@@ -46,7 +46,7 @@ class RecordFieldWriteReach {
         }
     }
 
-    prop {
+    redefine prop {
         return EF (point.x == 2 && point.y == 1)
     }
 }
@@ -66,7 +66,7 @@ class RecordFieldWriteBound {
         }
     }
 
-    prop {
+    redefine prop {
         return AG point.x + point.y <= 2
     }
 }
@@ -88,7 +88,7 @@ class RecordCopyEqualityBound {
         copy := point
     }
 
-    prop {
+    redefine prop {
         return AG point == copy
     }
 }
@@ -110,7 +110,7 @@ class RecordCopyIsNoAlias {
         }
     }
 
-    prop {
+    redefine prop {
         return AG (!copied || point == copy)
     }
 }
@@ -132,7 +132,7 @@ class NestedRecordReach {
         }
     }
 
-    prop {
+    redefine prop {
         return EF (copy == original && copy.light == Light::On && copy.position.x == 2)
     }
 }
@@ -152,7 +152,7 @@ class NestedRecordBound {
         }
     }
 
-    prop {
+    redefine prop {
         return AG copy.light == Light::Off
     }
 }
@@ -169,7 +169,7 @@ class LocalRecordHavocReach {
         point := next
     }
 
-    prop {
+    redefine prop {
         return EF (point.x == 3 && point.y == 3)
     }
 }
@@ -186,7 +186,7 @@ class LocalRecordHavocBound {
         point := next
     }
 
-    prop {
+    redefine prop {
         return AG point.x <= 2
     }
 }
@@ -208,7 +208,7 @@ class LocalRecordDefaultsBound {
         }
     }
 
-    prop {
+    redefine prop {
         return AG (!last.valid || last.value == 0)
     }
 }
@@ -231,7 +231,7 @@ class RecordParameterBound {
         }
     }
 
-    prop {
+    redefine prop {
         return AG (point.y == 0 && point.x <= 1)
     }
 }
@@ -254,7 +254,7 @@ class ContainedRecordReach {
         inline robot.step()
     }
 
-    prop {
+    redefine prop {
         return EF robot.position.x == 3
     }
 }
@@ -273,7 +273,7 @@ class RecordLiteralAssignReach {
         }
     }
 
-    prop {
+    redefine prop {
         return EF point == Point { x = 3, y = 2 }
     }
 }
@@ -292,7 +292,7 @@ class RecordLiteralAssignBound {
         }
     }
 
-    prop {
+    redefine prop {
         return AG (point.x == point.y || point == Point { x = 2, y = 3 })
     }
 }
@@ -307,7 +307,7 @@ class RecordLiteralDefaultBound {
         point := Point { x = point.x + 1 }
     }
 
-    prop {
+    redefine prop {
         return AG (point.x == 0 || point.y == 0)
     }
 }
@@ -322,7 +322,7 @@ class RecordLiteralDefaultViolated {
         point := Point { x = point.x + 1 }
     }
 
-    prop {
+    redefine prop {
         return AG point.y == 5
     }
 }
@@ -342,7 +342,7 @@ class LocalRecordLiteralReach {
         point := next
     }
 
-    prop {
+    redefine prop {
         return EF (hits == 1 && point == Point { x = 3, y = 2 })
     }
 }
@@ -363,7 +363,7 @@ class RecordLiteralArgumentBound {
         inline moveTo(Point { x = 2, y = point.y + 1 })
     }
 
-    prop {
+    redefine prop {
         return AG (point.x == lastX && point.y <= 3)
     }
 }
@@ -382,7 +382,7 @@ class RecordLiteralArgumentReach {
         point := Point { x = 2, y = point.y + 1 }
     }
 
-    prop {
+    redefine prop {
         return EF isAt(Point { x = 2, y = 3 })
     }
 }
@@ -401,7 +401,7 @@ class RecordLiteralArgumentViolated {
         inline moveTo(Point { x = 2, y = point.y + 1 })
     }
 
-    prop {
+    redefine prop {
         return AG point.y <= 2
     }
 }
@@ -416,7 +416,7 @@ class RecordFieldLiteralDefaultBound {
         line.to.x := line.to.x + 1
     }
 
-    prop {
+    redefine prop {
         return AG line.from == Point { x = 1, y = 1 }
     }
 }
@@ -435,7 +435,7 @@ class NestedRecordLiteralReach {
         }
     }
 
-    prop {
+    redefine prop {
         return EF (line.to == Point { x = 2, y = 1 } && line.from.x == 1)
     }
 }
@@ -454,7 +454,7 @@ class NestedRecordLiteralViolated {
         }
     }
 
-    prop {
+    redefine prop {
         return AG line.to.y == 0
     }
 }
@@ -473,7 +473,7 @@ class RecordParameterViolated {
         inline moveTo(origin)
     }
 
-    prop {
+    redefine prop {
         return AG point.x <= 1
     }
 }
@@ -508,7 +508,7 @@ class RecordArrayRuntimeIndexReach {
         inline none.bump(index)
     }
 
-    prop {
+    redefine prop {
         return EF (store.readings[2].value == 2 && store.readings[2].valid && !store.readings[0].valid)
     }
 }
@@ -531,7 +531,7 @@ class RecordArrayRuntimeIndexViolated {
         inline none.bump(index)
     }
 
-    prop {
+    redefine prop {
         return AG !store.readings[2].valid
     }
 }
@@ -553,7 +553,7 @@ class RecordArrayWholeCopyBound {
         }
     }
 
-    prop {
+    redefine prop {
         return AG (!(readings[0].value == 5 && readings[0].valid) && !(readings[1].value == 5 && readings[1].valid))
     }
 }
@@ -570,7 +570,7 @@ class RecordArrayWholeCopyViolated {
         readings[0] := held
     }
 
-    prop {
+    redefine prop {
         return AG readings[0].valid
     }
 }

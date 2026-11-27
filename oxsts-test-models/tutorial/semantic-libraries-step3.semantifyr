@@ -136,28 +136,28 @@ class Junction {
 
 @VerificationCase
 class NorthCanTurnGreen : Junction {
-    prop {
+    redefine prop {
         return EF north.green.isActive()
     }
 }
 
 @VerificationCase
 class NeverBothGreen : Junction {
-    prop {
+    redefine prop {
         return AG !(north.green.isActive() && east.green.isActive())
     }
 }
 
 @VerificationCase
 class NorthGreenOnlyWhileEastRed : Junction {
-    prop {
+    redefine prop {
         return AG (!north.green.isActive() || east.red.isActive())
     }
 }
 
 @VerificationCase
 class PedestriansCanWalk : PedestrianLight {
-    prop {
+    redefine prop {
         return EF walk.isActive()
     }
 }

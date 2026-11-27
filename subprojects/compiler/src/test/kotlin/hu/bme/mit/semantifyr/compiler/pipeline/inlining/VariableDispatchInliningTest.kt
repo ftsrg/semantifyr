@@ -38,7 +38,7 @@ class VariableDispatchInliningTest : InliningTestBase() {
                     redefine tran {
                         inline current?.step()
                     }
-                    prop {
+                    redefine prop {
                         return EF first.done
                     }
                 }
@@ -94,7 +94,7 @@ class VariableDispatchInliningTest : InliningTestBase() {
                     redefine tran {
                         inline current?.step()
                     }
-                    prop {
+                    redefine prop {
                         return AG (current == nothing || current == first || current == second)
                     }
                 }
@@ -147,7 +147,7 @@ class VariableDispatchInliningTest : InliningTestBase() {
                     redefine tran {
                         inline run(current)
                     }
-                    prop {
+                    redefine prop {
                         return EF first.done
                     }
                 }

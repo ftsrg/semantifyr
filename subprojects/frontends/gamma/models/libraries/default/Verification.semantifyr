@@ -36,7 +36,7 @@ class GammaVerificationCase {
         inline component.main()
     }
 
-    prop {
+    redefine prop {
         return propertyExpression.evaluate() as bool
     }
 }

@@ -193,7 +193,7 @@ public class TypeValidationTest {
                 contains port: ProvidedPort {
                     redefine contains interface: PingPong
                 }
-                prop { return EF port.outputEvent == port.interface.ping }
+                redefine prop { return EF port.outputEvent == port.interface.ping }
             }
             """, CheckMode.ALL);
 
@@ -209,7 +209,7 @@ public class TypeValidationTest {
                     redefine contains interface: PingPong
                 }
                 contains other: Other
-                prop { return EF port.outputEvent == other }
+                redefine prop { return EF port.outputEvent == other }
             }
             """, CheckMode.ALL);
 
@@ -407,7 +407,7 @@ public class TypeValidationTest {
             class Holder {
                 var number: int := 0
                 redefine tran { number := number + 1 }
-                prop { return EF (if number > 0 then true else false) }
+                redefine prop { return EF (if number > 0 then true else false) }
             }
             """, CheckMode.ALL);
 
@@ -544,7 +544,7 @@ public class TypeValidationTest {
             class Holder {
                 var number: int := 0
                 redefine tran { number := 1 }
-                prop { return number }
+                redefine prop { return number }
             }
             """, CheckMode.ALL);
 
@@ -684,7 +684,7 @@ public class TypeValidationTest {
             class Holder {
                 var value: int := 0
                 redefine tran { value := 1 }
-                prop { return AG value }
+                redefine prop { return AG value }
             }
             """, CheckMode.ALL);
 
@@ -767,7 +767,7 @@ public class TypeValidationTest {
             package test
             class Holder {
                 var count: int := 0
-                prop {
+                redefine prop {
                     return EF count
                 }
             }

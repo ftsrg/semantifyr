@@ -15,7 +15,7 @@ class AddReach {
         result := 3 + 4
     }
 
-    prop {
+    redefine prop {
         return EF result == 7
     }
 }
@@ -29,7 +29,7 @@ class AddBound {
         result := 3 + 4
     }
 
-    prop {
+    redefine prop {
         return AG (result == 0 || result == 7)
     }
 }
@@ -43,7 +43,7 @@ class SubtractReach {
         result := 10 - 3
     }
 
-    prop {
+    redefine prop {
         return EF result == 7
     }
 }
@@ -57,7 +57,7 @@ class SubtractBound {
         result := 10 - 3
     }
 
-    prop {
+    redefine prop {
         return AG (result == 0 || result == 7)
     }
 }
@@ -71,7 +71,7 @@ class MultiplyReach {
         result := 3 * 4
     }
 
-    prop {
+    redefine prop {
         return EF result == 12
     }
 }
@@ -85,7 +85,7 @@ class MultiplyBound {
         result := 3 * 4
     }
 
-    prop {
+    redefine prop {
         return AG (result == 0 || result == 12)
     }
 }
@@ -99,7 +99,7 @@ class DivideReach {
         result := 12 / 4
     }
 
-    prop {
+    redefine prop {
         return EF result == 3
     }
 }
@@ -113,7 +113,7 @@ class DivideBound {
         result := 12 / 4
     }
 
-    prop {
+    redefine prop {
         return AG (result == 0 || result == 3)
     }
 }
@@ -127,7 +127,7 @@ class UnaryMinusReach {
         x := -x
     }
 
-    prop {
+    redefine prop {
         return EF x == -5
     }
 }
@@ -141,7 +141,7 @@ class UnaryMinusBound {
         x := -x
     }
 
-    prop {
+    redefine prop {
         return AG (x == 5 || x == -5)
     }
 }
@@ -155,7 +155,7 @@ class AddViolated {
         result := 3 + 4
     }
 
-    prop {
+    redefine prop {
         return AG (result == 0 || result == 8)
     }
 }
@@ -169,7 +169,7 @@ class SubtractViolated {
         result := 10 - 3
     }
 
-    prop {
+    redefine prop {
         return AG (result == 0 || result == 13)
     }
 }
@@ -183,7 +183,7 @@ class MultiplyViolated {
         result := 3 * 4
     }
 
-    prop {
+    redefine prop {
         return AG (result == 0 || result == 7)
     }
 }
@@ -197,7 +197,7 @@ class DivideViolated {
         result := 12 / 4
     }
 
-    prop {
+    redefine prop {
         return AG (result == 0 || result == 48)
     }
 }
@@ -211,7 +211,7 @@ class UnaryMinusViolated {
         x := -x
     }
 
-    prop {
+    redefine prop {
         return AG x > 0
     }
 }
@@ -228,7 +228,7 @@ class RuntimeArithmeticBound {
         result := x * 2 + 1
     }
 
-    prop {
+    redefine prop {
         return AG (result == 0 || result == 1 || result == 3 || result == 5 || result == 7)
     }
 }
@@ -245,7 +245,7 @@ class RuntimeArithmeticViolated {
         result := x * 2 + 1
     }
 
-    prop {
+    redefine prop {
         return AG result != 7
     }
 }
@@ -262,7 +262,7 @@ class RuntimeDivisionBound {
         result := x / 2
     }
 
-    prop {
+    redefine prop {
         return AG (result >= 0 && result <= 3)
     }
 }
@@ -279,7 +279,7 @@ class RuntimeDivisionViolated {
         result := x / 2
     }
 
-    prop {
+    redefine prop {
         return AG result <= 2
     }
 }
@@ -298,7 +298,7 @@ class DivisionByZeroBlocks {
         divided := true
     }
 
-    prop {
+    redefine prop {
         return AG !(divided && divisor == 0)
     }
 }
@@ -317,7 +317,7 @@ class DivisionByZeroUnreachable {
         divided := true
     }
 
-    prop {
+    redefine prop {
         return EF (divided && divisor == 0)
     }
 }
@@ -335,7 +335,7 @@ class RealDivisionByZeroBlocks {
         divided := true
     }
 
-    prop {
+    redefine prop {
         return AG !(divided && divisor == 0)
     }
 }
@@ -353,7 +353,7 @@ class RealDivisionByZeroUnreachable {
         divided := true
     }
 
-    prop {
+    redefine prop {
         return EF (divided && divisor == 0)
     }
 }

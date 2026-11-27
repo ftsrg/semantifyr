@@ -40,7 +40,7 @@ class ConcurrentSessionTest {
 
         @VerificationCase
         class CaseA {
-            prop {
+            redefine prop {
                 return true
             }
         }

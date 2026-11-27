@@ -37,7 +37,7 @@ class InlinedOxstsModelCreatorTest {
                     redefine tran {
                         on := true
                     }
-                    prop {
+                    redefine prop {
                         return EF on
                     }
                 }

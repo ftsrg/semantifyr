@@ -48,7 +48,7 @@ public class RedefinitionChainCollector {
         var visited = new HashSet<RedefinableDeclaration>();
         visited.add(root);
         var redefined = redefinitionHandler.getRedefinedDeclaration(root);
-        // Every class redefines main and init of Anything, so the chain stops below it.
+        // The main, init and prop of every class meet in Anything, so the chain stops below it.
         while (redefined != null && !isAnythingMember(redefined) && visited.add(redefined)) {
             root = redefined;
             redefined = redefinitionHandler.getRedefinedDeclaration(root);

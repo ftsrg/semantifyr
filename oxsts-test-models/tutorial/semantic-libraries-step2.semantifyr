@@ -85,14 +85,14 @@ class PedestrianLight : Statechart {
 
 @VerificationCase
 class LightCanTurnGreen : TrafficLight {
-    prop {
+    redefine prop {
         return EF green.isActive()
     }
 }
 
 @VerificationCase
 class PedestriansCanWalk : PedestrianLight {
-    prop {
+    redefine prop {
         return EF walk.isActive()
     }
 }

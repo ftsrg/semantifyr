@@ -241,7 +241,7 @@ public class CastExpressionTest {
                 contains items: Base[0..*]
                 contains child: Child[1] subsets items
                 var selected: items[0..1] := nothing
-                prop { return AG (selected == nothing || (selected as Child) == child) }
+                redefine prop { return AG (selected == nothing || (selected as Child) == child) }
             }
             """, CheckMode.ALL);
 
@@ -257,7 +257,7 @@ public class CastExpressionTest {
             class Child : Base { }
             class Host {
                 contains child: Child[1]
-                prop { return AG (child as Base) == child }
+                redefine prop { return AG (child as Base) == child }
             }
             """, CheckMode.ALL);
 
@@ -270,7 +270,7 @@ public class CastExpressionTest {
             package test
             class Host {
                 var value: int := 0
-                prop { return (AG value == 0) as bool }
+                redefine prop { return (AG value == 0) as bool }
             }
             """, CheckMode.ALL);
 

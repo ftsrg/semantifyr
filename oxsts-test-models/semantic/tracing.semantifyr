@@ -33,7 +33,7 @@ class TracedChoiceBranchReach {
         }
     }
 
-    prop {
+    redefine prop {
         return EF (kitchen.lamp.on && !hall.lamp.on)
     }
 }
@@ -54,7 +54,7 @@ class TracedChoiceBranchParity {
         }
     }
 
-    prop {
+    redefine prop {
         return AG ((kitchen.lamp.on != hall.lamp.on) == odd)
     }
 }
@@ -73,7 +73,7 @@ class TracedChoiceBranchViolated {
         }
     }
 
-    prop {
+    redefine prop {
         return AG !kitchen.lamp.on
     }
 }

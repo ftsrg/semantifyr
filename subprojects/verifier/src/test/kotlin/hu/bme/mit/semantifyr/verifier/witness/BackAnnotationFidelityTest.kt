@@ -777,7 +777,7 @@ class BackAnnotationFidelityTest {
                     }
                 }
 
-                prop {
+                redefine prop {
                     return EF (kitchen.lamp.on && !hall.lamp.on)
                 }
             }
@@ -808,7 +808,7 @@ class BackAnnotationFidelityTest {
                     }
                 }
 
-                prop {
+                redefine prop {
                     return EF (slots[0] == 1 && slots[1] == 1 && slots[2] == 1)
                 }
             }
@@ -829,7 +829,7 @@ class BackAnnotationFidelityTest {
                     }
                 }
 
-                prop {
+                redefine prop {
                     return EF (second.done && !first.done)
                 }
             }
@@ -865,7 +865,7 @@ class BackAnnotationFidelityTest {
                     inline robot.step()
                 }
 
-                prop {
+                redefine prop {
                     return EF robot.position.x == 3
                 }
             }
@@ -899,7 +899,7 @@ class BackAnnotationFidelityTest {
                     inline none.bump(index)
                 }
 
-                prop {
+                redefine prop {
                     return EF (store.readings[2].value == 2 && store.readings[2].valid && !store.readings[0].valid)
                 }
             }
@@ -921,7 +921,7 @@ class BackAnnotationFidelityTest {
                     counter.tick := counter.tick + 1
                 }
 
-                prop {
+                redefine prop {
                     return EF counter.tick == 3
                 }
             }
@@ -942,7 +942,7 @@ class BackAnnotationFidelityTest {
                     }
                 }
 
-                prop {
+                redefine prop {
                     return EF branch == 1
                 }
             }
@@ -979,7 +979,7 @@ class BackAnnotationFidelityTest {
                     inline panel.press()
                 }
 
-                prop {
+                redefine prop {
                     return EF (panel.first.on)
                 }
             }
@@ -1011,7 +1011,7 @@ class BackAnnotationFidelityTest {
                     inline port.send(count)
                 }
 
-                prop {
+                redefine prop {
                     return EF (port.item == 2)
                 }
             }
@@ -1044,7 +1044,7 @@ class BackAnnotationFidelityTest {
                     inline scheduler.pick(scheduler.second)
                 }
 
-                prop {
+                redefine prop {
                     return EF (scheduler.current == scheduler.second)
                 }
             }
@@ -1071,7 +1071,7 @@ class BackAnnotationFidelityTest {
                     inline timer.fire()
                 }
 
-                prop {
+                redefine prop {
                     return EF (timer.fired)
                 }
             }

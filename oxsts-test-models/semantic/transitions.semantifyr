@@ -17,7 +17,7 @@ class InitBranchesReach {
         x := 2
     }
 
-    prop {
+    redefine prop {
         return EF x == 2
     }
 }
@@ -33,7 +33,7 @@ class InitBranchesUnreachable {
         x := 2
     }
 
-    prop {
+    redefine prop {
         return EF x == 3
     }
 }
@@ -57,7 +57,7 @@ class TranBranchesReach {
         x := x - 1
     }
 
-    prop {
+    redefine prop {
         return EF x == 0
     }
 }
@@ -81,7 +81,7 @@ class TranBranchesViolated {
         x := x - 1
     }
 
-    prop {
+    redefine prop {
         return AG x >= 1
     }
 }
@@ -101,7 +101,7 @@ class InitRunsOnceBound {
         x := x + 1
     }
 
-    prop {
+    redefine prop {
         return AG runs <= 1
     }
 }
@@ -121,7 +121,7 @@ class InitRunsOnceViolated {
         x := x + 1
     }
 
-    prop {
+    redefine prop {
         return AG runs == 0
     }
 }

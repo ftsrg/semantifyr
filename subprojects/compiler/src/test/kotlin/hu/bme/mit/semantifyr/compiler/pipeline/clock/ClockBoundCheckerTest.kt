@@ -77,7 +77,7 @@ class ClockBoundCheckerTest : FlatteningTestBase() {
             class PropertyReadsClock {
                 contains timer: Timer
 
-                prop {
+                redefine prop {
                     return AG !timer.isUp()
                 }
             }
@@ -92,7 +92,7 @@ class ClockBoundCheckerTest : FlatteningTestBase() {
                     done := true
                 }
 
-                prop {
+                redefine prop {
                     return AG true
                 }
             }
@@ -106,7 +106,7 @@ class ClockBoundCheckerTest : FlatteningTestBase() {
                     inline timer.expire(limit)
                 }
 
-                prop {
+                redefine prop {
                     return AG true
                 }
             }
@@ -119,7 +119,7 @@ class ClockBoundCheckerTest : FlatteningTestBase() {
                     inline timer.expire(3)
                 }
 
-                prop {
+                redefine prop {
                     return AG true
                 }
             }
@@ -141,7 +141,7 @@ class ClockBoundCheckerTest : FlatteningTestBase() {
                     inline relay.relay(limit)
                 }
 
-                prop {
+                redefine prop {
                     return AG true
                 }
             }
@@ -154,7 +154,7 @@ class ClockBoundCheckerTest : FlatteningTestBase() {
                     inline relay.relay(3)
                 }
 
-                prop {
+                redefine prop {
                     return AG true
                 }
             }

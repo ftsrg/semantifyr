@@ -32,7 +32,7 @@ class OxstsInlayHintServiceTest extends OxstsLanguageServerTest {
                         inline lamp.set(<|>1, <|>2)
                     }
 
-                    prop {
+                    redefine prop {
                         return lamp.isAt(<|>3)
                     }
                 }

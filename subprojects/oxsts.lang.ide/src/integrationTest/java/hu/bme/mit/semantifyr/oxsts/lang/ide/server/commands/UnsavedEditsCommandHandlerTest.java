@@ -37,7 +37,7 @@ class UnsavedEditsCommandHandlerTest {
 
             @VerificationCase
             class Decided {
-                prop {
+                redefine prop {
                     return AG true
                 }
             }
@@ -48,14 +48,14 @@ class UnsavedEditsCommandHandlerTest {
 
             @VerificationCase
             class Decided {
-                prop {
+                redefine prop {
                     return AG true
                 }
             }
 
             @VerificationCase
             class OnlyInBuffer {
-                prop {
+                redefine prop {
                     return AG false
                 }
             }

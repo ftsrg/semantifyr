@@ -25,7 +25,7 @@ class ConstantGuardReachable {
         }
     }
 
-    prop {
+    redefine prop {
         return EF state == 2
     }
 }

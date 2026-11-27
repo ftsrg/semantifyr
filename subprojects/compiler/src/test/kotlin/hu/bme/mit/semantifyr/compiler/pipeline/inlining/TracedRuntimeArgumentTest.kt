@@ -251,7 +251,7 @@ class TracedRuntimeArgumentTest : FlatteningTestBase() {
                     inline port.send(count)
                 }
 
-                prop {
+                redefine prop {
                     return AG port.item >= 0
                 }
             }
@@ -266,7 +266,7 @@ class TracedRuntimeArgumentTest : FlatteningTestBase() {
                     inline device.enable(requested)
                 }
 
-                prop {
+                redefine prop {
                     return AG true
                 }
             }
@@ -285,7 +285,7 @@ class TracedRuntimeArgumentTest : FlatteningTestBase() {
                     inline device.set(requested)
                 }
 
-                prop {
+                redefine prop {
                     return AG true
                 }
             }
@@ -299,7 +299,7 @@ class TracedRuntimeArgumentTest : FlatteningTestBase() {
                     inline display.show(level)
                 }
 
-                prop {
+                redefine prop {
                     return AG true
                 }
             }
@@ -313,7 +313,7 @@ class TracedRuntimeArgumentTest : FlatteningTestBase() {
                     inline display.write(name)
                 }
 
-                prop {
+                redefine prop {
                     return AG true
                 }
             }
@@ -328,7 +328,7 @@ class TracedRuntimeArgumentTest : FlatteningTestBase() {
                     inline display.note(requested)
                 }
 
-                prop {
+                redefine prop {
                     return AG true
                 }
             }
@@ -347,7 +347,7 @@ class TracedRuntimeArgumentTest : FlatteningTestBase() {
                     inline relay(requested)
                 }
 
-                prop {
+                redefine prop {
                     return AG true
                 }
             }
@@ -362,7 +362,7 @@ class TracedRuntimeArgumentTest : FlatteningTestBase() {
                     inline display.note(stored)
                 }
 
-                prop {
+                redefine prop {
                     return AG true
                 }
             }
@@ -379,7 +379,7 @@ class TracedRuntimeArgumentTest : FlatteningTestBase() {
                     inline display.note(held)
                 }
 
-                prop {
+                redefine prop {
                     return AG true
                 }
             }
@@ -399,7 +399,7 @@ class TracedRuntimeArgumentTest : FlatteningTestBase() {
                     inline first.toggle(current)
                 }
 
-                prop {
+                redefine prop {
                     return AG true
                 }
             }
@@ -423,7 +423,7 @@ class TracedRuntimeArgumentTest : FlatteningTestBase() {
                     inline pick(current)
                 }
 
-                prop {
+                redefine prop {
                     return AG true
                 }
             }
@@ -448,7 +448,7 @@ class TracedRuntimeArgumentTest : FlatteningTestBase() {
                     inline relay(point)
                 }
 
-                prop {
+                redefine prop {
                     return AG true
                 }
             }

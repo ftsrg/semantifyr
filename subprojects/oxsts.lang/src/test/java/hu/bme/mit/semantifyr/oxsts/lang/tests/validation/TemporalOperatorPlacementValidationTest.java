@@ -34,7 +34,7 @@ public class TemporalOperatorPlacementValidationTest {
                 prop reached(): bool {
                     return EF flag
                 }
-                prop {
+                redefine prop {
                     return reached()
                 }
             }
@@ -50,7 +50,7 @@ public class TemporalOperatorPlacementValidationTest {
             package test
             class Holder {
                 var flag: bool := false
-                prop {
+                redefine prop {
                     return (AG !flag) as bool
                 }
             }
@@ -69,7 +69,7 @@ public class TemporalOperatorPlacementValidationTest {
                 redefine tran {
                     flag := AG true
                 }
-                prop {
+                redefine prop {
                     return AG true
                 }
             }
@@ -84,7 +84,7 @@ public class TemporalOperatorPlacementValidationTest {
             package test
             class Holder {
                 var flag: bool := false
-                prop {
+                redefine prop {
                     return AG (EF flag)
                 }
             }
@@ -99,7 +99,7 @@ public class TemporalOperatorPlacementValidationTest {
             package test
             class Holder {
                 var flag: bool := false
-                prop {
+                redefine prop {
                     return !(EF flag)
                 }
             }

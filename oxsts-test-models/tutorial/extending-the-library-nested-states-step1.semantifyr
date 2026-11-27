@@ -189,35 +189,35 @@ class Junction : System {
 
 @VerificationCase
 class NorthCanTurnGreen : Junction {
-    prop {
+    redefine prop {
         return EF north.operating.green.isActive()
     }
 }
 
 @VerificationCase
 class NeverBothGreen : Junction {
-    prop {
+    redefine prop {
         return AG !(north.operating.green.isActive() && east.operating.green.isActive())
     }
 }
 
 @VerificationCase
 class NorthGreenOnlyWhileEastRed : Junction {
-    prop {
+    redefine prop {
         return AG (!north.operating.green.isActive() || east.operating.red.isActive())
     }
 }
 
 @VerificationCase
 class PedestriansCanWalk : Junction {
-    prop {
+    redefine prop {
         return EF pedestrians.walk.isActive()
     }
 }
 
 @VerificationCase
 class WalkOnlyWhileEastRed : Junction {
-    prop {
+    redefine prop {
         return AG (!pedestrians.walk.isActive() || east.operating.red.isActive())
     }
 }
@@ -249,14 +249,14 @@ class NorthGreenForThreeSteps {
         }
     }
 
-    prop {
+    redefine prop {
         return AG !leftGreenEarly
     }
 }
 
 @VerificationCase
 class NorthCanTurnYellow : Junction {
-    prop {
+    redefine prop {
         return EF north.operating.yellow.isActive()
     }
 }

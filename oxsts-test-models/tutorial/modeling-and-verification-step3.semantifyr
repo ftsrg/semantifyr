@@ -43,14 +43,14 @@ class Junction {
 
 @VerificationCase
 class NorthCanTurnGreen : Junction {
-    prop {
+    redefine prop {
         return EF (north == LightColor::Green)
     }
 }
 
 @VerificationCase
 class NeverBothGreen : Junction {
-    prop {
+    redefine prop {
         return AG !(north == LightColor::Green && east == LightColor::Green)
     }
 }

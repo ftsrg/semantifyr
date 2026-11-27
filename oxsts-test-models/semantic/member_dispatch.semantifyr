@@ -45,7 +45,7 @@ class MemberReadThroughVariableReach : Plant {
         seen := current.level
     }
 
-    prop {
+    redefine prop {
         return EF seen == 2
     }
 }
@@ -57,7 +57,7 @@ class MemberReadThroughVariableUnreachable : Plant {
         seen := current.level
     }
 
-    prop {
+    redefine prop {
         return EF seen == 3
     }
 }
@@ -65,7 +65,7 @@ class MemberReadThroughVariableUnreachable : Plant {
 @VerificationCase
 @Tag("expect-pass")
 class MemberReadThroughVariableBound : Plant {
-    prop {
+    redefine prop {
         return AG current.gauge.level == levelOf(current)
     }
 }
@@ -73,7 +73,7 @@ class MemberReadThroughVariableBound : Plant {
 @VerificationCase
 @Tag("expect-fail")
 class MemberReadThroughVariableViolated : Plant {
-    prop {
+    redefine prop {
         return AG levelOf(current) == 1
     }
 }
@@ -105,7 +105,7 @@ class OptionalCallThroughVariableReach : Dispatcher {
         inline current?.mark()
     }
 
-    prop {
+    redefine prop {
         return EF first.done
     }
 }
@@ -121,7 +121,7 @@ class OptionalCallThroughVariableUnreachable : Dispatcher {
         inline current?.mark()
     }
 
-    prop {
+    redefine prop {
         return EF second.done
     }
 }
@@ -134,7 +134,7 @@ class OptionalCallThroughNothingReach : Dispatcher {
         stepped := true
     }
 
-    prop {
+    redefine prop {
         return EF stepped
     }
 }
@@ -147,7 +147,7 @@ class OptionalCallThroughNothingUnreachable : Dispatcher {
         stepped := true
     }
 
-    prop {
+    redefine prop {
         return EF (first.done || second.done)
     }
 }
@@ -160,7 +160,7 @@ class ReadThroughNothingBlocks : Dispatcher {
         stepped := true
     }
 
-    prop {
+    redefine prop {
         return AG !stepped
     }
 }
@@ -181,7 +181,7 @@ class ReadThroughNothingBlocksViolated : Dispatcher {
         stepped := true
     }
 
-    prop {
+    redefine prop {
         return AG !stepped
     }
 }

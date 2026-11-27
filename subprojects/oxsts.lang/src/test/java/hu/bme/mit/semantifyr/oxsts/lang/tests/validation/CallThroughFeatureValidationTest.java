@@ -80,7 +80,7 @@ public class CallThroughFeatureValidationTest {
     void propertyCallThroughAManyValuedFeatureIsRejected() {
         var model = """
             class Lead : Team {
-                prop {
+                redefine prop {
                     return EF workers.isDone()
                 }
             }
@@ -138,7 +138,7 @@ public class CallThroughFeatureValidationTest {
     void propertyCallThroughAnOptionalFeatureWithADotPasses() {
         var parsedPackage = parseHelper.parse(WORKERS + """
             class Lead : Team {
-                prop {
+                redefine prop {
                     return EF spare.isDone()
                 }
             }

@@ -364,7 +364,7 @@ public class OperatorSyntaxTest {
             class Host {
                 var counter: int := 0
                 redefine tran { counter := 1 }
-                prop { return AG (counter >= 0) }
+                redefine prop { return AG (counter >= 0) }
             }
             """);
         parsedPackage.assertNoResourceErrors();
@@ -381,7 +381,7 @@ public class OperatorSyntaxTest {
             class Host {
                 var counter: int := 0
                 redefine tran { counter := counter + 1 }
-                prop { return EF (counter == 5) }
+                redefine prop { return EF (counter == 5) }
             }
             """);
         parsedPackage.assertNoResourceErrors();

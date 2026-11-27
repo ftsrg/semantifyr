@@ -56,13 +56,13 @@ class OxstsCompletionTest extends OxstsLanguageServerTest {
                 class Case {
                     contains light: TrafficLight
 
-                    prop {
+                    redefine prop {
                         return EF (light.<|>)
                     }
                 }
                 """)));
 
-        assertThat(labels(items)).containsExactlyInAnyOrder("color", "isColor");
+        assertThat(labels(items)).containsExactlyInAnyOrder("color", "isColor", "prop");
         assertThat(item(items, "color")).satisfies(item -> {
             assertThat(item.getKind()).isEqualTo(CompletionItemKind.Field);
             assertThat(item.getDetail()).isEqualTo("LightColor");
@@ -160,7 +160,7 @@ class OxstsCompletionTest extends OxstsLanguageServerTest {
                 class Case {
                     contains light: TrafficLight
 
-                    prop {
+                    redefine prop {
                         return EF (light.isColor(<|>))
                     }
                 }

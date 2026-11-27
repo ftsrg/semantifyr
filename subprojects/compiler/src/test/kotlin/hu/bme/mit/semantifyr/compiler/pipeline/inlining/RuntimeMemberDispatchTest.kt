@@ -48,7 +48,7 @@ class RuntimeMemberDispatchTest : InliningTestBase() {
                     redefine tran {
                         seen := current.done
                     }
-                    prop {
+                    redefine prop {
                         return EF seen
                     }
                 }
@@ -80,7 +80,7 @@ class RuntimeMemberDispatchTest : InliningTestBase() {
                     contains second: Worker[1]
                     contains other: Other[1]
                     var current: Worker[0..1] := nothing
-                    prop {
+                    redefine prop {
                         return EF current.done
                     }
                 }
@@ -112,7 +112,7 @@ class RuntimeMemberDispatchTest : InliningTestBase() {
                     prop isDoneOf(worker: Worker[0..1]): bool {
                         return worker.done
                     }
-                    prop {
+                    redefine prop {
                         return EF isDoneOf(current)
                     }
                 }
@@ -148,7 +148,7 @@ class RuntimeMemberDispatchTest : InliningTestBase() {
                     redefine tran {
                         inline observe(current)
                     }
-                    prop {
+                    redefine prop {
                         return EF seen
                     }
                 }
@@ -184,7 +184,7 @@ class RuntimeMemberDispatchTest : InliningTestBase() {
                     redefine tran {
                         seen := current.part.done
                     }
-                    prop {
+                    redefine prop {
                         return EF current.part.done
                     }
                 }
@@ -218,7 +218,7 @@ class RuntimeMemberDispatchTest : InliningTestBase() {
                     redefine tran {
                         inline current.part.step()
                     }
-                    prop {
+                    redefine prop {
                         return EF current.part.isDone()
                     }
                 }
@@ -258,7 +258,7 @@ class RuntimeMemberDispatchTest : InliningTestBase() {
                     redefine tran {
                         flags[current.slot] := true
                     }
-                    prop {
+                    redefine prop {
                         return EF flags[1]
                     }
                 }
@@ -297,7 +297,7 @@ class RuntimeMemberDispatchTest : InliningTestBase() {
                             }
                         }
                     }
-                    prop {
+                    redefine prop {
                         return EF count == 2
                     }
                 }
@@ -336,7 +336,7 @@ class RuntimeMemberDispatchTest : InliningTestBase() {
                             inline part.step()
                         }
                     }
-                    prop {
+                    redefine prop {
                         return EF (first.done && second.done)
                     }
                 }
@@ -379,7 +379,7 @@ class RuntimeMemberDispatchTest : InliningTestBase() {
                             inline worker.part.step()
                         }
                     }
-                    prop {
+                    redefine prop {
                         return EF (first.part.done && second.part.done)
                     }
                 }
@@ -417,7 +417,7 @@ class RuntimeMemberDispatchTest : InliningTestBase() {
                     contains first: Worker[1]
                     contains second: Worker[1]
                     var queue: Worker[2] := [first, second]
-                    prop {
+                    redefine prop {
                         return EF queue[1].done
                     }
                 }
@@ -449,7 +449,7 @@ class RuntimeMemberDispatchTest : InliningTestBase() {
                     redefine tran {
                         inline current?.step()
                     }
-                    prop {
+                    redefine prop {
                         return EF first.done
                     }
                 }
@@ -500,7 +500,7 @@ class RuntimeMemberDispatchTest : InliningTestBase() {
                             seen := pair.partnerDone()
                         }
                     }
-                    prop {
+                    redefine prop {
                         return EF seen
                     }
                 }
@@ -536,7 +536,7 @@ class RuntimeMemberDispatchTest : InliningTestBase() {
                         redefine tran {
                             current.done := true
                         }
-                        prop {
+                        redefine prop {
                             return EF first.done
                         }
                     }

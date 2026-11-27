@@ -37,7 +37,7 @@ class RedefinitionInliningTest : InliningTestBase() {
     """
 
     @Test
-    fun `an anonymous init and tran without redefine are the class's own`() {
+    fun `an init, tran and prop without redefine leave the ones of Anything in the case`() {
         assertInlinedModel(
             "Host",
             """
@@ -58,32 +58,30 @@ class RedefinitionInliningTest : InliningTestBase() {
             """,
             """
                 init {
-                    root.counter := 1
                 }
 
                 tran {
-                    root.counter := root.counter + 1
                 }
 
                 prop {
-                    EF root.counter == 5
+                    AG true
                 }
             """,
         )
     }
 
     @Test
-    fun `an anonymous tran without redefine replaces the tran of the parent class`() {
+    fun `a tran without redefine leaves the redefinition of the parent class in the step`() {
         assertInlinedModel(
             "Host",
             """
                 package inlining::tests
                 class Base {
                     var counter: int := 0
-                    tran {
+                    redefine tran {
                         counter := 1
                     }
-                    prop {
+                    redefine prop {
                         return EF counter == 2
                     }
                 }
@@ -92,9 +90,6 @@ class RedefinitionInliningTest : InliningTestBase() {
                     tran {
                         counter := 2
                     }
-                    prop {
-                        return EF counter == 3
-                    }
                 }
             """,
             """
@@ -102,11 +97,11 @@ class RedefinitionInliningTest : InliningTestBase() {
                 }
 
                 tran {
-                    root.counter := 2
+                    root.counter := 1
                 }
 
                 prop {
-                    EF root.counter == 3
+                    EF root.counter == 2
                 }
             """,
         )
@@ -123,7 +118,7 @@ class RedefinitionInliningTest : InliningTestBase() {
                     redefine tran {
                         inline child.act()
                     }
-                    prop {
+                    redefine prop {
                         return EF child.count == 10
                     }
                 }
@@ -154,7 +149,7 @@ class RedefinitionInliningTest : InliningTestBase() {
                     redefine tran {
                         inline leaf.act()
                     }
-                    prop {
+                    redefine prop {
                         return AG leaf.middleCount == 0
                     }
                 }
@@ -186,7 +181,7 @@ class RedefinitionInliningTest : InliningTestBase() {
                     redefine tran {
                         inline bases.act()
                     }
-                    prop {
+                    redefine prop {
                         return AG (child.count == 0 || child.count == 10)
                     }
                 }
@@ -232,7 +227,7 @@ class RedefinitionInliningTest : InliningTestBase() {
                     redefine tran {
                         inline thresholdSensor.tick()
                     }
-                    prop {
+                    redefine prop {
                         return EF thresholdSensor.threshold()
                     }
                 }
@@ -293,7 +288,7 @@ class RedefinitionInliningTest : InliningTestBase() {
                             inline item.act()
                         }
                     }
-                    prop {
+                    redefine prop {
                         return EF omitting.first.special == 1
                     }
                 }

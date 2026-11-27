@@ -80,7 +80,7 @@ public final class TestModels {
                     inline light.main()
                 }
 
-                prop {
+                redefine prop {
                     return EF (light.color == LightColor::Green)
                 }
             }
@@ -93,7 +93,7 @@ public final class TestModels {
                     inline intersection.main()
                 }
 
-                prop {
+                redefine prop {
                     return AG !(intersection.north.color == LightColor::Green && intersection.east.color == LightColor::Green)
                 }
             }

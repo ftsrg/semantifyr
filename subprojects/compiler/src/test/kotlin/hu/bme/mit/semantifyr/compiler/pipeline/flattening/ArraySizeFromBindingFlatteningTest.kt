@@ -77,7 +77,7 @@ class ArraySizeFromBindingFlatteningTest : FlatteningTestBase() {
                         inline one.put(1)
                         inline three.put(2)
                     }
-                    prop {
+                    redefine prop {
                         return AG one.slots[0] != 5
                     }
                 }
@@ -123,7 +123,7 @@ class ArraySizeFromBindingFlatteningTest : FlatteningTestBase() {
                     redefine tran {
                         inline port.accept(index)
                     }
-                    prop {
+                    redefine prop {
                         return AG port.values[1] == 2
                     }
                 }
@@ -152,7 +152,7 @@ class ArraySizeFromBindingFlatteningTest : FlatteningTestBase() {
                         inline none.put(1)
                         count := count + 1
                     }
-                    prop {
+                    redefine prop {
                         return AG count >= 0
                     }
                 }
@@ -178,7 +178,7 @@ class ArraySizeFromBindingFlatteningTest : FlatteningTestBase() {
                         redefine tran {
                             first := none.slots[0]
                         }
-                        prop {
+                        redefine prop {
                             return AG first >= 0
                         }
                     }
@@ -201,7 +201,7 @@ class ArraySizeFromBindingFlatteningTest : FlatteningTestBase() {
                         redefine tran {
                             pair.slots := [1, 2, 3]
                         }
-                        prop {
+                        redefine prop {
                             return AG pair.slots[0] >= 0
                         }
                     }
@@ -224,7 +224,7 @@ class ArraySizeFromBindingFlatteningTest : FlatteningTestBase() {
                     same := store.slots == [5]
                     same := [5] != store.slots
                 }
-                prop {
+                redefine prop {
                     return AG !same
                 }
             }
@@ -254,7 +254,7 @@ class ArraySizeFromBindingFlatteningTest : FlatteningTestBase() {
                 redefine tran {
                     %s
                 }
-                prop {
+                redefine prop {
                     return AG !same
                 }
             }
@@ -283,7 +283,7 @@ class ArraySizeFromBindingFlatteningTest : FlatteningTestBase() {
                         contains pair: Store {
                             redefine refers capacity: int = 2
                         }
-                        prop {
+                        redefine prop {
                             return AG pair.slots[0] == 1
                         }
                     }
@@ -303,7 +303,7 @@ class ArraySizeFromBindingFlatteningTest : FlatteningTestBase() {
                         contains pair: Store {
                             redefine refers capacity: int = 2
                         }
-                        prop {
+                        redefine prop {
                             return AG pair.slots[2] == 7
                         }
                     }
@@ -323,7 +323,7 @@ class ArraySizeFromBindingFlatteningTest : FlatteningTestBase() {
                         contains broken: Store {
                             redefine refers capacity: int = -1
                         }
-                        prop {
+                        redefine prop {
                             return AG true
                         }
                     }
@@ -363,7 +363,7 @@ class ArraySizeFromBindingFlatteningTest : FlatteningTestBase() {
                         havoc(queue.jobs)
                         inline queue.run(index)
                     }
-                    prop {
+                    redefine prop {
                         return EF queue.jobs[2] == queue.second
                     }
                 }
@@ -409,7 +409,7 @@ class ArraySizeFromBindingFlatteningTest : FlatteningTestBase() {
                     redefine tran {
                         inline store.move(index)
                     }
-                    prop {
+                    redefine prop {
                         return AG !store.messages[2].urgent
                     }
                 }
@@ -453,7 +453,7 @@ class ArraySizeFromBindingFlatteningTest : FlatteningTestBase() {
                 redefine tran {
                     %s
                 }
-                prop {
+                redefine prop {
                     return AG !store.hasHead(item)
                 }
             }
@@ -482,7 +482,7 @@ class ArraySizeFromBindingFlatteningTest : FlatteningTestBase() {
                         fixedItems[0] := nothing
                         fixedItems[index] := current
                     }
-                    prop {
+                    redefine prop {
                         return EF fixedItems[0] == nothing
                     }
                 }
@@ -515,7 +515,7 @@ class ArraySizeFromBindingFlatteningTest : FlatteningTestBase() {
                 redefine tran {
                     inline store.step()
                 }
-                prop {
+                redefine prop {
                     return AG !store.same
                 }
             }
@@ -548,7 +548,7 @@ class ArraySizeFromBindingFlatteningTest : FlatteningTestBase() {
                         contains store: Store {
                             redefine refers capacity: int = 1
                         }
-                        prop {
+                        redefine prop {
                             return AG true
                         }
                     }
@@ -576,7 +576,7 @@ class ArraySizeFromBindingFlatteningTest : FlatteningTestBase() {
                     redefine tran {
                         count := count + 1
                     }
-                    prop {
+                    redefine prop {
                         return AG count >= 0
                     }
                 }

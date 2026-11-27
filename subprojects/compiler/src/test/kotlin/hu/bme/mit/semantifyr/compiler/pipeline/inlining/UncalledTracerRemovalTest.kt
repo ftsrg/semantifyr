@@ -102,7 +102,7 @@ class UncalledTracerRemovalTest : InliningTestBase() {
                     }
                 }
 
-                prop {
+                redefine prop {
                     return AG (initial.port.item + step.port.item >= 0)
                 }
             }

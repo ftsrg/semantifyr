@@ -27,7 +27,7 @@ class CastInliningTest : InliningTestBase() {
                     redefine tran {
                         counter := counter + 1
                     }
-                    prop {
+                    redefine prop {
                         return (EF counter == 5) as bool
                     }
                 }
@@ -60,7 +60,7 @@ class CastInliningTest : InliningTestBase() {
                         var number: int := 0
                         number := anything as int
                     }
-                    prop {
+                    redefine prop {
                         return EF true
                     }
                 }
@@ -95,7 +95,7 @@ class CastInliningTest : InliningTestBase() {
                         var narrowed: Child[0..1] := nothing
                         narrowed := reference as Child
                     }
-                    prop {
+                    redefine prop {
                         return AG (reference == nothing || (reference as Child) == child)
                     }
                 }
@@ -130,7 +130,7 @@ class CastInliningTest : InliningTestBase() {
                         var anything: any := 0
                         anything := counter as any
                     }
-                    prop {
+                    redefine prop {
                         return EF true
                     }
                 }
@@ -155,7 +155,7 @@ class CastInliningTest : InliningTestBase() {
                         var number: int := 0
                         number := anything as int
                     }
-                    prop {
+                    redefine prop {
                         return EF true
                     }
                 }
@@ -178,7 +178,7 @@ class CastInliningTest : InliningTestBase() {
                         var measurement: real := 0.0
                         counter := measurement as int
                     }
-                    prop {
+                    redefine prop {
                         return EF true
                     }
                 }

@@ -124,7 +124,7 @@ class QuickFixTest extends OxstsLanguageServerTest {
                         return true
                     }
 
-                    prop {
+                    redefine prop {
                         return needsDerived(<|>base)
                     }
                 }
@@ -146,7 +146,7 @@ class QuickFixTest extends OxstsLanguageServerTest {
                         return true
                     }
 
-                    prop {
+                    redefine prop {
                         return needsDerived(base as Derived)
                     }
                 }

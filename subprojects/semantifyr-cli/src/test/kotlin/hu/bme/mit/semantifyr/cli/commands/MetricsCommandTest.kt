@@ -76,7 +76,7 @@ class MetricsCommandTest {
 
             @VerificationCase
             class Stateless {
-                prop {
+                redefine prop {
                     return AG true
                 }
             }

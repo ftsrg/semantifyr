@@ -21,7 +21,7 @@ class CopyAcrossSourceWrite {
         seen := true
     }
 
-    prop {
+    redefine prop {
         return EF seen
     }
 }
@@ -44,7 +44,7 @@ class CopyFromInitAcrossSourceWrite {
         seen := true
     }
 
-    prop {
+    redefine prop {
         return EF seen
     }
 }
@@ -62,7 +62,7 @@ class LocalInitializerBeforeSourceWrite {
         seen := snapshot
     }
 
-    prop {
+    redefine prop {
         return EF (source == 1 && seen == 0)
     }
 }
@@ -80,7 +80,7 @@ class LocalInitializerSourceInCone {
         seen := snapshot
     }
 
-    prop {
+    redefine prop {
         return EF seen == 1
     }
 }
@@ -101,7 +101,7 @@ class InitCopyOnOneBranch {
         copy := source
     }
 
-    prop {
+    redefine prop {
         return EF copy == 0
     }
 }
@@ -126,7 +126,7 @@ class GuardAroundAssumption {
         }
     }
 
-    prop {
+    redefine prop {
         return AG y == 0
     }
 }

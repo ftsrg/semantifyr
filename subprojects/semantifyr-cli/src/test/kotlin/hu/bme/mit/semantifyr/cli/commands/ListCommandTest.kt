@@ -70,8 +70,11 @@ class ListCommandTest {
     }
 
     @Test
-    suspend fun `a model file of another kind is an input error naming the extensions of the language`() {
-        val result = runCli("list", testModels.resolve("constructs/constructs.tsv").toString())
+    suspend fun `a model file of another kind is an input error naming the extensions of the language`(@TempDir directory: Path) {
+        val notes = directory.resolve("notes.txt")
+        notes.writeText("notes")
+
+        val result = runCli("list", notes.toString())
 
         assertThat(result.statusCode).isEqualTo(3)
         for (extension in oxstsExtensions) {
@@ -131,13 +134,29 @@ class ListCommandTest {
     }
 
     @Test
-    suspend fun `a model the validator rejects is a compilation error naming each issue at its place`() {
-        val model = testModels.resolve("constructs/multiple_inheritance.semantifyr")
+    suspend fun `a model the validator rejects is a compilation error naming each issue at its place`(@TempDir directory: Path) {
+        val model = directory.resolve("rejected.semantifyr")
+        model.writeText(
+            """
+            package rejected
+
+            class Left {
+                var x: int := 0
+            }
+
+            class Right {
+                var y: int := 0
+            }
+
+            class Both : Left, Right {
+            }
+            """.trimIndent(),
+        )
 
         val result = runCli("list", model.toString())
 
         assertThat(result.statusCode).isEqualTo(4)
-        assertThat(result.stderr).startsWith("error: ").containsPattern("multiple_inheritance\\.semantifyr:\\d+:\\d+: .+ \\[OXSTS\\.\\w+]")
+        assertThat(result.stderr).startsWith("error: ").containsPattern("rejected\\.semantifyr:\\d+:\\d+: .+ \\[OXSTS\\.\\w+]")
     }
 
     @Test

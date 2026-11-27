@@ -39,7 +39,7 @@ public class AnnotationTargetValidationTest {
                 tran step() {
                     count := count + 1
                 }
-                prop {
+                redefine prop {
                     return AG count >= 0
                 }
             }

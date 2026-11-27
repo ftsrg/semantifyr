@@ -113,7 +113,7 @@ class ObservedCallConeTest : FlatteningTestBase() {
                     }
                 }
 
-                prop {
+                redefine prop {
                     return AG true
                 }
             }
@@ -132,7 +132,7 @@ class ObservedCallConeTest : FlatteningTestBase() {
                     inline port.send(count)
                 }
 
-                prop {
+                redefine prop {
                     return AG true
                 }
             }
@@ -146,7 +146,7 @@ class ObservedCallConeTest : FlatteningTestBase() {
                     inline port.send(count)
                 }
 
-                prop {
+                redefine prop {
                     return AG true
                 }
             }

@@ -29,7 +29,7 @@ class DivisionAssumptionsTest : FlatteningTestBase() {
                             result := 0
                         }
                     }
-                    prop {
+                    redefine prop {
                         return AG result >= 0
                     }
                 }
@@ -70,7 +70,7 @@ class DivisionAssumptionsTest : FlatteningTestBase() {
                         havoc(divisor)
                         result := (1 / divisor) * 0
                     }
-                    prop {
+                    redefine prop {
                         return AG result == 1
                     }
                 }

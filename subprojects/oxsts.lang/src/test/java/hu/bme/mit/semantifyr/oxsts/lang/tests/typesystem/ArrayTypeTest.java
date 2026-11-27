@@ -83,7 +83,7 @@ public class ArrayTypeTest {
             class Buffer {
                 var pair: int[2] := [0, 0]
                 var triple: int[3] := [0, 0, 0]
-                prop { return AG pair == triple }
+                redefine prop { return AG pair == triple }
             }
             """, CheckMode.ALL);
 
@@ -96,7 +96,7 @@ public class ArrayTypeTest {
             package test
             class Buffer {
                 var pair: int[2] := [0, 0]
-                prop { return AG pair != 1 }
+                redefine prop { return AG pair != 1 }
             }
             """, CheckMode.ALL);
 
@@ -110,7 +110,7 @@ public class ArrayTypeTest {
             class Buffer {
                 var pair: int[2] := [0, 0]
                 var other: int[2] := [0, 0]
-                prop { return AG pair < other }
+                redefine prop { return AG pair < other }
             }
             """, CheckMode.ALL);
 
@@ -258,7 +258,7 @@ public class ArrayTypeTest {
                     havoc(picks)
                     inline queue[index].step()
                 }
-                prop { return EF (picks[0] == first && queue[1].isDone()) }
+                redefine prop { return EF (picks[0] == first && queue[1].isDone()) }
             }
             """, CheckMode.ALL);
 
@@ -276,7 +276,7 @@ public class ArrayTypeTest {
             class Team {
                 contains first: Worker
                 var queue: Worker[2] := [first, first]
-                prop {
+                redefine prop {
                     return EF queue[0].done
                 }
             }

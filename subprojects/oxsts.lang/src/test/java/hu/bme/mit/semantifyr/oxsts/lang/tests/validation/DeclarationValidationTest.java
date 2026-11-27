@@ -107,7 +107,9 @@ public class DeclarationValidationTest {
             @VerificationCase
             abstract class Case {
                 var count: int := 0
-                prop { return AG count == 0 }
+                redefine prop {
+                    return AG count == 0
+                }
             }
             """, CheckMode.ALL);
 
@@ -122,53 +124,9 @@ public class DeclarationValidationTest {
             @VerificationCase
             class Case {
                 var count: int := 0
-                prop { return AG count == 0 }
-            }
-            """, CheckMode.ALL);
-
-        parsedPackage.assertNoResourceErrors();
-        parsedPackage.assertNoValidationIssues();
-    }
-
-    @Test
-    void verificationCaseWithoutAPropertyIsRejected() {
-        var parsedPackage = parseHelper.parse("""
-            package test
-            @VerificationCase
-            class Case {
-                var count: int := 0
-            }
-            """, CheckMode.ALL);
-
-        parsedPackage.assertNoResourceErrors();
-        parsedPackage.assertOnlyValidationErrorsAre(OxstsValidator.MISSING_PROPERTY, 3);
-        parsedPackage.assertHasValidationIssue(OxstsValidator.MISSING_PROPERTY, "'Case' has no property");
-    }
-
-    @Test
-    void verificationCaseInheritingAPropertyPasses() {
-        var parsedPackage = parseHelper.parse("""
-            package test
-            class Base {
-                var count: int := 0
-                prop {
+                redefine prop {
                     return AG count == 0
                 }
-            }
-            @VerificationCase
-            class Case : Base { }
-            """, CheckMode.ALL);
-
-        parsedPackage.assertNoResourceErrors();
-        parsedPackage.assertNoValidationIssues();
-    }
-
-    @Test
-    void classWithoutAPropertyThatIsNoVerificationCasePasses() {
-        var parsedPackage = parseHelper.parse("""
-            package test
-            class Part {
-                var count: int := 0
             }
             """, CheckMode.ALL);
 
@@ -284,10 +242,10 @@ public class DeclarationValidationTest {
     }
 
     @Test
-    void anonymousTransitionsWithoutRedefinePass() {
+    void anonymousMembersWithoutRedefineWarnAsShadowing() {
         var parsedPackage = parseHelper.parse("""
             package test
-            class Base {
+            class Machine {
                 var count: int := 0
                 init {
                     count := 1
@@ -295,19 +253,40 @@ public class DeclarationValidationTest {
                 tran {
                     count := 2
                 }
-            }
-            class Child : Base {
-                init {
-                    count := 3
-                }
-                tran {
-                    count := 4
+                prop {
+                    return AG count == 0
                 }
             }
             """, CheckMode.ALL);
 
         parsedPackage.assertNoResourceErrors();
-        parsedPackage.assertNoValidationIssues();
+        assertThat(parsedPackage.getIssues())
+                .extracting(issue -> issue.getCode() + "@" + issue.getLineNumber())
+                .containsExactlyInAnyOrder(
+                        OxstsValidator.ELEMENT_SHADOWED + "@4",
+                        OxstsValidator.ELEMENT_SHADOWED + "@7",
+                        OxstsValidator.ELEMENT_SHADOWED + "@10");
+    }
+
+    @Test
+    void anonymousAbstractMembersAreRejected() {
+        var parsedPackage = parseHelper.parse("""
+            package test
+            abstract class Machine {
+                abstract init
+                abstract tran
+                abstract prop
+            }
+            """, CheckMode.ALL);
+
+        parsedPackage.assertNoResourceErrors();
+        assertThat(parsedPackage.getIssues())
+                .filteredOn(issue -> issue.getSeverity() == Severity.ERROR)
+                .extracting(issue -> issue.getCode() + "@" + issue.getLineNumber())
+                .containsExactlyInAnyOrder(
+                        OxstsValidator.ANONYMOUS_ABSTRACT_MEMBER + "@3",
+                        OxstsValidator.ANONYMOUS_ABSTRACT_MEMBER + "@4",
+                        OxstsValidator.ANONYMOUS_ABSTRACT_MEMBER + "@5");
     }
 
     @Test
@@ -334,25 +313,6 @@ public class DeclarationValidationTest {
                 .extracting(issue -> issue.getCode() + "@" + issue.getLineNumber())
                 .containsExactlyInAnyOrder(
                         OxstsValidator.DUPLICATE_NAME_ISSUE + "@4", OxstsValidator.DUPLICATE_NAME_ISSUE + "@10");
-    }
-
-    @Test
-    void anonymousPropertyWithoutRedefineRealizesTheInheritedAbstractOne() {
-        var parsedPackage = parseHelper.parse("""
-            package test
-            abstract class Base {
-                var count: int := 0
-                abstract prop
-            }
-            class Child : Base {
-                prop {
-                    return AG count == 0
-                }
-            }
-            """, CheckMode.ALL);
-
-        parsedPackage.assertNoResourceErrors();
-        parsedPackage.assertNoValidationIssues();
     }
 
     @Test

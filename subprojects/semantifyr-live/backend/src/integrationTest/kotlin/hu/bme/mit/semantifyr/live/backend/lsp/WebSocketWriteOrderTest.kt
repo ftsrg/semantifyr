@@ -41,7 +41,7 @@ class WebSocketWriteOrderTest {
 
             @VerificationCase
             class Case$name {
-                prop {
+                redefine prop {
                     return true
                 }
             }

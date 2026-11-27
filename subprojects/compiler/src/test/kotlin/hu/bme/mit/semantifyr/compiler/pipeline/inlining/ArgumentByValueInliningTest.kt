@@ -27,7 +27,7 @@ class ArgumentByValueInliningTest : InliningTestBase() {
                     redefine tran {
                         inline swap(x, y)
                     }
-                    prop {
+                    redefine prop {
                         return EF x == 2 && y == 1
                     }
                 }
@@ -67,7 +67,7 @@ class ArgumentByValueInliningTest : InliningTestBase() {
                     redefine tran {
                         inline increment(counter)
                     }
-                    prop {
+                    redefine prop {
                         return AG previous < counter
                     }
                 }
@@ -104,7 +104,7 @@ class ArgumentByValueInliningTest : InliningTestBase() {
                     redefine tran {
                         inline add(2)
                     }
-                    prop {
+                    redefine prop {
                         return EF counter == 2
                     }
                 }

@@ -111,7 +111,7 @@ class ClassWitnessBackAnnotator @Inject constructor(
         }
 
         private val originalProperty by lazy {
-            redefinitionAwareReferenceResolver.resolveOrNull(rootFeature, "prop") as? PropertyDeclaration ?: error("Verified class has no property.")
+            redefinitionAwareReferenceResolver.resolve(rootFeature, builtinSymbolResolver.anythingProperty(classDeclaration))
         }
 
         fun createInlinedOxsts(): InlinedOxsts {

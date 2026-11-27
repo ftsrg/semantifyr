@@ -36,7 +36,7 @@ class StructureFlatteningTest : FlatteningTestBase() {
                         firstUser.own.count := 1
                         secondUser.own.count := 2
                     }
-                    prop {
+                    redefine prop {
                         return AG (secondUser.counter.count == 0 || secondUser.counter.count == 1)
                     }
                 }
@@ -75,7 +75,7 @@ class StructureFlatteningTest : FlatteningTestBase() {
                     redefine tran {
                         inline parent.child.bumpParent()
                     }
-                    prop {
+                    redefine prop {
                         return EF parent.generation == 3
                     }
                 }
@@ -109,7 +109,7 @@ class StructureFlatteningTest : FlatteningTestBase() {
                     @VerificationCase
                     class Host {
                         contains leaf: Leaf[0..1]
-                        prop {
+                        redefine prop {
                             return AG leaf?.count == 0
                         }
                     }
@@ -137,7 +137,7 @@ class StructureFlatteningTest : FlatteningTestBase() {
                     } or {
                         counter := counter - 1
                     }
-                    prop {
+                    redefine prop {
                         return AG true
                     }
                 }

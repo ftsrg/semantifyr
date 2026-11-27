@@ -15,7 +15,7 @@ class UnboundedCounterReach {
         x := x + 1
     }
 
-    prop {
+    redefine prop {
         return EF x == 5
     }
 }
@@ -29,7 +29,7 @@ class UnboundedCounterBound {
         x := x + 1
     }
 
-    prop {
+    redefine prop {
         return AG x >= 0
     }
 }
@@ -43,7 +43,7 @@ class DoublingStaysPositive {
         x := x * 2
     }
 
-    prop {
+    redefine prop {
         return AG x > 0
     }
 }
@@ -57,7 +57,7 @@ class DoublingReachesNegative {
         x := x * 2
     }
 
-    prop {
+    redefine prop {
         return EF x < 0
     }
 }
@@ -80,7 +80,7 @@ class UnboundedGuardAroundAssumption {
         }
     }
 
-    prop {
+    redefine prop {
         return AG y == 0
     }
 }
@@ -96,7 +96,7 @@ class SaturatingCounterReach {
         }
     }
 
-    prop {
+    redefine prop {
         return EF x == 10
     }
 }
@@ -112,7 +112,7 @@ class SaturatingCounterBound {
         }
     }
 
-    prop {
+    redefine prop {
         return AG x <= 10
     }
 }
@@ -137,7 +137,7 @@ class TimerCountdownBound {
         }
     }
 
-    prop {
+    redefine prop {
         return AG (timer >= 0 && timer <= 3)
     }
 }
@@ -154,7 +154,7 @@ class BeyondSixteenBitsReach {
         }
     }
 
-    prop {
+    redefine prop {
         return EF x == 100000
     }
 }
@@ -170,7 +170,7 @@ class BeyondSixteenBitsBound {
         }
     }
 
-    prop {
+    redefine prop {
         return AG x <= 100000
     }
 }
@@ -189,7 +189,7 @@ class UnboundedCounterOutsideCone {
         }
     }
 
-    prop {
+    redefine prop {
         return AG x <= 3
     }
 }

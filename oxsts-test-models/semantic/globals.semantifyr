@@ -20,7 +20,7 @@ class GlobalTickReach {
         counter.tick := counter.tick + 1
     }
 
-    prop {
+    redefine prop {
         return EF counter.tick == 3
     }
 }
@@ -33,7 +33,7 @@ class GlobalTickBound {
         counter.tick := counter.tick + 1
     }
 
-    prop {
+    redefine prop {
         return AG counter.tick <= 3
     }
 }
@@ -46,7 +46,7 @@ class GlobalTickViolated {
         counter.tick := counter.tick + 1
     }
 
-    prop {
+    redefine prop {
         return AG counter.tick <= 2
     }
 }
@@ -61,7 +61,7 @@ class GlobalReferenceReach {
         sharedCounter.tick := sharedCounter.tick + 1
     }
 
-    prop {
+    redefine prop {
         return EF counter.tick == 3
     }
 }
@@ -74,7 +74,7 @@ class GlobalReferenceViolated {
         sharedCounter.tick := sharedCounter.tick + 1
     }
 
-    prop {
+    redefine prop {
         return AG counter.tick == 0
     }
 }

@@ -30,14 +30,14 @@ class TrafficLight {
 
 @VerificationCase
 class LightCanTurnGreen : TrafficLight {
-    prop {
+    redefine prop {
         return EF (color == LightColor::Green)
     }
 }
 
 @VerificationCase
 class LightCanTurnYellow : TrafficLight {
-    prop {
+    redefine prop {
         return EF (color == LightColor::Yellow)
     }
 }

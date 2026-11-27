@@ -40,7 +40,7 @@ class VerificationCaseDefinition {
         inline subject.executeMainComponent()
     }
 
-    prop {
+    redefine prop {
         return objective.evaluate()
     }
 }

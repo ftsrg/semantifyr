@@ -20,7 +20,7 @@ class TemporalOperatorInliningTest : InliningTestBase() {
                 @VerificationCase
                 class Host {
                     var counter: int := 0
-                    prop {
+                    redefine prop {
                         return AG (EF counter == 0)
                     }
                 }
@@ -42,7 +42,7 @@ class TemporalOperatorInliningTest : InliningTestBase() {
                 @VerificationCase
                 class Host {
                     var flag: bool := false
-                    prop {
+                    redefine prop {
                         return !(AG flag)
                     }
                 }
@@ -70,7 +70,7 @@ class TemporalOperatorInliningTest : InliningTestBase() {
                 @VerificationCase
                 class Host {
                     var flag: bool := false
-                    prop {
+                    redefine prop {
                         return !(EF flag)
                     }
                 }

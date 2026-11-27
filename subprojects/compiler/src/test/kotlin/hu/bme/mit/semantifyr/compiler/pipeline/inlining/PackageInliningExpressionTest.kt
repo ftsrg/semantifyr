@@ -26,7 +26,7 @@ class PackageInliningExpressionTest : InliningTestBase() {
                     prop isPositive(): bool {
                         return counter > 0
                     }
-                    prop {
+                    redefine prop {
                         return EF isPositive()
                     }
                     redefine tran {
@@ -53,7 +53,7 @@ class PackageInliningExpressionTest : InliningTestBase() {
                     prop isPositive(): bool {
                         return counter > 0
                     }
-                    prop {
+                    redefine prop {
                         return EF self.isPositive()
                     }
                     redefine tran {
@@ -86,7 +86,7 @@ class PackageInliningExpressionTest : InliningTestBase() {
                     redefine tran {
                         worker.done := true
                     }
-                    prop {
+                    redefine prop {
                         return EF worker.isDone()
                     }
                 }
@@ -118,7 +118,7 @@ class PackageInliningExpressionTest : InliningTestBase() {
                     redefine tran {
                         middle.leaf.value := middle.leaf.value + 1
                     }
-                    prop {
+                    redefine prop {
                         return EF middle.leaf.isBig()
                     }
                 }
@@ -153,7 +153,7 @@ class PackageInliningExpressionTest : InliningTestBase() {
                     redefine tran {
                         child.counter := 10
                     }
-                    prop {
+                    redefine prop {
                         return EF bases.marker()
                     }
                 }
@@ -195,7 +195,7 @@ class PackageInliningExpressionTest : InliningTestBase() {
                     redefine tran {
                         leaf.leafValue := 2
                     }
-                    prop {
+                    redefine prop {
                         return EF bases.marker()
                     }
                 }
@@ -235,7 +235,7 @@ class PackageInliningExpressionTest : InliningTestBase() {
                     redefine tran {
                         first.done := true
                     }
-                    prop {
+                    redefine prop {
                         return EF current.isDone()
                     }
                 }
@@ -264,7 +264,7 @@ class PackageInliningExpressionTest : InliningTestBase() {
                     prop difference(minuend: int, subtrahend: int): int {
                         return minuend - subtrahend
                     }
-                    prop {
+                    redefine prop {
                         return EF expected == difference(subtrahend = 1, minuend = measured)
                     }
                 }
@@ -298,7 +298,7 @@ class PackageInliningExpressionTest : InliningTestBase() {
                     redefine tran {
                         inline moveTo(Point { x = next() })
                     }
-                    prop {
+                    redefine prop {
                         return AG position != Point { x = next(), y = 2 }
                     }
                 }

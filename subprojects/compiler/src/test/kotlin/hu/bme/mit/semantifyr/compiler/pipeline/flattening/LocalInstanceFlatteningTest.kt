@@ -61,7 +61,7 @@ class LocalInstanceFlatteningTest : FlatteningTestBase() {
                             outside := true
                         }
                     }
-                    prop {
+                    redefine prop {
                         return AG !outside
                     }
                 }
@@ -107,7 +107,7 @@ class LocalInstanceFlatteningTest : FlatteningTestBase() {
                             empty := true
                         }
                     }
-                    prop {
+                    redefine prop {
                         return EF empty
                     }
                 }
@@ -157,7 +157,7 @@ class LocalInstanceFlatteningTest : FlatteningTestBase() {
                         flip := true
                         inline picked.finish()
                     }
-                    prop {
+                    redefine prop {
                         return EF second.done
                     }
                 }
@@ -199,7 +199,7 @@ class LocalInstanceFlatteningTest : FlatteningTestBase() {
                     redefine tran {
                         inline pool.pickOne()
                     }
-                    prop {
+                    redefine prop {
                         return AG !pool.spare.done
                     }
                 }
@@ -244,7 +244,7 @@ class LocalInstanceFlatteningTest : FlatteningTestBase() {
                         var queue: Worker[2] := [first, second]
                         inline queue[1].finish()
                     }
-                    prop {
+                    redefine prop {
                         return EF second.done
                     }
                 }
@@ -283,7 +283,7 @@ class LocalInstanceFlatteningTest : FlatteningTestBase() {
                     redefine tran {
                         inline pool.pickTwo()
                     }
-                    prop {
+                    redefine prop {
                         return AG !pool.spare.done
                     }
                 }

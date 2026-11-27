@@ -42,7 +42,7 @@ class FlatteningStepsTest : FlatteningTestBase() {
                     first.done := true
                 }
             }
-            prop {
+            redefine prop {
                 return AG !first.done || position.x == 1
             }
         }
@@ -59,7 +59,7 @@ class FlatteningStepsTest : FlatteningTestBase() {
             redefine tran {
                 worker.done := true
             }
-            prop {
+            redefine prop {
                 return EF worker.done
             }
         }

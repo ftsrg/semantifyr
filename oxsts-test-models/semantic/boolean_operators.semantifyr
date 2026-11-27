@@ -19,7 +19,7 @@ class AndTrueReach {
         result := left && right
     }
 
-    prop {
+    redefine prop {
         return EF result == true
     }
 }
@@ -37,7 +37,7 @@ class AndTrueImpliesBoth {
         result := left && right
     }
 
-    prop {
+    redefine prop {
         return AG (result == false || (left == true && right == true))
     }
 }
@@ -55,7 +55,7 @@ class OrTrueReach {
         result := left || right
     }
 
-    prop {
+    redefine prop {
         return EF result == true
     }
 }
@@ -73,7 +73,7 @@ class OrFalseImpliesBothFalse {
         result := left || right
     }
 
-    prop {
+    redefine prop {
         return AG (result == true || (left == false && right == false))
     }
 }
@@ -91,7 +91,7 @@ class XorTrueReach {
         result := left ^^ right
     }
 
-    prop {
+    redefine prop {
         return EF result == true
     }
 }
@@ -109,7 +109,7 @@ class XorTrueImpliesDiffer {
         result := left ^^ right
     }
 
-    prop {
+    redefine prop {
         return AG (result == false || left != right)
     }
 }
@@ -123,7 +123,7 @@ class NegationReach {
         operand := !operand
     }
 
-    prop {
+    redefine prop {
         return EF operand == false
     }
 }
@@ -137,7 +137,7 @@ class NegationBound {
         operand := !operand
     }
 
-    prop {
+    redefine prop {
         return AG (operand == true || operand == false)
     }
 }
@@ -155,7 +155,7 @@ class TautologyAlwaysTrue {
         result := (left && right) || !left
     }
 
-    prop {
+    redefine prop {
         return AG (result == false || result == true)
     }
 }
@@ -170,7 +170,7 @@ class DoubleNegationTrueReach {
         result := !(!operand)
     }
 
-    prop {
+    redefine prop {
         return EF result == true
     }
 }
@@ -186,7 +186,7 @@ class DoubleNegationMatchesInput {
         result := !(!operand)
     }
 
-    prop {
+    redefine prop {
         return AG (result == false || operand == true)
     }
 }
@@ -204,7 +204,7 @@ class AndWithFalseOperandUnreachable {
         result := left && right
     }
 
-    prop {
+    redefine prop {
         return EF (result == true && right == false)
     }
 }
@@ -222,7 +222,7 @@ class OrWithTrueOperandViolated {
         result := left || right
     }
 
-    prop {
+    redefine prop {
         return AG (result == false || left == true)
     }
 }
@@ -240,7 +240,7 @@ class XorOfEqualOperandsUnreachable {
         result := left ^^ right
     }
 
-    prop {
+    redefine prop {
         return EF (result == true && left == right)
     }
 }
@@ -254,7 +254,7 @@ class NegationViolated {
         operand := !operand
     }
 
-    prop {
+    redefine prop {
         return AG operand == true
     }
 }

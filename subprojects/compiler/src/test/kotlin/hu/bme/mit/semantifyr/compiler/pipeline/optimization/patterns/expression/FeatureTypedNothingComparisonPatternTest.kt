@@ -34,7 +34,7 @@ class FeatureTypedNothingComparisonPatternTest : InliningTestBase() {
                 class Host {
                     contains leaf: Leaf[1]
                     var slot: leaf[1] := nothing
-                    prop {
+                    redefine prop {
                         return EF slot == nothing
                     }
                 }
@@ -57,7 +57,7 @@ class FeatureTypedNothingComparisonPatternTest : InliningTestBase() {
                 class Host {
                     contains leaf: Leaf[1]
                     var slot: leaf[1] := nothing
-                    prop {
+                    redefine prop {
                         return EF slot != nothing
                     }
                 }
@@ -80,7 +80,7 @@ class FeatureTypedNothingComparisonPatternTest : InliningTestBase() {
                 class Host {
                     contains leaf: Leaf[0..1]
                     var slot: leaf[0..1] := nothing
-                    prop {
+                    redefine prop {
                         return EF slot == nothing
                     }
                 }
@@ -104,7 +104,7 @@ class FeatureTypedNothingComparisonPatternTest : InliningTestBase() {
                 class Host {
                     contains leaf: Leaf[1]
                     var slot: leaf[1] := nothing
-                    prop {
+                    redefine prop {
                         return EF nothing == slot
                     }
                 }

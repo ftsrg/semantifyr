@@ -226,7 +226,7 @@ public class ClockValidationTest {
             package test
             class Timer {
                 var elapsed: clock := 0
-                prop {
+                redefine prop {
                     return AG elapsed <= 5
                 }
             }

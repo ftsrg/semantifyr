@@ -82,7 +82,7 @@ class WitnessTimeScalerTest : InliningTestBase() {
                     inline timer.fire()
                 }
 
-                prop {
+                redefine prop {
                     return EF (timer.fired)
                 }
             }

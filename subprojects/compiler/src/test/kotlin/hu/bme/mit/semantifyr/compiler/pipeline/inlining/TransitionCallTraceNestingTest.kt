@@ -157,7 +157,7 @@ class TransitionCallTraceNestingTest : InliningTestBase() {
                     time := time + 1
                 }
 
-                prop {
+                redefine prop {
                     return AG (lightA.lightControl.item + lightB.lightControl.item + time >= 0)
                 }
             }

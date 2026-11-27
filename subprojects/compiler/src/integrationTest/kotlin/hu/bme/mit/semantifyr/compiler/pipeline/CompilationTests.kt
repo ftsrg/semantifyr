@@ -58,7 +58,7 @@ class CompilationTests {
                     redefine tran {
                         counter := counter + 1
                     }
-                    prop {
+                    redefine prop {
                         return EF counter == 5
                     }
                 }
@@ -78,7 +78,7 @@ class CompilationTests {
                     redefine tran {
                         havoc(flag)
                     }
-                    prop {
+                    redefine prop {
                         return EF flag == true
                     }
                 }
@@ -104,7 +104,7 @@ class CompilationTests {
                             counter := 3
                         }
                     }
-                    prop {
+                    redefine prop {
                         return EF counter == 2
                     }
                 }
@@ -128,7 +128,7 @@ class CompilationTests {
                             counter := 0
                         }
                     }
-                    prop {
+                    redefine prop {
                         return EF counter == 3
                     }
                 }
@@ -151,7 +151,7 @@ class CompilationTests {
                         assume(guard > 0)
                         counter := guard
                     }
-                    prop {
+                    redefine prop {
                         return EF counter == 5
                     }
                 }
@@ -172,7 +172,7 @@ class CompilationTests {
                         var step: int := 2
                         counter := counter + step
                     }
-                    prop {
+                    redefine prop {
                         return EF counter == 6
                     }
                 }
@@ -196,7 +196,7 @@ class CompilationTests {
                             counter := -1
                         }
                     }
-                    prop {
+                    redefine prop {
                         return EF counter == 1
                     }
                 }
@@ -222,7 +222,7 @@ class CompilationTests {
                         inline addBy(2)
                     }
 
-                    prop {
+                    redefine prop {
                         return EF counter == 6
                     }
                 }
@@ -248,7 +248,7 @@ class CompilationTests {
                     redefine tran {
                         counter := counter + 2
                     }
-                    prop {
+                    redefine prop {
                         return EF counter == 6
                     }
                 }
@@ -275,7 +275,7 @@ class CompilationTests {
                     redefine tran {
                         inline step()
                     }
-                    prop {
+                    redefine prop {
                         return EF counter == 3
                     }
                 }
@@ -302,7 +302,7 @@ class CompilationTests {
                     redefine tran {
                         inline leaf.main()
                     }
-                    prop {
+                    redefine prop {
                         return EF leaf.value == 3
                     }
                 }
@@ -327,7 +327,7 @@ class CompilationTests {
                     redefine tran {
                         havoc(slot)
                     }
-                    prop {
+                    redefine prop {
                         return EF slot == nothing
                     }
                 }
@@ -357,7 +357,7 @@ class CompilationTests {
                     redefine tran {
                         inline only.main()
                     }
-                    prop {
+                    redefine prop {
                         return EF only.value == 2
                     }
                 }
@@ -392,7 +392,7 @@ class CompilationTests {
                             color := Color::Red
                         }
                     }
-                    prop {
+                    redefine prop {
                         return EF color == Color::Blue
                     }
                 }
@@ -417,7 +417,7 @@ class CompilationTests {
                             second := 1
                         }
                     }
-                    prop {
+                    redefine prop {
                         return AG !(first == 1 && second == 1)
                     }
                 }
@@ -450,7 +450,7 @@ class CompilationTests {
                     redefine tran {
                         inline left.main()
                     }
-                    prop {
+                    redefine prop {
                         return EF left.value == 1
                     }
                 }
@@ -475,7 +475,7 @@ class CompilationTests {
                         return counter == expected
                     }
 
-                    prop {
+                    redefine prop {
                         return EF equals(3)
                     }
                 }
@@ -508,7 +508,7 @@ class CompilationTests {
                     redefine tran {
                         inline middle.step()
                     }
-                    prop {
+                    redefine prop {
                         return EF middle.deep.value == 2
                     }
                 }
@@ -530,7 +530,7 @@ class CompilationTests {
                         flag := !flag
                         number := -number
                     }
-                    prop {
+                    redefine prop {
                         return EF (!flag && number == -1)
                     }
                 }
@@ -556,7 +556,7 @@ class CompilationTests {
                     }
                     redefine tran {
                     }
-                    prop {
+                    redefine prop {
                         return EF counter == 2
                     }
                 }
@@ -576,7 +576,7 @@ class CompilationTests {
                     redefine tran {
                         counter := counter + 1
                     }
-                    prop {
+                    redefine prop {
                         return true
                     }
                 }
@@ -600,7 +600,7 @@ class CompilationTests {
                     redefine tran {
                         inline self.step()
                     }
-                    prop {
+                    redefine prop {
                         return EF self.counter == 3
                     }
                 }
@@ -626,7 +626,7 @@ class CompilationTests {
                             counter := counter - 1
                         }
                     }
-                    prop {
+                    redefine prop {
                         return AG (counter >= -10 && counter <= 10 && !(counter < -100) && !(counter > 100))
                     }
                 }
@@ -651,7 +651,7 @@ class CompilationTests {
                     redefine tran {
                         sharedInstance.flag := true
                     }
-                    prop {
+                    redefine prop {
                         return EF sharedInstance.flag
                     }
                 }
@@ -678,7 +678,7 @@ class CompilationTests {
                     redefine tran {
                         counter := counter + 1
                     }
-                    prop {
+                    redefine prop {
                         return EF predicate()
                     }
                 }
@@ -703,7 +703,7 @@ class CompilationTests {
                             right := !right
                         }
                     }
-                    prop {
+                    redefine prop {
                         return AG !(!(left || right) && (left || right))
                     }
                 }
@@ -730,7 +730,7 @@ class CompilationTests {
                         inline addBy(base + 2)
                     }
 
-                    prop {
+                    redefine prop {
                         return EF counter == 5
                     }
                 }
@@ -767,7 +767,7 @@ class CompilationTests {
                         inline apply(Command::Increment)
                     }
 
-                    prop {
+                    redefine prop {
                         return EF counter == 3
                     }
                 }
@@ -787,7 +787,7 @@ class CompilationTests {
                     redefine tran {
                         counter := counter + 1
                     }
-                    prop {
+                    redefine prop {
                         return EF counter > 3.14
                     }
                 }
@@ -809,7 +809,7 @@ class CompilationTests {
                     redefine tran {
                         counter := counter + 1
                     }
-                    prop {
+                    redefine prop {
                         return EF counter == "hi"
                     }
                 }
@@ -831,7 +831,7 @@ class CompilationTests {
                     redefine tran {
                         counter := [1, 2, 3][1]
                     }
-                    prop {
+                    redefine prop {
                         return EF counter == 2
                     }
                 }
@@ -854,7 +854,7 @@ class CompilationTests {
                             total := total + index
                         }
                     }
-                    prop {
+                    redefine prop {
                         return EF total == 6
                     }
                 }
@@ -881,7 +881,7 @@ class CompilationTests {
                     redefine tran {
                         sensor.fired := true
                     }
-                    prop {
+                    redefine prop {
                         return EF sensor.fired
                     }
                 }
@@ -903,7 +903,7 @@ class CompilationTests {
                         number := number + 1
                         result := if number > 0 then 1 else -1
                     }
-                    prop {
+                    redefine prop {
                         return EF result == 1
                     }
                 }
@@ -923,7 +923,7 @@ class CompilationTests {
                     redefine tran {
                         number := number + 1
                     }
-                    prop {
+                    redefine prop {
                         return EF (if number > 0 then true else false)
                     }
                 }
@@ -943,7 +943,7 @@ class CompilationTests {
                     redefine tran {
                         counter := counter + 1
                     }
-                    prop {
+                    redefine prop {
                         return EF counter == 1
                     }
                 }
@@ -954,7 +954,7 @@ class CompilationTests {
                     redefine tran {
                         countdown := countdown - 1
                     }
-                    prop {
+                    redefine prop {
                         return EF countdown == 5
                     }
                 }
@@ -986,7 +986,7 @@ class CompilationTests {
                     redefine tran {
                         inline relay.relay(count)
                     }
-                    prop {
+                    redefine prop {
                         return AG true
                     }
                 }

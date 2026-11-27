@@ -56,7 +56,7 @@ public class DiagnosticSuppressionTest {
                 var flag: bool := true
                 var counter: int := 0
                 redefine tran { counter := counter + 1 }
-                prop { return AG (flag && counter) }
+                redefine prop { return AG (flag && counter) }
             }
             """, CheckMode.ALL);
 

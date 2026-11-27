@@ -43,7 +43,7 @@ public class RedefinitionHandler {
         }
 
         var name = NamingUtil.getName(declaration);
-        if ((declaration.isRedefine() || NamingUtil.isAnonymous(declaration)) && name != null) {
+        if (declaration.isRedefine() && name != null) {
             // find the other RedefinableDeclaration in the parent domain with the same name
             var surroundingFeature = (DomainDeclaration) declaration.eContainer();
             var parentDomain = domainMemberCollectionProvider.getParentCollection(surroundingFeature);

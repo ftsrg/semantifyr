@@ -42,7 +42,6 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.eclipse.emf.ecore.EObject;
@@ -146,6 +145,7 @@ public class OxstsValidator extends AbstractOxstsValidator {
     public static final String REDEFINED_NOT_FOUND_ISSUE = ISSUE_PREFIX + "REDEFINED_NOT_FOUND";
     public static final String DUPLICATE_REDEFINITION = ISSUE_PREFIX + "DUPLICATE_REDEFINITION";
     public static final String MEMBER_NOT_IN_ABSTRACT_CLASS = ISSUE_PREFIX + "MEMBER_NOT_IN_ABSTRACT_CLASS";
+    public static final String ANONYMOUS_ABSTRACT_MEMBER = ISSUE_PREFIX + "ANONYMOUS_ABSTRACT_MEMBER";
     public static final String ELEMENT_SHADOWED = ISSUE_PREFIX + "ELEMENT_SHADOWED";
     public static final String INVALID_CALL_ARGUMENTS_COUND = ISSUE_PREFIX + "INVALID_CALL_ARGUMENTS_COUNT";
     public static final String PARAMETER_BOUND_TWICE = ISSUE_PREFIX + "PARAMETER_BOUND_TWICE";
@@ -179,7 +179,6 @@ public class OxstsValidator extends AbstractOxstsValidator {
     public static final String MISPLACED_TEMPORAL_OPERATOR = ISSUE_PREFIX + "MISPLACED_TEMPORAL_OPERATOR";
     public static final String MISSING_INITIALIZER = ISSUE_PREFIX + "MISSING_INITIALIZER";
     public static final String ABSTRACT_VERIFICATION_CASE = ISSUE_PREFIX + "ABSTRACT_VERIFICATION_CASE";
-    public static final String MISSING_PROPERTY = ISSUE_PREFIX + "MISSING_PROPERTY";
     public static final String INCORRECT_ANNOTATION_TARGET = ISSUE_PREFIX + "INCORRECT_ANNOTATION_TARGET";
     public static final String AMBIGUOUS_REFERENCE = ISSUE_PREFIX + "AMBIGUOUS_REFERENCE";
     public static final String DECLARED_IN_ANOTHER_FILE = ISSUE_PREFIX + "DECLARED_IN_ANOTHER_FILE";
@@ -241,6 +240,18 @@ public class OxstsValidator extends AbstractOxstsValidator {
                     OxstsPackage.Literals.NAMED_ELEMENT__NAME,
                     0,
                     MEMBER_NOT_IN_ABSTRACT_CLASS);
+        }
+    }
+
+    // an abstract member cannot redefine, so an anonymous one would shadow the concrete one of Anything
+    @Check
+    public void checkAnonymousAbstractMember(RedefinableDeclaration redefinableDeclaration) {
+        if (NamingUtil.isAnonymous(redefinableDeclaration) && OxstsUtils.isMemberAbstract(redefinableDeclaration)) {
+            acceptError(
+                    "'" + NamingUtil.getName(redefinableDeclaration)
+                            + "' cannot be abstract, since an abstract member cannot redefine the concrete one every class inherits.",
+                    redefinableDeclaration,
+                    ANONYMOUS_ABSTRACT_MEMBER);
         }
     }
 
@@ -317,28 +328,6 @@ public class OxstsValidator extends AbstractOxstsValidator {
                     0,
                     ABSTRACT_VERIFICATION_CASE);
         }
-    }
-
-    @Check
-    public void checkVerificationCaseHasProperty(ClassDeclaration classDeclaration) {
-        if (classDeclaration.isAbstract() || !builtinAnnotationHandler.isVerificationCase(classDeclaration)) {
-            return;
-        }
-        for (var member : domainMemberCollectionProvider
-                .getMemberCollection(classDeclaration)
-                .getDeclarations()) {
-            if (member instanceof PropertyDeclaration && "prop".equals(NamingUtil.getName(member))) {
-                return;
-            }
-        }
-        acceptError(
-                "Verification case '"
-                        + NamingUtil.getName(classDeclaration)
-                        + "' has no property to check; declare or inherit one, such as `prop { return AG ... }`.",
-                classDeclaration,
-                OxstsPackage.Literals.NAMED_ELEMENT__NAME,
-                0,
-                MISSING_PROPERTY);
     }
 
     //    @Check
@@ -447,17 +436,18 @@ public class OxstsValidator extends AbstractOxstsValidator {
     @Check
     public void checkShadowedNames(NamedElement namedElement) {
         if (namedElement instanceof RedefinableDeclaration redefinableDeclaration
-                && (redefinableDeclaration.isRedefine() || NamingUtil.isAnonymous(redefinableDeclaration))) {
+                && redefinableDeclaration.isRedefine()) {
             return;
         }
 
-        if (!(namedElement.eContainer() instanceof DomainDeclaration parentDomain)) {
+        var name = NamingUtil.getName(namedElement);
+        if (name == null || !(namedElement.eContainer() instanceof DomainDeclaration parentDomain)) {
             return;
         }
         var declarations =
                 domainMemberCollectionProvider.getParentCollection(parentDomain).getDeclarations();
 
-        if (declarations.stream().anyMatch(d -> Objects.equals(NamingUtil.getName(d), namedElement.getName()))) {
+        if (declarations.stream().anyMatch(d -> name.equals(NamingUtil.getName(d)))) {
             acceptWarning(
                     "Name shadows another element.",
                     namedElement,

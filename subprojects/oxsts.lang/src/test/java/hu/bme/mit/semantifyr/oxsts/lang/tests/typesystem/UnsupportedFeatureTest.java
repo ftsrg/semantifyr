@@ -123,7 +123,7 @@ public class UnsupportedFeatureTest {
                         seen := worker.done
                     }
                 }
-                prop {
+                redefine prop {
                     return EF current.done
                 }
             }
@@ -211,7 +211,7 @@ public class UnsupportedFeatureTest {
             class Team {
                 contains lead: Worker
                 var current: Worker[0..1] := nothing
-                prop {
+                redefine prop {
                     return EF current?.done
                 }
             }
@@ -228,7 +228,7 @@ public class UnsupportedFeatureTest {
             class Team {
                 contains lead: Worker
                 var current: Worker[0..1] := nothing
-                prop {
+                redefine prop {
                     return EF current?.isDone()
                 }
             }
@@ -253,7 +253,7 @@ public class UnsupportedFeatureTest {
                         inline worker.step()
                     }
                 }
-                prop { return EF current.isDone() }
+                redefine prop { return EF current.isDone() }
             }
             """, CheckMode.ALL);
 

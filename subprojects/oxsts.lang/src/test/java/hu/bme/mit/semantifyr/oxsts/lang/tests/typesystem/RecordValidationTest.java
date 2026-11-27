@@ -62,7 +62,7 @@ public class RecordValidationTest {
                     local.y := 2
                     inline move(local)
                 }
-                prop {
+                redefine prop {
                     return EF (position == previous && segment.from != segment.to && isOrigin(segment.from) && segment.color == Color::Green)
                 }
             }
@@ -164,7 +164,7 @@ public class RecordValidationTest {
             class Holder {
                 var position: Point := Point { x = 0 }
                 var previous: Point := Point { x = 0 }
-                prop { return EF position < previous }
+                redefine prop { return EF position < previous }
             }
             """, CheckMode.ALL);
 
@@ -176,7 +176,7 @@ public class RecordValidationTest {
         var parsedPackage = parseHelper.parse(RECORDS + """
             class Holder {
                 var position: Point := Point { x = 0 }
-                prop { return EF position != nothing }
+                redefine prop { return EF position != nothing }
             }
             """, CheckMode.ALL);
 
@@ -188,7 +188,7 @@ public class RecordValidationTest {
         var parsedPackage = parseHelper.parse(RECORDS + """
             class Holder {
                 var position: Point := Point { x = 0 }
-                prop { return EF position == 1 }
+                redefine prop { return EF position == 1 }
             }
             """, CheckMode.ALL);
 
@@ -332,7 +332,7 @@ public class RecordValidationTest {
                     box := Box { size = 2 }
                     position := if position.x > 3 then Point { x = 0 } else position
                 }
-                prop {
+                redefine prop {
                     return EF (position != Point { x = 3, y = 0 } && isAt(Point { x = 1 }) && Point { x = 1 }.x == 1)
                 }
             }
@@ -508,7 +508,7 @@ public class RecordValidationTest {
         var parsedPackage = parseHelper.parse(RECORDS + """
             class Holder {
                 var position: Point := Point { x = 0 }
-                prop { return EF position < Point { x = 1 } }
+                redefine prop { return EF position < Point { x = 1 } }
             }
             """, CheckMode.ALL);
 

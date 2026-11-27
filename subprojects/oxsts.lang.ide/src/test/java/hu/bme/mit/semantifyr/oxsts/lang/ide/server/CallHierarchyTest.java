@@ -56,7 +56,7 @@ class CallHierarchyTest extends OxstsLanguageServerTest {
 
                 var lit: bool := lamp.<|>isOn()
 
-                prop {
+                redefine prop {
                     return true
                 }
             }

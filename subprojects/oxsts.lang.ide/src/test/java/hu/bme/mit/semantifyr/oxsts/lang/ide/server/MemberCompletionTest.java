@@ -66,7 +66,7 @@ class MemberCompletionTest extends OxstsLanguageServerTest {
                         inline light.<|>main()
                     }
 
-                    prop {
+                    redefine prop {
                         return EF (light.color == LightColor::Green)
                     }
                 }

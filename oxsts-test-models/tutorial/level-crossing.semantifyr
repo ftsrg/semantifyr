@@ -121,14 +121,14 @@ class LevelCrossing {
 
 @VerificationCase
 class BarrierDownWhileTrainInCrossing : LevelCrossing {
-    prop {
+    redefine prop {
         return AG (!(trackA.state == TrackState::InCrossing || trackB.state == TrackState::InCrossing) || barrier.state == BarrierState::Down)
     }
 }
 
 @VerificationCase
 class TwoTrainsCanBeInTheCrossing : LevelCrossing {
-    prop {
+    redefine prop {
         return EF (trackA.state == TrackState::InCrossing && trackB.state == TrackState::InCrossing)
     }
 }
