@@ -7,7 +7,6 @@
 import com.github.gradle.node.pnpm.task.PnpmTask
 import com.github.gradle.node.task.NodeTask
 import hu.bme.mit.semantifyr.gradle.AppendFurtherCases
-import hu.bme.mit.semantifyr.gradle.FURTHER_CASES_EXTENSION
 import hu.bme.mit.semantifyr.gradle.corpusModels
 import hu.bme.mit.semantifyr.gradle.oxstsFileExtension
 import hu.bme.mit.semantifyr.gradle.semantifyrArtifact
@@ -197,7 +196,6 @@ tasks.processResources {
 }
 
 val compiledExamplesDirectory = layout.buildDirectory.dir("compiled-examples")
-val compiledCorpusDirectory = layout.buildDirectory.dir("compiled-corpus")
 val compiledTutorialDirectory = layout.buildDirectory.dir("compiled-tutorial")
 val examplesSourceDirectory = layout.projectDirectory.dir("../models/examples")
 val appendedCorpusDirectory = layout.buildDirectory.dir("corpus")
@@ -220,10 +218,6 @@ val compiledExamplesElements = configurations.consumable("compiledExamplesElemen
 
 val compiledTutorialElements = configurations.consumable("compiledTutorialElements") {
     attributes(semantifyrArtifact("compiled-tutorial"))
-}
-
-val compiledCorpusElements = configurations.consumable("compiledCorpusElements") {
-    attributes(semantifyrArtifact("compiled-corpus"))
 }
 
 // the CLI builds every SysML and KerML file under the model's directory as its workspace
@@ -312,27 +306,6 @@ corpusModels(tutorialSourceDirectory).forEach {
         it.name,
         compiledTutorialDirectory,
         compiledTutorialElements,
-    )
-}
-
-val corpusWorkspace = files(appendFurtherCases).asFileTree.matching {
-    include(
-        "**/*.sysml",
-        "**/*.kerml",
-    )
-}
-
-// the models with further cases, compiled with them for the tests that take a further case
-corpusModels(examplesSourceDirectory).filter {
-    examplesSourceDirectory.file("${it.name}.$FURTHER_CASES_EXTENSION").asFile.isFile
-}.forEach {
-    registerSysmlCompile(
-        "compileSysmlCorpus_${it.name}",
-        appendedCorpusDirectory,
-        corpusWorkspace,
-        it.name,
-        compiledCorpusDirectory,
-        compiledCorpusElements,
     )
 }
 

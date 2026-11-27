@@ -130,3 +130,28 @@ class GuardAroundAssumption {
         return AG y == 0
     }
 }
+
+// Constant variable substitution: a branch whose assumption reads a variable that is never written drops out, and the other branches still run.
+@VerificationCase
+@Tag("expect-pass")
+class ConstantGuardReachable {
+    var sentinel: int := -1
+    var state: int := 0
+
+    redefine tran {
+        choice {
+            assume(sentinel == 3)
+            state := 99
+        } or {
+            assume(state == 0)
+            state := 1
+        } or {
+            assume(state == 1)
+            state := 2
+        }
+    }
+
+    redefine prop {
+        return EF state == 2
+    }
+}
