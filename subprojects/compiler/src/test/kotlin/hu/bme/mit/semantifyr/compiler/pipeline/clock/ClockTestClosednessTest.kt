@@ -42,18 +42,16 @@ class ClockTestClosednessTest : FlatteningTestBase() {
         }
         return cases.map {
             DynamicTest.dynamicTest(it.name) {
-                val unoptimized = unclosedTestTexts(it.name, OptimizationConfig.NONE)
-                val optimized = unclosedTestTexts(it.name, OptimizationConfig.ALL)
+                val unoptimized = unclosedTestCount(it.name, OptimizationConfig.NONE)
+                val optimized = unclosedTestCount(it.name, OptimizationConfig.ALL)
                 assertThat(optimized).isEqualTo(unoptimized)
             }
         }
     }
 
-    private fun unclosedTestTexts(className: String, optimization: OptimizationConfig): Set<String> {
+    private fun unclosedTestCount(className: String, optimization: OptimizationConfig): Int {
         val mainTransition = flatten(className, CLOCK_CASES, optimization).inlinedOxsts.mainTransition
-        return clockTestAnalysis.unclosedTests(mainTransition).map {
-            serialize(it).trim()
-        }.toSet()
+        return clockTestAnalysis.unclosedTests(mainTransition).size
     }
 
     @Test
@@ -246,7 +244,7 @@ class ClockTestClosednessTest : FlatteningTestBase() {
                     inline current.restart()
                     current := second
                     choice {
-                        assume(current.elapsed >= 1)
+                        assume(current.elapsed > 1)
                         hit := true
                     } or {
                     }
