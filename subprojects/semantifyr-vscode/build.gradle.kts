@@ -46,6 +46,19 @@ val cloneGrammars = tasks.register<Sync>("cloneGrammars") {
     into("syntaxes")
 }
 
+val cloneLicense = tasks.register("cloneLicense") {
+    val source = isolated.rootProject.projectDirectory.file("LICENSE")
+    val target = layout.projectDirectory.file("LICENSE")
+    inputs.file(source).withPathSensitivity(PathSensitivity.NONE)
+    outputs.file(target)
+    outputs.cacheIf {
+        true
+    }
+    doLast {
+        source.asFile.copyTo(target.asFile, overwrite = true)
+    }
+}
+
 fun NpmTask.configureSharedInputs() {
     inputs.file(layout.projectDirectory.file("esbuild.mjs")).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(editorCommon).withPathSensitivity(PathSensitivity.RELATIVE)
@@ -68,7 +81,7 @@ val bundleExtension = tasks.register<NpmTask>("bundleExtension") {
     inputs.files(renderIcons).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.file(layout.projectDirectory.file("README.md")).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.file(layout.projectDirectory.file("CHANGELOG.md")).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.file(layout.projectDirectory.file("LICENSE")).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.files(cloneLicense).withPathSensitivity(PathSensitivity.RELATIVE)
 
     npmCommand = listOf("run", "bundle", "--", extensionVersion, "--no-git-tag-version", "--no-update-package-json")
 
@@ -112,6 +125,7 @@ tasks.named<Delete>("clean") {
         "icons",
         "bin",
         "syntaxes",
+        "LICENSE",
     )
 }
 
