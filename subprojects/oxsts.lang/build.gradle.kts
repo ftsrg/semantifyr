@@ -13,12 +13,7 @@ plugins {
 
 dependencies {
     api(project(":oxsts.model"))
-    api(libs.antlr.runtime)
-    api(libs.ecore)
-    api(libs.emf.common)
     api(libs.guava)
-    api(libs.guice)
-    api(libs.xtext.util)
 
     implementation(project(":utils"))
     implementation(libs.kotlin.stdlib)
@@ -26,15 +21,9 @@ dependencies {
     implementation(libs.slf4j.api)
     implementation(libs.xtext.xbase.lib)
 
-    testFixturesApi(project(":oxsts.model"))
-    testFixturesApi(libs.ecore)
-    testFixturesApi(libs.guice)
     testFixturesApi(libs.junit.api)
-    testFixturesApi(libs.xtext.core)
     testFixturesApi(libs.xtext.testing)
     testFixturesImplementation(libs.assertj.core)
-    testFixturesImplementation(libs.emf.common)
-    testFixturesImplementation(libs.xtext.util)
 
     testImplementation(libs.log4j.api)
     testImplementation(libs.log4j.core)

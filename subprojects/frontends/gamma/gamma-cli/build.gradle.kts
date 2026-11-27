@@ -10,23 +10,11 @@ plugins {
 }
 
 dependencies {
-    implementation(project(":backend"))
-    implementation(project(":compiler"))
     implementation(project(":gamma-frontend"))
-    implementation(project(":gamma.lang"))
     implementation(project(":logging"))
-    implementation(project(":oxsts.lang"))
     implementation(project(":portfolios"))
-    implementation(project(":verifier"))
-    implementation(libs.clikt)
-    implementation(libs.clikt.core)
-    implementation(libs.guice)
-    implementation(libs.slf4j.api)
-    implementation(libs.xtext.core)
 
     testImplementation(testFixtures(project(":cli-common")))
-    testImplementation(libs.kotlinx.serialization.core)
-    testImplementation(libs.kotlinx.serialization.json)
     testImplementation(libs.mordant.core)
 }
 

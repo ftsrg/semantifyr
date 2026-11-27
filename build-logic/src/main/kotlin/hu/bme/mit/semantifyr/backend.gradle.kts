@@ -10,6 +10,11 @@ plugins {
     id("hu.bme.mit.semantifyr.suites")
 }
 
+dependencies {
+    testImplementation(testFixtures(project(":backend")))
+    testImplementation(testFixtures(project(":oxsts.lang")))
+}
+
 tasks.withType<Test>().configureEach {
     inputs.dir(isolated.rootProject.projectDirectory.dir("oxsts-test-models")).withPathSensitivity(PathSensitivity.RELATIVE)
 }

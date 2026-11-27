@@ -17,18 +17,8 @@ val generate = sourceSets.create("generate")
 
 dependencies {
     api(project(":backend"))
-    api(project(":compiler"))
-    api(project(":oxsts.lang"))
-    api(project(":oxsts.model"))
-    api(libs.guice)
-    api(libs.guice.extensions.assistedinject)
-    api(libs.kotlinx.serialization.core)
-    api(libs.slf4j.api)
-    api(libs.xtext.core)
 
     implementation(project(":logging"))
-    implementation(libs.ecore)
-    implementation(libs.emf.common)
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.serialization.json)
 
@@ -37,28 +27,14 @@ dependencies {
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.opentest4j)
 
-    testFixturesApi(project(":backend"))
-    testFixturesApi(project(":compiler"))
-    testFixturesApi(libs.guice)
     testFixturesApi(libs.junit.params)
-    testFixturesApi(libs.kotlinx.serialization.core)
-    testFixturesApi(libs.slf4j.api)
-    testFixturesImplementation(project(":guice-common"))
     testFixturesImplementation(project(":logging"))
-    testFixturesImplementation(project(":oxsts.model"))
     testFixturesImplementation(libs.assertj.core)
-    testFixturesImplementation(libs.ecore)
-    testFixturesImplementation(libs.emf.common)
     testFixturesImplementation(libs.junit.api)
     testFixturesImplementation(libs.kotlinx.coroutines.core)
     testFixturesImplementation(libs.kotlinx.serialization.json)
 
     add(generate.implementationConfigurationName, project())
-    add(generate.implementationConfigurationName, project(":compiler"))
-    add(generate.implementationConfigurationName, project(":oxsts.lang"))
-    add(generate.implementationConfigurationName, project(":oxsts.model"))
-    add(generate.implementationConfigurationName, libs.guice)
-    add(generate.implementationConfigurationName, libs.kotlinx.serialization.core)
     add(generate.implementationConfigurationName, libs.kotlinx.serialization.json)
 }
 

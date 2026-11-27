@@ -10,24 +10,10 @@ plugins {
 }
 
 dependencies {
-    implementation(project(":backend"))
-    implementation(project(":compiler"))
     implementation(project(":logging"))
-    implementation(project(":oxsts.lang"))
-    implementation(project(":oxsts.model"))
     implementation(project(":portfolios"))
-    implementation(project(":verifier"))
-    implementation(libs.clikt)
-    implementation(libs.clikt.core)
-    implementation(libs.ecore)
-    implementation(libs.guice)
-    implementation(libs.kotlinx.serialization.core)
-    implementation(libs.kotlinx.serialization.json)
-    implementation(libs.slf4j.api)
-    implementation(libs.xtext.core)
 
     testImplementation(testFixtures(project(":cli-common")))
-    testImplementation(testFixtures(project(":verifier")))
     testImplementation(libs.log4j.api)
     testImplementation(libs.log4j.core)
     testImplementation(libs.mordant.core)

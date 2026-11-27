@@ -15,5 +15,4 @@ dependencies {
     api(libs.kotlinx.serialization.json)
 
     implementation(project(":logging"))
-    implementation(libs.slf4j.api)
 }

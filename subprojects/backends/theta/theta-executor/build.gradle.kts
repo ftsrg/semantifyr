@@ -53,8 +53,6 @@ dependencies {
     api(project(":backend"))
 
     implementation(project(":logging"))
-    implementation(libs.docker.java.api)
-    implementation(libs.slf4j.api)
 
     thetaCli(
         variantOf(libs.theta.xsts.cli) {

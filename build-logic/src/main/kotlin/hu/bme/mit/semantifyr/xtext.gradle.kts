@@ -27,11 +27,15 @@ dependencies {
     mwe2(libs.xtext.generator)
     mwe2(libs.xtext.generator.antlr)
     mwe2(libs.xtext.xbase)
-    // the TextMate fragment needs gson, which Xtext does not declare
     mwe2(libs.gson)
 
     api(platform(libs.xtext.bom))
+    api(libs.antlr.runtime)
+    api(libs.ecore)
+    api(libs.emf.common)
+    api(libs.guice)
     api(libs.xtext.core)
+    api(libs.xtext.util)
 }
 
 val extension = extensions.create<XtextPluginConfiguration>("xtext")

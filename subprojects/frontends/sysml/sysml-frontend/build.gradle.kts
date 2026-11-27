@@ -16,61 +16,25 @@ plugins {
 }
 
 dependencies {
-    api(project(":backend"))
-    api(project(":compiler"))
     api(project(":verifier"))
-    api(libs.guice)
 
-    implementation(project(":oxsts.lang"))
     implementation(project(":sysml-wrapper"))
     implementation(project(":logging"))
     implementation(libs.kotlinx.coroutines.core)
-    implementation(libs.slf4j.api)
-    implementation(libs.xtext.core)
 
-    testImplementation(project(":oxsts.model"))
     testImplementation(testFixtures(project(":portfolios")))
-    testImplementation(libs.ecore)
-    testImplementation(libs.emf.common)
 
-    testFixturesApi(project(":backend"))
-    testFixturesApi(project(":compiler"))
-    testFixturesApi(project(":verifier"))
-    testFixturesApi(libs.kotlinx.serialization.core)
     testFixturesImplementation(project(":logging"))
-    testFixturesImplementation(project(":oxsts.lang"))
     testFixturesImplementation(testFixtures(project(":portfolios")))
     testFixturesImplementation(testFixtures(project(":verifier")))
     testFixturesImplementation(libs.assertj.core)
-    testFixturesImplementation(libs.guice)
-    testFixturesImplementation(libs.kotlinx.serialization.json)
-    testFixturesImplementation(libs.slf4j.api)
 }
 
 testing {
     suites {
         named<JvmTestSuite>("integrationTest") {
             dependencies {
-                implementation(project(":backend"))
-                implementation(project(":compiler"))
                 implementation(testFixtures(project(":portfolios")))
-            }
-        }
-
-        named<JvmTestSuite>("nightlyTest") {
-            dependencies {
-                implementation(project(":backend"))
-                implementation(project(":compiler"))
-            }
-        }
-
-        named<JvmTestSuite>("semanticTest") {
-            dependencies {
-                implementation(project(":backend"))
-                implementation(project(":compiler"))
-                implementation(project(":oxsts.lang"))
-                implementation(libs.guice)
-                implementation(libs.xtext.core)
             }
         }
     }

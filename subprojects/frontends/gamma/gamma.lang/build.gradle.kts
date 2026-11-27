@@ -14,17 +14,11 @@ plugins {
 val metamodel = sourceSets.create("metamodel")
 
 dependencies {
-    api(libs.antlr.runtime)
-    api(libs.ecore)
-    api(libs.emf.common)
     api(libs.guava)
-    api(libs.guice)
-    api(libs.xtext.util)
 
     implementation(libs.slf4j.api)
     implementation(libs.xtext.xbase.lib)
 
-    testFixturesApi(libs.guice)
     testFixturesApi(libs.junit.api)
     testFixturesApi(libs.xtext.testing)
 

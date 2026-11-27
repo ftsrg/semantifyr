@@ -15,39 +15,17 @@ plugins {
 
 dependencies {
     implementation(project(":logging"))
-    implementation(libs.slf4j.api)
 
-    api(project(":backend"))
     api(project(":verifier"))
     api(project(":theta-backend"))
     api(project(":uppaal-backend"))
     api(project(":nuxmv-backend"))
     api(project(":spin-backend"))
-    api(libs.guice)
 
-    testImplementation(project(":compiler"))
-    testImplementation(project(":oxsts.model"))
     testImplementation(libs.kotlinx.coroutines.core)
     testImplementation(libs.kotlinx.coroutines.test)
 
-    testFixturesApi(project(":backend"))
-    testFixturesApi(libs.kotlinx.serialization.core)
     testFixturesApi(libs.kotlinx.serialization.json)
-    testFixturesImplementation(project(":nuxmv-executor"))
-    testFixturesImplementation(project(":uppaal-executor"))
-}
-
-testing {
-    suites {
-        named<JvmTestSuite>("integrationTest") {
-            dependencies {
-                implementation(project(":backend"))
-                implementation(project(":compiler"))
-                implementation(project(":oxsts.lang"))
-                implementation(libs.guice)
-            }
-        }
-    }
 }
 
 tasks.named<Test>("integrationTest") {
