@@ -39,7 +39,7 @@ val sysmlDirectory = layout.projectDirectory.dir("sysml-2ls")
 
 node {
     nodeProjectDir = sysmlDirectory
-    pnpmVersion = pnpmVersionOf(sysmlDirectory.file("package.json"))
+    pnpmVersion = pnpmVersionOf(sysmlDirectory.file("package.json")).orElse(pnpmVersionOf(isolated.rootProject.projectDirectory.file("package.json")))
 }
 
 val checkoutSysml = tasks.register<Exec>("checkoutSysml") {
