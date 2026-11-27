@@ -129,7 +129,6 @@ val cloneOxstsExamples = tasks.register<Sync>("cloneOxstsExamples") {
     into(importedSnippetsDirectory.dir("oxsts"))
 }
 
-// live's menu shows the first line of a model's comment under its label
 val exampleDescriptions = tasks.register<ExampleDescriptions>("exampleDescriptions") {
     models.from(servedFiles("sysml"), servedFiles("gamma"), servedFiles("oxsts"))
     outputDirectory = importedSnippetsDirectory.dir("descriptions")
