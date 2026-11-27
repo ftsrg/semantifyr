@@ -114,7 +114,24 @@ class ThetaBackendReplayTest {
 
     @Test
     suspend fun `a model without state variables fails with an empty witness`() {
-        val result = verify("StatelessViolation", models.parse(BackendTestModels.STATELESS_VIOLATION), TransitionCallTraceMap(emptyMap()))
+        val statelessViolation = models.parse(
+            """
+                inlined oxsts of semantifyr::Anything
+                init {
+                }
+                tran {
+                    choice {
+                    } or {
+                        assume (true)
+                    }
+                }
+                prop {
+                    AG false
+                }
+            """,
+        )
+
+        val result = verify("StatelessViolation", statelessViolation, TransitionCallTraceMap(emptyMap()))
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.Failed)
         assertThat(result.inlinedWitness!!.initializedState.values).isEmpty()

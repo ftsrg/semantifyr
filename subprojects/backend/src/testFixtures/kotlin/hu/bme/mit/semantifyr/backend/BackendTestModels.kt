@@ -7,11 +7,11 @@
 package hu.bme.mit.semantifyr.backend
 
 import com.google.inject.Inject
-import com.google.inject.Injector
 import com.google.inject.Provider
-import hu.bme.mit.semantifyr.compiler.SemantifyrCompiler
+import hu.bme.mit.semantifyr.compiler.SemantifyrCompilerFactory
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.ArtifactConfig
 import hu.bme.mit.semantifyr.compiler.pipeline.context.FlattenedCompilationContext
+import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationConfig
 import hu.bme.mit.semantifyr.compiler.reader.SemantifyrLoader
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
@@ -23,7 +23,7 @@ import java.nio.file.Path
 import kotlin.io.path.Path
 
 class BackendTestModels @Inject constructor(
-    private val injector: Injector,
+    private val compilerFactory: SemantifyrCompilerFactory,
     private val loader: SemantifyrLoader,
     private val resourceSetProvider: Provider<XtextResourceSet>,
     private val inlinedParser: ParseHelper<InlinedOxsts>,
@@ -75,21 +75,6 @@ class BackendTestModels @Inject constructor(
                 AG counter < 2
             }
         """
-
-        const val STATELESS_VIOLATION = """
-            inlined oxsts of semantifyr::Anything
-            init {
-            }
-            tran {
-                choice {
-                } or {
-                    assume (true)
-                }
-            }
-            prop {
-                AG false
-            }
-        """
     }
 
     fun parse(source: String, vararg packages: String): InlinedOxsts {
@@ -107,10 +92,11 @@ class BackendTestModels @Inject constructor(
         className: String,
         outputDirectory: Path,
     ): FlattenedCompilationContext {
-        val context = loader.loadStandaloneModel(Path("../../../../oxsts-test-models/semantic/$file.semantifyr"))
+        val semanticModels = System.getProperty("semantifyr.semanticModels") ?: error("The build names no semantic test models")
+        val context = loader.loadStandaloneModel(Path(semanticModels, "$file.semantifyr"))
         val classDeclaration = context.modelResources.single().allContents.asSequence().filterIsInstance<ClassDeclaration>().single {
             it.name == className
         }
-        return SemantifyrCompiler(injector, ArtifactConfig.NONE).compile(classDeclaration, outputDirectory)
+        return compilerFactory.create(ArtifactConfig.NONE, OptimizationConfig.ALL).compile(classDeclaration, outputDirectory)
     }
 }
