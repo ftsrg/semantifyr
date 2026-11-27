@@ -79,8 +79,6 @@ function parseResultStatus(status: VerificationStatus): VerificationCaseStatus {
   }
 }
 
-export { discoverVerificationCases, witnessValidationLocation } from '@semantifyr/editor-common'
-
 export interface RunVerificationHandle {
   cancel: () => void
   // cancels one running or queued case and lets the rest of the run go on

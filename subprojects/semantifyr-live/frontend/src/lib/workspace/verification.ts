@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
+import { discoverVerificationCases, witnessValidationLocation } from '@semantifyr/editor-common'
+
 import type { LiveFlavor } from '../../examples'
 import type { ActiveVerificationInfo } from '../api/types'
 import type { LanguageRuntime } from '../language/types'
@@ -12,11 +14,9 @@ import { failStep, finishStep, InitializationSteps, isReadyToVerify } from '../s
 import type { Settings } from '../stores/settings'
 import { createStore, type ReadableStore } from '../stores/store'
 import {
-  discoverVerificationCases,
   dispatchAutoValidation,
   runAllVerifications,
   verifySingleCase,
-  witnessValidationLocation,
   type AutoValidateRequest,
   type LspClient,
   type RunVerificationHandle,
