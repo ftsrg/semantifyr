@@ -7,7 +7,6 @@
 package hu.bme.mit.semantifyr
 
 import hu.bme.mit.semantifyr.gradle.artifactsOf
-import hu.bme.mit.semantifyr.gradle.semantifyrArtifact
 
 plugins {
     id("hu.bme.mit.semantifyr.cli")
@@ -31,11 +30,4 @@ sourceSets {
 
 tasks.clean {
     delete(xtextGeneratedDirectory)
-}
-
-configurations.consumable("applicationDistributionElements") {
-    attributes(semantifyrArtifact("application-distribution"))
-    outgoing.artifact(layout.buildDirectory.dir("install")) {
-        builtBy(tasks.installDist)
-    }
 }

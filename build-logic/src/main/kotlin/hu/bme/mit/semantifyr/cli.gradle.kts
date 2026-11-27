@@ -72,15 +72,9 @@ tasks.distTar {
     enabled = false
 }
 
-configurations.consumable("cliDistributionElements") {
-    attributes(semantifyrArtifact("cli-distribution"))
-    outgoing.artifact(
-        layout.dir(
-            tasks.installDist.map {
-                it.destinationDir
-            },
-        ),
-    ) {
+configurations.consumable("applicationDistributionElements") {
+    attributes(semantifyrArtifact("application-distribution"))
+    outgoing.artifact(layout.buildDirectory.dir("install")) {
         builtBy(tasks.installDist)
     }
 }

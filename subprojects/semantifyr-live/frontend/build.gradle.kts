@@ -24,8 +24,8 @@ plugins {
 }
 
 val editorCommon = artifactsOf("npm-package", ":semantifyr-editor-common")
-val gammaCli = artifactsOf("cli-distribution", ":gamma-cli")
-val sysmlCli = artifactsOf("cli-distribution", ":sysml-cli")
+val gammaCli = artifactsOf("application-distribution", ":gamma-cli")
+val sysmlCli = artifactsOf("application-distribution", ":sysml-cli")
 val sysmlWorker = artifactsOf("sysml-worker", ":sysml-wrapper")
 val grammars = artifactsOf("textmate-grammar", ":oxsts.lang", ":gamma.lang")
 val languageConfiguration = artifactsOf("language-configuration", ":semantifyr-vscode")
@@ -55,7 +55,7 @@ fun compileServedExamples(
     }
     val windows = Os.isFamily(Os.FAMILY_WINDOWS)
     val startScripts = distribution.asFileTree.matching {
-        include("bin/*")
+        include("*/bin/*")
     }
     val compiles = servedExamples(language).filter {
         !it.hidden
@@ -71,7 +71,7 @@ fun compileServedExamples(
             inputs.files(startScripts).withPathSensitivity(PathSensitivity.RELATIVE)
             inputs.files(
                 distribution.asFileTree.matching {
-                    include("lib/*.jar")
+                    include("*/lib/*.jar")
                 },
             ).withNormalizer(ClasspathNormalizer::class.java)
             outputs.dir(targetDirectory)
