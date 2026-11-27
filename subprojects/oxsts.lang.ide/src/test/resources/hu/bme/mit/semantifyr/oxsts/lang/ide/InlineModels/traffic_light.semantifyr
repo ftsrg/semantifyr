@@ -1,0 +1,64 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package example::lights
+
+enum LightColor {
+    Red,
+    Yellow,
+    Green
+}
+
+/*
+ * A traffic light cycling through its colors.
+ */
+class TrafficLight {
+    var color: LightColor := LightColor::Red
+
+    /*
+     * Switches the light.
+     */
+    tran setColor(color: LightColor) {
+        self.color := color
+    }
+
+    tran blink(color: LightColor, times: int) {
+        inline setColor(color)
+    }
+
+    redefine tran {
+        inline setColor(LightColor::Green)
+    }
+
+    prop isColor(color: LightColor): bool {
+        return self.color == color
+    }
+}
+
+class SpecialLight : TrafficLight {
+    redefine tran setColor(color: LightColor) {
+        self.color := LightColor::Red
+    }
+}
+
+class DimmedLight : TrafficLight {
+    redefine tran {
+        self.color := LightColor::Yellow
+    }
+}
+
+class Intersection {
+    contains light: TrafficLight[1]
+    contains special: SpecialLight[1]
+    contains dimmed: DimmedLight[1]
+
+    tran cycle() {
+        inline light.setColor(LightColor::Red)
+        inline special.setColor(LightColor::Green)
+        inline light.main()
+        inline dimmed.main()
+    }
+}

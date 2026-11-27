@@ -1,0 +1,32 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package inlining::tests
+
+abstract class Sensor {
+    var count: int := 0
+    abstract prop threshold(): bool
+    abstract tran tick()
+}
+class ThresholdSensor : Sensor {
+    redefine prop threshold(): bool {
+        return count >= 3
+    }
+    redefine tran tick() {
+        assume(count < 3)
+        count := count + 1
+    }
+}
+@VerificationCase
+class Host {
+    contains thresholdSensor: ThresholdSensor[1]
+    redefine tran {
+        inline thresholdSensor.tick()
+    }
+    redefine prop {
+        return EF thresholdSensor.threshold()
+    }
+}

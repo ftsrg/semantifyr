@@ -8,6 +8,7 @@ package hu.bme.mit.semantifyr.compiler.pipeline.inlining
 
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.ExpressionEvaluationSerializer
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.eAllOfType
+import hu.bme.mit.semantifyr.oxsts.lang.tests.utils.TestModels.testModel
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ElementReference
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 import org.assertj.core.api.Assertions.assertThat
@@ -42,71 +43,7 @@ class UncalledTracerRemovalTest : InliningTestBase() {
     }
 
     companion object {
-        private val MODEL = """
-            package inlining::tests::uncalled_tracer_removal
-
-            class Port {
-                var item: int := 0
-
-                @Trace
-                tran send(value: int) {
-                    item := value
-                }
-            }
-
-            abstract class Node {
-                abstract prop isActive(): bool
-            }
-
-            class State : Node {
-                var active: bool := false
-
-                redefine prop isActive(): bool {
-                    return active
-                }
-            }
-
-            class Entry : Node {
-                redefine prop isActive(): bool {
-                    return false
-                }
-            }
-
-            class Transition {
-                refers from: Node[1]
-                contains port: Port
-
-                @Trace
-                tran fire() {
-                    assume(from.isActive())
-                    inline port.send(1)
-                }
-            }
-
-            @VerificationCase
-            class Machine {
-                contains start: Entry
-                contains idle: State
-                contains initial: Transition {
-                    redefine refers from: Node[1] = start
-                }
-                contains step: Transition {
-                    redefine refers from: Node[1] = idle
-                }
-
-                redefine tran {
-                    choice {
-                        inline initial.fire()
-                    } or {
-                        inline step.fire()
-                    }
-                }
-
-                redefine prop {
-                    return AG (initial.port.item + step.port.item >= 0)
-                }
-            }
-        """.trimIndent()
+        private val MODEL = testModel(UncalledTracerRemovalTest::class.java, "model.semantifyr")
     }
 
 }

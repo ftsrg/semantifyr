@@ -6,6 +6,7 @@
 
 package hu.bme.mit.semantifyr.oxsts.lang.tests.typesystem;
 
+import static hu.bme.mit.semantifyr.oxsts.lang.tests.utils.TestModels.testModel;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.google.inject.Inject;
@@ -110,24 +111,8 @@ public class UnsupportedFeatureTest {
 
     @Test
     void readsThroughRuntimeHoldersPass() {
-        var parsedPackage = parseHelper.parse(WORKERS + """
-            class Team {
-                contains workers: Worker[0..*]
-                contains lead: Worker subsets workers
-                var current: Worker[0..1] := nothing
-                var seen: bool := false
-                redefine tran {
-                    var picked: Worker[0..1] := lead
-                    seen := current.done || picked.done || current.part.done
-                    for (worker in workers) {
-                        seen := worker.done
-                    }
-                }
-                redefine prop {
-                    return EF current.done
-                }
-            }
-            """, CheckMode.ALL);
+        var parsedPackage = parseHelper.parse(
+                WORKERS + testModel(getClass(), "reads_through_runtime_holders.semantifyr"), CheckMode.ALL);
 
         parsedPackage.assertNoResourceErrors();
         parsedPackage.assertNoValidationErrors();

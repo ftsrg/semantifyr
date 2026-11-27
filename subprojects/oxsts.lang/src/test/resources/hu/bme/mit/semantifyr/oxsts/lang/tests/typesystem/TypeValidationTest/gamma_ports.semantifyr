@@ -1,0 +1,28 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package test
+
+class Event {
+}
+class Interface {
+    contains events: Event[0..*]
+    contains inputEvents: Event[0..*] subsets events
+    contains outputEvents: Event[0..*] subsets events
+}
+class Port {
+    contains interface: Interface[1]
+    refers outputEvents: Event[0..*]
+    var outputEvent: outputEvents[0..1] := nothing
+}
+class ProvidedPort : Port {
+    redefine refers outputEvents: Event[0..*] = interface.outputEvents
+}
+class PingPong : Interface {
+    contains ping: Event subsets outputEvents
+}
+class Other {
+}

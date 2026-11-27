@@ -7,6 +7,7 @@
 package hu.bme.mit.semantifyr.backends.spin.transformation
 
 import hu.bme.mit.semantifyr.backend.BackendUnsupportedException
+import hu.bme.mit.semantifyr.backend.testModel
 import hu.bme.mit.semantifyr.backend.transformation.WHOLE_DELAY_VARIABLE_NAME
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -31,8 +32,12 @@ class SpinModelTransformerTest : SpinTransformationTestBase() {
     """
 
     private suspend fun transform(body: String): SpinArtifacts {
+        return artifactsOf("inlined oxsts of semantifyr::Anything\n${body.trimIndent()}")
+    }
+
+    private suspend fun artifactsOf(model: String): SpinArtifacts {
         return withTransformer {
-            it.transform(parse("inlined oxsts of semantifyr::Anything\n${body.trimIndent()}", colors, paints))
+            it.transform(parse(model, colors, paints))
         }
     }
 
@@ -673,39 +678,7 @@ class SpinModelTransformerTest : SpinTransformationTestBase() {
 
     @Test
     suspend fun `the stable flag is written only at the boundaries of whole steps`() {
-        val promela = transform(
-            """
-                var counter : int := 0
-                var flag : bool := false
-                init {
-                    choice {
-                        counter := 1
-                    } or {
-                        havoc(flag)
-                    }
-                } or {
-                    counter := 2
-                }
-                tran {
-                    assume(counter < 5)
-                    if (flag) {
-                        choice {
-                            counter := counter + 1
-                        } or {
-                            var delta : int := 1
-                            counter := counter - delta
-                        }
-                    } else {
-                        havoc(counter)
-                    }
-                } or {
-                    flag := !flag
-                }
-                prop {
-                    AG counter < 5
-                }
-            """,
-        ).promela
+        val promela = artifactsOf(testModel("stable_flag.semantifyr")).promela
         val lines = promela.lines()
         val flagLines = lines.withIndex().filter {
             SPIN_STABLE_FLAG in it.value && !it.value.startsWith("bool ") && !it.value.startsWith("ltl ")

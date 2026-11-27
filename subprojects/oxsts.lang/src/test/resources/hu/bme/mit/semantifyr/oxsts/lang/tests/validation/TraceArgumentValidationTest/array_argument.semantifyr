@@ -1,0 +1,30 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package test
+
+class Display {
+    var seen: bool := false
+    @Trace
+    tran note(value: any) {
+        seen := true
+    }
+    @Trace
+    tran show(values: int[2]) {
+        seen := true
+    }
+}
+class Host {
+    var readings: int[2] := [0, 0]
+    contains display: Display
+    tran relay(value: any) {
+        inline display.note(value)
+    }
+    redefine tran {
+        inline display.note(readings)
+        inline relay(readings)
+    }
+}

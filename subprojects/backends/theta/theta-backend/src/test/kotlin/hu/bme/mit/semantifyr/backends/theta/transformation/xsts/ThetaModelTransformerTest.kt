@@ -7,6 +7,7 @@
 package hu.bme.mit.semantifyr.backends.theta.transformation.xsts
 
 import hu.bme.mit.semantifyr.backend.BackendUnsupportedException
+import hu.bme.mit.semantifyr.backend.testModel
 import hu.bme.mit.semantifyr.compiler.pipeline.inlining.TransitionTracerNames
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -31,13 +32,21 @@ class ThetaModelTransformerTest : ThetaTransformationTestBase() {
     """
 
     private suspend fun xsts(body: String): String {
+        return xstsOf("inlined oxsts of semantifyr::Anything\n${body.trimIndent()}")
+    }
+
+    private suspend fun xstsOf(model: String): String {
         return withTransformer {
-            serialize(it.transform(parse("inlined oxsts of semantifyr::Anything\n${body.trimIndent()}", colors, paints), testXstsUri).xsts)
+            serialize(it.transform(parse(model, colors, paints), testXstsUri).xsts)
         }
     }
 
     private suspend fun xstsLines(body: String): List<String> {
-        return xsts(body).lines().map {
+        return xstsLinesOf("inlined oxsts of semantifyr::Anything\n${body.trimIndent()}")
+    }
+
+    private suspend fun xstsLinesOf(model: String): List<String> {
+        return xstsOf(model).lines().map {
             it.trim()
         }.filter {
             it.isNotEmpty()
@@ -84,30 +93,7 @@ class ThetaModelTransformerTest : ThetaTransformationTestBase() {
 
     @Test
     suspend fun `the serialized model separates its lines with a line feed alone`() {
-        val xsts = xsts(
-            """
-                var counter : int := 0
-                var color : test::colors::Color := test::colors::Color::Red
-                init {
-                    counter := 1
-                }
-                tran {
-                    choice {
-                        counter := 1
-                    } or {
-                        color := test::colors::Color::Green
-                    }
-                    if (counter < 3) {
-                        counter := 1
-                    } else {
-                        counter := 2
-                    }
-                }
-                prop {
-                    AG counter < 3
-                }
-            """,
-        )
+        val xsts = xstsOf(testModel("line_feeds.semantifyr"))
 
         assertThat(xsts).contains("\n").doesNotContain("\r")
     }
@@ -260,31 +246,7 @@ class ThetaModelTransformerTest : ThetaTransformationTestBase() {
 
     @Test
     suspend fun `assumptions, choices and ifs map to their XSTS forms`() {
-        val lines = xstsLines(
-            """
-                var counter : int := 0
-                init {
-                }
-                tran {
-                    assume(counter < 3)
-                    choice {
-                        counter := 1
-                    } or {
-                    }
-                    if (counter < 3) {
-                        counter := 1
-                    } else {
-                        counter := 2
-                    }
-                    if (counter > 3) {
-                        counter := 3
-                    }
-                }
-                prop {
-                    AG true
-                }
-            """,
-        )
+        val lines = xstsLinesOf(testModel("assumptions_choices_and_ifs.semantifyr"))
 
         assertThat(lines).containsSequence(
             "trans {",
@@ -351,30 +313,7 @@ class ThetaModelTransformerTest : ThetaTransformationTestBase() {
 
     @Test
     suspend fun `operators keep the meaning of the source grouping`() {
-        val lines = xstsLines(
-            """
-                var counter : int := 0
-                var left : bool := false
-                var right : bool := true
-                init {
-                }
-                tran {
-                    counter := ((counter + 1) - (2 * counter)) / 3
-                    counter := counter - (1 - counter)
-                    left := (left && right) || !(left ^^ right)
-                    left := left && (right || left)
-                    left := (left || right) && left
-                    left := (left ^^ right) ^^ left
-                    left := (counter == 0) == left
-                    left := (counter < 1) != (counter < 2)
-                    assume(counter < 1 && counter <= 2 && counter > -3 && counter >= -4 && counter == 0 && counter != 5)
-                    counter := if counter < 3 then counter + 1 else 0
-                }
-                prop {
-                    AG counter == -(counter + 1)
-                }
-            """,
-        )
+        val lines = xstsLinesOf(testModel("operator_grouping.semantifyr"))
 
         assertThat(lines).containsSequence(
             "counter := ( counter + 1 - 2 * counter ) / 3;",

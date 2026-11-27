@@ -20,6 +20,7 @@ import hu.bme.mit.semantifyr.compiler.pipeline.utils.serializeFormatted
 import hu.bme.mit.semantifyr.compiler.scopes.withCompilationScopeBlocking
 import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts
 import hu.bme.mit.semantifyr.oxsts.lang.tests.utils.InlinedOxstsParseHelper
+import hu.bme.mit.semantifyr.oxsts.lang.tests.utils.TestModels.testModel
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssignmentOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.BooleanOp
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.BooleanOperator
@@ -480,25 +481,7 @@ class ArrayFlatteningPassTest {
     @Test
     fun `an array-valued if-then-else is assigned, compared and indexed slot by slot`() {
         val inlined = parseHelper.parse(
-            """
-                inlined oxsts of semantifyr::Anything
-                var values: int[2] := [1, 2]
-                var others: int[2] := [3, 4]
-                var flag: bool := false
-                var index: int := 0
-                var seen: int := 0
-                var same: bool := false
-                init {
-                }
-                tran {
-                    values := if flag then others else [5, 6]
-                    same := (if flag then values else others) == others
-                    seen := (if flag then values else others)[index]
-                }
-                prop {
-                    AG true
-                }
-            """.trimIndent(),
+            testModel(javaClass, "array_valued_if_then_else.semantifyr"),
         )
 
         flattenArrays(inlined)

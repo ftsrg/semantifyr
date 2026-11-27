@@ -1,0 +1,25 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package test
+
+class Item {
+}
+@Control
+class Holder {
+    @VerificationCase
+    var count: int := 0
+    @Shared
+    refers other: Item[0..1]
+    @Trace
+    prop positive(): bool {
+        return count > 0
+    }
+    @Tag("slow")
+    tran step() {
+        count := count + 1
+    }
+}

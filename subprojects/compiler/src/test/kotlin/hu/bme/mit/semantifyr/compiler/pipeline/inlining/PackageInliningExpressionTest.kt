@@ -8,6 +8,7 @@ package hu.bme.mit.semantifyr.compiler.pipeline.inlining
 
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.eAllOfType
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.serializeFormatted
+import hu.bme.mit.semantifyr.oxsts.lang.tests.utils.TestModels.testModel
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.CallSuffixExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.RecordLiteral
 import org.assertj.core.api.Assertions.assertThat
@@ -72,25 +73,7 @@ class PackageInliningExpressionTest : InliningTestBase() {
     fun `single-level feature navigation property call`() {
         prepare(
             "Host",
-            """
-                package inlining::tests::expr_single_nav
-                class Worker {
-                    var done: bool := false
-                    prop isDone(): bool {
-                        return done
-                    }
-                }
-                @VerificationCase
-                class Host {
-                    contains worker: Worker[1]
-                    redefine tran {
-                        worker.done := true
-                    }
-                    redefine prop {
-                        return EF worker.isDone()
-                    }
-                }
-            """,
+            testModel(javaClass, "single_level_navigation.semantifyr"),
         ) {
             inlineAll(it)
             assertNoPropertyCallsInProperty(it)
@@ -101,28 +84,7 @@ class PackageInliningExpressionTest : InliningTestBase() {
     fun `multi-level feature navigation property call`() {
         prepare(
             "Host",
-            """
-                package inlining::tests::expr_multi_nav
-                class Leaf {
-                    var value: int := 0
-                    prop isBig(): bool {
-                        return value > 10
-                    }
-                }
-                class Middle {
-                    contains leaf: Leaf[1]
-                }
-                @VerificationCase
-                class Host {
-                    contains middle: Middle[1]
-                    redefine tran {
-                        middle.leaf.value := middle.leaf.value + 1
-                    }
-                    redefine prop {
-                        return EF middle.leaf.isBig()
-                    }
-                }
-            """,
+            testModel(javaClass, "multi_level_navigation.semantifyr"),
         ) {
             inlineAll(it)
             assertNoPropertyCallsInProperty(it)
@@ -133,31 +95,7 @@ class PackageInliningExpressionTest : InliningTestBase() {
     fun `polymorphic dispatch via redefining subclass property`() {
         prepare(
             "Testing",
-            """
-                package inlining::tests::expr_poly
-                class Base {
-                    prop marker(): bool {
-                        return false
-                    }
-                }
-                class Child : Base {
-                    var counter: int := 0
-                    redefine prop marker(): bool {
-                        return counter == 10
-                    }
-                }
-                @VerificationCase
-                class Testing {
-                    contains bases: Base[0..*]
-                    contains child: Child[1] subsets bases
-                    redefine tran {
-                        child.counter := 10
-                    }
-                    redefine prop {
-                        return EF bases.marker()
-                    }
-                }
-            """,
+            testModel(javaClass, "polymorphic_dispatch.semantifyr"),
         ) {
             inlineAll(it)
             assertNoPropertyCallsInProperty(it)
@@ -169,37 +107,7 @@ class PackageInliningExpressionTest : InliningTestBase() {
     fun `multi-level inheritance redefinition picks the leaf property`() {
         prepare(
             "Testing",
-            """
-                package inlining::tests::expr_multi_inheritance
-                class Base {
-                    prop marker(): bool {
-                        return false
-                    }
-                }
-                class Middle : Base {
-                    var middleValue: int := 0
-                    redefine prop marker(): bool {
-                        return middleValue == 1
-                    }
-                }
-                class Leaf : Middle {
-                    var leafValue: int := 0
-                    redefine prop marker(): bool {
-                        return leafValue == 2
-                    }
-                }
-                @VerificationCase
-                class Testing {
-                    contains bases: Base[0..*]
-                    contains leaf: Leaf[1] subsets bases
-                    redefine tran {
-                        leaf.leafValue := 2
-                    }
-                    redefine prop {
-                        return EF bases.marker()
-                    }
-                }
-            """,
+            testModel(javaClass, "multi_level_inheritance.semantifyr"),
         ) {
             inlineAll(it)
             assertNoPropertyCallsInProperty(it)
@@ -211,35 +119,7 @@ class PackageInliningExpressionTest : InliningTestBase() {
     fun `variable dispatch in a property expression expands to an if-then-else chain`() {
         prepare(
             "Dispatcher",
-            """
-                package inlining::tests::expr_variable_dispatch
-                class Worker {
-                    var done: bool := false
-                    prop isDone(): bool {
-                        return done
-                    }
-                }
-                @VerificationCase
-                class Dispatcher {
-                    contains workers: Worker[0..*]
-                    contains first: Worker[1] subsets workers
-                    contains second: Worker[1] subsets workers
-                    var current: workers[0..1] := nothing
-                    redefine init {
-                        choice {
-                            current := first
-                        } or {
-                            current := second
-                        }
-                    }
-                    redefine tran {
-                        first.done := true
-                    }
-                    redefine prop {
-                        return EF current.isDone()
-                    }
-                }
-            """,
+            testModel(javaClass, "variable_dispatch.semantifyr"),
         ) {
             inlineAll(it)
             assertNoPropertyCallsInProperty(it)
@@ -280,29 +160,7 @@ class PackageInliningExpressionTest : InliningTestBase() {
     fun `a record literal survives inlining with its calls and arguments inlined`() {
         prepare(
             "Host",
-            """
-                package inlining::tests::record_literal
-                record Point {
-                    var x: int := 0
-                    var y: int := 0
-                }
-                @VerificationCase
-                class Host {
-                    var position: Point := Point { x = 0 }
-                    prop next(): int {
-                        return position.x + 1
-                    }
-                    tran moveTo(target: Point) {
-                        position := target
-                    }
-                    redefine tran {
-                        inline moveTo(Point { x = next() })
-                    }
-                    redefine prop {
-                        return AG position != Point { x = next(), y = 2 }
-                    }
-                }
-            """,
+            testModel(javaClass, "record_literal.semantifyr"),
         ) {
             inlineAll(it)
             assertNoPropertyCallsInProperty(it)

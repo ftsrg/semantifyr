@@ -32,54 +32,7 @@ import kotlin.time.Duration.Companion.minutes
 
 class ConcurrentVerificationTest {
 
-    private val model = """
-        package concurrent
-
-        @VerificationCase
-        class ReachesThree {
-            var x: int := 0
-
-            redefine tran {
-                if (x < 3) {
-                    x := x + 1
-                }
-            }
-
-            redefine prop {
-                return EF x == 3
-            }
-        }
-
-        @VerificationCase
-        class ReachesTwo {
-            var x: int := 0
-
-            redefine tran {
-                if (x < 2) {
-                    x := x + 1
-                }
-            }
-
-            redefine prop {
-                return EF x == 2
-            }
-        }
-
-        @VerificationCase
-        class StaysBelowThree {
-            var x: int := 0
-
-            redefine tran {
-                if (x < 3) {
-                    x := x + 1
-                }
-            }
-
-            redefine prop {
-                return AG x < 3
-            }
-        }
-    """.trimIndent()
+    private val model = checkNotNull(javaClass.getResource("ConcurrentVerificationTest/concurrent.semantifyr")).readText()
 
     private val expectedVerdicts = mapOf(
         "ReachesThree" to "passed",

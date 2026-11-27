@@ -8,6 +8,7 @@ package hu.bme.mit.semantifyr.compiler.pipeline.inlining
 
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.eAllOfType
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.serializeFormatted
+import hu.bme.mit.semantifyr.oxsts.lang.tests.utils.TestModels.testModel
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlineOperation
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
@@ -95,25 +96,7 @@ class PackageInliningOperationTest : InliningTestBase() {
     fun `single-level feature navigation call`() {
         prepare(
             "Host",
-            """
-                package inlining::tests
-                class Worker {
-                    var done: bool := false
-                    tran step() {
-                        done := true
-                    }
-                }
-                @VerificationCase
-                class Host {
-                    contains worker: Worker[1]
-                    redefine tran {
-                        inline worker.step()
-                    }
-                    redefine prop {
-                        return EF worker.done
-                    }
-                }
-            """,
+            testModel(javaClass, "single_level_navigation.semantifyr"),
         ) {
             inlineAll(it)
             assertNoInlineOperationsInMain(it)
@@ -125,28 +108,7 @@ class PackageInliningOperationTest : InliningTestBase() {
     fun `multi-level feature navigation call`() {
         prepare(
             "Host",
-            """
-                package inlining::tests
-                class Leaf {
-                    var value: int := 0
-                    tran bump() {
-                        value := value + 1
-                    }
-                }
-                class Middle {
-                    contains leaf: Leaf[1]
-                }
-                @VerificationCase
-                class Host {
-                    contains middle: Middle[1]
-                    redefine tran {
-                        inline middle.leaf.bump()
-                    }
-                    redefine prop {
-                        return EF middle.leaf.value == 1
-                    }
-                }
-            """,
+            testModel(javaClass, "multi_level_navigation.semantifyr"),
         ) {
             inlineAll(it)
             assertNoInlineOperationsInMain(it)
@@ -158,36 +120,7 @@ class PackageInliningOperationTest : InliningTestBase() {
     fun `multi-level inheritance redefinition picks the leaf transition`() {
         prepare(
             "Testing",
-            """
-                package inlining::tests
-                class Base {
-                    tran act() {
-                    }
-                }
-                class Middle : Base {
-                    var middleValue: int := 0
-                    redefine tran act() {
-                        middleValue := 1
-                    }
-                }
-                class Leaf : Middle {
-                    var leafValue: int := 0
-                    redefine tran act() {
-                        leafValue := 2
-                    }
-                }
-                @VerificationCase
-                class Testing {
-                    contains bases: Base[0..*]
-                    contains leaf: Leaf[1] subsets bases
-                    redefine tran {
-                        inline bases.act()
-                    }
-                    redefine prop {
-                        return EF leaf.leafValue == 2
-                    }
-                }
-            """,
+            testModel(javaClass, "multi_level_inheritance.semantifyr"),
         ) {
             inlineAll(it)
             assertNoInlineOperationsInMain(it)
@@ -231,32 +164,7 @@ class PackageInliningOperationTest : InliningTestBase() {
     fun `parametric inline call substitutes an enum argument into the body`() {
         prepare(
             "Host",
-            """
-                package inlining::tests
-                enum Command {
-                    Increment,
-                    Decrement,
-                }
-                @VerificationCase
-                class Host {
-                    var counter: int := 0
-                    tran apply(command: Command) {
-                        choice {
-                            assume(command == Command::Increment)
-                            counter := counter + 1
-                        } or {
-                            assume(command == Command::Decrement)
-                            counter := counter - 1
-                        }
-                    }
-                    redefine tran {
-                        inline apply(Command::Increment)
-                    }
-                    redefine prop {
-                        return EF counter == 3
-                    }
-                }
-            """,
+            testModel(javaClass, "enum_argument.semantifyr"),
         ) {
             inlineAll(it)
             assertNoInlineOperationsInMain(it)
@@ -272,25 +180,7 @@ class PackageInliningOperationTest : InliningTestBase() {
     fun `nested inline calls declaring local variables of the same name avoid collision`() {
         prepare(
             "Host",
-            """
-                package inlining::tests
-                @VerificationCase
-                class Host {
-                    var counter: int := 0
-                    tran step() {
-                        var scratch: int := 0
-                        scratch := 1
-                        counter := counter + scratch
-                    }
-                    redefine tran {
-                        inline step()
-                        inline step()
-                    }
-                    redefine prop {
-                        return EF counter == 2
-                    }
-                }
-            """,
+            testModel(javaClass, "nested_local_variables.semantifyr"),
         ) {
             inlineAll(it)
             assertNoInlineOperationsInMain(it)
@@ -312,24 +202,7 @@ class PackageInliningOperationTest : InliningTestBase() {
     fun `named arguments bind by name when out of declaration order`() {
         prepare(
             "Host",
-            """
-                package inlining::tests
-                @VerificationCase
-                class Host {
-                    var left: int := 0
-                    var right: int := 0
-                    tran set(first: int, second: int) {
-                        left := first
-                        right := second
-                    }
-                    redefine tran {
-                        inline set(second = 2, first = 1)
-                    }
-                    redefine prop {
-                        return EF left == 1
-                    }
-                }
-            """,
+            testModel(javaClass, "named_arguments_out_of_order.semantifyr"),
         ) {
             inlineAll(it)
             assertMainContains(it, "root.left := 1")
@@ -341,30 +214,7 @@ class PackageInliningOperationTest : InliningTestBase() {
     fun `named arguments bind by name in a redefinition`() {
         prepare(
             "Host",
-            """
-                package inlining::tests
-                abstract class Base {
-                    abstract tran set(first: int, second: int)
-                }
-                class Leaf : Base {
-                    var left: int := 0
-                    var right: int := 0
-                    redefine tran set(first: int, second: int) {
-                        left := first
-                        right := second
-                    }
-                }
-                @VerificationCase
-                class Host {
-                    contains leaf: Leaf[1]
-                    redefine tran {
-                        inline leaf.set(second = 2, first = 1)
-                    }
-                    redefine prop {
-                        return EF leaf.left == 1
-                    }
-                }
-            """,
+            testModel(javaClass, "named_arguments_in_redefinition.semantifyr"),
         ) {
             inlineAll(it)
             assertMainContains(it, "root.leaf.left := 1")
@@ -376,25 +226,7 @@ class PackageInliningOperationTest : InliningTestBase() {
     fun `an omitted optional argument binds nothing`() {
         prepare(
             "Host",
-            """
-                package inlining::tests
-                class Worker {
-                }
-                @VerificationCase
-                class Host {
-                    contains worker: Worker[1]
-                    var current: Worker[0..1] := worker
-                    tran select(target: Worker[0..1]) {
-                        current := target
-                    }
-                    redefine tran {
-                        inline select()
-                    }
-                    redefine prop {
-                        return EF current == nothing
-                    }
-                }
-            """,
+            testModel(javaClass, "omitted_optional_argument.semantifyr"),
         ) {
             inlineAll(it)
             assertMainContains(it, "root.current := nothing")
@@ -405,28 +237,7 @@ class PackageInliningOperationTest : InliningTestBase() {
     fun `a required parameter without an argument is a source error`() {
         prepare(
             "Host",
-            """
-                package inlining::tests
-                abstract class Base {
-                    abstract tran set()
-                }
-                class Leaf : Base {
-                    var counter: int := 0
-                    redefine tran set(value: int) {
-                        counter := value
-                    }
-                }
-                @VerificationCase
-                class Host {
-                    contains leaf: Leaf[1]
-                    redefine tran {
-                        inline leaf.set()
-                    }
-                    redefine prop {
-                        return EF leaf.counter == 1
-                    }
-                }
-            """,
+            testModel(javaClass, "missing_required_argument.semantifyr"),
         ) {
             assertThatThrownBy { inlineAll(it) }
                 .isInstanceOf(IllegalStateException::class.java)

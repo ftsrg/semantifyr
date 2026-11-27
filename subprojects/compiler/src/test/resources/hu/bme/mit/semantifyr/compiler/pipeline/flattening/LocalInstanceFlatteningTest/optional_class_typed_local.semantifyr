@@ -1,0 +1,23 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+@VerificationCase
+class Host {
+    contains first: Worker
+    var empty: bool := false
+    redefine tran {
+        var optional: Worker[0..1] := first
+        havoc(optional)
+        var required: Worker := first
+        havoc(required)
+        if (optional == nothing || required == nothing) {
+            empty := true
+        }
+    }
+    redefine prop {
+        return EF empty
+    }
+}

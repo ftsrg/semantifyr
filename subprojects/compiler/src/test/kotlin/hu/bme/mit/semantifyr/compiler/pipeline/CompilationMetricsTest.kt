@@ -21,6 +21,7 @@ import hu.bme.mit.semantifyr.compiler.pipeline.optimization.analyses.LivenessAna
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.analyses.ReachingDefinitionsAnalysis
 import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts
 import hu.bme.mit.semantifyr.oxsts.lang.tests.utils.OxstsPackageParseHelper
+import hu.bme.mit.semantifyr.oxsts.lang.tests.utils.TestModels.testModel
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
@@ -132,33 +133,6 @@ class CompilationMetricsTest {
 
     companion object {
         // two instances of one class, so that the inlined and the flattened model count a variable per instance
-        private val MODEL = """
-            package compilation::metrics
-
-            class Counter {
-                var count: int := 0
-
-                tran step() {
-                    if (count < 3) {
-                        count := count + 1
-                    }
-                }
-            }
-
-            @VerificationCase
-            class Host {
-                contains first: Counter
-                contains second: Counter
-
-                redefine tran {
-                    inline first.step()
-                    inline second.step()
-                }
-
-                redefine prop {
-                    return EF (first.count == 3 && second.count == 3)
-                }
-            }
-        """.trimIndent()
+        private val MODEL = testModel(CompilationMetricsTest::class.java, "model.semantifyr")
     }
 }

@@ -1,0 +1,32 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+class Other {
+    var done: bool := false
+    tran step() {
+        done := true
+    }
+}
+@VerificationCase
+class Host {
+    contains first: Worker[1]
+    contains second: Worker[1]
+    contains other: Other[1]
+    var current: Worker[0..1] := nothing
+    redefine init {
+        choice {
+            current := first
+        } or {
+            current := second
+        }
+    }
+    redefine tran {
+        inline current?.step()
+    }
+    redefine prop {
+        return AG (current == nothing || current == first || current == second)
+    }
+}

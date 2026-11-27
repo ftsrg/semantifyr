@@ -1,0 +1,26 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+inlined oxsts of semantifyr::Anything
+var counter: int := 0
+var left: bool := false
+var right: bool := true
+init {
+}
+tran {
+    choice {
+        counter := ((counter + 1) - (2 * counter)) / 3
+    } or {
+        left := (left && right) || !(left ^^ right)
+    } or {
+        assume(counter < 1 && counter <= 2 && counter > -3 && counter >= -4 && counter == 0 && counter != 5)
+    } or {
+        counter := if counter < 3 then counter + 1 else 0
+    }
+}
+prop {
+    AG true
+}

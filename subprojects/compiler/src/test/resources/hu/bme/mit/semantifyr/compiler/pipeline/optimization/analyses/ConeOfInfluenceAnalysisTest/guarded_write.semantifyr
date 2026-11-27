@@ -1,0 +1,24 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+inlined oxsts of semantifyr::Anything
+var activeState: int := -1
+var inputEvent: int := 0
+init {
+    activeState := 0
+}
+tran {
+    choice {
+        assume(activeState == 0 && inputEvent == 1)
+        activeState := 25
+    } or {
+        assume(activeState == 25 && inputEvent == 2)
+        activeState := 0
+    }
+}
+prop {
+    AG (activeState != 25)
+}

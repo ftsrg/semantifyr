@@ -1,0 +1,25 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package example::holders
+
+class Base {
+}
+
+class Derived : Base {
+}
+
+class Holder {
+    contains base: Base
+
+    prop needsDerived(value: Derived): bool {
+        return true
+    }
+
+    redefine prop {
+        return needsDerived(base as Derived)
+    }
+}

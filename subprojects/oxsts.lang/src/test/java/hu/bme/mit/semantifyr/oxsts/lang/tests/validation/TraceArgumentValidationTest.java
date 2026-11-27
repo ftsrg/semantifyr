@@ -6,6 +6,7 @@
 
 package hu.bme.mit.semantifyr.oxsts.lang.tests.validation;
 
+import static hu.bme.mit.semantifyr.oxsts.lang.tests.utils.TestModels.testModel;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.google.inject.Inject;
@@ -92,31 +93,7 @@ public class TraceArgumentValidationTest {
 
     @Test
     void recordArgumentOfATracedCallIsRejected() {
-        var parsedPackage = parseHelper.parse("""
-            package test
-            record Point {
-                var x: int := 0
-            }
-            class Port {
-                var item: int := 0
-                @Trace
-                tran send(point: Point) {
-                    item := point.x
-                }
-            }
-            class Host {
-                var position: Point := Point { x = 1 }
-                contains port: Port
-                tran relay(point: Point) {
-                    inline port.send(point)
-                }
-                redefine tran {
-                    inline port.send(Point { x = 2 })
-                    inline port.send(position)
-                    inline relay(position)
-                }
-            }
-            """, CheckMode.ALL);
+        var parsedPackage = parseHelper.parse(testModel(getClass(), "record_argument.semantifyr"), CheckMode.ALL);
 
         parsedPackage.assertNoResourceErrors();
         assertThat(parsedPackage.getIssues())
@@ -132,31 +109,7 @@ public class TraceArgumentValidationTest {
 
     @Test
     void anArrayCannotReachATracedParameter() {
-        var parsedPackage = parseHelper.parse("""
-            package test
-            class Display {
-                var seen: bool := false
-                @Trace
-                tran note(value: any) {
-                    seen := true
-                }
-                @Trace
-                tran show(values: int[2]) {
-                    seen := true
-                }
-            }
-            class Host {
-                var readings: int[2] := [0, 0]
-                contains display: Display
-                tran relay(value: any) {
-                    inline display.note(value)
-                }
-                redefine tran {
-                    inline display.note(readings)
-                    inline relay(readings)
-                }
-            }
-            """, CheckMode.ALL);
+        var parsedPackage = parseHelper.parse(testModel(getClass(), "array_argument.semantifyr"), CheckMode.ALL);
 
         parsedPackage.assertNoResourceErrors();
         assertThat(parsedPackage.getIssues())
@@ -172,26 +125,8 @@ public class TraceArgumentValidationTest {
 
     @Test
     void runtimeRealAndStringArgumentsOfATracedCallPass() {
-        var parsedPackage = parseHelper.parse("""
-            package test
-            class Display {
-                var reading: real := 0.0
-                var label: string := ""
-                @Trace
-                tran show(value: real, text: string) {
-                    reading := value
-                    label := text
-                }
-            }
-            class Host {
-                var level: real := 0.5
-                var name: string := "a"
-                contains display: Display
-                redefine tran {
-                    inline display.show(level, name)
-                }
-            }
-            """, CheckMode.ALL);
+        var parsedPackage =
+                parseHelper.parse(testModel(getClass(), "real_and_string_arguments.semantifyr"), CheckMode.ALL);
 
         parsedPackage.assertNoResourceErrors();
         parsedPackage.assertNoValidationIssues();

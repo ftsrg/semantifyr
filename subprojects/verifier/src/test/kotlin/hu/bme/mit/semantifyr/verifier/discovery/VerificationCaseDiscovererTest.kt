@@ -7,6 +7,7 @@
 package hu.bme.mit.semantifyr.verifier.discovery
 
 import com.google.inject.Inject
+import hu.bme.mit.semantifyr.backend.testModel
 import hu.bme.mit.semantifyr.compiler.reader.SemantifyrLoader
 import hu.bme.mit.semantifyr.compiler.reader.SemantifyrModelContext
 import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts
@@ -102,33 +103,7 @@ class VerificationCaseDiscovererTest {
 
     private fun loadContext(): SemantifyrModelContext {
         val model = modelDirectory.resolve("discovery.semantifyr")
-        model.writeText(MODEL)
+        model.writeText(testModel("discovery.semantifyr"))
         return loader.loadStandaloneModel(model)
-    }
-
-    companion object {
-        private val MODEL = """
-            package verifier::discovery
-
-            class Counter {
-                var count: int := 0
-            }
-
-            @VerificationCase
-            @Tag("expect-pass")
-            class Passing {
-                redefine prop {
-                    return AG true
-                }
-            }
-
-            @VerificationCase
-            @Tag("expect-fail")
-            class Failing {
-                redefine prop {
-                    return AG false
-                }
-            }
-        """.trimIndent()
     }
 }

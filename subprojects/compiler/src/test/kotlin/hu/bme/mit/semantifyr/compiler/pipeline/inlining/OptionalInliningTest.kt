@@ -6,6 +6,7 @@
 
 package hu.bme.mit.semantifyr.compiler.pipeline.inlining
 
+import hu.bme.mit.semantifyr.oxsts.lang.tests.utils.TestModels.testModel
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
 
@@ -140,38 +141,7 @@ class OptionalInliningTest : InliningTestBase() {
     fun `an inline if on an omitted optional argument takes its nothing branch`() {
         assertInlinedModel(
             "Host",
-            """
-                package inlining::tests
-                class Marker {
-                }
-                class Recorder {
-                    var value: int := 0
-                    var marked: bool := false
-                    tran store(value: int, marker: Marker[0..1]) {
-                        self.value := value
-                        inline if (marker == nothing) {
-                            marked := false
-                        } else {
-                            marked := true
-                        }
-                    }
-                }
-                @VerificationCase
-                class Host {
-                    contains recorder: Recorder[1]
-                    contains marker: Marker[1]
-                    redefine tran {
-                        choice {
-                            inline recorder.store(5)
-                        } or {
-                            inline recorder.store(7, marker)
-                        }
-                    }
-                    redefine prop {
-                        return EF (recorder.value == 5 && !recorder.marked)
-                    }
-                }
-            """,
+            testModel(javaClass, "inline_if_on_omitted_argument.semantifyr"),
             """
                 init {
                 }

@@ -6,6 +6,7 @@
 
 package hu.bme.mit.semantifyr.oxsts.lang.tests.validation;
 
+import static hu.bme.mit.semantifyr.oxsts.lang.tests.utils.TestModels.testModel;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.google.inject.Inject;
@@ -26,24 +27,8 @@ public class ClockValidationTest {
 
     @Test
     void clockIsResetAndComparedWithIntegersByEveryOperator() {
-        var parsedPackage = parseHelper.parse("""
-            package test
-            class Timer {
-                refers limit: int = 5
-                var elapsed: clock := 0
-                redefine tran {
-                    assume(elapsed <= limit)
-                    assume(elapsed >= 1)
-                    assume(elapsed == 2)
-                    assume(3 >= elapsed)
-                    assume(!(elapsed < 1))
-                    assume(!(elapsed > 4))
-                    assume(!(elapsed != 2))
-                    elapsed := 0
-                    assume(elapsed < 1)
-                }
-            }
-            """, CheckMode.ALL);
+        var parsedPackage =
+                parseHelper.parse(testModel(getClass(), "clock_reset_and_compared.semantifyr"), CheckMode.ALL);
 
         parsedPackage.assertNoResourceErrors();
         parsedPackage.assertNoValidationIssues();
@@ -308,28 +293,7 @@ public class ClockValidationTest {
 
     @Test
     void onlyTheClockTestOutsideInitWithoutAResetOnEveryPathBeforeItIsWarned() {
-        var source = TIMER + """
-                redefine init {
-                    if (elapsed < 1) {
-                        flag := true
-                    }
-                }
-                redefine tran {
-                    choice {
-                        elapsed := 0
-                    } or {
-                        elapsed := 0
-                        other := 0
-                    }
-                    if (elapsed < 1) {
-                        flag := true
-                    }
-                    if (other < 1) {
-                        flag := false
-                    }
-                }
-            }
-            """;
+        var source = testModel(getClass(), "reset_on_every_path.semantifyr");
         var parsedPackage = parseHelper.parse(source, CheckMode.ALL);
 
         parsedPackage.assertNoResourceErrors();

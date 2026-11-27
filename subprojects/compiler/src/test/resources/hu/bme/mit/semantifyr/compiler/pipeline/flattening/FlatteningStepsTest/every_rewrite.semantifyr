@@ -1,0 +1,34 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package flattening::steps
+
+record Point {
+    var x: int := 0
+}
+class Worker {
+    var done: bool := false
+}
+@VerificationCase
+class Host {
+    contains first: Worker
+    contains second: Worker
+    var position: Point := Point { x = 1 }
+    var values: int[2] := [1, 2]
+    var current: Worker[0..1] := nothing
+    redefine tran {
+        var picked: Worker := first
+        havoc(picked)
+        havoc(current)
+        position.x := values[0] / position.x
+        if (picked == current) {
+            first.done := true
+        }
+    }
+    redefine prop {
+        return AG !first.done || position.x == 1
+    }
+}

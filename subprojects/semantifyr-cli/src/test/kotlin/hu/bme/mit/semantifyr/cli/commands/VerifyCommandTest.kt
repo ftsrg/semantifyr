@@ -22,7 +22,6 @@ import hu.bme.mit.semantifyr.cli.common.jsonLines
 import hu.bme.mit.semantifyr.cli.runCli
 import hu.bme.mit.semantifyr.cli.smokeModel
 import hu.bme.mit.semantifyr.cli.testModels
-import hu.bme.mit.semantifyr.cli.writeSameStemModels
 import hu.bme.mit.semantifyr.portfolios.Portfolios
 import hu.bme.mit.semantifyr.verifier.FakeBackend
 import hu.bme.mit.semantifyr.verifier.FakeConfig
@@ -46,6 +45,7 @@ import kotlin.io.path.createDirectory
 import kotlin.io.path.createFile
 import kotlin.io.path.isWritable
 import kotlin.io.path.readText
+import kotlin.io.path.toPath
 import kotlin.io.path.writeText
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
@@ -155,37 +155,7 @@ class VerifyCommandTest {
     @Test
     suspend fun `a case that fails to compile does not stop the run and exits with the compilation code`(@TempDir directory: Path) {
         val model = directory.resolve("untemporal.semantifyr")
-        model.writeText(
-            """
-            package untemporal
-
-            @VerificationCase
-            class Untemporal {
-                var counter: int := 0
-
-                redefine tran {
-                    counter := 1
-                }
-
-                redefine prop {
-                    return counter == 1
-                }
-            }
-
-            @VerificationCase
-            class Temporal {
-                var counter: int := 0
-
-                redefine tran {
-                    counter := 1
-                }
-
-                redefine prop {
-                    return EF counter == 1
-                }
-            }
-            """.trimIndent(),
-        )
+        model.writeText(checkNotNull(javaClass.getResource("VerifyCommandTest/untemporal_and_temporal.semantifyr")).readText())
         val backend = FakeBackend.verdict("counted", VerificationVerdict.Passed)
         val portfolio = SingleBackendPortfolio(backend, FakeConfig("counted"))
 
@@ -329,7 +299,7 @@ class VerifyCommandTest {
 
     @Test
     suspend fun `cases of models sharing a file stem get their own reports`(@TempDir directory: Path) {
-        val models = writeSameStemModels(directory)
+        val models = checkNotNull(javaClass.getResource("VerifyCommandTest/same_stem")).toURI().toPath()
         val portfolio = fakePortfolio("fixed", VerificationVerdict.Passed, VerificationVerdict.Passed)
 
         val result = runCli("verify", "--json", "--portfolio", portfolio.id, "-d", directory.resolve("artifacts").toString(), models.toString(), portfolios = listOf(portfolio))

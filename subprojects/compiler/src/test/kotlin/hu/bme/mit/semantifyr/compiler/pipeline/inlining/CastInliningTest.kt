@@ -7,6 +7,7 @@
 package hu.bme.mit.semantifyr.compiler.pipeline.inlining
 
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.eAllOfType
+import hu.bme.mit.semantifyr.oxsts.lang.tests.utils.TestModels.testModel
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.CastExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.EF
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.TemporalOperator
@@ -77,29 +78,7 @@ class CastInliningTest : InliningTestBase() {
     fun `a narrowing cast of an instance is erased in a transition and in a property`() {
         assertInlinedModel(
             "Case",
-            """
-                package inlining::tests::instance_cast
-                class Base {
-                }
-                class Child : Base {
-                }
-                @VerificationCase
-                class Case {
-                    contains children: Base[0..*]
-                    contains child: Child[1] subsets children
-                    var reference: children[0..1] := nothing
-                    redefine init {
-                        reference := child
-                    }
-                    redefine tran {
-                        var narrowed: Child[0..1] := nothing
-                        narrowed := reference as Child
-                    }
-                    redefine prop {
-                        return AG (reference == nothing || (reference as Child) == child)
-                    }
-                }
-            """,
+            testModel(javaClass, "narrowing_cast.semantifyr"),
             $$$$"""
                 init {
                     root.reference := root.child

@@ -1,0 +1,23 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package inlining::tests
+
+@VerificationCase
+class Host {
+    var counter: int := 0
+    var previous: int := 0
+    tran increment(old: int) {
+        counter := counter + 1
+        previous := old
+    }
+    redefine tran {
+        inline increment(counter)
+    }
+    redefine prop {
+        return AG previous < counter
+    }
+}

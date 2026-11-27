@@ -1,0 +1,79 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package optimization::tests::observed_call_cone
+
+class Lamp {
+    var on: bool := false
+
+    @Trace
+    tran toggle() {
+        on := !on
+    }
+}
+
+class Port {
+    var item: int := 0
+
+    @Trace
+    tran send(value: int) {
+        item := value
+    }
+}
+
+@VerificationCase
+class GuardedCall {
+    contains lamp: Lamp
+    var armed: bool := false
+
+    redefine tran {
+        choice {
+            armed := true
+        } or {
+            armed := false
+        }
+        if (armed) {
+            inline lamp.toggle()
+        }
+    }
+
+    redefine prop {
+        return AG true
+    }
+}
+
+@VerificationCase
+class RunTimeArgument {
+    contains port: Port
+    var count: int := 0
+
+    redefine tran {
+        choice {
+            count := 1
+        } or {
+            count := 2
+        }
+        inline port.send(count)
+    }
+
+    redefine prop {
+        return AG true
+    }
+}
+
+@VerificationCase
+class ConstantArgument {
+    contains port: Port
+    var count: int := 4
+
+    redefine tran {
+        inline port.send(count)
+    }
+
+    redefine prop {
+        return AG true
+    }
+}

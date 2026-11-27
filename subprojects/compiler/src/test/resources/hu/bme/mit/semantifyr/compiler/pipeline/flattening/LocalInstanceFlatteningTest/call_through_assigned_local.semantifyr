@@ -1,0 +1,23 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+@VerificationCase
+class Host {
+    contains first: Worker
+    contains second: Worker
+    var flip: bool := false
+    redefine tran {
+        var picked: Worker := first
+        if (flip) {
+            picked := second
+        }
+        flip := true
+        inline picked.finish()
+    }
+    redefine prop {
+        return EF second.done
+    }
+}

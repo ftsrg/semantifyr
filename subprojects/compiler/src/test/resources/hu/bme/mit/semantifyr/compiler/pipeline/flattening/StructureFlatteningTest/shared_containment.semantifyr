@@ -1,0 +1,29 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package flattening::tests
+
+class Counter {
+    var count: int := 0
+}
+class User {
+    @Shared
+    contains counter: Counter[1]
+    contains own: Counter[1]
+}
+@VerificationCase
+class Host {
+    contains firstUser: User[1]
+    contains secondUser: User[1]
+    redefine tran {
+        firstUser.counter.count := 1
+        firstUser.own.count := 1
+        secondUser.own.count := 2
+    }
+    redefine prop {
+        return AG (secondUser.counter.count == 0 || secondUser.counter.count == 1)
+    }
+}

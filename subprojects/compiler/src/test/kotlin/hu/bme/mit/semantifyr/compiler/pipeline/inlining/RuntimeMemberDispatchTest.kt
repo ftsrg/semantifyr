@@ -6,31 +6,13 @@
 
 package hu.bme.mit.semantifyr.compiler.pipeline.inlining
 
+import hu.bme.mit.semantifyr.oxsts.lang.tests.utils.TestModels.testModel
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
 
 class RuntimeMemberDispatchTest : InliningTestBase() {
 
-    private val worker = """
-        package inlining::tests
-        class Part {
-            var done: bool := false
-            tran step() {
-                done := true
-            }
-            prop isDone(): bool {
-                return done
-            }
-        }
-        class Worker {
-            var done: bool := false
-            var slot: int := 0
-            contains part: Part[1]
-        }
-        class Other {
-            var done: bool := false
-        }
-    """
+    private val worker = testModel(javaClass, "worker.semantifyr")
 
     @Test
     fun `a read through a feature-typed variable in a transition blocks the operation when the variable holds nothing`() {
@@ -135,24 +117,7 @@ class RuntimeMemberDispatchTest : InliningTestBase() {
     fun `a read through a class-typed parameter of a transition blocks the operation when the argument is nothing`() {
         assertInlinedModel(
             "Host",
-            worker + """
-                @VerificationCase
-                class Host {
-                    contains first: Worker[1]
-                    contains second: Worker[1]
-                    var current: Worker[0..1] := nothing
-                    var seen: bool := false
-                    tran observe(worker: Worker[0..1]) {
-                        seen := worker.done
-                    }
-                    redefine tran {
-                        inline observe(current)
-                    }
-                    redefine prop {
-                        return EF seen
-                    }
-                }
-            """,
+            worker + testModel(javaClass, "class_typed_transition_parameter.semantifyr"),
             $$$$"""
                 init {
                 }
@@ -283,25 +248,7 @@ class RuntimeMemberDispatchTest : InliningTestBase() {
     fun `a read through a runtime for loop variable dispatches over the instances of the range`() {
         assertInlinedModel(
             "Host",
-            worker + """
-                @VerificationCase
-                class Host {
-                    contains workers: Worker[0..*]
-                    contains first: Worker[1] subsets workers
-                    contains second: Worker[1] subsets workers
-                    var count: int := 0
-                    redefine tran {
-                        for (worker in workers) {
-                            if (worker.done) {
-                                count := count + 1
-                            }
-                        }
-                    }
-                    redefine prop {
-                        return EF count == 2
-                    }
-                }
-            """,
+            worker + testModel(javaClass, "runtime_for_read.semantifyr"),
             """
                 init {
                 }
@@ -481,30 +428,7 @@ class RuntimeMemberDispatchTest : InliningTestBase() {
     fun `a read inside a dispatched branch requires its holder only when the dispatch takes the branch`() {
         assertInlinedModel(
             "Host",
-            worker + """
-                class Pair {
-                    contains part: Part[1]
-                    var partner: Part[0..1] := nothing
-                    prop partnerDone(): bool {
-                        return partner.done
-                    }
-                }
-                @VerificationCase
-                class Host {
-                    contains pairs: Pair[0..*]
-                    contains first: Pair[1] subsets pairs
-                    contains second: Pair[1] subsets pairs
-                    var seen: bool := false
-                    redefine tran {
-                        for (pair in pairs) {
-                            seen := pair.partnerDone()
-                        }
-                    }
-                    redefine prop {
-                        return EF seen
-                    }
-                }
-            """,
+            worker + testModel(javaClass, "read_inside_dispatched_branch.semantifyr"),
             """
                 init {
                 }

@@ -1,0 +1,107 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package clock::tests::bound
+
+class Timer {
+    refers deadline: int = 5
+    var elapsed: clock := 0
+
+    tran expire(limit: int) {
+        assume(elapsed >= limit)
+        assume(elapsed <= deadline)
+    }
+
+    prop isUp(): bool {
+        return elapsed >= deadline
+    }
+}
+
+@VerificationCase
+class PropertyReadsClock {
+    contains timer: Timer
+
+    redefine prop {
+        return AG !timer.isUp()
+    }
+}
+
+@VerificationCase
+class AssumedProperty {
+    contains timer: Timer
+    var done: bool := false
+
+    redefine tran {
+        assume(timer.isUp())
+        done := true
+    }
+
+    redefine prop {
+        return AG true
+    }
+}
+
+@VerificationCase
+class RunTimeBound {
+    contains timer: Timer
+    var limit: int := 3
+
+    redefine tran {
+        inline timer.expire(limit)
+    }
+
+    redefine prop {
+        return AG true
+    }
+}
+
+@VerificationCase
+class CompileTimeBound {
+    contains timer: Timer
+
+    redefine tran {
+        inline timer.expire(3)
+    }
+
+    redefine prop {
+        return AG true
+    }
+}
+
+class Relay {
+    contains timer: Timer
+
+    tran relay(limit: int) {
+        inline timer.expire(limit)
+    }
+}
+
+@VerificationCase
+class RelayedRunTimeBound {
+    contains relay: Relay
+    var limit: int := 3
+
+    redefine tran {
+        inline relay.relay(limit)
+    }
+
+    redefine prop {
+        return AG true
+    }
+}
+
+@VerificationCase
+class RelayedCompileTimeBound {
+    contains relay: Relay
+
+    redefine tran {
+        inline relay.relay(3)
+    }
+
+    redefine prop {
+        return AG true
+    }
+}

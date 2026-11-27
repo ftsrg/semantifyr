@@ -1,0 +1,56 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+// one case of each verdict for each temporal operator, so that exactly two of them expect a witness
+package verifier::helper
+
+@VerificationCase
+@Tag("expect-pass")
+class Incrementing {
+    var x: int := 0
+
+    redefine tran {
+        x := x + 1
+    }
+
+    redefine prop {
+        return EF x == 10
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+class StaysAtOne {
+    var x: int := 1
+
+    redefine prop {
+        return EF x == 0
+    }
+}
+
+@VerificationCase
+@Tag("expect-pass")
+class StaysAtZero {
+    var x: int := 0
+
+    redefine prop {
+        return AG x == 0
+    }
+}
+
+@VerificationCase
+@Tag("expect-fail")
+class CounterExceedsBound {
+    var x: int := 0
+
+    redefine tran {
+        x := x + 1
+    }
+
+    redefine prop {
+        return AG x < 5
+    }
+}

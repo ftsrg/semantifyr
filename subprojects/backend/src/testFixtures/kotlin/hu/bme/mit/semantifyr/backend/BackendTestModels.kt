@@ -30,51 +30,15 @@ class BackendTestModels @Inject constructor(
     private val packageParser: ParseHelper<OxstsModelPackage>,
 ) {
     companion object {
-        const val SATURATING_COUNTER_EXCEEDS_BOUND = """
-            inlined oxsts of semantifyr::Anything
-            var counter : int := 0
-            init {
-            }
-            tran {
-                if (counter < 3) {
-                    counter := counter + 1
-                }
-            }
-            prop {
-                AG counter < 2
-            }
-        """
+        val SATURATING_COUNTER_EXCEEDS_BOUND = model("saturating_counter_exceeds_bound.semantifyr")
 
-        const val UNREACHABLE_TARGET = """
-            inlined oxsts of semantifyr::Anything
-            var counter : int := 0
-            init {
-            }
-            tran {
-                assume(counter < 3)
-                counter := counter + 1
-            }
-            prop {
-                EF counter == 5
-            }
-        """
+        val UNREACHABLE_TARGET = model("unreachable_target.semantifyr")
 
-        const val SATURATING_ONE_OF_SEVERAL_CHANGES = """
-            inlined oxsts of semantifyr::Anything
-            var counter : int := 0
-            var unchanged : int := 5
-            var flag : bool := true
-            init {
-            }
-            tran {
-                if (counter < 3) {
-                    counter := counter + 1
-                }
-            }
-            prop {
-                AG counter < 2
-            }
-        """
+        val SATURATING_ONE_OF_SEVERAL_CHANGES = model("saturating_one_of_several_changes.semantifyr")
+
+        private fun model(name: String): String {
+            return checkNotNull(BackendTestModels::class.java.getResource("BackendTestModels/$name")).readText()
+        }
     }
 
     fun parse(source: String, vararg packages: String): InlinedOxsts {

@@ -1,0 +1,31 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package inlining::tests
+
+class Item {
+    var hits: int := 0
+    tran act() {
+        hits := hits + 1
+    }
+}
+class Holder {
+    contains items: Item[0..*]
+    contains first: Item[1] subsets items
+}
+@VerificationCase
+class Host : Holder {
+    contains second: Item[1] subsets items
+    redefine contains items: Item[0..*]
+    redefine tran {
+        inline for (item in items) {
+            inline item.act()
+        }
+    }
+    redefine prop {
+        return AG true
+    }
+}

@@ -13,6 +13,7 @@ import hu.bme.mit.semantifyr.backend.BackendVerificationResult
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.backend.execution.AvailabilityReport
 import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
+import hu.bme.mit.semantifyr.backend.testModel
 import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts
 import hu.bme.mit.semantifyr.verifier.portfolio.ConcurrencyGate
 import hu.bme.mit.semantifyr.verifier.portfolio.PortfolioLeg
@@ -119,7 +120,7 @@ class SemantifyrVerifierTestHelperTest {
 
     private fun writeModel(): Path {
         val model = modelDirectory.resolve("cases.semantifyr")
-        model.writeText(MODEL)
+        model.writeText(testModel("cases.semantifyr"))
         return model
     }
 
@@ -150,60 +151,5 @@ class SemantifyrVerifierTestHelperTest {
         ): BackendVerificationResult {
             return BackendVerificationResult(verdict = verdict, metadata = fakeMetadata(FakeExecutorKey.name))
         }
-    }
-
-    companion object {
-        // one case of each verdict for each temporal operator, so that exactly two of them expect a witness
-        private val MODEL = """
-            package verifier::helper
-
-            @VerificationCase
-            @Tag("expect-pass")
-            class Incrementing {
-                var x: int := 0
-
-                redefine tran {
-                    x := x + 1
-                }
-
-                redefine prop {
-                    return EF x == 10
-                }
-            }
-
-            @VerificationCase
-            @Tag("expect-fail")
-            class StaysAtOne {
-                var x: int := 1
-
-                redefine prop {
-                    return EF x == 0
-                }
-            }
-
-            @VerificationCase
-            @Tag("expect-pass")
-            class StaysAtZero {
-                var x: int := 0
-
-                redefine prop {
-                    return AG x == 0
-                }
-            }
-
-            @VerificationCase
-            @Tag("expect-fail")
-            class CounterExceedsBound {
-                var x: int := 0
-
-                redefine tran {
-                    x := x + 1
-                }
-
-                redefine prop {
-                    return AG x < 5
-                }
-            }
-        """.trimIndent()
     }
 }

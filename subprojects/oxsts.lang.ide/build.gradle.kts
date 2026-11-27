@@ -13,7 +13,7 @@ dependencies {
     implementation(project(":lang-ide-common"))
     implementation(libs.eclipse.equinox.common)
 
-    testImplementation(libs.xtext.testing)
+    testImplementation(testFixtures(project(":oxsts.lang")))
 }
 
 application {

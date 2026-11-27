@@ -1,0 +1,55 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package semantifyr::verification::report::arrays
+
+class Job {
+    var done: bool := false
+
+    tran finish() {
+        done := true
+    }
+}
+
+@VerificationCase
+class ArraySlotIndependenceReach {
+    var slots: int[3] := [0, 0, 0]
+
+    redefine tran {
+        choice {
+            slots[0] := slots[0] + 1
+        } or {
+            slots[1] := slots[1] + 1
+        } or {
+            slots[2] := slots[2] + 1
+        }
+    }
+
+    redefine prop {
+        return EF (slots[0] == 1 && slots[1] == 1 && slots[2] == 1)
+    }
+}
+
+@VerificationCase
+class ClassTypedArrayDispatchReach {
+    contains first: Job
+    contains second: Job
+    var queue: Job[2] := [first, second]
+    var index: int := 0
+
+    redefine tran {
+        choice {
+            inline queue[index].finish()
+        } or {
+            assume(index < 1)
+            index := index + 1
+        }
+    }
+
+    redefine prop {
+        return EF (second.done && !first.done)
+    }
+}

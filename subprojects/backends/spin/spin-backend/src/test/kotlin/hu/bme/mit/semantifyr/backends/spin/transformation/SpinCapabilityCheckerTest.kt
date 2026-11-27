@@ -6,6 +6,7 @@
 
 package hu.bme.mit.semantifyr.backends.spin.transformation
 
+import hu.bme.mit.semantifyr.backend.testModel
 import hu.bme.mit.semantifyr.compiler.pipeline.context.TransitionCallTraceMap
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.InstanceEvaluation
 import hu.bme.mit.semantifyr.compiler.pipeline.inlining.TransitionCallTrace
@@ -25,7 +26,11 @@ class SpinCapabilityCheckerTest : SpinTransformationTestBase() {
     """
 
     private fun unsupported(body: String): List<String> {
-        val inlinedOxsts = parse("inlined oxsts of semantifyr::Anything\n${body.trimIndent()}", colors)
+        return unsupportedIn("inlined oxsts of semantifyr::Anything\n${body.trimIndent()}")
+    }
+
+    private fun unsupportedIn(model: String): List<String> {
+        val inlinedOxsts = parse(model, colors)
         return withCapabilityChecker {
             it.check(inlinedOxsts, TransitionCallTraceMap(emptyMap()))
         }.map {
@@ -35,32 +40,7 @@ class SpinCapabilityCheckerTest : SpinTransformationTestBase() {
 
     @Test
     fun `a model of supported constructs passes`() {
-        val unsupported = unsupported(
-            """
-                var counter : int := 0
-                var flag : bool := false
-                var color : test::colors::Color := test::colors::Color::Red
-                var elapsed : clock := 0
-                init {
-                    havoc(flag)
-                }
-                tran {
-                    choice {
-                        assume(counter < 3)
-                        assume(elapsed <= 2)
-                        counter := counter + 1
-                        elapsed := 0
-                    } or {
-                        if (flag) {
-                            color := test::colors::Color::Green
-                        }
-                    }
-                }
-                prop {
-                    AG (counter <= 3 && (if flag then true else color == test::colors::Color::Red))
-                }
-            """,
-        )
+        val unsupported = unsupportedIn(testModel("supported_constructs.semantifyr"))
 
         assertThat(unsupported).isEmpty()
     }

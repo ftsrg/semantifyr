@@ -10,6 +10,7 @@ import com.google.inject.Inject
 import com.google.inject.Injector
 import hu.bme.mit.semantifyr.backend.BackendCapabilityChecker
 import hu.bme.mit.semantifyr.backend.scopes.withVerificationScopeBlocking
+import hu.bme.mit.semantifyr.backend.testModel
 import hu.bme.mit.semantifyr.backends.theta.ThetaBackend
 import hu.bme.mit.semantifyr.backends.theta.ThetaConfig
 import hu.bme.mit.semantifyr.compiler.pipeline.context.TransitionCallTraceMap
@@ -35,7 +36,11 @@ class ThetaCapabilityCheckerTest : ThetaTransformationTestBase() {
     """
 
     private fun unsupported(body: String, type: Class<out ThetaCapabilityChecker> = ThetaCapabilityChecker::class.java): List<String> {
-        val inlinedOxsts = parse("inlined oxsts of semantifyr::Anything\n${body.trimIndent()}", colors, notes)
+        return unsupportedIn("inlined oxsts of semantifyr::Anything\n${body.trimIndent()}", type)
+    }
+
+    private fun unsupportedIn(model: String, type: Class<out ThetaCapabilityChecker> = ThetaCapabilityChecker::class.java): List<String> {
+        val inlinedOxsts = parse(model, colors, notes)
         return capabilityChecker(type).check(inlinedOxsts, TransitionCallTraceMap(emptyMap())).map {
             it.description
         }
@@ -43,32 +48,7 @@ class ThetaCapabilityCheckerTest : ThetaTransformationTestBase() {
 
     @Test
     fun `a model of supported constructs passes`() {
-        val unsupported = unsupported(
-            """
-                var counter : int := 0
-                var flag : bool := false
-                var color : test::colors::Color := test::colors::Color::Red
-                var elapsed : clock := 0
-                init {
-                    havoc(flag)
-                }
-                tran {
-                    choice {
-                        assume(counter < 3)
-                        assume(elapsed <= 2)
-                        counter := counter + 1
-                        elapsed := 0
-                    } or {
-                        if (flag) {
-                            color := test::colors::Color::Green
-                        }
-                    }
-                }
-                prop {
-                    AG (counter <= 3 && (if flag then true else color == test::colors::Color::Red))
-                }
-            """,
-        )
+        val unsupported = unsupportedIn(testModel("supported_constructs.semantifyr"))
 
         assertThat(unsupported).isEmpty()
     }

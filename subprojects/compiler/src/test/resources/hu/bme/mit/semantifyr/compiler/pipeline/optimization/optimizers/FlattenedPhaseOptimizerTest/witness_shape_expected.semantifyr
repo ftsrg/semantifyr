@@ -1,0 +1,40 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+inlined oxsts of semantifyr::Anything
+var step: int := 0
+var current: int := -1
+var first_done: bool := false
+var second_done: bool := false
+init {
+    assume(step == 0)
+    choice {
+        current := 0
+    } or {
+        current := 1
+    }
+    assume(current == 1)
+    assume(first_done == false)
+    assume(second_done == false)
+    step := 1
+}
+tran {
+    assume(step == 1)
+    choice {
+        assume(current == 0)
+        first_done := true
+    } or {
+        assume(current == 1)
+        second_done := true
+    }
+    assume(current == 1)
+    assume(first_done == false)
+    assume(second_done == true)
+    step := 2
+}
+prop {
+    EF (step == 2 && (first_done == true || second_done == true))
+}

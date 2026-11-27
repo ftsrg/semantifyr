@@ -6,6 +6,7 @@
 
 package hu.bme.mit.semantifyr.oxsts.lang.tests.typesystem;
 
+import static hu.bme.mit.semantifyr.oxsts.lang.tests.utils.TestModels.testModel;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.google.inject.Inject;
@@ -119,24 +120,8 @@ public class ArrayTypeTest {
 
     @Test
     void slotOfAnArrayAdmittingNothingTakesNothingAndAnOptionalValue() {
-        var parsedPackage = parseHelper.parse("""
-            package test
-            class Item
-            class Port {
-                refers capacity: int
-                contains first: Item
-                var fixedItems: Item[0..2] := [nothing, nothing]
-                var items: Item[0..capacity] := [nothing, ...]
-                var index: int := 0
-                redefine tran {
-                    var current: Item[0..1] := first
-                    fixedItems[0] := nothing
-                    fixedItems[index] := current
-                    items[index] := nothing
-                    items[0] := current
-                }
-            }
-            """, CheckMode.ALL);
+        var parsedPackage =
+                parseHelper.parse(testModel(getClass(), "slot_admitting_nothing.semantifyr"), CheckMode.ALL);
 
         parsedPackage.assertNoResourceErrors();
         parsedPackage.assertNoValidationErrors();
@@ -238,29 +223,8 @@ public class ArrayTypeTest {
 
     @Test
     void classAndFeatureTypedArraysPass() {
-        var parsedPackage = parseHelper.parse("""
-            package test
-            class Worker {
-                var done: bool := false
-                tran step() { done := true }
-                prop isDone(): bool { return done }
-            }
-            class Team {
-                contains workers: Worker[0..*]
-                contains first: Worker subsets workers
-                contains second: Worker subsets workers
-                var queue: Worker[2] := [first, second]
-                var picks: workers[1..2] := [first, second]
-                var index: int := 0
-                redefine tran {
-                    queue[index] := second
-                    picks := queue
-                    havoc(picks)
-                    inline queue[index].step()
-                }
-                redefine prop { return EF (picks[0] == first && queue[1].isDone()) }
-            }
-            """, CheckMode.ALL);
+        var parsedPackage =
+                parseHelper.parse(testModel(getClass(), "class_and_feature_typed_arrays.semantifyr"), CheckMode.ALL);
 
         parsedPackage.assertNoResourceErrors();
         parsedPackage.assertNoValidationErrors();

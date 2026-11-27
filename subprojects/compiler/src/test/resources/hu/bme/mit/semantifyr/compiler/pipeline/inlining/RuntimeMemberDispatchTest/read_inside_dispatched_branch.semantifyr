@@ -1,0 +1,28 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+class Pair {
+    contains part: Part[1]
+    var partner: Part[0..1] := nothing
+    prop partnerDone(): bool {
+        return partner.done
+    }
+}
+@VerificationCase
+class Host {
+    contains pairs: Pair[0..*]
+    contains first: Pair[1] subsets pairs
+    contains second: Pair[1] subsets pairs
+    var seen: bool := false
+    redefine tran {
+        for (pair in pairs) {
+            seen := pair.partnerDone()
+        }
+    }
+    redefine prop {
+        return EF seen
+    }
+}

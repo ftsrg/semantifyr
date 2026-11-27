@@ -6,6 +6,7 @@
 
 package hu.bme.mit.semantifyr.oxsts.lang.tests.validation;
 
+import static hu.bme.mit.semantifyr.oxsts.lang.tests.utils.TestModels.testModel;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.google.inject.Inject;
@@ -21,24 +22,7 @@ import org.junit.jupiter.params.provider.CsvSource;
 @InjectWithOxsts
 public class CallThroughFeatureValidationTest {
 
-    private static final String WORKERS = """
-            package test
-            class Worker {
-                var done: bool := false
-                tran step() {
-                    done := true
-                }
-                prop isDone(): bool {
-                    return done
-                }
-            }
-            class Team {
-                contains workers: Worker[0..*]
-                contains first: Worker subsets workers
-                contains second: Worker subsets workers
-                contains spare: Worker[0..1]
-            }
-            """;
+    private static final String WORKERS = testModel(CallThroughFeatureValidationTest.class, "workers.semantifyr");
 
     @Inject
     private OxstsPackageParseHelper parseHelper;

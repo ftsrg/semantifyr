@@ -1,0 +1,22 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+inlined oxsts of semantifyr::Anything
+var value: int := 0
+var outerGuard: int := 0
+var innerGuard: int := 0
+init {
+}
+tran {
+    if (outerGuard == 0) {
+        if (innerGuard == 0) {
+            value := 1
+        }
+    }
+}
+prop {
+    AG (value != 1)
+}

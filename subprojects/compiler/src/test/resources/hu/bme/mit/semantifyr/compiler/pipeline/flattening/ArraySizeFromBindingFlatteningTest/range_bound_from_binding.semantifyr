@@ -1,0 +1,32 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package flattening::size_from_binding
+
+class Item
+class Port {
+    refers capacity: int
+    contains first: Item
+    var items: Item[0..capacity] := [nothing, ...]
+    var values: int[1..capacity] := [1, 2, ...]
+    tran accept(index: int) {
+        items[index] := first
+        items := [items[1], nothing]
+    }
+}
+@VerificationCase
+class Host {
+    contains port: Port {
+        redefine refers capacity: int = 2
+    }
+    var index: int := 0
+    redefine tran {
+        inline port.accept(index)
+    }
+    redefine prop {
+        return AG port.values[1] == 2
+    }
+}

@@ -1,0 +1,35 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package inlining::tests
+
+class Group {
+    var registered: int := 0
+    tran register(member: Member) {
+        registered := registered + 1
+        member.joined := true
+    }
+}
+class Member {
+    var joined: bool := false
+    refers group: Group
+    redefine init {
+        inline group.register(self)
+    }
+}
+@VerificationCase
+class Host {
+    contains office: Group
+    contains member: Member {
+        redefine refers group: Group = office
+    }
+    redefine init {
+        inline member.init()
+    }
+    redefine prop {
+        return AG member.joined
+    }
+}

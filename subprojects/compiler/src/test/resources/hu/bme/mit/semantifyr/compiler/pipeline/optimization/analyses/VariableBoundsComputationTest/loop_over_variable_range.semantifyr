@@ -1,0 +1,25 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+inlined oxsts of semantifyr::Anything
+var bound: int := 0
+var last: int := 0
+init {
+}
+tran {
+    choice {
+        bound := 4
+    } or {
+        bound := 7
+    }
+    last := 0
+    for (index in 1..<bound) {
+        last := index
+    }
+}
+prop {
+    AG (last < 7)
+}

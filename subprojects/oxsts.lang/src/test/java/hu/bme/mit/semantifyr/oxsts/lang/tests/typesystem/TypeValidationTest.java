@@ -6,6 +6,8 @@
 
 package hu.bme.mit.semantifyr.oxsts.lang.tests.typesystem;
 
+import static hu.bme.mit.semantifyr.oxsts.lang.tests.utils.TestModels.testModel;
+
 import com.google.inject.Inject;
 import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts;
 import hu.bme.mit.semantifyr.oxsts.lang.tests.utils.OxstsPackageParseHelper;
@@ -164,27 +166,7 @@ public class TypeValidationTest {
         parsedPackage.assertHasValidationIssue(OxstsValidator.TYPE_MISMATCH, "compare");
     }
 
-    private static final String GAMMA_PORTS = """
-            package test
-            class Event { }
-            class Interface {
-                contains events: Event[0..*]
-                contains inputEvents: Event[0..*] subsets events
-                contains outputEvents: Event[0..*] subsets events
-            }
-            class Port {
-                contains interface: Interface[1]
-                refers outputEvents: Event[0..*]
-                var outputEvent: outputEvents[0..1] := nothing
-            }
-            class ProvidedPort : Port {
-                redefine refers outputEvents: Event[0..*] = interface.outputEvents
-            }
-            class PingPong : Interface {
-                contains ping: Event subsets outputEvents
-            }
-            class Other { }
-            """;
+    private static final String GAMMA_PORTS = testModel(TypeValidationTest.class, "gamma_ports.semantifyr");
 
     @Test
     void comparingUnrelatedFeaturesOfTheSameClassPasses() {

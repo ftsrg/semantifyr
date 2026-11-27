@@ -6,35 +6,12 @@
 
 package hu.bme.mit.semantifyr.compiler.pipeline.inlining
 
+import hu.bme.mit.semantifyr.oxsts.lang.tests.utils.TestModels.testModel
 import org.junit.jupiter.api.Test
 
 class RedefinitionInliningTest : InliningTestBase() {
 
-    private val hierarchy = """
-        package inlining::tests
-        class Base {
-            tran act() {
-            }
-        }
-        class Child : Base {
-            var count: int := 0
-            redefine tran act() {
-                count := 10
-            }
-        }
-        class Middle : Base {
-            var middleCount: int := 0
-            redefine tran act() {
-                middleCount := 1
-            }
-        }
-        class Leaf : Middle {
-            var leafCount: int := 0
-            redefine tran act() {
-                leafCount := 2
-            }
-        }
-    """
+    private val hierarchy = testModel(javaClass, "hierarchy.semantifyr")
 
     @Test
     fun `an init, tran and prop without redefine leave the ones of Anything in the case`() {
@@ -74,24 +51,7 @@ class RedefinitionInliningTest : InliningTestBase() {
     fun `a tran without redefine leaves the redefinition of the parent class in the step`() {
         assertInlinedModel(
             "Host",
-            """
-                package inlining::tests
-                class Base {
-                    var counter: int := 0
-                    redefine tran {
-                        counter := 1
-                    }
-                    redefine prop {
-                        return EF counter == 2
-                    }
-                }
-                @VerificationCase
-                class Host : Base {
-                    tran {
-                        counter := 2
-                    }
-                }
-            """,
+            testModel(javaClass, "tran_without_redefine.semantifyr"),
             """
                 init {
                 }
@@ -205,33 +165,7 @@ class RedefinitionInliningTest : InliningTestBase() {
     fun `a call to an abstract member runs the redefinition of the concrete class`() {
         assertInlinedModel(
             "Host",
-            """
-                package inlining::tests
-                abstract class Sensor {
-                    var count: int := 0
-                    abstract prop threshold(): bool
-                    abstract tran tick()
-                }
-                class ThresholdSensor : Sensor {
-                    redefine prop threshold(): bool {
-                        return count >= 3
-                    }
-                    redefine tran tick() {
-                        assume(count < 3)
-                        count := count + 1
-                    }
-                }
-                @VerificationCase
-                class Host {
-                    contains thresholdSensor: ThresholdSensor[1]
-                    redefine tran {
-                        inline thresholdSensor.tick()
-                    }
-                    redefine prop {
-                        return EF thresholdSensor.threshold()
-                    }
-                }
-            """,
+            testModel(javaClass, "abstract_member_call.semantifyr"),
             """
                 init {
                 }
@@ -252,47 +186,7 @@ class RedefinitionInliningTest : InliningTestBase() {
     fun `a redefined containment stays in its superset whether it restates subsets or not`() {
         assertInlinedModel(
             "Host",
-            """
-                package inlining::tests
-                class Item {
-                    var hits: int := 0
-                    tran act() {
-                        hits := hits + 1
-                    }
-                }
-                class SpecialItem : Item {
-                    var special: int := 0
-                    redefine tran act() {
-                        special := special + 1
-                    }
-                }
-                class Holder {
-                    contains items: Item[0..*]
-                    contains first: Item[1] subsets items
-                }
-                class RestatingHolder : Holder {
-                    redefine contains first: SpecialItem[1] subsets items
-                }
-                class OmittingHolder : Holder {
-                    redefine contains first: SpecialItem[1]
-                }
-                @VerificationCase
-                class Host {
-                    contains restating: RestatingHolder[1]
-                    contains omitting: OmittingHolder[1]
-                    redefine tran {
-                        inline for (item in restating.items) {
-                            inline item.act()
-                        }
-                        inline for (item in omitting.items) {
-                            inline item.act()
-                        }
-                    }
-                    redefine prop {
-                        return EF omitting.first.special == 1
-                    }
-                }
-            """,
+            testModel(javaClass, "redefined_containment.semantifyr"),
             """
                 init {
                 }

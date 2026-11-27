@@ -6,6 +6,7 @@
 
 package hu.bme.mit.semantifyr.compiler.pipeline.inlining
 
+import hu.bme.mit.semantifyr.oxsts.lang.tests.utils.TestModels.testModel
 import org.junit.jupiter.api.Test
 
 class ArgumentByValueInliningTest : InliningTestBase() {
@@ -14,24 +15,7 @@ class ArgumentByValueInliningTest : InliningTestBase() {
     fun `swap reads both arguments before the body writes either`() {
         assertInlinedModel(
             "Host",
-            """
-                package inlining::tests
-                @VerificationCase
-                class Host {
-                    var x: int := 1
-                    var y: int := 2
-                    tran swap(first: int, second: int) {
-                        x := second
-                        y := first
-                    }
-                    redefine tran {
-                        inline swap(x, y)
-                    }
-                    redefine prop {
-                        return EF x == 2 && y == 1
-                    }
-                }
-            """,
+            testModel(javaClass, "swap.semantifyr"),
             $$$$"""
                 init {
                 }
@@ -54,24 +38,7 @@ class ArgumentByValueInliningTest : InliningTestBase() {
     fun `a parameter read after the body writes its argument reads the value at the call`() {
         assertInlinedModel(
             "Host",
-            """
-                package inlining::tests
-                @VerificationCase
-                class Host {
-                    var counter: int := 0
-                    var previous: int := 0
-                    tran increment(old: int) {
-                        counter := counter + 1
-                        previous := old
-                    }
-                    redefine tran {
-                        inline increment(counter)
-                    }
-                    redefine prop {
-                        return AG previous < counter
-                    }
-                }
-            """,
+            testModel(javaClass, "parameter_read_after_write.semantifyr"),
             $$$$"""
                 init {
                 }

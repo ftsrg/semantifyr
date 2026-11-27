@@ -8,6 +8,7 @@ package hu.bme.mit.semantifyr.compiler.pipeline.inlining
 
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationConfig
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.eAllOfType
+import hu.bme.mit.semantifyr.oxsts.lang.tests.utils.TestModels.testModel
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.IfThenElse
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.IndexingSuffixExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralBoolean
@@ -88,28 +89,7 @@ class CompileTimeIfThenElseInliningTest : InliningTestBase() {
 
     @Test
     fun `a guard over a parameter is decided where its argument is a constant and stays where it is read at run time`() {
-        val source = """
-            package inlining::tests::compile_time_if_then_else_parameters
-            @VerificationCase
-            class Case {
-                var value: int := 0
-                var result: int := 0
-                tran put(limit: int) {
-                    result := if limit > 0 then 1 else 2
-                }
-                prop above(limit: int): bool {
-                    return if limit > 0 then result == 1 else result == 2
-                }
-                redefine tran {
-                    havoc(value)
-                    inline put(3)
-                    inline put(value)
-                }
-                redefine prop {
-                    return AG (above(value) || above(1))
-                }
-            }
-        """
+        val source = testModel(javaClass, "parameter_guard.semantifyr")
         assertThat(compiles("Case", source)).hasSize(2)
     }
 
@@ -137,33 +117,7 @@ class CompileTimeIfThenElseInliningTest : InliningTestBase() {
 
     @Test
     fun `a compile-time guard is decided in an assignment and in the guard of an if of a transition`() {
-        val source = """
-            package inlining::tests::compile_time_if_then_else_transition
-            class Store {
-                refers capacity: int
-                var items: int[capacity] := [0, ...]
-                var count: int := 0
-                tran put(value: int) {
-                    count := if capacity > 0 then items[0] + value else value
-                    if (if capacity > 0 then items[0] > 0 else false) {
-                        count := 0
-                    }
-                }
-            }
-            @VerificationCase
-            class Case {
-                contains store: Store {
-                    redefine refers capacity: int = 0
-                }
-                var value: int := 0
-                redefine tran {
-                    inline store.put(value)
-                }
-                redefine prop {
-                    return AG store.count >= 0
-                }
-            }
-        """
+        val source = testModel(javaClass, "guard_in_assignment_and_if.semantifyr")
         prepare("Case", source, OptimizationConfig.NONE) {
             val main = inlineAll(it).inlinedOxsts.mainTransition
             assertThat(main.eAllOfType<IfThenElse>().toList()).isEmpty()

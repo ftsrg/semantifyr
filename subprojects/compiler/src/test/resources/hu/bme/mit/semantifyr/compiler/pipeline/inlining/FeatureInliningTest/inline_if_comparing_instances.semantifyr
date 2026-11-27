@@ -1,0 +1,27 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package inlining::tests
+
+class Item {
+}
+@VerificationCase
+class Host {
+    contains first: Item[1]
+    contains second: Item[1]
+    refers chosen: Item[1] = second
+    var counter: int := 0
+    redefine tran {
+        inline if (chosen == first) {
+            counter := 1
+        } else {
+            counter := 2
+        }
+    }
+    redefine prop {
+        return AG true
+    }
+}

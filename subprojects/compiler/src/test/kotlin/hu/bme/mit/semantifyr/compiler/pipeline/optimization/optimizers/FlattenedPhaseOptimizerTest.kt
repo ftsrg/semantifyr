@@ -14,6 +14,7 @@ import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationConfig
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.passes.PassTestBase
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.serializeFormatted
 import hu.bme.mit.semantifyr.compiler.scopes.withCompilationScopeBlocking
+import hu.bme.mit.semantifyr.oxsts.lang.tests.utils.TestModels.testModel
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.nio.file.Files
@@ -58,56 +59,8 @@ class FlattenedPhaseOptimizerTest : PassTestBase() {
 
     @Test
     fun `init choice plus tran reads must keep both init writes alive`() = assertOptimizerTransforms(
-        source = """
-            inlined oxsts of semantifyr::Anything
-            var current: int := -1
-            var done_first: bool := false
-            var done_second: bool := false
-            init {
-                choice {
-                    current := 0
-                } or {
-                    current := 1
-                }
-            }
-            tran {
-                choice {
-                    assume(current == 0)
-                    done_first := true
-                } or {
-                    assume(current == 1)
-                    done_second := true
-                }
-            }
-            prop {
-                EF (done_first == true || done_second == true)
-            }
-        """,
-        expectedSource = """
-            inlined oxsts of semantifyr::Anything
-            var current: int := -1
-            var done_first: bool := false
-            var done_second: bool := false
-            init {
-                choice {
-                    current := 0
-                } or {
-                    current := 1
-                }
-            }
-            tran {
-                choice {
-                    assume(current == 0)
-                    done_first := true
-                } or {
-                    assume(current == 1)
-                    done_second := true
-                }
-            }
-            prop {
-                EF (done_first == true || done_second == true)
-            }
-        """,
+        source = testModel(javaClass, "init_choice_tran_reads.semantifyr"),
+        expectedSource = testModel(javaClass, "init_choice_tran_reads_expected.semantifyr"),
     )
 
     @Test
@@ -207,122 +160,14 @@ class FlattenedPhaseOptimizerTest : PassTestBase() {
 
     @Test
     fun `nested choice in init - all branches stay live when read in tran`() = assertOptimizerTransforms(
-        source = """
-            inlined oxsts of semantifyr::Anything
-            var current: int := -1
-            init {
-                choice {
-                    choice {
-                        current := 0
-                    } or {
-                        current := 1
-                    }
-                } or {
-                    current := 2
-                }
-            }
-            tran {
-                assume(current == 0 || current == 1 || current == 2)
-            }
-            prop {
-                AG (current != 99)
-            }
-        """,
-        expectedSource = """
-            inlined oxsts of semantifyr::Anything
-            var current: int := -1
-            init {
-                choice {
-                    current := 2
-                } or {
-                    current := 0
-                } or {
-                    current := 1
-                }
-            }
-            tran {
-                assume(current == 0 || current == 1 || current == 2)
-            }
-            prop {
-                AG (current != 99)
-            }
-        """,
+        source = testModel(javaClass, "nested_init_choice.semantifyr"),
+        expectedSource = testModel(javaClass, "nested_init_choice_expected.semantifyr"),
     )
 
     @Test
     fun `witness shape with step counter and dispatch must be preserved`() = assertOptimizerTransforms(
-        source = """
-            inlined oxsts of semantifyr::Anything
-            var step: int := 0
-            var current: int := -1
-            var first_done: bool := false
-            var second_done: bool := false
-            init {
-                assume(step == 0)
-                choice {
-                    current := 0
-                } or {
-                    current := 1
-                }
-                assume(current == 1)
-                assume(first_done == false)
-                assume(second_done == false)
-                step := 1
-            }
-            tran {
-                assume(step == 1)
-                choice {
-                    assume(current == 0)
-                    first_done := true
-                } or {
-                    assume(current == 1)
-                    second_done := true
-                }
-                assume(current == 1)
-                assume(first_done == false)
-                assume(second_done == true)
-                step := 2
-            }
-            prop {
-                EF (step == 2 && (first_done == true || second_done == true))
-            }
-        """,
-        expectedSource = """
-            inlined oxsts of semantifyr::Anything
-            var step: int := 0
-            var current: int := -1
-            var first_done: bool := false
-            var second_done: bool := false
-            init {
-                assume(step == 0)
-                choice {
-                    current := 0
-                } or {
-                    current := 1
-                }
-                assume(current == 1)
-                assume(first_done == false)
-                assume(second_done == false)
-                step := 1
-            }
-            tran {
-                assume(step == 1)
-                choice {
-                    assume(current == 0)
-                    first_done := true
-                } or {
-                    assume(current == 1)
-                    second_done := true
-                }
-                assume(current == 1)
-                assume(first_done == false)
-                assume(second_done == true)
-                step := 2
-            }
-            prop {
-                EF (step == 2 && (first_done == true || second_done == true))
-            }
-        """,
+        source = testModel(javaClass, "witness_shape.semantifyr"),
+        expectedSource = testModel(javaClass, "witness_shape_expected.semantifyr"),
     )
 
     @Test

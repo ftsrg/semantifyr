@@ -1,0 +1,30 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package inlining::tests
+
+class Limited {
+    refers limit: int = 2
+    var count: int := 0
+    tran step() {
+        assume(count < limit)
+        count := count + 1
+    }
+}
+@VerificationCase
+class Host {
+    contains plain: Limited[1]
+    contains raised: Limited[1] {
+        redefine refers limit: int = 3
+    }
+    redefine tran {
+        inline plain.step()
+        inline raised.step()
+    }
+    redefine prop {
+        return AG true
+    }
+}

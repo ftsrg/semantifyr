@@ -1,0 +1,26 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+inlined oxsts of semantifyr::Anything
+var total: int := 0
+init {
+}
+tran {
+    {
+        {
+            total := total + -3
+        }
+        {
+            total := total + -2
+        }
+        {
+            total := total + -1
+        }
+    }
+}
+prop {
+    AG true
+}

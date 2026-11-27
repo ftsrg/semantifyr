@@ -7,6 +7,7 @@
 package hu.bme.mit.semantifyr.compiler.pipeline.inlining
 
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.eAllOfType
+import hu.bme.mit.semantifyr.oxsts.lang.tests.utils.TestModels.testModel
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ArithmeticBinaryOperator
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ArithmeticOp
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ComparisonOperator
@@ -61,32 +62,7 @@ class WitnessTimeScalerTest : InliningTestBase() {
     }
 
     companion object {
-        private val MODEL = """
-            package clock::tests::scale
-
-            class Timer {
-                var elapsed: clock := 0
-                var fired: bool := false
-
-                tran fire() {
-                    assume(elapsed >= 3)
-                    fired := true
-                }
-            }
-
-            @VerificationCase
-            class TimerFires {
-                contains timer: Timer
-
-                redefine tran {
-                    inline timer.fire()
-                }
-
-                redefine prop {
-                    return EF (timer.fired)
-                }
-            }
-        """.trimIndent()
+        private val MODEL = testModel(WitnessTimeScalerTest::class.java, "model.semantifyr")
 
         private fun witness(timeScale: String): String {
             return """

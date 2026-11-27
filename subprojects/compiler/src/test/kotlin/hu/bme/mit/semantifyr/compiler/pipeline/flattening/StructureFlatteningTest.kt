@@ -7,6 +7,7 @@
 package hu.bme.mit.semantifyr.compiler.pipeline.flattening
 
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.eAllOfType
+import hu.bme.mit.semantifyr.oxsts.lang.tests.utils.TestModels.testModel
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ChoiceOperation
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
@@ -17,30 +18,7 @@ class StructureFlatteningTest : FlatteningTestBase() {
     fun `a shared containment is one instance in every holder`() {
         val flattened = flatten(
             "Host",
-            """
-                package flattening::tests
-                class Counter {
-                    var count: int := 0
-                }
-                class User {
-                    @Shared
-                    contains counter: Counter[1]
-                    contains own: Counter[1]
-                }
-                @VerificationCase
-                class Host {
-                    contains firstUser: User[1]
-                    contains secondUser: User[1]
-                    redefine tran {
-                        firstUser.counter.count := 1
-                        firstUser.own.count := 1
-                        secondUser.own.count := 2
-                    }
-                    redefine prop {
-                        return AG (secondUser.counter.count == 0 || secondUser.counter.count == 1)
-                    }
-                }
-            """,
+            testModel(javaClass, "shared_containment.semantifyr"),
         )
 
         assertThat(
@@ -56,30 +34,7 @@ class StructureFlatteningTest : FlatteningTestBase() {
     fun `a container feature navigates to the instance that contains it`() {
         assertFlattenedModel(
             "Host",
-            """
-                package flattening::tests
-                class Parent {
-                    contains child: Offspring[1] opposite parent
-                    var generation: int := 0
-                }
-                class Offspring {
-                    container parent: Parent[1] opposite child
-                    tran bumpParent() {
-                        assume(parent.generation < 3)
-                        parent.generation := parent.generation + 1
-                    }
-                }
-                @VerificationCase
-                class Host {
-                    contains parent: Parent[1]
-                    redefine tran {
-                        inline parent.child.bumpParent()
-                    }
-                    redefine prop {
-                        return EF parent.generation == 3
-                    }
-                }
-            """,
+            testModel(javaClass, "container_feature.semantifyr"),
             $$$$"""
                 init {
                 }
@@ -122,26 +77,7 @@ class StructureFlatteningTest : FlatteningTestBase() {
     fun `branches of the main and the initial transition stay alternatives`() {
         val flattened = flatten(
             "Host",
-            """
-                package flattening::tests
-                @VerificationCase
-                class Host {
-                    var counter: int := 0
-                    redefine init {
-                        counter := 1
-                    } or {
-                        counter := 2
-                    }
-                    redefine tran {
-                        counter := counter + 1
-                    } or {
-                        counter := counter - 1
-                    }
-                    redefine prop {
-                        return AG true
-                    }
-                }
-            """,
+            testModel(javaClass, "alternative_branches.semantifyr"),
         )
 
         assertThat(flattened.inlinedOxsts.initTransition.eAllOfType<ChoiceOperation>().single().branches).hasSize(2)

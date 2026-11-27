@@ -7,6 +7,7 @@
 package hu.bme.mit.semantifyr.compiler.pipeline.optimization.analyses
 
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.eAllOfType
+import hu.bme.mit.semantifyr.oxsts.lang.tests.utils.TestModels.testModel
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssignmentOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ElementReference
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
@@ -168,24 +169,7 @@ class SemanticsEdgeCaseTest : AnalysisTestBase() {
     @Test
     fun `choice branches are joined - OUT is the union of branch OUTs`() {
         val (inlined, result) = runReachingDefinitions(
-            """
-                inlined oxsts of semantifyr::Anything
-                var source: int := 0
-                var target: int := 0
-                init {
-                }
-                tran {
-                    choice {
-                        source := 1
-                    } or {
-                        source := 2
-                    }
-                    target := source
-                }
-                prop {
-                    AG true
-                }
-            """,
+            testModel(javaClass, "choice_branches_joined.semantifyr"),
         )
         val source = inlined.varNamed("source")
         val sourceWrites = inlined.assignmentsTo(source).toSet()

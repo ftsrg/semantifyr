@@ -7,6 +7,7 @@
 package hu.bme.mit.semantifyr.compiler.pipeline.flattening
 
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationConfig
+import hu.bme.mit.semantifyr.oxsts.lang.tests.utils.TestModels.testModel
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
@@ -16,24 +17,7 @@ class DivisionAssumptionsTest : FlatteningTestBase() {
     fun `the operation that evaluates a division assumes its divisor nonzero, an inner divisor first`() {
         assertFlattenedModel(
             "Host",
-            """
-                package flattening::division
-                @VerificationCase
-                class Host {
-                    var divisor: int := 0
-                    var result: int := 0
-                    redefine tran {
-                        havoc(divisor)
-                        result := 12 / (6 / divisor)
-                        if (result / divisor > 1) {
-                            result := 0
-                        }
-                    }
-                    redefine prop {
-                        return AG result >= 0
-                    }
-                }
-            """,
+            testModel(javaClass, "nested_divisions.semantifyr"),
             $$$$"""
                 init {
                 }

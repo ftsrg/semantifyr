@@ -8,6 +8,7 @@ package hu.bme.mit.semantifyr.compiler.pipeline.flattening
 
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.ArtifactConfig
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.CompilationPass
+import hu.bme.mit.semantifyr.oxsts.lang.tests.utils.TestModels.testModel
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.nio.file.Path
@@ -18,35 +19,7 @@ import kotlin.io.path.readText
 
 class FlatteningStepsTest : FlatteningTestBase() {
 
-    private val everyRewrite = """
-        package flattening::steps
-        record Point {
-            var x: int := 0
-        }
-        class Worker {
-            var done: bool := false
-        }
-        @VerificationCase
-        class Host {
-            contains first: Worker
-            contains second: Worker
-            var position: Point := Point { x = 1 }
-            var values: int[2] := [1, 2]
-            var current: Worker[0..1] := nothing
-            redefine tran {
-                var picked: Worker := first
-                havoc(picked)
-                havoc(current)
-                position.x := values[0] / position.x
-                if (picked == current) {
-                    first.done := true
-                }
-            }
-            redefine prop {
-                return AG !first.done || position.x == 1
-            }
-        }
-    """
+    private val everyRewrite = testModel(javaClass, "every_rewrite.semantifyr")
 
     private val variablesOnly = """
         package flattening::steps

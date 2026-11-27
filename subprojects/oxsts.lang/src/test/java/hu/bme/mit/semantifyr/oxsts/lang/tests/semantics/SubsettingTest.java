@@ -6,6 +6,7 @@
 
 package hu.bme.mit.semantifyr.oxsts.lang.tests.semantics;
 
+import static hu.bme.mit.semantifyr.oxsts.lang.tests.utils.TestModels.testModel;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.google.inject.Inject;
@@ -87,28 +88,7 @@ public class SubsettingTest {
                                 .eObject());
     }
 
-    private static final String REDEFINED_SUPERSETS = """
-            package test
-            class Item { }
-            class Holder {
-                contains all: Item[0..*]
-                contains items: Item[0..*] subsets all
-                contains first: Item[1] subsets items
-            }
-            class Direct : Holder {
-                redefine contains items: Item[0..*]
-            }
-            class Middle : Holder {
-                redefine contains items: Item[0..*]
-            }
-            class Chain : Middle {
-                contains slots: Item[0..*] redefines items
-            }
-            class Both : Holder {
-                contains extra: Item[0..*]
-                redefine contains items: Item[0..*] subsets extra
-            }
-            """;
+    private static final String REDEFINED_SUPERSETS = testModel(SubsettingTest.class, "redefined_supersets.semantifyr");
 
     private List<String> subSetterNames(String className, String declaringClassName, String featureName) {
         var parsedPackage = parseHelper.parse(REDEFINED_SUPERSETS, CheckMode.ALL);

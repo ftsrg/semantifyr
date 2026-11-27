@@ -20,6 +20,7 @@ import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.backend.execution.AvailabilityReport
 import hu.bme.mit.semantifyr.backend.execution.BackendExecutor
 import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
+import hu.bme.mit.semantifyr.backend.testModel
 import hu.bme.mit.semantifyr.backend.witness.Fraction
 import hu.bme.mit.semantifyr.backend.witness.InlinedWitness
 import hu.bme.mit.semantifyr.backend.witness.WitnessState
@@ -155,7 +156,7 @@ class SemantifyrVerifierImplTest {
         val result = build(portfolio, output).verify(loadFirstCase()).report.result
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.NotSupported)
-        assertThat(result.message).isEqualTo("scripted does not support simple.semantifyr:5: variables of type int (x)")
+        assertThat(result.message).isEqualTo("scripted does not support simple.semantifyr:11: variables of type int (x)")
     }
 
     @Test
@@ -387,7 +388,7 @@ class SemantifyrVerifierImplTest {
             )
         }
         val case = loadFirstCase()
-        val witness = loadWitness(case, output.resolve("renamed.semantifyr"), rootName = "system")
+        val witness = loadWitness(case, output.resolve("renamed.semantifyr"), witness = "witness_with_system_root.semantifyr")
 
         val outcome = build(portfolio, output).verify(witness)
 
@@ -438,7 +439,7 @@ class SemantifyrVerifierImplTest {
 
     private fun loadFirstCase(): VerificationCase {
         val modelPath = modelDirectory.resolve("simple.semantifyr")
-        modelPath.writeText(MODEL)
+        modelPath.writeText(testModel("simple.semantifyr"))
         val context = loader.loadStandaloneModel(modelPath)
         val classDeclaration = context.modelResources.asSequence()
             .flatMap {
@@ -459,35 +460,9 @@ class SemantifyrVerifierImplTest {
     private fun loadWitness(
         case: VerificationCase,
         witnessPath: Path,
-        rootName: String = "root",
+        witness: String = "witness.semantifyr",
     ): InlinedOxsts {
-        witnessPath.writeText(
-            """
-            witness of semantifyr::verification::simple::Incrementing
-
-            var step: int := 0
-
-            contains $rootName: semantifyr::verification::simple::Incrementing
-
-            init {
-                assume(step == 0)
-                inline $rootName.init()
-                assume($rootName.x == 1)
-                step := 1
-            }
-
-            tran {
-                assume(step == 1)
-                inline $rootName.main()
-                assume($rootName.x == 2)
-                step := 2
-            }
-
-            prop {
-                $rootName.prop()
-            }
-            """.trimIndent(),
-        )
+        witnessPath.writeText(testModel(witness))
         val resourceSet = case.classDeclaration.eResource().resourceSet
         val resource = resourceSet.getResource(URI.createFileURI(witnessPath.toAbsolutePath().toString()), true)
         EcoreUtil.resolveAll(resourceSet)
@@ -612,28 +587,5 @@ class SemantifyrVerifierImplTest {
             invocations++
             return behavior(request, progress)
         }
-    }
-
-    companion object {
-        private val MODEL = """
-            package semantifyr::verification::simple
-
-            @VerificationCase
-            class Incrementing {
-                var x: int := 0
-
-                redefine init {
-                    x := 1
-                }
-
-                redefine tran {
-                    x := x + 1
-                }
-
-                redefine prop {
-                    return EF x == 10
-                }
-            }
-        """.trimIndent()
     }
 }

@@ -1,0 +1,32 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+record Box {
+    var corner: Point := Point { x = 1 }
+    var size: int := 1
+}
+class Holder {
+    var position: Point := Point { x = 1 }
+    var segment: Segment := Segment { from = Point { x = 0, y = 1 }, to = Point { x = 2 } }
+    var box: Box := Box { size = 1 }
+    tran move(target: Point) {
+        position := target
+    }
+    prop isAt(point: Point): bool {
+        return position == point
+    }
+    redefine tran {
+        position := Point { x = position.x + 1, y = position.y }
+        var local: Point := Point { x = segment.to.x }
+        inline move(Point { x = local.y })
+        segment := Segment { from = position, to = local, color = Color::Green }
+        box := Box { size = 2 }
+        position := if position.x > 3 then Point { x = 0 } else position
+    }
+    redefine prop {
+        return EF (position != Point { x = 3, y = 0 } && isAt(Point { x = 1 }) && Point { x = 1 }.x == 1)
+    }
+}
