@@ -77,7 +77,9 @@ public class OxstsFormatter extends AbstractJavaFormatter {
     }
 
     protected boolean startsFile(IHiddenRegion hiddenRegion) {
-        return hiddenRegion != null && hiddenRegion.getPreviousSemanticRegion() == null && !hiddenRegion.containsComment();
+        return hiddenRegion != null
+                && hiddenRegion.getPreviousSemanticRegion() == null
+                && !hiddenRegion.containsComment();
     }
 
     protected boolean startsPackageSection(EObject declaration) {
