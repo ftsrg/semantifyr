@@ -22,5 +22,4 @@ dependencies {
     testImplementation(libs.kotlinx.coroutines.core)
     testImplementation(libs.kotlinx.coroutines.test)
 
-    testFixturesApi(libs.kotlinx.serialization.json)
 }

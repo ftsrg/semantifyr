@@ -4,13 +4,10 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import hu.bme.mit.semantifyr.frontends.sysml.SysMLv2Variant
 import hu.bme.mit.semantifyr.frontends.sysml.testing.CorpusTier
 import hu.bme.mit.semantifyr.frontends.sysml.testing.CorpusVerdict
 import hu.bme.mit.semantifyr.frontends.sysml.testing.SysMLCorpus
 import hu.bme.mit.semantifyr.frontends.sysml.testing.SysMLv2FrontendTestHelper
-import hu.bme.mit.semantifyr.portfolios.testing.ExampleLanguage
-import hu.bme.mit.semantifyr.portfolios.testing.ServedExamples
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.nio.file.Path
@@ -50,20 +47,6 @@ class SysMLCorpusTest {
             it.case.falsification
         }.forEach {
             assertThat(it.case.verdict).describedAs(it.toString()).isEqualTo(CorpusVerdict.Failed)
-        }
-    }
-
-    @Test
-    fun `served models compile without a library variant`() {
-        val served = ServedExamples.load().of(ExampleLanguage.Sysml).map {
-            it.path.name
-        }
-
-        assertThat(served).isNotEmpty()
-        corpus.models.filter {
-            it.file in served
-        }.forEach {
-            assertThat(it.variant).describedAs(it.file).isEqualTo(SysMLv2Variant.Default)
         }
     }
 

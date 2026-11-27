@@ -135,15 +135,6 @@ fun Test.readsTestModels(vararg folders: String) {
     }
 }
 
-// paths relative to the module, so that the test task stays relocatable for the build cache
-fun Test.readsServedExamples() {
-    val module = project.projectDir.toPath()
-    inputs.file(project.servedExamplesFile).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.files(project.servedExampleSources()).withPathSensitivity(PathSensitivity.RELATIVE)
-    systemProperty("semantifyr.repository", module.relativize(project.isolated.rootProject.projectDirectory.asFile.toPath()).joinToString("/"))
-    systemProperty("semantifyr.examples", module.relativize(project.servedExamplesFile.asFile.toPath()).joinToString("/"))
-}
-
 private fun descriptionOf(text: String): String? {
     val opening = text.trimStart()
     if (!opening.startsWith("/**") && !opening.startsWith("doc")) {

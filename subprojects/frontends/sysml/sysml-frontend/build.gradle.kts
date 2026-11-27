@@ -5,7 +5,6 @@
  */
 
 import hu.bme.mit.semantifyr.gradle.artifactsOf
-import hu.bme.mit.semantifyr.gradle.readsServedExamples
 import hu.bme.mit.semantifyr.gradle.semantifyrArtifact
 
 plugins {
@@ -22,22 +21,9 @@ dependencies {
     implementation(project(":logging"))
     implementation(libs.kotlinx.coroutines.core)
 
-    testImplementation(testFixtures(project(":portfolios")))
-
     testFixturesImplementation(project(":logging"))
-    testFixturesImplementation(testFixtures(project(":portfolios")))
     testFixturesImplementation(testFixtures(project(":verifier")))
     testFixturesImplementation(libs.assertj.core)
-}
-
-testing {
-    suites {
-        named<JvmTestSuite>("integrationTest") {
-            dependencies {
-                implementation(testFixtures(project(":portfolios")))
-            }
-        }
-    }
 }
 
 val librariesDirectory = layout.projectDirectory.dir("../models/libraries")
@@ -65,7 +51,6 @@ tasks.processResources {
 }
 
 tasks.withType<Test>().configureEach {
-    readsServedExamples()
     inputs.files(syncSysmlTestModels).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.dir(layout.projectDirectory.dir("../models/etc")).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.dir(layout.projectDirectory.dir("../models/tutorial")).withPathSensitivity(PathSensitivity.RELATIVE)

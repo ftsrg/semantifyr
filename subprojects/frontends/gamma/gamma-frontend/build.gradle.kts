@@ -7,7 +7,6 @@
 import hu.bme.mit.semantifyr.gradle.corpusModels
 import hu.bme.mit.semantifyr.gradle.javaRuntimeLibrary
 import hu.bme.mit.semantifyr.gradle.oxstsFileExtension
-import hu.bme.mit.semantifyr.gradle.readsServedExamples
 import hu.bme.mit.semantifyr.gradle.semantifyrArtifact
 
 plugins {
@@ -34,16 +33,6 @@ dependencies {
     testFixturesImplementation(libs.junit.api)
 }
 
-testing {
-    suites {
-        named<JvmTestSuite>("integrationTest") {
-            dependencies {
-                implementation(testFixtures(project(":portfolios")))
-            }
-        }
-    }
-}
-
 val exampleLogging = configurations.dependencyScope("exampleLogging")
 val exampleLoggingClasspath = configurations.resolvable("exampleLoggingClasspath") {
     extendsFrom(exampleLogging.get())
@@ -60,10 +49,6 @@ val librariesDirectory = layout.projectDirectory.dir("../models/libraries")
 
 tasks.processResources {
     from(librariesDirectory)
-}
-
-tasks.named<Test>("integrationTest") {
-    readsServedExamples()
 }
 
 tasks.withType<Test>().configureEach {

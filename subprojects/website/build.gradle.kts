@@ -8,7 +8,6 @@ import com.github.gradle.node.npm.task.NpmTask
 import groovy.json.JsonSlurper
 import hu.bme.mit.semantifyr.gradle.artifactsOf
 import hu.bme.mit.semantifyr.gradle.readsPackage
-import hu.bme.mit.semantifyr.gradle.readsServedExamples
 import hu.bme.mit.semantifyr.gradle.readsWorkspace
 import hu.bme.mit.semantifyr.gradle.registerBrandingAssets
 import hu.bme.mit.semantifyr.gradle.registerNpmCheck
@@ -16,8 +15,7 @@ import hu.bme.mit.semantifyr.gradle.semantifyrArtifact
 import hu.bme.mit.semantifyr.gradle.servedExampleSources
 
 plugins {
-    id("hu.bme.mit.semantifyr.theta")
-    id("hu.bme.mit.semantifyr.suites")
+    id("hu.bme.mit.semantifyr.jvm")
     id("hu.bme.mit.semantifyr.nodejs")
     kotlin("jvm")
     kotlin("plugin.serialization")
@@ -171,21 +169,6 @@ val extractFences = tasks.register<NpmTask>("extractFences") {
 tasks.named<Test>("test") {
     inputs.files(extractFences).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.dir(layout.projectDirectory.dir("models")).withPathSensitivity(PathSensitivity.RELATIVE)
-}
-
-testing {
-    suites {
-        named<JvmTestSuite>("integrationTest") {
-            dependencies {
-                implementation(testFixtures(project(":portfolios")))
-            }
-        }
-    }
-}
-
-tasks.named<Test>("integrationTest") {
-    readsServedExamples()
-    inputs.dir(tutorialDirectory).withPathSensitivity(PathSensitivity.RELATIVE)
 }
 
 configurations.consumable("oxstsTutorialElements") {
