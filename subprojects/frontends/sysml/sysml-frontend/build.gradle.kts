@@ -5,7 +5,6 @@
  */
 
 import hu.bme.mit.semantifyr.gradle.artifactsOf
-import hu.bme.mit.semantifyr.gradle.semantifyrArtifact
 
 plugins {
     id("hu.bme.mit.semantifyr.theta")
@@ -15,29 +14,19 @@ plugins {
 }
 
 dependencies {
+    api(project(":sysml-wrapper"))
     api(project(":verifier"))
 
-    implementation(project(":sysml-wrapper"))
     implementation(project(":logging"))
     implementation(libs.kotlinx.coroutines.core)
 
     testFixturesImplementation(project(":logging"))
     testFixturesImplementation(testFixtures(project(":verifier")))
     testFixturesImplementation(libs.assertj.core)
+    testFixturesImplementation(libs.kotlinx.serialization.json)
 }
 
 val librariesDirectory = layout.projectDirectory.dir("../models/libraries")
-val examplesDirectory = layout.projectDirectory.dir("../models/examples")
-
-configurations.consumable("sysmlLibraryElements") {
-    attributes(semantifyrArtifact("sysml-library"))
-    outgoing.artifact(librariesDirectory.dir("default"))
-}
-
-configurations.consumable("sysmlExamplesElements") {
-    attributes(semantifyrArtifact("sysml-examples"))
-    outgoing.artifact(examplesDirectory)
-}
 
 val sysmlCorpus = artifactsOf("sysml-corpus", ":sysml-wrapper")
 

@@ -196,7 +196,6 @@ tasks.processResources {
 }
 
 val compiledExamplesDirectory = layout.buildDirectory.dir("compiled-examples")
-val compiledTutorialDirectory = layout.buildDirectory.dir("compiled-tutorial")
 val examplesSourceDirectory = layout.projectDirectory.dir("../models/examples")
 val appendedCorpusDirectory = layout.buildDirectory.dir("corpus")
 
@@ -214,10 +213,6 @@ configurations.consumable("sysmlCorpusElements") {
 
 val compiledExamplesElements = configurations.consumable("compiledExamplesElements") {
     attributes(semantifyrArtifact("compiled-examples"))
-}
-
-val compiledTutorialElements = configurations.consumable("compiledTutorialElements") {
-    attributes(semantifyrArtifact("compiled-tutorial"))
 }
 
 // the CLI builds every SysML and KerML file under the model's directory as its workspace
@@ -287,27 +282,28 @@ corpusModels(examplesSourceDirectory).filter {
     )
 }
 
-val tutorialSourceDirectory = layout.projectDirectory.dir("../models/tutorial")
-val tutorialWorkspace = fileTree(tutorialSourceDirectory) {
-    include(
-        "**/*.sysml",
-        "**/*.kerml",
-    )
+val smokeSourceDirectory = layout.projectDirectory.dir("../models/smoke")
+val compiledSmokeDirectory = layout.buildDirectory.dir("compiled-smoke")
+
+val compiledSmokeElements = configurations.consumable("compiledSmokeElements") {
+    attributes(semantifyrArtifact("compiled-smoke"))
 }
 
-// the tutorial's models are served on its page, and the load test sends them as live does
-corpusModels(tutorialSourceDirectory).forEach {
-    registerSysmlCompile(
-        "compileSysmlTutorial_${it.name}",
-        provider {
-            tutorialSourceDirectory
-        },
-        tutorialWorkspace,
-        it.name,
-        compiledTutorialDirectory,
-        compiledTutorialElements,
-    )
-}
+registerSysmlCompile(
+    "compileSysmlSmoke",
+    provider {
+        smokeSourceDirectory
+    },
+    fileTree(smokeSourceDirectory) {
+        include(
+            "**/*.sysml",
+            "**/*.kerml",
+        )
+    },
+    "smoke",
+    compiledSmokeDirectory,
+    compiledSmokeElements,
+)
 
 tasks.named("integrationTest") {
     inputs.files(appendFurtherCases).withPathSensitivity(PathSensitivity.RELATIVE)

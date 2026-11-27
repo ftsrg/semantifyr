@@ -4,8 +4,6 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import hu.bme.mit.semantifyr.gradle.readsTestModels
-
 plugins {
     id("hu.bme.mit.semantifyr.distribution-test")
     kotlin("jvm")
@@ -15,7 +13,6 @@ dependencies {
     implementation(project(":logging"))
     implementation(project(":portfolios"))
     implementation(project(":sysml-frontend"))
-    implementation(project(":sysml-wrapper"))
 
     testFixturesApi(project(":verifier"))
     testFixturesApi(libs.clikt)
@@ -24,17 +21,8 @@ dependencies {
     testFixturesImplementation(libs.junit.api)
     testFixturesImplementation(libs.mordant.core)
 
+    testImplementation(testFixtures(project(":cli-common")))
     testImplementation(libs.mordant.core)
-}
-
-testing {
-    suites {
-        named<JvmTestSuite>("integrationTest") {
-            dependencies {
-                implementation(testFixtures(project(":cli-common")))
-            }
-        }
-    }
 }
 
 application {
@@ -47,18 +35,13 @@ distributions.main {
         from(layout.projectDirectory.dir("../models/libraries/default")) {
             into("libraries/sysmlv2")
         }
-        from(layout.projectDirectory.file("../models/tutorial/room.sysml")) {
-            into("models/smoke")
-        }
     }
 }
 
-listOf(
-    "test",
-    "integrationTest",
-).forEach {
-    tasks.named<Test>(it) {
-        inputs.dir(layout.projectDirectory.dir("../models/tutorial")).withPathSensitivity(PathSensitivity.RELATIVE)
-        readsTestModels("semantic")
-    }
+tasks.named("test") {
+    inputs.dir(layout.projectDirectory.dir("../models/tutorial")).withPathSensitivity(PathSensitivity.RELATIVE)
+}
+
+tasks.named("endToEndTest") {
+    inputs.file(layout.projectDirectory.file("../models/smoke/smoke.sysml")).withPathSensitivity(PathSensitivity.RELATIVE)
 }

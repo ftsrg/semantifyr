@@ -40,7 +40,7 @@ class SysMLCompileCommandTest {
     }
 
     @Test
-    suspend fun `the translation goes next to the model in the primary extension`(@TempDir directory: Path) {
+    suspend fun `the transformation goes next to the model in the primary extension`(@TempDir directory: Path) {
         val model = directory.resolve("room.sysml").createFile()
         val target = directory.resolve("room.semantifyr")
 
@@ -52,9 +52,9 @@ class SysMLCompileCommandTest {
     }
 
     @Test
-    suspend fun `the translation goes to the output path`(@TempDir directory: Path) {
+    suspend fun `the transformation goes to the output path`(@TempDir directory: Path) {
         val model = directory.resolve("room.sysml").createFile()
-        val target = directory.resolve("out").resolve("translated.semantifyr")
+        val target = directory.resolve("out").resolve("transformed.semantifyr")
 
         val result = compile("-o", target.toString(), model.toString())
 
@@ -63,14 +63,14 @@ class SysMLCompileCommandTest {
     }
 
     @Test
-    suspend fun `a failed translation is a compilation error`(@TempDir directory: Path) {
+    suspend fun `a failed transformation is a compilation error`(@TempDir directory: Path) {
         val model = directory.resolve("room.sysml").createFile()
-        whenever(compiler.compile(any(), any())).thenThrow(IllegalStateException("the model does not translate"))
+        whenever(compiler.compile(any(), any())).thenThrow(IllegalStateException("the model does not transform"))
 
         val result = compile(model.toString())
 
         assertThat(result.statusCode).isEqualTo(ExitCode.Compilation.code)
-        assertThat(result.stderr).contains("the model does not translate")
+        assertThat(result.stderr).contains("the model does not transform")
     }
 
     @Test

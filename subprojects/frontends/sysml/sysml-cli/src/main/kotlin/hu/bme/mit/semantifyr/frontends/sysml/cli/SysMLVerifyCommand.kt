@@ -28,6 +28,7 @@ import hu.bme.mit.semantifyr.cli.common.options.VerificationCaseSpecificationOpt
 import hu.bme.mit.semantifyr.cli.common.verifyCase
 import hu.bme.mit.semantifyr.cli.common.verifyOutputOption
 import hu.bme.mit.semantifyr.frontends.sysml.SysMLv2Frontend
+import hu.bme.mit.semantifyr.frontends.sysml.wrapper.SysMLv2Compiler
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
 import hu.bme.mit.semantifyr.portfolios.Portfolios
@@ -39,6 +40,7 @@ class SysMLVerifyCommand @Inject constructor(
     verificationCaseDiscoverer: VerificationCaseDiscoverer,
     private val injector: Injector,
     private val fileExtensionProvider: FileExtensionProvider,
+    private val compiler: SysMLv2Compiler,
 ) : SuspendingCliktCommand("verify") {
     private val logger by loggerFactory()
 
@@ -83,6 +85,7 @@ class SysMLVerifyCommand @Inject constructor(
         val (frontend, context) = try {
             val frontend = SysMLv2Frontend.builder()
                 .source(model)
+                .compiler(compiler)
                 .additionalLibraryPaths(libraries)
                 .injector(injector)
                 .portfolio(portfolio)
