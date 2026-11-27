@@ -63,7 +63,7 @@ function paragraphsOf(comment: string[]): string[] {
   });
 }
 
-// what a declaration shows is its text without the comments, which the page shows as prose
+// the page shows the comments as prose
 function withoutComments(lines: string[]): string {
   return lines.join('\n').replace(/^[ \t]*\/\*[\s\S]*?\*\/[ \t]*\n/gm, '').replace(/^[ \t]*\/\/.*\n/gm, '').trimEnd();
 }
@@ -73,7 +73,6 @@ function braceDepthOf(line: string): number {
   return (code.match(/\{/g)?.length ?? 0) - (code.match(/\}/g)?.length ?? 0);
 }
 
-// every top-level declaration of the library carries the comment before it, which the editors' hover also shows
 function parseLibrary(library: string): Declaration[] {
   const lines = library.replace(/\r\n/g, '\n').replace(/^\/\*[\s\S]*?SPDX-[\s\S]*?\*\/\s*/, '').split('\n');
   const declarations: Declaration[] = [];

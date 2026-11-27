@@ -60,9 +60,9 @@ function Line({ className, x1, y1, x2, y2, end, start }: { className: string | u
   return <line className={className} x1={x1} y1={y1} x2={x2} y2={y2} markerEnd={end === undefined ? undefined : `url(#${prefix}-${end})`} markerStart={start === undefined ? undefined : `url(#${prefix}-${start})`} />;
 }
 
-function Path({ className, d, end, start }: { className: string | undefined; d: string; end?: string; start?: string }): React.JSX.Element {
+function Path({ className, d, end }: { className: string | undefined; d: string; end: string }): React.JSX.Element {
   const prefix = useContext(Markers);
-  return <path className={className} d={d} fill="none" markerEnd={end === undefined ? undefined : `url(#${prefix}-${end})`} markerStart={start === undefined ? undefined : `url(#${prefix}-${start})`} />;
+  return <path className={className} d={d} fill="none" markerEnd={`url(#${prefix}-${end})`} />;
 }
 
 function Text({ x, y, children, anchor = 'middle', kind = 'label', size = 16 }: { x: number; y: number; children: React.ReactNode; anchor?: 'start' | 'middle' | 'end'; kind?: 'label' | 'caption' | 'code' | 'failed'; size?: number }): React.JSX.Element {
@@ -187,7 +187,7 @@ export function LightCycle(): React.JSX.Element {
 
 type TraceRow = { name: string; lamps: Lamp[] } | { name: string; flags: boolean[] } | { name: string; numbers: number[] };
 
-export function TraceTimeline({ rows, broken }: { rows: TraceRow[]; broken?: string }): React.JSX.Element {
+export function TraceTimeline({ rows, broken }: { rows: TraceRow[]; broken: string }): React.JSX.Element {
   const left = 132;
   const top = 40;
   const rowHeight = 50;
@@ -199,14 +199,14 @@ export function TraceTimeline({ rows, broken }: { rows: TraceRow[]; broken?: str
   // a long trace gets narrower columns, so that it stays readable on a phone
   const column = states > 5 ? 54 : 70;
   const width = left + column * states + 8;
-  const height = top + rowHeight * rows.length + (broken === undefined ? 8 : 34);
+  const height = top + rowHeight * rows.length + 34;
   const last = states - 1;
   const names = rows.map((row) => {
     return row.name;
   }).join(', ');
   return (
-    <Picture width={width} height={height} label={`A trace of ${String(states)} states that shows ${names}${broken === undefined ? '' : `, whose last state breaks ${broken}`}`}>
-      {broken === undefined ? null : <rect className={styles.broken} x={left + column * last + 4} y={4} width={column - 8} height={top + rowHeight * rows.length - 8} rx={8} />}
+    <Picture width={width} height={height} label={`A trace of ${String(states)} states that shows ${names}, whose last state breaks ${broken}`}>
+      <rect className={styles.broken} x={left + column * last + 4} y={4} width={column - 8} height={top + rowHeight * rows.length - 8} rx={8} />
       {Array.from({ length: states }, (_, index) => {
         return <Text key={index} x={left + column * index + column / 2} y={22} kind="caption" size={14}>{index === 0 ? 'start' : `step ${String(index)}`}</Text>;
       })}
@@ -233,7 +233,7 @@ export function TraceTimeline({ rows, broken }: { rows: TraceRow[]; broken?: str
           </g>
         );
       })}
-      {broken === undefined ? null : <Text x={width - 8} y={height - 14} anchor="end" kind="failed" size={15}>{`breaks ${broken}`}</Text>}
+      <Text x={width - 8} y={height - 14} anchor="end" kind="failed" size={15}>{`breaks ${broken}`}</Text>
     </Picture>
   );
 }

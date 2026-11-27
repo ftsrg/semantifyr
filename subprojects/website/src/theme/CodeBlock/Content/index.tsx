@@ -35,7 +35,7 @@ function linesOf(code: string, language: string | undefined): LineToken[][] {
   });
 }
 
-// every block is coloured from the grammar live's editor loads for its language, in the tokens' syntax colours, and a language without one is plain
+// coloured by the grammars live's editor loads, not by Prism
 export default function CodeBlockContent({ className }: Props): React.JSX.Element {
   const { metadata, wordWrap } = useCodeBlockContext();
   const { code, language, lineNumbersStart, lineClassNames } = metadata;

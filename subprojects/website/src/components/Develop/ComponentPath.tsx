@@ -14,12 +14,10 @@ interface PathBox {
   id: string;
   title: string;
   line: string;
-  // the section under the picture that describes the box
   section: string;
   kind: 'artifact' | 'component' | 'external';
 }
 
-// in the order a model takes through them; the picture turns at the portfolio and comes back below
 const PATH: PathBox[] = [
   {
     id: 'model',
@@ -185,7 +183,7 @@ function arrowOf(index: number, turn: number): 'right' | 'left' | undefined {
   return undefined;
 }
 
-// the boxes stand in the path's order, which is how a phone shows them and a reader without the picture reads them
+// the boxes stand in the path's order, the order a phone and a screen reader take
 export default function ComponentPath(): React.JSX.Element {
   const turn = PATH.findIndex((box) => {
     return box.id === 'portfolio';

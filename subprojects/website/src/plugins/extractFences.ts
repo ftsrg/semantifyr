@@ -48,7 +48,7 @@ const lessonStages = aliases.find(([alias]) => {
   return alias === LESSON_STAGE_DIRECTORY;
 })?.[1];
 
-// the syntax and the preprocessing Docusaurus parses a page with before remarkFences runs
+// parses a page as Docusaurus does before remarkFences runs
 const processor = createProcessor({
   format: 'mdx',
   remarkPlugins: [
@@ -59,7 +59,6 @@ const processor = createProcessor({
   ],
 });
 
-// a lesson's stage by its name, any other OXSTS file through a source alias, relative to the website
 function importedModelsOf(text: string): ImportedModel[] {
   return text.split('\n').flatMap((line) => {
     const source = IMPORT.exec(line.trim())?.[1];

@@ -9,6 +9,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import CodeBlock from '@theme/CodeBlock';
 import { useColorMode } from '@docusaurus/theme-common';
 import { liveEditorUrl, liveExampleUrl, normalizeBaseUrl, type LiveEditorLines, type LiveEditorView } from '@semantifyr/editor-common';
+import type { ExampleLanguage } from '@semantifyr/editor-common/examples';
 import { terms } from '@semantifyr/editor-common/terms';
 import { FenceContext } from '@site/src/lib/fence';
 import { useLiveBackendUrl } from '@site/src/lib/live';
@@ -18,13 +19,11 @@ import styles from './styles.module.css';
 
 interface EmbeddedExampleProps {
   model: string;
-  // the registry's identifier of a served example, which opens by its address
   example?: string | undefined;
   shown: string;
-  lines?: LiveEditorLines | undefined;
-  language: 'oxsts' | 'gamma' | 'sysml';
+  lines: LiveEditorLines;
+  language: ExampleLanguage;
   view: LiveEditorView;
-  open?: boolean;
 }
 
 type Phase = 'closed' | 'loading' | 'unanswered' | 'open';
@@ -73,7 +72,7 @@ function OpenIcon(): React.JSX.Element {
   );
 }
 
-export function EmbeddedExample({ model, example, shown, lines, language, view, open = false }: EmbeddedExampleProps): React.JSX.Element {
+export function EmbeddedExample({ model, example, shown, lines, language, view }: EmbeddedExampleProps): React.JSX.Element {
   const liveBackendUrl = useLiveBackendUrl();
   const { colorMode } = useColorMode();
   const [phase, setPhase] = useState<Phase>('closed');
@@ -83,8 +82,7 @@ export function EmbeddedExample({ model, example, shown, lines, language, view, 
   const code = useRef<HTMLDivElement>(null);
   const control = useRef<HTMLButtonElement>(null);
   const closedAt = useRef<number | null>(null);
-  const first = lines?.first;
-  const last = lines?.last;
+  const { first, last } = lines;
   const opened = phase !== 'closed';
 
   useEffect(() => {
@@ -93,8 +91,7 @@ export function EmbeddedExample({ model, example, shown, lines, language, view, 
       return;
     }
     let active = true;
-    const range = first === undefined || last === undefined ? undefined : { first, last };
-    void liveEditorUrl(`${normalizeBaseUrl(liveBackendUrl).http}/`, { language, example, view, theme: colorMode, lines: range, model: example === undefined ? model : undefined }).then((address) => {
+    void liveEditorUrl(`${normalizeBaseUrl(liveBackendUrl).http}/`, { language, example, view, theme: colorMode, lines: { first, last }, model: example === undefined ? model : undefined }).then((address) => {
       if (active) {
         setUrl(address);
       }
@@ -136,8 +133,6 @@ export function EmbeddedExample({ model, example, shown, lines, language, view, 
   const address = example === undefined ? undefined : liveExampleUrl(`${normalizeBaseUrl(liveBackendUrl).http}/`, language, example);
   const fence = useMemo(() => {
     return {
-      model,
-      address,
       control: phase === 'closed'
         ? (
           <button
@@ -169,7 +164,7 @@ export function EmbeddedExample({ model, example, shown, lines, language, view, 
     <div ref={block} className={`${styles.embed}${phase === 'loading' ? ` ${styles.loading}` : ''}`} aria-busy={phase === 'loading'}>
       <div ref={code} hidden={phase === 'open'}>
         <FenceContext.Provider value={fence}>
-          <CodeBlock language={language === 'sysml' ? 'sysmlv2' : language} metastring={open && phase !== 'unanswered' ? 'open' : ''}>
+          <CodeBlock language={language === 'sysml' ? 'sysmlv2' : language}>
             {shown}
           </CodeBlock>
         </FenceContext.Provider>

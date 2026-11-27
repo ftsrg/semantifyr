@@ -8,7 +8,6 @@ version = 1
 path = [
     "subprojects/frontends/*/models/**",
     "subprojects/website/src/docs/**",
-    "subprojects/website/static/**",
     "subprojects/backends/theta/*/src/main/java/**/*.java",
     "subprojects/backends/*/*-backend/src/test/resources/captured/**",
     "subprojects/benchmark/src/test/resources/runexec/**",

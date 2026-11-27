@@ -4,9 +4,6 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import hu.bme.mit.semantifyr.gradle.oxstsFileExtension
-import hu.bme.mit.semantifyr.gradle.semantifyrArtifact
-
 plugins {
     id("hu.bme.mit.semantifyr.distribution-test")
     kotlin("jvm")
@@ -52,39 +49,5 @@ distributions.main {
         from(rootDirectory.dir("oxsts-test-models/smoke")) {
             into("models/smoke")
         }
-    }
-}
-
-val phasesModel = rootDirectory.file("oxsts-test-models/phases/room.semantifyr")
-val phasesDirectory = layout.buildDirectory.dir("phases")
-
-val phases = tasks.register<JavaExec>("phases") {
-    classpath = sourceSets["main"].runtimeClasspath
-    mainClass = application.mainClass
-    inputs.file(phasesModel).withPathSensitivity(PathSensitivity.RELATIVE)
-    outputs.dir(phasesDirectory)
-    outputs.cacheIf {
-        true
-    }
-    val outputDirectory = phasesDirectory.get().asFile
-    workingDir = outputDirectory
-    args("compile", "--disable-artifact=mapping", "--artifact-directory=.", "--output=compiled.$oxstsFileExtension", phasesModel.asFile.relativeTo(outputDirectory).invariantSeparatorsPath)
-    doFirst {
-        outputDirectory.deleteRecursively()
-        outputDirectory.mkdirs()
-    }
-    doLast {
-        outputDirectory.walkTopDown().filter {
-            it.isFile
-        }.forEach {
-            it.writeText(it.readText().replace("\r\n", "\n"))
-        }
-    }
-}
-
-configurations.consumable("phasesElements") {
-    attributes(semantifyrArtifact("phases"))
-    outgoing.artifact(phasesDirectory) {
-        builtBy(phases)
     }
 }

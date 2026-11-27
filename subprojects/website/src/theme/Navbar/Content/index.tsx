@@ -165,20 +165,19 @@ function ThemeSwitch(): React.JSX.Element {
   );
 }
 
-// on a phone the bar is live's: the brand, and the current section opening the menu
 function PhoneMenuButton(): React.JSX.Element {
   const { shown, toggle } = useNavbarMobileSidebar();
   const current = useCurrentSection();
   const button = useRef<HTMLButtonElement>(null);
 
-  // the theme's menu stays open on Escape and under a focus that has left it for the page behind it
+  // the theme's menu stays open on Escape and when the focus leaves it
   useEffect(() => {
     const menu = document.querySelector('.navbar-sidebar');
     const opener = button.current;
     if (!shown || menu === null || opener === null) {
       return;
     }
-    // the theme offers a toggle alone, and one event may lead to both closings
+    // the theme offers only a toggle, and one event may trigger both closings
     let closed = false;
     const close = (): void => {
       if (!closed) {

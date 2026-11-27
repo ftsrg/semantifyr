@@ -11,9 +11,7 @@ import { EmbeddedExample } from './EmbeddedExample';
 
 export interface PageModel {
   language: ExampleLanguage;
-  // from the repository's root
   file: string;
-  // a served example's, by which live opens it; any other model opens with its text in the address
   id?: string | undefined;
   text: string;
   compressedModel: string;
@@ -24,7 +22,7 @@ export type ExpectedVerdict = CaseManifest['models'][number]['cases'][number]['v
 
 interface Props {
   example: PageModel;
-  show?: string[];
+  show: string[];
 }
 
 const VERIFICATION_CASE = /@VerificationCase|\bverification\s+(?:def|case)\b/;
@@ -109,16 +107,15 @@ export function selectDeclarations(code: string, names: string[]): string {
 
 export default function LiveEmbed({ example, show }: Props): React.JSX.Element {
   const model = example.text;
-  const selection = show ? select(model, show) : null;
+  const selection = select(model, show);
   return (
     <EmbeddedExample
       model={model}
       example={example.id}
-      shown={selection?.text ?? model}
-      lines={selection?.lines}
+      shown={selection.text}
+      lines={selection.lines}
       language={example.language}
       view={VERIFICATION_CASE.test(model) ? 'embed' : 'edit-only'}
-      open={selection === null && example.language !== 'sysml'}
     />
   );
 }

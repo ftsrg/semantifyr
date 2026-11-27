@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-/* the search's own variables take the tokens; its classes are hashed, so the rules below match them by their name */
+/* the search's classes are hashed, so the rules below match them by their name */
 :root {
   --search-local-modal-background: var(--surface-overlay);
   --search-local-modal-shadow: var(--shadow-overlay);

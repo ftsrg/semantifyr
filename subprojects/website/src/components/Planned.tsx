@@ -11,7 +11,6 @@ interface Props {
   children: React.ReactNode;
 }
 
-// the one mark of what is planned: a page never writes a planned thing as present
 export default function Planned({ children }: Props): React.JSX.Element {
   return (
     <Admonition type="info" title="Planned">

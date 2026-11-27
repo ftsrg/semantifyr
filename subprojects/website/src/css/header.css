@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-/* the header is live's top bar: its height, brand, segmented control, quiet buttons and theme switch */
+/* the header follows live's top bar */
 :root {
   --ifm-navbar-height: var(--toolbar-height);
   --ifm-navbar-padding-horizontal: 0;
@@ -271,7 +271,6 @@
   }
 }
 
-/* the phone's menu opens with live's brand at the bar's height */
 .navbar-sidebar__brand {
   height: 56px;
   padding: 0 var(--space-4) 0 var(--space-6);

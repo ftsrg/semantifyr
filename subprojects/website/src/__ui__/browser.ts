@@ -18,7 +18,7 @@ export function launchBrowser(): Promise<Browser> {
   return chromium.launch(localChromium === '' ? {} : { executablePath: localChromium });
 }
 
-// Playwright's browser is installed by the test's run rather than by a task of its own, so that a run served from the cache fetches nothing
+// installed by the test's run, not by a task of its own, so a run served from the cache fetches nothing
 export function setup(): void {
   if (localChromium !== '') {
     if (!existsSync(localChromium)) {

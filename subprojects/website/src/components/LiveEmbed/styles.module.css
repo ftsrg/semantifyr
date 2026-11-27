@@ -69,7 +69,7 @@
   }
 }
 
-/* a cross-origin frame that is not rendered never loads its page, so it loads see-through over the block, at the width it will have */
+/* a cross-origin frame that is not rendered never loads, so it loads invisible over the block */
 .pending {
   position: absolute;
   inset: 0;

@@ -19,7 +19,7 @@ import sourceAliases from './source-aliases.json';
 import linkingFiles from './linking-files.json';
 import { addressOf, learnParts, sections, SOURCE_CODE, type LearnPart } from './src/map';
 
-// the code blocks take their colours from live's grammars in theme/CodeBlock/Content; the block itself from the tokens
+// theme/CodeBlock/Content colours the code, so Prism colours only the block
 const codeBlockTheme: PrismTheme = {
   plain: {
     color: 'var(--syntax-name)',
@@ -32,7 +32,7 @@ const liveBackendUrl = process.env.SEMANTIFYR_LIVE_URL ?? 'https://live.semantif
 
 const REPOSITORY = path.resolve(__dirname, '../..');
 
-// the lessons' stages, which no registry serves: their pages link into live with the text in the address
+// no registry serves the lessons' stages, so live opens them by their text
 const LESSON_STAGES = path.relative(REPOSITORY, path.resolve(__dirname, sourceAliases['@oxsts-lesson-stages']));
 
 interface PageModelSource {
@@ -54,7 +54,6 @@ function expectedVerdicts(file: string): Record<string, string> {
   }));
 }
 
-// by the address a page imports each from
 function pageModelSources(): Record<string, PageModelSource> {
   const served = servedExamples.map((example): [string, PageModelSource] => {
     return [`served-examples/${example.language}/${example.id}`, { language: example.language, file: example.file, id: example.id }];
@@ -87,7 +86,6 @@ function pageModelsPlugin(): Plugin {
   };
 }
 
-// every address of the site that the repository's files write opens a page of the built site; live's texts write it through their constant
 function siteLinksPlugin(): Plugin {
   return {
     name: 'site-links',
@@ -95,6 +93,7 @@ function siteLinksPlugin(): Plugin {
       const routes = new Set(routesPaths);
       const address = new RegExp(`${siteConfig.url.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(/[^\\s"'\`)\\]>#?]*)?`, 'g');
       const broken = linkingFiles.flatMap((file) => {
+        // live's texts write the site's address through their WEBSITE_URL constant
         const text = readFileSync(path.join(REPOSITORY, file), 'utf8').replace(/\$\{WEBSITE_URL\}/g, siteConfig.url);
         return [...text.matchAll(address)].filter((match) => {
           const pathname = match[1] ?? '/';
@@ -119,10 +118,7 @@ function directoriesOf(part: LearnPart): string[] {
 
 const partDirectories = new Set(learnParts.flatMap(directoriesOf));
 
-// the docs are routed at the site's root, so a page's address is its path under them
-const DOCS = 'src/docs';
-
-const nodeVersion = readFileSync(path.resolve(__dirname, '../../.nvmrc'), 'utf8').trim();
+const nodeVersion = readFileSync(path.join(REPOSITORY, '.nvmrc'), 'utf8').trim();
 
 export default {
   title: 'Semantifyr',
@@ -169,10 +165,10 @@ export default {
     [
       '@docusaurus/plugin-content-docs',
       {
-        path: DOCS,
+        path: 'src/docs',
         routeBasePath: '/',
         sidebarPath: './sidebars.ts',
-        // a part of Learn links its index, so the index is no page of the part's own; Develop lists its index
+        // a part of Learn links its index, so its list leaves the index out; Develop lists its index
         async sidebarItemsGenerator({ defaultSidebarItemsGenerator, ...generation }) {
           const items = await defaultSidebarItemsGenerator(generation);
           if (!partDirectories.has(generation.item.dirName)) {
@@ -203,7 +199,7 @@ export default {
           return {
             resolve: {
               alias: {
-                // the sources the pages import, which the website's test and its Gradle tasks read from the same file
+                // extractFences and the Gradle build read source-aliases.json too
                 ...Object.fromEntries(
                   Object.entries(sourceAliases).map(([alias, directory]) => {
                     return [alias, path.resolve(__dirname, directory)];
@@ -211,7 +207,6 @@ export default {
                 ),
                 // written by the cloneGrammars Gradle task
                 '@grammars': path.resolve(__dirname, 'build/grammars'),
-                '@phases': path.resolve(__dirname, 'build/phases'),
               },
             },
             module: {
@@ -240,8 +235,8 @@ export default {
     [
       '@easyops-cn/docusaurus-search-local',
       {
-        // the index is built with the site and searched in the reader's browser
         hashed: true,
+        docsDir: 'src/docs',
         indexBlog: false,
         indexPages: true,
         docsRouteBasePath: '/',
@@ -265,7 +260,7 @@ export default {
         srcDark: 'img/logo-full-dark.svg',
         height: 21,
       },
-      // the phone's menu; the header draws the same entries from the map on a desktop
+      // the phone's menu; on a desktop the header draws its own
       items: [
         {
           type: 'dropdown',
@@ -295,18 +290,7 @@ export default {
     },
     footer: {
       links: [
-        {
-          label: 'Learn',
-          to: '/learn/',
-        },
-        {
-          label: 'Develop',
-          to: '/develop/',
-        },
-        {
-          label: 'Publications',
-          to: '/publications/',
-        },
+        ...sections,
         {
           label: 'Semantifyr Live',
           href: liveBackendUrl,

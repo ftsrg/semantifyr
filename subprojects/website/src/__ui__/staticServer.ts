@@ -36,7 +36,7 @@ export function fileOf(root: string, path: string): string | null {
   return file;
 }
 
-// the test answers live at the address the site's build was given for it, so the site needs no build of its own for the test
+// the test answers live at the address the built site names, so the site needs no build of its own for the test
 function liveUrlOf(): string {
   const scripts = join(SITE, 'assets/js');
   for (const file of readdirSync(scripts)) {

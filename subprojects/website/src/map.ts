@@ -4,11 +4,9 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-// the parts of Learn, which its sidebar and the header's menu are made from
 export interface LearnPart {
   label: string;
   doc: string;
-  // the folder whose pages, but its index, the part holds
   directory?: string;
   parts?: LearnPart[];
 }

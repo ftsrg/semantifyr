@@ -22,7 +22,7 @@ interface Ui {
   open: (address: string) => Promise<Page>;
 }
 
-// the routes stand before the first page loads, so no request of a page reaches another host than the site's server; a route sees HTTP requests alone, and the mock answers live's sockets
+// no request reaches another host than the site's server; routes see HTTP alone, so the mock answers live's sockets
 async function routeHosts(context: BrowserContext, backend: MockBackend): Promise<void> {
   const siteOrigin = new URL(SITE_URL).origin;
   await context.route((url) => {
@@ -48,7 +48,7 @@ function folderName(name: string): string {
 
 export const test = base.extend<{ ui: Ui; browser: Browser }>({
   browser: [
-    // vitest reads the fixtures a fixture needs from the pattern of its first parameter, and this one needs none
+    // vitest reads a fixture's dependencies from its first parameter's pattern, and this one has none
     // eslint-disable-next-line no-empty-pattern
     async ({}, provide) => {
       const browser = await launchBrowser();

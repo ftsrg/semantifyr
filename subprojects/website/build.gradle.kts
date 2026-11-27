@@ -23,7 +23,6 @@ val liveScreenshots = artifactsOf("screenshots", ":semantifyr-live-frontend")
 val liveWebDistribution = artifactsOf("web-distribution", ":semantifyr-live-frontend")
 val liveUiMock = artifactsOf("live-ui-mock", ":semantifyr-live-frontend")
 val generatedWitness = artifactsOf("generated-witness", ":verifier")
-val phases = artifactsOf("phases", ":semantifyr-cli")
 
 dependencies {
     testImplementation(project(":oxsts.lang"))
@@ -96,11 +95,6 @@ val cloneGeneratedWitness = tasks.register<Sync>("cloneGeneratedWitness") {
     into(layout.buildDirectory.dir("generated-witness"))
 }
 
-val clonePhases = tasks.register<Sync>("clonePhases") {
-    from(phases)
-    into(layout.buildDirectory.dir("phases"))
-}
-
 val importedBrandingDirectory = layout.projectDirectory.dir("static-imported-branding")
 
 val cloneBrandingAssets = registerBrandingAssets(importedBrandingDirectory.dir("img"))
@@ -160,7 +154,6 @@ val npmAssemble = tasks.register<NpmTask>("npmAssemble") {
     inputs.files(sourceAliasDirectories).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(servedExampleSources()).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(cloneBrandingAssets).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.files(clonePhases).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(cloneScreenshots).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(cloneApiDocs).withPathSensitivity(PathSensitivity.RELATIVE)
 
