@@ -15,7 +15,8 @@ import hu.bme.mit.semantifyr.gradle.semantifyrArtifact
 import hu.bme.mit.semantifyr.gradle.servedExampleSources
 
 plugins {
-    id("hu.bme.mit.semantifyr.jvm")
+    id("hu.bme.mit.semantifyr.theta")
+    id("hu.bme.mit.semantifyr.suites")
     id("hu.bme.mit.semantifyr.nodejs")
     kotlin("jvm")
     kotlin("plugin.serialization")
@@ -169,6 +170,10 @@ val extractFences = tasks.register<NpmTask>("extractFences") {
 tasks.named<Test>("test") {
     inputs.files(extractFences).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.dir(layout.projectDirectory.dir("models")).withPathSensitivity(PathSensitivity.RELATIVE)
+}
+
+tasks.named("integrationTest") {
+    inputs.dir(tutorialDirectory).withPathSensitivity(PathSensitivity.RELATIVE)
 }
 
 configurations.consumable("oxstsTutorialElements") {
