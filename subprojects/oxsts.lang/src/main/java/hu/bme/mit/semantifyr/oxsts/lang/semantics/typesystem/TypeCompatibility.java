@@ -200,11 +200,6 @@ public class TypeCompatibility {
         return left;
     }
 
-    /**
-     * Returns {@code true} if a value of the {@code assigned} type can be assigned into a location
-     * typed as {@code assignee}. Checks domain compatibility plus multiplicity (can an optional
-     * slot accept nothing? can a one slot accept a some? etc.).
-     */
     public boolean isAssignable(TypeEvaluation assignee, TypeEvaluation assigned, EObject context) {
         if (assignee instanceof InvalidTypeEvaluation || assigned instanceof InvalidTypeEvaluation) {
             return true;

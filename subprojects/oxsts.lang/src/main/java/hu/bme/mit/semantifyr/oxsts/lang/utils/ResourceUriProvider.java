@@ -16,8 +16,7 @@ public class ResourceUriProvider {
     @Inject
     protected UriExtensions uriExtensions;
 
-    // To be consistent with the LSP server implementation we need to ensure our URIs have an empty
-    // authority
+    // To be consistent with the LSP server implementation we need to ensure our URIs have an empty authority
     public URI createFileUri(Path path) {
         var fileUri = URI.createFileURI(path.toAbsolutePath().toString());
         return uriExtensions.withEmptyAuthority(fileUri);

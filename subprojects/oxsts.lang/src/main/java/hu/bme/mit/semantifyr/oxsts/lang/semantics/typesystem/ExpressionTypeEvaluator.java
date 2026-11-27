@@ -213,7 +213,6 @@ public class ExpressionTypeEvaluator extends ExpressionEvaluator<TypeEvaluation>
         }
 
         if (classDeclaration == null) {
-            // TODO: add validation diagnostic
             return InvalidTypeEvaluation.Instance;
         }
 

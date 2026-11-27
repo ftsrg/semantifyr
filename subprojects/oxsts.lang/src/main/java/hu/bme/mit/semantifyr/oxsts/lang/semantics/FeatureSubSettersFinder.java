@@ -44,9 +44,6 @@ public class FeatureSubSettersFinder {
         var memberCollection = domainMemberCollectionProvider.getMemberCollection(domain);
         var target = resolve(memberCollection, feature);
 
-        // Preserve declaration order via LinkedHashSet. HashSet here would
-        // make downstream IR shape depend on hash order, reordering dispatch
-        // chains non-deterministically across runs.
         return memberCollection.getDeclarations().stream()
                 .filter(d -> d instanceof FeatureDeclaration)
                 .map(d -> (FeatureDeclaration) d)
@@ -61,7 +58,6 @@ public class FeatureSubSettersFinder {
         return resolved != null ? resolved : feature;
     }
 
-    // a redefinition has the values of the feature it redefines, so it is under that feature's supersets too
     private List<FeatureDeclaration> getSupersets(FeatureDeclaration feature) {
         var supersets = new ArrayList<FeatureDeclaration>();
         var superset = feature.getSuperset();
