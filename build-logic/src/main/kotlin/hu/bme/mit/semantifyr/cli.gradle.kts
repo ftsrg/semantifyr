@@ -6,7 +6,6 @@
 
 package hu.bme.mit.semantifyr
 
-import hu.bme.mit.semantifyr.gradle.semantifyrArtifact
 import org.gradle.accessors.dm.LibrariesForLibs
 
 plugins {
@@ -18,13 +17,6 @@ val libs = the<LibrariesForLibs>()
 
 dependencies {
     runtimeOnly(libs.slf4j.log4j)
-}
-
-application {
-    applicationDefaultJvmArgs = listOf(
-        "--enable-native-access=ALL-UNNAMED",
-        "-Dguice_bytecode_gen_option=DISABLED",
-    )
 }
 
 // cmd.exe rejects a line over 8191 characters, which the expanded jar list exceeds under a long install path
@@ -53,6 +45,10 @@ distributions.main {
 }
 
 tasks.startScripts {
+    defaultJvmOpts = listOf(
+        "--enable-native-access=ALL-UNNAMED",
+        "-Dguice_bytecode_gen_option=DISABLED",
+    )
     val windowsScriptFile = windowsScript
     val classpathJarName = windowsClasspathJar.flatMap {
         it.archiveFileName
@@ -73,11 +69,4 @@ tasks.startScripts {
 
 tasks.distTar {
     enabled = false
-}
-
-configurations.consumable("distributionElements") {
-    attributes(semantifyrArtifact("application-distribution"))
-    outgoing.artifact(layout.buildDirectory.dir("install")) {
-        builtBy(tasks.installDist)
-    }
 }

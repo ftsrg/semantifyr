@@ -5,9 +5,9 @@
  */
 
 import hu.bme.mit.semantifyr.gradle.artifactsOf
+import hu.bme.mit.semantifyr.gradle.readsTestModels
 
 plugins {
-    id("hu.bme.mit.semantifyr.cli")
     id("hu.bme.mit.semantifyr.xtext-ide")
     id("hu.bme.mit.semantifyr.suites")
 }
@@ -50,17 +50,11 @@ val cloneLibraries = tasks.register<Sync>("cloneLibraries") {
     into(layout.buildDirectory.dir("libraries"))
 }
 
-tasks.named("test") {
+tasks.named<Test>("test") {
     inputs.files(cloneLibraries).withPathSensitivity(PathSensitivity.RELATIVE)
-    listOf(
-        "oxsts-test-models/tutorial",
-        "oxsts-test-models/phases",
-        "oxsts-test-models/smoke",
-    ).forEach {
-        inputs.dir(isolated.rootProject.projectDirectory.dir(it)).withPathSensitivity(PathSensitivity.RELATIVE)
-    }
+    readsTestModels("tutorial", "phases", "smoke")
 }
 
-tasks.named("integrationTest") {
-    inputs.dir(isolated.rootProject.projectDirectory.dir("oxsts-test-models/smoke")).withPathSensitivity(PathSensitivity.RELATIVE)
+tasks.named<Test>("integrationTest") {
+    readsTestModels("smoke")
 }

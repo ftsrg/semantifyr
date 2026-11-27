@@ -67,25 +67,24 @@ application {
     mainClass = "hu.bme.mit.semantifyr.live.backend.SemantifyrLiveCliKt"
 }
 
-val generateBuildInfo = tasks.register("generateBuildInfo") {
-    val outputDirectory = layout.buildDirectory.dir("generated/buildinfo")
-    val version = project.version.toString()
-    val commitHash = commitHash()
-    inputs.property("version", version)
-    inputs.property("commitHash", commitHash)
-    outputs.dir(outputDirectory)
-
-    doLast {
-        outputDirectory.get().asFile.mkdirs()
-        outputDirectory.get().file("build-info.properties").asFile.writeText(
-            "version=$version\ncommit=${commitHash.get()}\n",
-        )
+val generateBuildInfo = tasks.register<WriteProperties>("generateBuildInfo") {
+    destinationFile = layout.buildDirectory.file("generated/buildinfo/build-info.properties")
+    property("commit", commitHash())
+    outputs.cacheIf {
+        true
     }
 }
 
-sourceSets.main {
-    resources.srcDir(generateBuildInfo)
+tasks.jar {
+    from(generateBuildInfo)
 }
+
+val semanticLibrariesDirectory = layout.buildDirectory.dir("staging/semantic-libraries")
+val gammaExamplesDirectory = layout.buildDirectory.dir("staging/gamma-examples")
+val oxstsTestModelsDirectory = layout.buildDirectory.dir("staging/oxsts-test-models")
+val gammaCompiledExamplesDirectory = layout.buildDirectory.dir("staging/gamma-compiled-examples")
+val sysmlCompiledExamplesDirectory = layout.buildDirectory.dir("staging/sysml-compiled-examples")
+val webDirectory = layout.buildDirectory.dir("staging/web")
 
 val cloneSemanticLibraries = tasks.register<Sync>("cloneSemanticLibraries") {
     from(sysmlLibrary) {
@@ -94,27 +93,27 @@ val cloneSemanticLibraries = tasks.register<Sync>("cloneSemanticLibraries") {
     from(gammaLibrary) {
         into("gamma")
     }
-    into(layout.buildDirectory.dir("staging/semantic-libraries"))
+    into(semanticLibrariesDirectory)
 }
 
-val cloneGammaTestModels = tasks.register<Sync>("cloneGammaTestModels") {
+val cloneGammaExamples = tasks.register<Sync>("cloneGammaExamples") {
     from(gammaExamples)
-    into(layout.buildDirectory.dir("staging/gamma-test-models"))
+    into(gammaExamplesDirectory)
 }
 
 val cloneOxstsTestModels = tasks.register<Sync>("cloneOxstsTestModels") {
     from(isolated.rootProject.projectDirectory.dir("oxsts-test-models/smoke"))
-    into(layout.buildDirectory.dir("staging/oxsts-test-models"))
+    into(oxstsTestModelsDirectory)
 }
 
-val cloneGammaLibraryModels = tasks.register<Sync>("cloneGammaLibraryModels") {
+val cloneGammaCompiledExamples = tasks.register<Sync>("cloneGammaCompiledExamples") {
     from(gammaCompiledExamples)
-    into(layout.buildDirectory.dir("staging/gamma-library-models"))
+    into(gammaCompiledExamplesDirectory)
 }
 
-val cloneSysmlLibraryModels = tasks.register<Sync>("cloneSysmlLibraryModels") {
+val cloneSysmlCompiledExamples = tasks.register<Sync>("cloneSysmlCompiledExamples") {
     from(sysmlCompiledExamples)
-    into(layout.buildDirectory.dir("staging/sysml-library-models"))
+    into(sysmlCompiledExamplesDirectory)
 }
 
 val cloneWebDistributions = tasks.register<Sync>("cloneWebDistributions") {
@@ -123,28 +122,34 @@ val cloneWebDistributions = tasks.register<Sync>("cloneWebDistributions") {
         exclude("sysml.tmLanguage.json")
         into("sysml-worker")
     }
-    into(layout.buildDirectory.dir("staging/web"))
+    into(webDirectory)
 }
-
-val stagingDirectory = layout.buildDirectory.dir("staging").get().asFile
 
 fun JavaExec.servesLive() {
     runsWithTheta()
-    inputs.files(cloneSemanticLibraries)
+    inputs.files(cloneSemanticLibraries).withPathSensitivity(PathSensitivity.RELATIVE)
 
-    args = listOf("start")
+    classpath = files(tasks.jar, configurations.runtimeClasspath)
+    args("start")
 
-    environment("SEMANTIFYR_LIVE_SEMANTIC_LIBRARIES_DIR", stagingDirectory.resolve("semantic-libraries").absolutePath)
     environment("SEMANTIFYR_LIVE_PORT", "18080")
     environment("SEMANTIFYR_LIVE_METRICS_PORT", "18081")
-    environment("SEMANTIFYR_LIVE_ROOT_WORK_DIR", layout.buildDirectory.dir("work").get().asFile.absolutePath)
+    val semanticLibraries = semanticLibrariesDirectory
+    val workDirectory = layout.buildDirectory.dir("work")
+    doFirst {
+        environment("SEMANTIFYR_LIVE_SEMANTIC_LIBRARIES_DIR", semanticLibraries.get().asFile.absolutePath)
+        environment("SEMANTIFYR_LIVE_ROOT_WORK_DIR", workDirectory.get().asFile.absolutePath)
+    }
 }
 
 tasks.named<JavaExec>("run") {
     servesLive()
-    inputs.files(cloneWebDistributions)
+    inputs.files(cloneWebDistributions).withPathSensitivity(PathSensitivity.RELATIVE)
 
-    environment("SEMANTIFYR_LIVE_WEB_ROOT_DIR", stagingDirectory.resolve("web").absolutePath)
+    val web = webDirectory
+    doFirst {
+        environment("SEMANTIFYR_LIVE_WEB_ROOT_DIR", web.get().asFile.absolutePath)
+    }
 }
 
 tasks.register<JavaExec>("runDev") {
@@ -152,23 +157,19 @@ tasks.register<JavaExec>("runDev") {
 
     servesLive()
 
-    classpath = sourceSets["main"].runtimeClasspath
     mainClass = application.mainClass
-    jvmArgs(application.applicationDefaultJvmArgs)
 }
 
-val relativeStagingDirectory = "build/staging"
-
-fun Test.readsSharedModels() {
-    inputs.files(cloneSemanticLibraries).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.files(cloneGammaTestModels).withPathSensitivity(PathSensitivity.RELATIVE)
-
-    systemProperty("semantifyr.live.semanticLibraries", "$relativeStagingDirectory/semantic-libraries")
-    systemProperty("semantifyr.live.gammaTestModels", "$relativeStagingDirectory/gamma-test-models")
-}
-
-tasks.named<Test>("test") {
-    readsSharedModels()
+fun Test.readsStaged(
+    property: String,
+    sync: TaskProvider<Sync>,
+    directory: Provider<Directory>,
+) {
+    inputs.files(sync).withPathSensitivity(PathSensitivity.RELATIVE)
+    val module = layout.projectDirectory.asFile
+    jvmArgumentProviders += CommandLineArgumentProvider {
+        listOf("-D$property=${directory.get().asFile.relativeTo(module).invariantSeparatorsPath}")
+    }
 }
 
 testing {
@@ -189,14 +190,11 @@ testing {
 }
 
 tasks.named<Test>("integrationTest") {
-    readsSharedModels()
-    inputs.files(cloneOxstsTestModels)
-    inputs.files(cloneGammaLibraryModels)
-    inputs.files(cloneSysmlLibraryModels)
-
-    systemProperty("semantifyr.live.oxstsTestModels", "$relativeStagingDirectory/oxsts-test-models")
-    systemProperty("semantifyr.live.gammaLibraryModels", "$relativeStagingDirectory/gamma-library-models")
-    systemProperty("semantifyr.live.sysmlLibraryModels", "$relativeStagingDirectory/sysml-library-models")
+    readsStaged("semantifyr.live.semanticLibraries", cloneSemanticLibraries, semanticLibrariesDirectory)
+    readsStaged("semantifyr.live.gammaExamples", cloneGammaExamples, gammaExamplesDirectory)
+    readsStaged("semantifyr.live.oxstsTestModels", cloneOxstsTestModels, oxstsTestModelsDirectory)
+    readsStaged("semantifyr.live.gammaCompiledExamples", cloneGammaCompiledExamples, gammaCompiledExamplesDirectory)
+    readsStaged("semantifyr.live.sysmlCompiledExamples", cloneSysmlCompiledExamples, sysmlCompiledExamplesDirectory)
 }
 
 val liveImageContext = tasks.register<Tar>("liveImageContext") {

@@ -7,9 +7,10 @@
 package hu.bme.mit.semantifyr
 
 import hu.bme.mit.semantifyr.gradle.artifactsOf
+import hu.bme.mit.semantifyr.gradle.semantifyrArtifact
 
 plugins {
-    id("hu.bme.mit.semantifyr.jvm")
+    id("hu.bme.mit.semantifyr.cli")
 }
 
 val ideGeneratedFiles = artifactsOf("xtext-ide-sources", path.removeSuffix(".ide"))
@@ -21,15 +22,20 @@ val cloneIdeGenerated = tasks.register<Sync>("cloneIdeGenerated") {
     into(xtextGeneratedDirectory)
 }
 
-val ideGeneratedSources = files(xtextGeneratedDirectory).builtBy(cloneIdeGenerated)
-
 sourceSets {
     main {
-        java.srcDir(ideGeneratedSources)
-        resources.srcDir(ideGeneratedSources)
+        java.srcDir(cloneIdeGenerated)
+        resources.srcDir(cloneIdeGenerated)
     }
 }
 
 tasks.clean {
     delete(xtextGeneratedDirectory)
+}
+
+configurations.consumable("applicationDistributionElements") {
+    attributes(semantifyrArtifact("application-distribution"))
+    outgoing.artifact(layout.buildDirectory.dir("install")) {
+        builtBy(tasks.installDist)
+    }
 }

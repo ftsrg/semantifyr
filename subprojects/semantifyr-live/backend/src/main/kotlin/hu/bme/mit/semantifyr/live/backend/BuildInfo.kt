@@ -9,7 +9,7 @@ package hu.bme.mit.semantifyr.live.backend
 import java.util.Properties
 
 object BuildInfo {
-    val version: String
+    val version = javaClass.`package`.implementationVersion ?: "unknown"
     val commit: String
 
     init {
@@ -18,7 +18,6 @@ object BuildInfo {
         if (stream != null) {
             properties.load(stream)
         }
-        version = properties.getProperty("version", "unknown")
         commit = properties.getProperty("commit", "unknown")
     }
 }

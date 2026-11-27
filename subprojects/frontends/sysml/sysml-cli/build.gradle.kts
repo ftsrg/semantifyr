@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
+import hu.bme.mit.semantifyr.gradle.readsTestModels
+
 plugins {
     id("hu.bme.mit.semantifyr.distribution-test")
     kotlin("jvm")
@@ -40,8 +42,6 @@ application {
     applicationName = "semantifyr-sysml"
 }
 
-val rootDirectory = isolated.rootProject.projectDirectory
-
 distributions.main {
     contents {
         from(layout.projectDirectory.dir("../models/libraries/default")) {
@@ -57,8 +57,8 @@ listOf(
     "test",
     "integrationTest",
 ).forEach {
-    tasks.named(it) {
+    tasks.named<Test>(it) {
         inputs.dir(layout.projectDirectory.dir("../models/tutorial")).withPathSensitivity(PathSensitivity.RELATIVE)
-        inputs.dir(rootDirectory.dir("oxsts-test-models/semantic")).withPathSensitivity(PathSensitivity.RELATIVE)
+        readsTestModels("semantic")
     }
 }

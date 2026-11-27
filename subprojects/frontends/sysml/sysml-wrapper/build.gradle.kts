@@ -7,6 +7,7 @@
 import com.github.gradle.node.pnpm.task.PnpmTask
 import com.github.gradle.node.task.NodeTask
 import hu.bme.mit.semantifyr.gradle.AppendFurtherCases
+import hu.bme.mit.semantifyr.gradle.FURTHER_CASES_EXTENSION
 import hu.bme.mit.semantifyr.gradle.corpusModels
 import hu.bme.mit.semantifyr.gradle.oxstsFileExtension
 import hu.bme.mit.semantifyr.gradle.semantifyrArtifact
@@ -48,7 +49,7 @@ node {
 val checkoutSysml = tasks.register<Exec>("checkoutSysml") {
     inputs.property("sysmlUrl", sysmlUrl)
     inputs.property("sysmlCommit", sysmlCommit)
-    inputs.dir("scripts")
+    inputs.dir("scripts").withPathSensitivity(PathSensitivity.RELATIVE)
     outputs.dir(sysmlDirectory.dir(".git"))
 
     if (Os.isFamily(Os.FAMILY_WINDOWS)) {
@@ -82,9 +83,9 @@ val sysmlSourceFiles = fileTree(sysmlDirectory.dir("packages")) {
 val buildCli = tasks.register<PnpmTask>("buildCli") {
     // node_modules links back into the workspace packages, so it changes whenever they are built
     dependsOn(tasks.pnpmInstall)
-    inputs.file(sysmlDirectory.file("package.json"))
-    inputs.file(sysmlDirectory.file("tsconfig.json"))
-    inputs.files(sysmlSourceFiles)
+    inputs.file(sysmlDirectory.file("package.json")).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.file(sysmlDirectory.file("tsconfig.json")).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.files(sysmlSourceFiles).withPathSensitivity(PathSensitivity.RELATIVE)
     outputs.file(sysmlDirectory.file("packages/syside-cli/dist/cli.cjs"))
 
     pnpmCommand = listOf("run", "cli")
@@ -93,9 +94,9 @@ val buildCli = tasks.register<PnpmTask>("buildCli") {
 val bundleExtension = tasks.register<PnpmTask>("bundleExtension") {
     dependsOn(tasks.pnpmInstall)
     mustRunAfter(buildCli)
-    inputs.file(sysmlDirectory.file("package.json"))
-    inputs.file(sysmlDirectory.file("tsconfig.json"))
-    inputs.files(sysmlSourceFiles)
+    inputs.file(sysmlDirectory.file("package.json")).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.file(sysmlDirectory.file("tsconfig.json")).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.files(sysmlSourceFiles).withPathSensitivity(PathSensitivity.RELATIVE)
     val vscodePackageDirectory = sysmlDirectory.dir("packages/syside-vscode")
     outputs.files(
         fileTree(vscodePackageDirectory) {
@@ -138,9 +139,9 @@ val bundleCli = tasks.register<Sync>("bundleCli") {
 val assembleFork = tasks.register<PnpmTask>("assembleFork") {
     dependsOn(tasks.pnpmInstall)
     mustRunAfter(buildCli, bundleExtension)
-    inputs.file(sysmlDirectory.file("package.json"))
-    inputs.file(sysmlDirectory.file("tsconfig.json"))
-    inputs.files(sysmlSourceFiles)
+    inputs.file(sysmlDirectory.file("package.json")).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.file(sysmlDirectory.file("tsconfig.json")).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.files(sysmlSourceFiles).withPathSensitivity(PathSensitivity.RELATIVE)
     outputs.dir(sysmlDirectory.dir("packages/syside-languageserver/lib"))
 
     pnpmCommand = listOf("-r", "assemble")
@@ -150,9 +151,9 @@ val languageServerDirectory = sysmlDirectory.dir("packages/syside-languageserver
 
 val bundleWorker = tasks.register<PnpmTask>("bundleWorker") {
     dependsOn(tasks.pnpmInstall)
-    inputs.files(assembleFork)
-    inputs.files(sysmlSourceFiles)
-    inputs.file(languageServerDirectory.file("library/Verification.sysml"))
+    inputs.files(assembleFork).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.files(sysmlSourceFiles).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.file(languageServerDirectory.file("library/Verification.sysml")).withPathSensitivity(PathSensitivity.RELATIVE)
     outputs.dir(languageServerDirectory.dir("dist/worker"))
 
     pnpmCommand = listOf("-F", "syside-languageserver", "bundle:worker")
@@ -162,7 +163,10 @@ val sysmlWorkerDirectory = layout.buildDirectory.dir("sysml-worker")
 
 val collectWorker = tasks.register<Sync>("collectWorker") {
     from(bundleWorker) {
-        exclude("library/.project", "library/.settings/**")
+        exclude(
+            "library/.project",
+            "library/.settings/**",
+        )
     }
     from(languageServerDirectory.file("syntaxes/sysml.tmLanguage.json"))
     into(sysmlWorkerDirectory)
@@ -210,29 +214,41 @@ configurations.consumable("sysmlCorpusElements") {
     }
 }
 
+val compiledExamplesElements = configurations.consumable("compiledExamplesElements") {
+    attributes(semantifyrArtifact("compiled-examples"))
+}
+
+val compiledTutorialElements = configurations.consumable("compiledTutorialElements") {
+    attributes(semantifyrArtifact("compiled-tutorial"))
+}
+
+val compiledCorpusElements = configurations.consumable("compiledCorpusElements") {
+    attributes(semantifyrArtifact("compiled-corpus"))
+}
+
 // the CLI builds every SysML and KerML file under the model's directory as its workspace
-fun sysmlCompileTask(
+fun registerSysmlCompile(
     taskName: String,
     sourceDirectory: Provider<Directory>,
     workspace: FileCollection,
     name: String,
     targetDirectory: Provider<Directory>,
-): TaskProvider<NodeTask> {
-    return tasks.register<NodeTask>(taskName) {
+    elements: NamedDomainObjectProvider<ConsumableConfiguration>,
+) {
+    val sourceFile = sourceDirectory.map {
+        it.file("$name.sysml")
+    }
+    val targetFile = targetDirectory.map {
+        it.file("$name.$oxstsFileExtension")
+    }
+    val namesFile = targetDirectory.map {
+        it.file("$name.names.json")
+    }
+    val compile = tasks.register<NodeTask>(taskName) {
         inputs.files(bundleCli).withPathSensitivity(PathSensitivity.RELATIVE)
-        val sourceFile = sourceDirectory.map {
-            it.file("$name.sysml")
-        }
-        val targetFile = targetDirectory.map {
-            it.file("$name.$oxstsFileExtension")
-        }
         inputs.files(workspace).withPathSensitivity(PathSensitivity.RELATIVE)
         outputs.file(targetFile)
-        outputs.file(
-            targetDirectory.map {
-                it.file("$name.names.json")
-            },
-        )
+        outputs.file(namesFile)
         outputs.cacheIf {
             true
         }
@@ -241,26 +257,31 @@ fun sysmlCompileTask(
         }
         workingDir = layout.projectDirectory
         args = provider {
-            listOf(
-                "compile",
-                sourceFile.get().asFile.relativeTo(projectDir).invariantSeparatorsPath,
-                cliBundleDirectory.get().dir("sysml.library").asFile.relativeTo(projectDir).invariantSeparatorsPath,
-                "-o",
-                targetFile.get().asFile.relativeTo(projectDir).invariantSeparatorsPath,
-            )
+            listOf("compile", sourceFile.get().asFile.relativeTo(projectDir).invariantSeparatorsPath, cliBundleDirectory.get().dir("sysml.library").asFile.relativeTo(projectDir).invariantSeparatorsPath, "-o", targetFile.get().asFile.relativeTo(projectDir).invariantSeparatorsPath)
+        }
+    }
+    elements.configure {
+        outgoing.artifact(targetFile) {
+            builtBy(compile)
+        }
+        outgoing.artifact(namesFile) {
+            builtBy(compile)
         }
     }
 }
 
 val examplesWorkspace = fileTree(examplesSourceDirectory) {
-    include("**/*.sysml", "**/*.kerml")
+    include(
+        "**/*.sysml",
+        "**/*.kerml",
+    )
 }
 
 // every model on the default library, as live serves it: live shows the compiled served models, and the live backend's tests take others
-val compileSysmlExampleTasks = corpusModels(examplesSourceDirectory).filter {
+corpusModels(examplesSourceDirectory).filter {
     !it.conformance
-}.map {
-    sysmlCompileTask(
+}.forEach {
+    registerSysmlCompile(
         "compileSysmlExample_${it.name}",
         provider {
             examplesSourceDirectory
@@ -268,24 +289,21 @@ val compileSysmlExampleTasks = corpusModels(examplesSourceDirectory).filter {
         examplesWorkspace,
         it.name,
         compiledExamplesDirectory,
+        compiledExamplesElements,
     )
 }
 
 val tutorialSourceDirectory = layout.projectDirectory.dir("../models/tutorial")
 val tutorialWorkspace = fileTree(tutorialSourceDirectory) {
-    include("**/*.sysml", "**/*.kerml")
-}
-
-configurations.consumable("compiledExamplesElements") {
-    attributes(semantifyrArtifact("compiled-examples"))
-    outgoing.artifact(compiledExamplesDirectory) {
-        builtBy(compileSysmlExampleTasks)
-    }
+    include(
+        "**/*.sysml",
+        "**/*.kerml",
+    )
 }
 
 // the tutorial's models are served on its page, and the load test sends them as live does
-val compileSysmlTutorialTasks = corpusModels(tutorialSourceDirectory).map {
-    sysmlCompileTask(
+corpusModels(tutorialSourceDirectory).forEach {
+    registerSysmlCompile(
         "compileSysmlTutorial_${it.name}",
         provider {
             tutorialSourceDirectory
@@ -293,38 +311,29 @@ val compileSysmlTutorialTasks = corpusModels(tutorialSourceDirectory).map {
         tutorialWorkspace,
         it.name,
         compiledTutorialDirectory,
+        compiledTutorialElements,
     )
 }
 
-configurations.consumable("compiledTutorialElements") {
-    attributes(semantifyrArtifact("compiled-tutorial"))
-    outgoing.artifact(compiledTutorialDirectory) {
-        builtBy(compileSysmlTutorialTasks)
-    }
-}
-
 val corpusWorkspace = files(appendFurtherCases).asFileTree.matching {
-    include("**/*.sysml", "**/*.kerml")
+    include(
+        "**/*.sysml",
+        "**/*.kerml",
+    )
 }
 
 // the models with further cases, compiled with them for the tests that take a further case
-val compileSysmlCorpusTasks = corpusModels(examplesSourceDirectory).filter {
-    examplesSourceDirectory.file("${it.name}.further-cases").asFile.isFile
-}.map {
-    sysmlCompileTask(
+corpusModels(examplesSourceDirectory).filter {
+    examplesSourceDirectory.file("${it.name}.$FURTHER_CASES_EXTENSION").asFile.isFile
+}.forEach {
+    registerSysmlCompile(
         "compileSysmlCorpus_${it.name}",
         appendedCorpusDirectory,
         corpusWorkspace,
         it.name,
         compiledCorpusDirectory,
+        compiledCorpusElements,
     )
-}
-
-configurations.consumable("compiledCorpusElements") {
-    attributes(semantifyrArtifact("compiled-corpus"))
-    outgoing.artifact(compiledCorpusDirectory) {
-        builtBy(compileSysmlCorpusTasks)
-    }
 }
 
 tasks.named("integrationTest") {

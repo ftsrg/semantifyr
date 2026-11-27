@@ -45,7 +45,7 @@ val testFixturesXtextGeneratedDirectory = layout.projectDirectory.dir("src/testF
 val ideGeneratedDirectory = layout.buildDirectory.dir("generated/sources/xtext/ide")
 
 val generateXtextLanguage = tasks.register<JavaExec>("generateXtextLanguage") {
-    group = BasePlugin.BUILD_GROUP
+    group = LifecycleBasePlugin.BUILD_GROUP
 
     classpath(mwe2Classpath)
     mainClass = "org.eclipse.emf.mwe2.launch.runtime.Mwe2Launcher"
@@ -60,11 +60,7 @@ val generateXtextLanguage = tasks.register<JavaExec>("generateXtextLanguage") {
     val mweFile = extension.mweFile
     val rootPath = "rootPath=/$projectDir/.."
     argumentProviders += CommandLineArgumentProvider {
-        listOf(
-            mweFile.get(),
-            "-p",
-            rootPath,
-        )
+        listOf(mweFile.get(), "-p", rootPath)
     }
 
     outputs.cacheIf {
@@ -83,7 +79,7 @@ sourceSets {
     }
 }
 
-configurations.consumable("ideGeneratedElements") {
+configurations.consumable("xtextIdeSourcesElements") {
     attributes(semantifyrArtifact("xtext-ide-sources"))
     outgoing.artifact(ideGeneratedDirectory) {
         builtBy(generateXtextLanguage)

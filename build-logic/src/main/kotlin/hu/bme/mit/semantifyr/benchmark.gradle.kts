@@ -40,7 +40,10 @@ tasks.register<JavaExec>("benchmark") {
     classpath = benchmark.runtimeClasspath
     mainClass = "hu.bme.mit.semantifyr.benchmark.BenchmarkRunnerKt"
     systemProperty("log4j2.configurationFile", "log4j2-benchmark.properties")
-    systemProperty("benchmark.output", layout.buildDirectory.dir("benchmark").get().asFile.absolutePath)
+    val outputDirectory = layout.buildDirectory.dir("benchmark")
+    jvmArgumentProviders += CommandLineArgumentProvider {
+        listOf("-Dbenchmark.output=${outputDirectory.get().asFile.absolutePath}")
+    }
     if (runexec.isPresent) {
         systemProperty("benchmark.runexec", runexec.get())
     }

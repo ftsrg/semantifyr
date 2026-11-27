@@ -18,9 +18,9 @@ object StagedTestSupport {
 
     val semanticLibrariesDirectory = systemPropertyPath("semantifyr.live.semanticLibraries")
     val oxstsTestModelsDirectory = systemPropertyPath("semantifyr.live.oxstsTestModels")
-    val gammaTestModelsDirectory = systemPropertyPath("semantifyr.live.gammaTestModels")
-    val gammaLibraryModelsDirectory = systemPropertyPath("semantifyr.live.gammaLibraryModels")
-    val sysmlLibraryModelsDirectory = systemPropertyPath("semantifyr.live.sysmlLibraryModels")
+    val gammaExamplesDirectory = systemPropertyPath("semantifyr.live.gammaExamples")
+    val gammaCompiledExamplesDirectory = systemPropertyPath("semantifyr.live.gammaCompiledExamples")
+    val sysmlCompiledExamplesDirectory = systemPropertyPath("semantifyr.live.sysmlCompiledExamples")
 
     private fun systemPropertyPath(name: String): Path? {
         return System.getProperty(name)?.let {

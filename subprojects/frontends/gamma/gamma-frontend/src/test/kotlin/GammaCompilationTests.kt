@@ -36,7 +36,7 @@ class GammaCompilationTests {
     @Inject
     private lateinit var gammaDiscoverer: GammaVerificationCaseDiscoverer
 
-    private val simpleGammaPath = Path("build", "test-models", "Simple.gamma")
+    private val simpleGammaPath = Path("..", "models", "examples", "Simple.gamma")
 
     @Test
     fun `compile produces an oxsts file with the expected package header`(@TempDir temporaryDirectory: Path) {

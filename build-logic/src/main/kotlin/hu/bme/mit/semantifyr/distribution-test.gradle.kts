@@ -33,7 +33,7 @@ testing {
 
             targets.all {
                 testTask.configure {
-                    inputs.files(unzipDistribution)
+                    inputs.files(unzipDistribution).withPathSensitivity(PathSensitivity.RELATIVE)
                 }
             }
         }

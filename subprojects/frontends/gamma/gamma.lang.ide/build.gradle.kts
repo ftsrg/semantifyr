@@ -5,7 +5,6 @@
  */
 
 plugins {
-    id("hu.bme.mit.semantifyr.cli")
     id("hu.bme.mit.semantifyr.xtext-ide")
 }
 

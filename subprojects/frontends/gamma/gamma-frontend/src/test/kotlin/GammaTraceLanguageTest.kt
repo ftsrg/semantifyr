@@ -87,7 +87,7 @@ class GammaTraceLanguageTest {
         assertion: String,
     ): GammaRoot {
         val resourceSet = resourceSetProvider.get()
-        resourceSet.getResource(URI.createFileURI(Path("build", "test-models", "$model.gamma").absolutePathString()), true)
+        resourceSet.getResource(URI.createFileURI(Path("..", "models", "examples", "$model.gamma").absolutePathString()), true)
         return parseHelper.parse(
             """
             import $model

@@ -7,7 +7,6 @@
 package hu.bme.mit.semantifyr
 
 import hu.bme.mit.semantifyr.gradle.javaRuntimeLibrary
-import hu.bme.mit.semantifyr.gradle.semantifyrKtlint
 import org.gradle.accessors.dm.LibrariesForLibs
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 
@@ -44,7 +43,7 @@ spotless {
                 )
             },
         )
-        semantifyrKtlint(libs.versions.ktlint.get())
+        ktlint(libs.versions.ktlint.get())
     }
 
     java {
@@ -100,14 +99,12 @@ testing {
             useJUnitJupiter(libs.versions.junit)
 
             dependencies {
-                implementation.bundle(libs.bundles.junit.fixtures)
+                implementation.bundle(libs.bundles.junit)
                 implementation(libs.assertj.core)
                 implementation.bundle(libs.bundles.mockito)
                 runtimeOnly(libs.slf4j.log4j)
             }
-        }
 
-        named<JvmTestSuite>("test") {
             targets.all {
                 testTask.configure {
                     jvmArgumentProviders.add(MockitoAgentArgumentProvider(files(mockitoAgentClasspath)))
@@ -117,8 +114,7 @@ testing {
     }
 }
 
-// plain values only, as the plugin is not yet updated to providers
-// FIXME: when the plugin is updated
+// FIXME: plain values until the sonar plugin takes providers
 sonar {
     properties {
         val testSourceSets = testing.suites.withType<JvmTestSuite>().map {

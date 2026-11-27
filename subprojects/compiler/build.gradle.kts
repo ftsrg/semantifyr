@@ -6,6 +6,7 @@
 
 import hu.bme.mit.semantifyr.gradle.artifactsOf
 import hu.bme.mit.semantifyr.gradle.oxstsFileExtension
+import hu.bme.mit.semantifyr.gradle.readsTestModels
 
 plugins {
     id("hu.bme.mit.semantifyr.suites")
@@ -35,8 +36,8 @@ listOf(
     "test",
     "integrationTest",
 ).forEach {
-    tasks.named(it) {
-        inputs.dir(isolated.rootProject.projectDirectory.dir("oxsts-test-models")).withPathSensitivity(PathSensitivity.RELATIVE)
+    tasks.named<Test>(it) {
+        readsTestModels()
     }
 }
 

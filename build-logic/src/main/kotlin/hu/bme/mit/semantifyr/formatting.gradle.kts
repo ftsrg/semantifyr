@@ -16,11 +16,6 @@ val libs = the<LibrariesForLibs>()
 
 spotless {
     kotlinGradle {
-        target(
-            fileTree(".") {
-                include("*.gradle.kts")
-            },
-        )
         ktlint(libs.versions.ktlint.get())
     }
 }

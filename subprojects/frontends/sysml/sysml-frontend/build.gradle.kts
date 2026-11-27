@@ -71,7 +71,7 @@ tasks.processResources {
 
 tasks.withType<Test>().configureEach {
     readsServedExamples()
-    inputs.files(syncSysmlTestModels)
+    inputs.files(syncSysmlTestModels).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.dir(layout.projectDirectory.dir("../models/etc")).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.dir(layout.projectDirectory.dir("../models/tutorial")).withPathSensitivity(PathSensitivity.RELATIVE)
 }

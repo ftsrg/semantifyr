@@ -7,6 +7,7 @@
 package hu.bme.mit.semantifyr.live.backend.server
 
 import hu.bme.mit.semantifyr.live.backend.BackendConfig
+import hu.bme.mit.semantifyr.live.backend.BuildInfo
 import hu.bme.mit.semantifyr.live.backend.ServerConfig
 import hu.bme.mit.semantifyr.live.backend.ServerStatus
 import hu.bme.mit.semantifyr.live.backend.SessionManagerConfig
@@ -85,8 +86,8 @@ class ApiRoutesHandlerTest {
         assertThat(info.activeSessions).isEqualTo(3)
         assertThat(info.maxSessions).isEqualTo(64)
         assertThat(info.uptime).isNotNull()
-        assertThat(info.version).isNotEmpty().isNotEqualTo("unknown")
-        assertThat(info.commit).isNotEmpty()
+        assertThat(info.version).isEqualTo(BuildInfo.version)
+        assertThat(info.commit).isEqualTo(BuildInfo.commit)
     }
 
     @Test

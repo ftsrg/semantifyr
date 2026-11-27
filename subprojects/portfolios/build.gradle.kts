@@ -5,6 +5,7 @@
  */
 
 import hu.bme.mit.semantifyr.gradle.readsServedExamples
+import hu.bme.mit.semantifyr.gradle.readsTestModels
 
 plugins {
     id("hu.bme.mit.semantifyr.theta")
@@ -30,5 +31,5 @@ dependencies {
 
 tasks.named<Test>("integrationTest") {
     readsServedExamples()
-    inputs.dir(isolated.rootProject.projectDirectory.dir("oxsts-test-models/tutorial")).withPathSensitivity(PathSensitivity.RELATIVE)
+    readsTestModels("tutorial")
 }

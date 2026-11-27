@@ -54,10 +54,7 @@ val generateEPackage = tasks.register<JavaExec>("generateEPackage") {
         it.asFile.relativeTo(projectDirectory).path
     }
     argumentProviders += CommandLineArgumentProvider {
-        listOf(
-            emfGeneratedPath,
-            modelPath.get(),
-        )
+        listOf(emfGeneratedPath, modelPath.get())
     }
 }
 

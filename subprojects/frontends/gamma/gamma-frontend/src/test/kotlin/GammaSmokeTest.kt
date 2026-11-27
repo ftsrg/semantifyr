@@ -23,7 +23,7 @@ class GammaSmokeTest {
             portfolio = SingleBackendPortfolio(FakeBackend.verdict("fake", VerificationVerdict.Passed), FakeConfig()),
             outputDirectory = GammaFrontendTestHelper.testArtifactRoot(GammaSmokeTest::class.java),
         )
-        val case = helper.discover(Path("build", "test-models", "Simple.gamma")).first()
+        val case = helper.discover(Path("..", "models", "examples", "Simple.gamma")).first()
 
         val result = frontend.verify(case)
 

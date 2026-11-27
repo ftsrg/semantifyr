@@ -9,7 +9,7 @@ plugins {
 }
 
 dependencies {
-    // https://github.com/gradle/gradle/issues/15383
+    // the precompiled plugins reach the version catalog accessors only through this jar, https://github.com/gradle/gradle/issues/15383
     implementation(files(libs.javaClass.superclass.protectionDomain.codeSource.location))
 
     implementation(libs.node.plugin)

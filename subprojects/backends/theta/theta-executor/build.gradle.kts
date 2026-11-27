@@ -13,7 +13,7 @@ plugins {
 }
 
 val operatingSystemName = System.getProperty("os.name").lowercase()
-val currentOs = when {
+val currentOperatingSystem = when {
     operatingSystemName.contains("win") -> "windows"
     operatingSystemName.contains("mac") -> "osx"
     else -> "linux"
@@ -22,7 +22,7 @@ val currentArchitecture = when (System.getProperty("os.arch")) {
     "aarch64" -> "arm64"
     else -> "x64"
 }
-val nativeExtension = when (currentOs) {
+val nativeExtension = when (currentOperatingSystem) {
     "windows" -> "dll"
     "osx" -> "dylib"
     else -> "so"
@@ -60,7 +60,6 @@ dependencies {
         },
     )
 
-    // Z3 - available on all platforms and architectures
     thetaNativeLibraries(
         variantOf(libs.javasmt.z3) {
             classifier("libz3-$currentArchitecture")
@@ -74,69 +73,68 @@ dependencies {
         },
     )
 
-    when (currentOs) {
+    when (currentOperatingSystem) {
         "linux" if currentArchitecture == "x64" -> {
             thetaNativeLibraries(
                 variantOf(libs.javasmt.mathsat5) {
                     classifier("libmathsat5j-x64")
-                    artifactType("so")
+                    artifactType(nativeExtension)
                 },
             )
             thetaNativeLibraries(
                 variantOf(libs.javasmt.cvc5) {
                     classifier("libcvc5jni-x64")
-                    artifactType("so")
+                    artifactType(nativeExtension)
                 },
             )
             thetaNativeLibraries(
                 variantOf(libs.javasmt.bitwuzla) {
                     classifier("libbitwuzlaj-x64")
-                    artifactType("so")
+                    artifactType(nativeExtension)
                 },
             )
             thetaNativeLibraries(
                 variantOf(libs.javasmt.opensmt) {
                     classifier("libopensmtj-x64")
-                    artifactType("so")
+                    artifactType(nativeExtension)
                 },
             )
         }
-
         "windows" if currentArchitecture == "x64" -> {
             thetaNativeLibraries(
                 variantOf(libs.javasmt.mathsat5) {
                     classifier("mathsat5j-x64")
-                    artifactType("dll")
+                    artifactType(nativeExtension)
                 },
             )
             thetaNativeLibraries(
                 variantOf(libs.javasmt.mathsat5) {
                     classifier("mathsat-x64")
-                    artifactType("dll")
+                    artifactType(nativeExtension)
                 },
             )
             thetaNativeLibraries(
                 variantOf(libs.javasmt.mathsat5) {
                     classifier("mpir-x64")
-                    artifactType("dll")
+                    artifactType(nativeExtension)
                 },
             )
             thetaNativeLibraries(
                 variantOf(libs.javasmt.cvc5) {
                     classifier("libcvc5jni-x64")
-                    artifactType("dll")
+                    artifactType(nativeExtension)
                 },
             )
             thetaNativeLibraries(
                 variantOf(libs.javasmt.bitwuzla) {
                     classifier("libbitwuzlaj-x64")
-                    artifactType("dll")
+                    artifactType(nativeExtension)
                 },
             )
         }
     }
 
-    // Z3 legacy - a custom Z3 4.5.0 fork with renamed library symbols, committed to the theta repo
+    // Theta's Z3 4.5.0 fork, whose renamed symbols let it load beside the current Z3
     thetaZ3LegacyLibraries(
         variantOf(libs.theta.libz3legacy) {
             artifactType(nativeExtension)
@@ -147,6 +145,12 @@ dependencies {
             artifactType(nativeExtension)
         },
     )
+}
+
+val scriptsDirectory = layout.projectDirectory.dir("scripts")
+
+tasks.test {
+    inputs.dir(scriptsDirectory).withPathSensitivity(PathSensitivity.RELATIVE)
 }
 
 val thetaXstsCliDirectory = layout.buildDirectory.dir("theta-xsts-cli")
@@ -177,7 +181,7 @@ val prepareThetaXstsCli = tasks.register<Sync>("prepareThetaXstsCli") {
         }
     }
 
-    from(layout.projectDirectory.dir("scripts"))
+    from(scriptsDirectory)
 
     into(thetaXstsCliDirectory)
 }

@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
+import hu.bme.mit.semantifyr.gradle.readsTestModels
+
 plugins {
     id("hu.bme.mit.semantifyr.distribution-test")
     kotlin("jvm")
@@ -24,15 +26,13 @@ application {
     applicationName = "semantifyr"
 }
 
-val rootDirectory = isolated.rootProject.projectDirectory
-
-tasks.withType<Test>().configureEach {
-    inputs.dir(rootDirectory.dir("oxsts-test-models")).withPathSensitivity(PathSensitivity.RELATIVE)
+tasks.named<Test>("test") {
+    readsTestModels()
 }
 
 distributions.main {
     contents {
-        from(rootDirectory.dir("oxsts-test-models/smoke")) {
+        from(isolated.rootProject.projectDirectory.dir("oxsts-test-models/smoke")) {
             into("models/smoke")
         }
     }

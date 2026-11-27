@@ -5,6 +5,7 @@
  */
 
 import hu.bme.mit.semantifyr.gradle.oxstsFileExtension
+import hu.bme.mit.semantifyr.gradle.readsTestModels
 import hu.bme.mit.semantifyr.gradle.semantifyrArtifact
 
 plugins {
@@ -38,30 +39,36 @@ dependencies {
     add(generate.implementationConfigurationName, libs.kotlinx.serialization.json)
 }
 
-val witnessDirectory = isolated.rootProject.projectDirectory.dir("oxsts-test-models/witness")
-
 tasks.test {
-    inputs.dir(isolated.rootProject.projectDirectory.dir("oxsts-test-models/simple")).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.dir(witnessDirectory).withPathSensitivity(PathSensitivity.RELATIVE)
+    readsTestModels("simple", "witness")
 }
 
+val witnessDirectory = isolated.rootProject.projectDirectory.dir("oxsts-test-models/witness")
+val witnessModel = witnessDirectory.file("blinker.semantifyr")
+val witnessReport = witnessDirectory.file("blinker.report.json")
 val generatedWitnessDirectory = layout.buildDirectory.dir("generated-witness")
+val generatedWitnessFile = generatedWitnessDirectory.map {
+    it.file("blinker.witness.$oxstsFileExtension")
+}
 
 val generatedWitness = tasks.register<JavaExec>("generatedWitness") {
     classpath = generate.runtimeClasspath
     mainClass = "hu.bme.mit.semantifyr.verifier.GenerateWitnessKt"
-    inputs.file(witnessDirectory.file("blinker.semantifyr")).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.file(witnessDirectory.file("blinker.report.json")).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.file(witnessModel).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.file(witnessReport).withPathSensitivity(PathSensitivity.RELATIVE)
     outputs.dir(generatedWitnessDirectory)
     outputs.cacheIf {
         true
     }
-    val outputDirectory = generatedWitnessDirectory.get().asFile
-    workingDir = outputDirectory
-    args(witnessDirectory.file("blinker.semantifyr").asFile.relativeTo(outputDirectory).invariantSeparatorsPath, witnessDirectory.file("blinker.report.json").asFile.relativeTo(outputDirectory).invariantSeparatorsPath, "blinker.witness.$oxstsFileExtension")
-    doFirst {
-        outputDirectory.deleteRecursively()
-        outputDirectory.mkdirs()
+
+    val projectDirectory = layout.projectDirectory.asFile
+    val modelPath = witnessModel.asFile.relativeTo(projectDirectory).invariantSeparatorsPath
+    val reportPath = witnessReport.asFile.relativeTo(projectDirectory).invariantSeparatorsPath
+    val witnessPath = generatedWitnessFile.map {
+        it.asFile.relativeTo(projectDirectory).invariantSeparatorsPath
+    }
+    argumentProviders += CommandLineArgumentProvider {
+        listOf(modelPath, reportPath, witnessPath.get())
     }
 }
 

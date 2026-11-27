@@ -6,7 +6,7 @@
 
 package hu.bme.mit.semantifyr
 
-import hu.bme.mit.semantifyr.gradle.registerBackendRunService
+import hu.bme.mit.semantifyr.gradle.BackendRunService
 
 plugins {
     id("hu.bme.mit.semantifyr.jvm")
@@ -16,7 +16,9 @@ val backendRuns = providers.gradleProperty("backendRuns").map {
     it.toInt()
 }.orElse(1)
 
-val backendRunServiceProvider = gradle.sharedServices.registerBackendRunService(backendRuns)
+val backendRunServiceProvider = gradle.sharedServices.registerIfAbsent("backendRunService", BackendRunService::class) {
+    maxParallelUsages = backendRuns
+}
 
 testing {
     suites {

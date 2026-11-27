@@ -52,7 +52,7 @@ fun corpusModels(manifest: String): List<CorpusModel> {
     }
 }
 
-private const val FURTHER_CASES_EXTENSION = "further-cases"
+const val FURTHER_CASES_EXTENSION = "further-cases"
 
 // sysml-2ls translates one root namespace per document, so a model's further cases cannot sit in a second file that imports it
 @CacheableTask
@@ -122,6 +122,16 @@ fun Project.servedExampleSources(): List<RegularFile> {
         )
     }.distinct().map {
         root.file(it)
+    }
+}
+
+fun Test.readsTestModels(vararg folders: String) {
+    val testModels = project.isolated.rootProject.projectDirectory.dir("oxsts-test-models")
+    if (folders.isEmpty()) {
+        inputs.dir(testModels).withPathSensitivity(PathSensitivity.RELATIVE)
+    }
+    folders.forEach {
+        inputs.dir(testModels.dir(it)).withPathSensitivity(PathSensitivity.RELATIVE)
     }
 }
 

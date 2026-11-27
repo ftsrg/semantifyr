@@ -11,7 +11,6 @@ import hu.bme.mit.semantifyr.gradle.readsServedExamples
 import hu.bme.mit.semantifyr.gradle.semantifyrArtifact
 
 plugins {
-    id("hu.bme.mit.semantifyr.jvm")
     id("hu.bme.mit.semantifyr.theta")
     id("hu.bme.mit.semantifyr.suites")
     kotlin("jvm")
@@ -56,13 +55,11 @@ dependencies {
     exampleLogging(libs.slf4j.log4j)
 }
 
-val syncGammaTestModels = tasks.register<Sync>("syncGammaTestModels") {
-    from(layout.projectDirectory.dir("../models/examples"))
-    into(layout.buildDirectory.dir("test-models"))
-}
+val examplesDirectory = layout.projectDirectory.dir("../models/examples")
+val librariesDirectory = layout.projectDirectory.dir("../models/libraries")
 
 tasks.processResources {
-    from(layout.projectDirectory.dir("../models/libraries"))
+    from(librariesDirectory)
 }
 
 tasks.named<Test>("integrationTest") {
@@ -70,7 +67,7 @@ tasks.named<Test>("integrationTest") {
 }
 
 tasks.withType<Test>().configureEach {
-    inputs.files(syncGammaTestModels)
+    inputs.dir(examplesDirectory).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.dir(layout.projectDirectory.dir("../models/etc")).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(
         layout.projectDirectory.dir("../models").asFileTree.matching {
@@ -83,19 +80,22 @@ tasks.withType<Test>().configureEach {
 }
 
 val compiledExamplesDirectory = layout.buildDirectory.dir("compiled-examples")
-val examplesSourceDirectory = layout.projectDirectory.dir("../models/examples")
+
+val compiledExamplesElements = configurations.consumable("compiledExamplesElements") {
+    attributes(semantifyrArtifact("compiled-examples"))
+}
 
 // a file that imports another holds a model's further cases, which nothing consumes compiled
-val compileGammaExampleTasks = corpusModels(examplesSourceDirectory).filter { model ->
-    providers.fileContents(examplesSourceDirectory.file(model.file)).asText.get().lines().none {
+corpusModels(examplesDirectory).filter { model ->
+    providers.fileContents(examplesDirectory.file(model.file)).asText.get().lines().none {
         it.startsWith("import ")
     }
-}.map { model ->
-    tasks.register<JavaExec>("compileGammaExample_${model.name}") {
-        val sourceFile = examplesSourceDirectory.file("${model.name}.gamma")
-        val targetFile = compiledExamplesDirectory.map {
-            it.file("${model.name}.$oxstsFileExtension")
-        }
+}.forEach { model ->
+    val sourceFile = examplesDirectory.file(model.file)
+    val targetFile = compiledExamplesDirectory.map {
+        it.file("${model.name}.$oxstsFileExtension")
+    }
+    val compileGammaExample = tasks.register<JavaExec>("compileGammaExample_${model.name}") {
         inputs.file(sourceFile).withPathSensitivity(PathSensitivity.NAME_ONLY)
         outputs.file(targetFile)
         outputs.cacheIf {
@@ -104,31 +104,22 @@ val compileGammaExampleTasks = corpusModels(examplesSourceDirectory).filter { mo
         mainClass = "hu.bme.mit.semantifyr.frontends.gamma.examples.CompileGammaExampleKt"
         classpath = files(sourceSets["main"].runtimeClasspath, exampleLoggingClasspath)
         argumentProviders += CommandLineArgumentProvider {
-            listOf(
-                sourceFile.asFile.absolutePath,
-                targetFile.get().asFile.absolutePath,
-            )
+            listOf(sourceFile.asFile.absolutePath, targetFile.get().asFile.absolutePath)
+        }
+    }
+    compiledExamplesElements.configure {
+        outgoing.artifact(targetFile) {
+            builtBy(compileGammaExample)
         }
     }
 }
 
-val compileGammaExamples = tasks.register("compileGammaExamples") {
-    inputs.files(compileGammaExampleTasks)
-}
-
 configurations.consumable("gammaLibraryElements") {
     attributes(semantifyrArtifact("gamma-library"))
-    outgoing.artifact(layout.projectDirectory.dir("../models/libraries/default"))
+    outgoing.artifact(librariesDirectory.dir("default"))
 }
 
 configurations.consumable("gammaExamplesElements") {
     attributes(semantifyrArtifact("gamma-examples"))
-    outgoing.artifact(examplesSourceDirectory)
-}
-
-configurations.consumable("compiledExamplesElements") {
-    attributes(semantifyrArtifact("compiled-examples"))
-    outgoing.artifact(compiledExamplesDirectory) {
-        builtBy(compileGammaExamples)
-    }
+    outgoing.artifact(examplesDirectory)
 }

@@ -35,5 +35,5 @@ distributions.main {
 }
 
 tasks.named("test") {
-    inputs.dir(layout.projectDirectory.dir("../models/examples")).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.file(layout.projectDirectory.file("../models/examples/Simple.gamma")).withPathSensitivity(PathSensitivity.RELATIVE)
 }

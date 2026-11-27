@@ -172,11 +172,11 @@ class GammaReferenceTraceTest {
     )
 
     companion object {
-        private val CROSSROADS_CASES = Path("build", "test-models", "CrossroadsFurtherCases.gamma")
+        private val CROSSROADS_CASES = Path("..", "models", "examples", "CrossroadsFurtherCases.gamma")
         private val PAIR = Path("..", "models", "etc")
         private val REFERENCE_TRACE = PAIR.resolve("crossroads-ACanBeGreen.trace.get")
         private val REFERENCE_REPORT = PAIR.resolve("crossroads-ACanBeGreen.report.json")
-        private val LEVEL_CROSSING = Path("build", "test-models", "LevelCrossing.gamma")
+        private val LEVEL_CROSSING = Path("..", "models", "examples", "LevelCrossing.gamma")
         private val LEVEL_CROSSING_TRACE = PAIR.resolve("level-crossing-BarrierDownWhileTrainInCrossing.trace.get")
         private const val RAISE_INPUT_EVENT = "semantifyr::gamma::ports::Port::raiseInputEvent"
         private const val SET_OUTPUT_EVENT = "semantifyr::gamma::ports::Port::setOutputEvent"

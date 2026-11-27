@@ -13,6 +13,6 @@ dependencies {
     api(project(":uppaal-executor"))
 
     implementation(project(":logging"))
-    implementation(libs.kotlinx.coroutines.core)
     implementation(project(":utils"))
+    implementation(libs.kotlinx.coroutines.core)
 }

@@ -50,7 +50,7 @@ class LiveCompiledOxstsTest {
     @Test
     suspend fun `the gamma flavor returns the compiled oxsts of its document and follows its edits`(@TempDir temporaryDirectory: Path) {
         StagedTestSupport.assumeStaged()
-        val modelSource = stagedModel(StagedTestSupport.gammaTestModelsDirectory, "semantifyr.live.gammaTestModels", "Simple.gamma")
+        val modelSource = stagedModel(StagedTestSupport.gammaExamplesDirectory, "semantifyr.live.gammaExamples", "Simple.gamma")
         withRealServer(config(temporaryDirectory)) { client, port ->
             client.webSocket("ws://localhost:$port/ws/lsp/gamma") {
                 openGammaModel(modelSource)
@@ -99,7 +99,7 @@ class LiveCompiledOxstsTest {
     @Test
     suspend fun `the compiled oxsts given to the gamma session goes to its definitions in the gamma library and on inside it`(@TempDir temporaryDirectory: Path) {
         StagedTestSupport.assumeStaged()
-        val modelSource = stagedModel(StagedTestSupport.gammaTestModelsDirectory, "semantifyr.live.gammaTestModels", "Simple.gamma")
+        val modelSource = stagedModel(StagedTestSupport.gammaExamplesDirectory, "semantifyr.live.gammaExamples", "Simple.gamma")
         val compiledUri = "file:///workspace/.live-derived/model-oxsts/Simple.semantifyr"
         withRealServer(config(temporaryDirectory)) { client, port ->
             client.webSocket("ws://localhost:$port/ws/lsp/gamma") {

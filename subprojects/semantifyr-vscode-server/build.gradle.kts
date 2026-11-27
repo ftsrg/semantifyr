@@ -36,24 +36,19 @@ val cloneGammaLibrary = tasks.register<Sync>("cloneGammaLibrary") {
     into("examples/gamma/Library")
 }
 
-val cloneSysMLLibrary = tasks.register<Sync>("cloneSysMLLibrary") {
+val cloneSysmlLibrary = tasks.register<Sync>("cloneSysmlLibrary") {
     from(sysmlLibrary)
     into("examples/sysml/Library")
 }
 
-val cloneLibraries = tasks.register("cloneLibraries") {
-    dependsOn(cloneGammaLibrary)
-    dependsOn(cloneSysMLLibrary)
-}
-
-val cloneGammaTestModels = tasks.register<Sync>("cloneGammaTestModels") {
+val cloneGammaExamples = tasks.register<Sync>("cloneGammaExamples") {
     from(gammaExamples) {
         include("*.gamma")
     }
     into("examples/gamma/TestModels")
 }
 
-val cloneSysMLTestModels = tasks.register<Sync>("cloneSysMLTestModels") {
+val cloneSysmlExamples = tasks.register<Sync>("cloneSysmlExamples") {
     val examples = sysmlExamples
     from(examples) {
         // the corpus models share its isStateActive and eventually
@@ -72,24 +67,19 @@ val cloneTutorialModels = tasks.register<Sync>("cloneTutorialModels") {
     into("examples/tutorial/")
 }
 
-val cloneTestModels = tasks.register("cloneTestModels") {
-    dependsOn(cloneGammaTestModels)
-    dependsOn(cloneSysMLTestModels)
-    dependsOn(cloneTutorialModels)
-}
-
-val prepareDockerBuild = tasks.register("prepareDockerBuild") {
-    dependsOn(cloneDistribution)
-    dependsOn(cloneTheta)
-    dependsOn(cloneLibraries)
-    dependsOn(cloneTestModels)
-}
-
 val vscodeServerImageContext = tasks.register<Tar>("vscodeServerImageContext") {
     archiveFileName = "vscode-server-image-context.tar.gz"
     compression = Compression.GZIP
     useFileSystemPermissions()
-    dependsOn(prepareDockerBuild)
+    dependsOn(
+        cloneDistribution,
+        cloneTheta,
+        cloneGammaLibrary,
+        cloneSysmlLibrary,
+        cloneGammaExamples,
+        cloneSysmlExamples,
+        cloneTutorialModels,
+    )
     from(layout.projectDirectory) {
         include("Dockerfile")
         include("jupyter_server_config.py")

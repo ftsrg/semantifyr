@@ -6,6 +6,8 @@
 
 package hu.bme.mit.semantifyr
 
+import hu.bme.mit.semantifyr.gradle.readsTestModels
+
 plugins {
     id("hu.bme.mit.semantifyr.suites")
 }
@@ -16,5 +18,5 @@ dependencies {
 }
 
 tasks.withType<Test>().configureEach {
-    inputs.dir(isolated.rootProject.projectDirectory.dir("oxsts-test-models")).withPathSensitivity(PathSensitivity.RELATIVE)
+    readsTestModels()
 }

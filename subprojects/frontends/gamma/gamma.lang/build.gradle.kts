@@ -44,10 +44,7 @@ val generateEPackage = tasks.register<JavaExec>("generateEPackage") {
     }
 
     val projectDirectory = layout.projectDirectory.asFile
-    args(
-        emfGeneratedDirectory.asFile.relativeTo(projectDirectory).path,
-        modelDirectory.asFile.relativeTo(projectDirectory).path,
-    )
+    args(emfGeneratedDirectory.asFile.relativeTo(projectDirectory).path, modelDirectory.asFile.relativeTo(projectDirectory).path)
 }
 
 sourceSets.main {

@@ -126,7 +126,7 @@ class LiveVerificationTest {
     suspend fun `a gamma verification returns its gamma trace, which opens without errors, and a witness that re-verifies`(@TempDir temporaryDirectory: Path) {
         StagedTestSupport.assumeStaged()
         val documentUri = "file:///workspace/snippet.gamma"
-        val modelSource = stagedModel(StagedTestSupport.gammaTestModelsDirectory, "semantifyr.live.gammaTestModels", "Simple.gamma")
+        val modelSource = stagedModel(StagedTestSupport.gammaExamplesDirectory, "semantifyr.live.gammaExamples", "Simple.gamma")
         withRealServer(config(temporaryDirectory)) { client, port ->
             client.webSocket("ws://localhost:$port/ws/lsp/gamma") {
                 send(Frame.Text(LspWire.initializeRequest()))
@@ -180,7 +180,7 @@ class LiveVerificationTest {
         verifyCompiledCase(
             temporaryDirectory = temporaryDirectory,
             flavor = "oxsts-with-gamma-library",
-            modelSource = stagedModel(StagedTestSupport.gammaLibraryModelsDirectory, "semantifyr.live.gammaLibraryModels", "Simple.semantifyr"),
+            modelSource = stagedModel(StagedTestSupport.gammaCompiledExamplesDirectory, "semantifyr.live.gammaCompiledExamples", "Simple.semantifyr"),
             caseName = "LeaderStatechartIdleReachable",
             expectedStatus = expectedStatus("Simple.gamma", "LeaderStatechartIdleReachable"),
         )
@@ -191,7 +191,7 @@ class LiveVerificationTest {
         verifyCompiledCase(
             temporaryDirectory = temporaryDirectory,
             flavor = "oxsts-with-sysmlv2-library",
-            modelSource = stagedModel(StagedTestSupport.sysmlLibraryModelsDirectory, "semantifyr.live.sysmlLibraryModels", "door_access.semantifyr"),
+            modelSource = stagedModel(StagedTestSupport.sysmlCompiledExamplesDirectory, "semantifyr.live.sysmlCompiledExamples", "door_access.semantifyr"),
             caseName = "LockedReachable",
             expectedStatus = "passed",
         )
@@ -199,7 +199,7 @@ class LiveVerificationTest {
 
     // the wire's status of a case's expected verdict, which the manifest beside the staged Gamma models states
     private fun expectedStatus(file: String, caseName: String): String {
-        return CaseManifest.load(checkNotNull(StagedTestSupport.gammaTestModelsDirectory)).expectedVerdict(file, caseName).name.lowercase()
+        return CaseManifest.load(checkNotNull(StagedTestSupport.gammaExamplesDirectory)).expectedVerdict(file, caseName).name.lowercase()
     }
 
     private fun caseDirectoryName(modelStem: String, case: VerificationCaseSpecification): String {
