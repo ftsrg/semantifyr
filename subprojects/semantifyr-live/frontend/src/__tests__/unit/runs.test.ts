@@ -6,7 +6,6 @@
 
 import { describe, expect, it, vi } from 'vitest';
 import {
-  discoverCases,
   dispatchAutoValidation,
   runAllVerifications,
   validateWitness,
@@ -271,73 +270,6 @@ describe('verification statuses', () => {
     });
     expect(states.at(-1)?.cases[0]?.status).toBe(caseStatus);
     expect(states.at(-1)?.cases[0]?.message).toBe('note');
-  });
-});
-
-describe('discoverCases', () => {
-  it('is discovering while the request is pending and discovered with the cases once it resolves', async () => {
-    let resolveDiscovery: (cases: unknown) => void = () => {};
-    const sendRequest = vi.fn<LspClient['sendRequest']>(() => {
-      return new Promise((resolve) => {
-        resolveDiscovery = resolve;
-      });
-    });
-    const client: LspClient = { sendRequest, sendNotification: () => {} };
-
-    const { states, setState } = captureStates();
-    const discovery = discoverCases(client, 'oxsts.case.discover', 'file:///workspace/snippet.semantifyr', setState);
-
-    expect(states.at(-1)?.discovery).toBe('discovering');
-    resolveDiscovery([sampleCase('a')]);
-    await discovery;
-
-    expect(states.at(-1)?.discovery).toBe('discovered');
-    expect(states.at(-1)?.cases.map((caseState) => {
-      return caseState.caseInfo.id;
-    })).toEqual(['a']);
-    expect(states.at(-1)?.cases[0]?.status).toBe('stale');
-  });
-
-  it('is discovered with no cases when the model declares none', async () => {
-    const sendRequest = vi.fn<LspClient['sendRequest']>(async () => {
-      return [];
-    });
-    const client: LspClient = { sendRequest, sendNotification: () => {} };
-
-    const { states, setState } = captureStates();
-    await discoverCases(client, 'oxsts.case.discover', 'file:///workspace/snippet.semantifyr', setState);
-
-    expect(states.at(-1)?.discovery).toBe('discovered');
-    expect(states.at(-1)?.cases).toEqual([]);
-  });
-
-  it('keeps the verdict of a case discovered again', async () => {
-    const sendRequest = vi.fn<LspClient['sendRequest']>(async () => {
-      return [sampleCase('a')];
-    });
-    const client: LspClient = { sendRequest, sendNotification: () => {} };
-
-    const { states, setState } = captureStates();
-    setState({
-      phase: 'done',
-      discovery: 'discovered',
-      cases: [{ caseInfo: sampleCase('a'), status: 'passed' }],
-    });
-    await discoverCases(client, 'oxsts.case.discover', 'file:///workspace/snippet.semantifyr', setState);
-
-    expect(states.at(-1)?.cases[0]?.status).toBe('passed');
-  });
-
-  it('returns to idle when the discovery request fails', async () => {
-    const sendRequest = vi.fn<LspClient['sendRequest']>(async () => {
-      throw new Error('closed');
-    });
-    const client: LspClient = { sendRequest, sendNotification: () => {} };
-
-    const { states, setState } = captureStates();
-    await discoverCases(client, 'oxsts.case.discover', 'file:///workspace/snippet.semantifyr', setState);
-
-    expect(states.at(-1)?.discovery).toBe('idle');
   });
 });
 

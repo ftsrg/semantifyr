@@ -6,7 +6,6 @@
 
 import {
   caseOutcomeOf,
-  discoverVerificationCases,
   validateWitness as requestWitnessValidation,
   VerificationStatus,
   type VerificationCaseResult,
@@ -26,7 +25,6 @@ import {
 
 import {
   cancelledCase,
-  mergeDiscoveredCases,
   ranDuringOf,
   type VerificationCaseState,
   type VerificationCaseStatus,
@@ -83,29 +81,6 @@ function parseResultStatus(status: VerificationStatus): VerificationCaseStatus {
 
 export { discoverVerificationCases, witnessValidationLocation } from '@semantifyr/editor-common'
 
-export async function discoverCases(
-  client: LspClient,
-  discoveryCommand: string,
-  fileUri: string,
-  setState: StateUpdater,
-): Promise<boolean> {
-  setState((previous) => ({ ...previous, discovery: 'discovering' }))
-  let discovered: VerificationCaseSpecification[]
-  try {
-    discovered = await discoverVerificationCases(client, discoveryCommand, fileUri)
-  } catch {
-    setState((previous) => ({ ...previous, discovery: 'idle' }))
-    return false
-  }
-  setState((previous) => {
-    if (previous.phase === 'running') {
-      return { ...previous, discovery: 'discovered' }
-    }
-    return { ...previous, discovery: 'discovered', cases: mergeDiscoveredCases(previous.cases, discovered) }
-  })
-  return true
-}
-
 export interface RunVerificationHandle {
   cancel: () => void
   // cancels one running or queued case and lets the rest of the run go on
@@ -119,7 +94,7 @@ export interface AutoValidateRequest {
   byCase?: boolean | undefined
 }
 
-export interface RunVerificationOptions {
+interface RunVerificationOptions {
   portfolioId?: string | undefined
   // Called per case after a witness arrives; returning non-null dispatches validateWitness.
   getAutoValidateRequest?: (() => AutoValidateRequest | null) | undefined
@@ -508,7 +483,7 @@ export function verifySingleCase(
   }
 }
 
-export interface WitnessValidationOutcome {
+interface WitnessValidationOutcome {
   status: WitnessValidationStatus
   message?: string
   report?: VerificationReport
