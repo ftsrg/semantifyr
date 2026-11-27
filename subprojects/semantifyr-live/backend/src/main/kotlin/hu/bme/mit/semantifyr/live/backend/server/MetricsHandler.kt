@@ -32,7 +32,7 @@ class MetricsHandler @Inject constructor(
     private val containerMetrics = ContainerMetrics.ofCurrentProcess()
 
     init {
-        EngineProcessMetrics().bindTo(registry)
+        BackendProcessMetrics().bindTo(registry)
         containerMetrics?.bindTo(registry)
     }
 

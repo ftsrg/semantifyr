@@ -688,7 +688,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum by (instance) (semantifyr_live_engine_memory_resident_bytes{instance=\"@instance@\",engine!=\"other\"})",
+          "expr": "sum by (instance) (semantifyr_live_backend_memory_resident_bytes{instance=\"@instance@\",backend!=\"other\"})",
           "legendFormat": "backends resident",
           "refId": "B",
           "range": true
@@ -1134,7 +1134,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "semantifyr_live_engine_processes{instance=\"@instance@\",engine=\"other\"}",
+          "expr": "semantifyr_live_backend_processes{instance=\"@instance@\",backend=\"other\"}",
           "legendFormat": "unclassified",
           "refId": "A",
           "range": true

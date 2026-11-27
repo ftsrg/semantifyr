@@ -17,7 +17,7 @@ class SoundnessDirectionTest {
     private val reachability = OxstsFactory.createEF()
 
     @Test
-    fun `an exact engine is trusted in both directions`() {
+    fun `an exact backend is trusted in both directions`() {
         assertThat(SoundnessDirection.Exact.trusts(VerificationVerdict.Passed, invariant)).isTrue
         assertThat(SoundnessDirection.Exact.trusts(VerificationVerdict.Failed, invariant)).isTrue
         assertThat(SoundnessDirection.Exact.trusts(VerificationVerdict.Passed, reachability)).isTrue
@@ -25,7 +25,7 @@ class SoundnessDirectionTest {
     }
 
     @Test
-    fun `an under-approximating engine is trusted only when it found a trace`() {
+    fun `an under-approximating backend is trusted only when it found a trace`() {
         assertThat(SoundnessDirection.UnderApproximating.trusts(VerificationVerdict.Failed, invariant)).isTrue
         assertThat(SoundnessDirection.UnderApproximating.trusts(VerificationVerdict.Passed, invariant)).isFalse
         assertThat(SoundnessDirection.UnderApproximating.trusts(VerificationVerdict.Passed, reachability)).isTrue
@@ -33,7 +33,7 @@ class SoundnessDirectionTest {
     }
 
     @Test
-    fun `an over-approximating engine is trusted only when it explored everything`() {
+    fun `an over-approximating backend is trusted only when it explored everything`() {
         assertThat(SoundnessDirection.OverApproximating.trusts(VerificationVerdict.Passed, invariant)).isTrue
         assertThat(SoundnessDirection.OverApproximating.trusts(VerificationVerdict.Failed, invariant)).isFalse
         assertThat(SoundnessDirection.OverApproximating.trusts(VerificationVerdict.Failed, reachability)).isTrue

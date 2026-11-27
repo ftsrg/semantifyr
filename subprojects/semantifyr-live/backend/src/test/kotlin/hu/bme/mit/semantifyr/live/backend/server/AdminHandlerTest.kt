@@ -180,7 +180,7 @@ class AdminHandlerTest {
         val thetaPortfolio = config.portfolios.single {
             it.id == Portfolios.ThetaFull.id
         }
-        assertThat(thetaPortfolio.engines).isNotEmpty
+        assertThat(thetaPortfolio.backends).isNotEmpty
         assertThat(
             config.portfolios.map {
                 it.id

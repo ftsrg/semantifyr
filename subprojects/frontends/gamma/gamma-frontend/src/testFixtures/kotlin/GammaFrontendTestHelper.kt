@@ -38,7 +38,7 @@ import kotlin.streams.asStream
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 
-enum class GammaTestEngine(
+enum class GammaTestBackend(
     val portfolio: VerificationPortfolio,
 ) {
     Theta(Portfolios.ThetaBoundedKInduction),
@@ -76,13 +76,13 @@ class GammaFrontendTestHelper {
         return gammaDiscoverer.discover(gammaModel)
     }
 
-    fun witnessCasesOnEveryEngine(): Stream<Arguments> {
+    fun witnessCasesOnEveryBackend(): Stream<Arguments> {
         return GammaCorpus.load(GammaCorpus.examples).asSequence().flatMap { entry ->
             val gammaVerificationCase = discoverInWorkspace(entry.directory, entry.model.file).single {
                 it.declaration.name == entry.case.name
             }
             if (gammaVerificationCase.declaration.expression is EF) {
-                GammaTestEngine.entries.asSequence().map {
+                GammaTestBackend.entries.asSequence().map {
                     Arguments.of(Named.of(gammaVerificationCase.qualifiedName, entry), it)
                 }
             } else {
@@ -137,19 +137,19 @@ class GammaFrontendTestHelper {
     }
 
     suspend fun checkVerificationCaseOn(
-        engine: GammaTestEngine,
+        backend: GammaTestBackend,
         entry: GammaCorpusEntry,
         outputDirectory: Path,
         timeout: Duration,
         validationPortfolio: VerificationPortfolio? = null,
     ): GammaVerificationResult {
-        val portfolio = engine.portfolio
+        val portfolio = backend.portfolio
         assumePortfolioAvailable(portfolio)
 
         val gammaVerificationCase = discoverInWorkspace(entry.directory, entry.model.file).single {
             it.declaration.name == entry.case.name
         }
-        val frontend = buildFrontend(portfolio, outputDirectory.resolve(engine.name.lowercase()), timeout = timeout)
+        val frontend = buildFrontend(portfolio, outputDirectory.resolve(backend.name.lowercase()), timeout = timeout)
         val result = frontend.verify(gammaVerificationCase)
         assertVerdict(gammaVerificationCase.qualifiedName, entry.case.expectedVerdict, result.outcome.report.result)
 

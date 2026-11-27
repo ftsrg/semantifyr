@@ -347,7 +347,7 @@ class SessionVerificationManager @Inject constructor(
             "inlining" to compilation.inliningDuration,
             "flattening" to compilation.flatteningDuration,
             "preparation" to backend.preparationDuration,
-            "engine" to backend.verificationDuration,
+            "backend" to backend.verificationDuration,
             "back_annotation" to verifier.backAnnotationDuration + backend.backAnnotationDuration,
         )
         for ((phase, duration) in phases) {

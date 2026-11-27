@@ -96,12 +96,12 @@ const CONFIG: AdminConfigResponse = {
   sessionManager: { maxSessionsGlobal: 256, semanticLibrariesDirectory: '/srv/libraries', rootWorkDirectory: '/var/lib/semantifyr/work' },
   verification: { concurrency: 4, timeout: 'PT1M' },
   portfolios: [
-    { id: 'smart', engines: ['nuxmv', 'spin', 'theta'] },
-    { id: 'all-agree', engines: ['nuxmv', 'spin', 'theta', 'uppaal'] },
-    { id: 'theta', engines: ['theta'] },
-    { id: 'nuxmv-ic3-invar', engines: ['nuxmv'] },
-    { id: 'spin-safe-dfs', engines: ['spin'] },
-    { id: 'uppaal-default', engines: ['uppaal'] },
+    { id: 'smart', backends: ['nuxmv', 'spin', 'theta'] },
+    { id: 'all-agree', backends: ['nuxmv', 'spin', 'theta', 'uppaal'] },
+    { id: 'theta', backends: ['theta'] },
+    { id: 'nuxmv-ic3-invar', backends: ['nuxmv'] },
+    { id: 'spin-safe-dfs', backends: ['spin'] },
+    { id: 'uppaal-default', backends: ['uppaal'] },
   ],
 }
 
@@ -209,7 +209,7 @@ function states(): Readonly<Record<string, ScreenState>> {
         })).toEqual(['full', 'full', 'embed', 'edit-only', 'embed'])
         expect(text('.admin-deployed')).toContain('0.9.4')
         expect(text('.admin-deployed')).toContain('Verifier time')
-        expect(count('.admin-deployed .admin-engines .tag')).toBeGreaterThan(8)
+        expect(count('.admin-deployed .admin-backends .tag')).toBeGreaterThan(8)
         expect(text('.admin-deployed')).toContain('unavailable')
         expect(text('.admin-header')).toContain('Signed in as octocat')
         expect(count('.admin-header a[href*=grafana]')).toBe(1)

@@ -161,14 +161,14 @@ class SemantifyrVerifierImplTest {
     @Test
     suspend fun `BackendUnsupportedException from the portfolio yields NotSupported`(@TempDir output: Path) {
         val portfolio = ScriptedPortfolio { _, _ ->
-            throw BackendUnsupportedException("engine cannot represent this model")
+            throw BackendUnsupportedException("backend cannot represent this model")
         }
 
         val result = build(portfolio, output)
             .verify(loadFirstCase()).report.result
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.NotSupported)
-        assertThat(result.message).contains("engine cannot represent")
+        assertThat(result.message).contains("backend cannot represent")
     }
 
     @Test

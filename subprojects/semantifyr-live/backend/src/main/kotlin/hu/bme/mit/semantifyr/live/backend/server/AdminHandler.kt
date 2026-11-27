@@ -136,7 +136,7 @@ class AdminHandler @Inject constructor(
             portfolios = PortfolioRegistry.entries.map {
                 AdminPortfolioResponse(
                     id = it.portfolio.id,
-                    engines = it.portfolio.executorKeys.map { key ->
+                    backends = it.portfolio.executorKeys.map { key ->
                         key.name
                     }.sorted(),
                 )

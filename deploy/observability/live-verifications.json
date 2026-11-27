@@ -1032,7 +1032,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "histogram_quantile(0.5, sum by (le, backend_name) (label_replace(rate(semantifyr_live_verification_phase_seconds_bucket{instance=\"@instance@\",kind=\"verify\",phase=\"engine\"}[$__rate_interval]), \"backend_name\", \"$1\", \"backend\", \"([^:]+):.*\")))",
+          "expr": "histogram_quantile(0.5, sum by (le, backend_name) (label_replace(rate(semantifyr_live_verification_phase_seconds_bucket{instance=\"@instance@\",kind=\"verify\",phase=\"backend\"}[$__rate_interval]), \"backend_name\", \"$1\", \"backend\", \"([^:]+):.*\")))",
           "legendFormat": "{{backend_name}} p50",
           "refId": "A",
           "range": true
@@ -1042,7 +1042,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "histogram_quantile(0.95, sum by (le, backend_name) (label_replace(rate(semantifyr_live_verification_phase_seconds_bucket{instance=\"@instance@\",kind=\"verify\",phase=\"engine\"}[$__rate_interval]), \"backend_name\", \"$1\", \"backend\", \"([^:]+):.*\")))",
+          "expr": "histogram_quantile(0.95, sum by (le, backend_name) (label_replace(rate(semantifyr_live_verification_phase_seconds_bucket{instance=\"@instance@\",kind=\"verify\",phase=\"backend\"}[$__rate_interval]), \"backend_name\", \"$1\", \"backend\", \"([^:]+):.*\")))",
           "legendFormat": "{{backend_name}} p95",
           "refId": "B",
           "range": true
@@ -1225,7 +1225,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "label_replace(label_replace(histogram_quantile(0.5, sum by (le, phase) (increase(semantifyr_live_verification_phase_seconds_bucket{instance=\"@instance@\",kind=\"verify\"}[$__range]))), \"phase\", \"backend run\", \"phase\", \"engine\"), \"phase\", \"back annotation\", \"phase\", \"back_annotation\")",
+          "expr": "label_replace(label_replace(histogram_quantile(0.5, sum by (le, phase) (increase(semantifyr_live_verification_phase_seconds_bucket{instance=\"@instance@\",kind=\"verify\"}[$__range]))), \"phase\", \"backend run\", \"phase\", \"backend\"), \"phase\", \"back annotation\", \"phase\", \"back_annotation\")",
           "legendFormat": "",
           "refId": "A",
           "instant": true,
@@ -1237,7 +1237,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "label_replace(label_replace(histogram_quantile(0.95, sum by (le, phase) (increase(semantifyr_live_verification_phase_seconds_bucket{instance=\"@instance@\",kind=\"verify\"}[$__range]))), \"phase\", \"backend run\", \"phase\", \"engine\"), \"phase\", \"back annotation\", \"phase\", \"back_annotation\")",
+          "expr": "label_replace(label_replace(histogram_quantile(0.95, sum by (le, phase) (increase(semantifyr_live_verification_phase_seconds_bucket{instance=\"@instance@\",kind=\"verify\"}[$__range]))), \"phase\", \"backend run\", \"phase\", \"backend\"), \"phase\", \"back annotation\", \"phase\", \"back_annotation\")",
           "legendFormat": "",
           "refId": "B",
           "instant": true,
@@ -1249,7 +1249,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "label_replace(label_replace(sum by (phase) (increase(semantifyr_live_verification_phase_seconds_sum{instance=\"@instance@\",kind=\"verify\"}[$__range])) / scalar(sum(increase(semantifyr_live_verification_seconds_sum{instance=\"@instance@\",kind=\"verify\",backend!=\"none\"}[$__range]))), \"phase\", \"backend run\", \"phase\", \"engine\"), \"phase\", \"back annotation\", \"phase\", \"back_annotation\")",
+          "expr": "label_replace(label_replace(sum by (phase) (increase(semantifyr_live_verification_phase_seconds_sum{instance=\"@instance@\",kind=\"verify\"}[$__range])) / scalar(sum(increase(semantifyr_live_verification_seconds_sum{instance=\"@instance@\",kind=\"verify\",backend!=\"none\"}[$__range]))), \"phase\", \"backend run\", \"phase\", \"backend\"), \"phase\", \"back annotation\", \"phase\", \"back_annotation\")",
           "legendFormat": "",
           "refId": "C",
           "instant": true,
@@ -1803,8 +1803,8 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "semantifyr_live_engine_processes{instance=\"@instance@\",engine!=\"other\"}",
-          "legendFormat": "{{engine}}",
+          "expr": "semantifyr_live_backend_processes{instance=\"@instance@\",backend!=\"other\"}",
+          "legendFormat": "{{backend}}",
           "refId": "A",
           "range": true
         }
@@ -1925,8 +1925,8 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "semantifyr_live_engine_memory_resident_bytes{instance=\"@instance@\",engine!=\"other\"}",
-          "legendFormat": "{{engine}}",
+          "expr": "semantifyr_live_backend_memory_resident_bytes{instance=\"@instance@\",backend!=\"other\"}",
+          "legendFormat": "{{backend}}",
           "refId": "A",
           "range": true
         }

@@ -149,7 +149,7 @@ class VerifyCommandTest {
         val result = runCli("verify", "--portfolio", "absent", model.toString(), portfolios = listOf(UnavailablePortfolio))
 
         assertThat(result.statusCode).isEqualTo(8)
-        assertThat(result.stderr).contains("Portfolio 'absent' is unavailable: no engine").contains("install an engine")
+        assertThat(result.stderr).contains("Portfolio 'absent' is unavailable: no backend").contains("install a backend")
     }
 
     @Test
@@ -366,7 +366,7 @@ class VerifyCommandTest {
         override val legs = emptyList<PortfolioLeg<*>>()
 
         override fun availability(environment: ExecutionEnvironment): AvailabilityReport {
-            return AvailabilityReport.Unavailable("no engine", listOf("install an engine"))
+            return AvailabilityReport.Unavailable("no backend", listOf("install a backend"))
         }
 
         override suspend fun verify(

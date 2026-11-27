@@ -15,7 +15,7 @@ import java.nio.file.Path
 import kotlin.io.path.name
 import kotlin.jvm.optionals.getOrDefault
 
-private val engineCommands = mapOf(
+private val backendCommands = mapOf(
     "spin" to "spin",
     "nuXmv" to "nuxmv",
     "verifyta" to "uppaal",
@@ -25,7 +25,7 @@ private const val THETA_COMMAND = "theta-xsts-cli"
 
 private const val OTHER = "other"
 
-private val engines = listOf(
+private val backends = listOf(
     "theta",
     "spin",
     "nuxmv",
@@ -33,30 +33,30 @@ private val engines = listOf(
     OTHER,
 )
 
-class EngineProcessMetrics : MeterBinder {
+class BackendProcessMetrics : MeterBinder {
 
     override fun bindTo(registry: MeterRegistry) {
-        for (engine in engines) {
-            Gauge.builder("semantifyr.live.engine.processes") {
-                processesOf(engine).size
-            }.tag("engine", engine).register(registry)
-            Gauge.builder("semantifyr.live.engine.memory.resident") {
-                processesOf(engine).sumOf {
+        for (backend in backends) {
+            Gauge.builder("semantifyr.live.backend.processes") {
+                processesOf(backend).size
+            }.tag("backend", backend).register(registry)
+            Gauge.builder("semantifyr.live.backend.memory.resident") {
+                processesOf(backend).sumOf {
                     residentBytes(it)
                 }
-            }.tag("engine", engine).baseUnit("bytes").register(registry)
+            }.tag("backend", backend).baseUnit("bytes").register(registry)
         }
     }
 
-    private fun processesOf(engine: String): List<ProcessHandle> {
+    private fun processesOf(backend: String): List<ProcessHandle> {
         return ProcessHandle.current().children().filter {
-            engineOf(it) == engine
+            backendOf(it) == backend
         }.toList().flatMap {
             listOf(it) + it.descendants().toList()
         }
     }
 
-    private fun engineOf(process: ProcessHandle): String {
+    private fun backendOf(process: ProcessHandle): String {
         val info = process.info()
         if (THETA_COMMAND in info.commandLine().getOrDefault("")) {
             return "theta"
@@ -65,7 +65,7 @@ class EngineProcessMetrics : MeterBinder {
         val arguments = info.arguments().getOrDefault(emptyArray())
         val names = listOf(command) + arguments.take(1)
         return names.firstNotNullOfOrNull {
-            engineCommands[Path.of(it).name]
+            backendCommands[Path.of(it).name]
         } ?: OTHER
     }
 

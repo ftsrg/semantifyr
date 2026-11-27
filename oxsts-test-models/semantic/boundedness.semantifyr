@@ -175,7 +175,7 @@ class BeyondSixteenBitsBound {
     }
 }
 
-// An unbounded counter the property does not depend on does not limit any engine.
+// An unbounded counter the property does not depend on does not limit any backend.
 @VerificationCase
 @Tag("expect-pass")
 class UnboundedCounterOutsideCone {

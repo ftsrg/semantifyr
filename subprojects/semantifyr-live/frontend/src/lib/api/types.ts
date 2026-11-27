@@ -89,7 +89,7 @@ export interface AdminWhoamiResponse {
 
 export interface AdminPortfolioResponse {
   id: string
-  engines: string[]
+  backends: string[]
 }
 
 export interface AdminConfigResponse {

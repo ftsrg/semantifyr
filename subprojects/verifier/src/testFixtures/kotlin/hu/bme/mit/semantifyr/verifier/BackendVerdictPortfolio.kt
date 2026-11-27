@@ -16,8 +16,7 @@ import hu.bme.mit.semantifyr.verifier.portfolio.ConcurrencyGate
 import hu.bme.mit.semantifyr.verifier.portfolio.PortfolioLeg
 import hu.bme.mit.semantifyr.verifier.portfolio.VerificationPortfolio
 
-// an engine suite compares the engine's own verdict with the case's, also where its soundness direction does not trust it
-class EngineVerdictPortfolio<T : BackendConfig>(
+class BackendVerdictPortfolio<T : BackendConfig>(
     backend: VerificationBackend<T>,
     configuration: T,
 ) : VerificationPortfolio() {

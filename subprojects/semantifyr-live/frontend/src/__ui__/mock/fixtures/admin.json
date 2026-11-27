@@ -24,7 +24,7 @@
   "portfolios": [
    {
     "id": "smart",
-    "engines": [
+    "backends": [
      "nuxmv",
      "spin",
      "theta",
@@ -33,7 +33,7 @@
    },
    {
     "id": "all-agree",
-    "engines": [
+    "backends": [
      "nuxmv",
      "spin",
      "theta",
@@ -42,25 +42,25 @@
    },
    {
     "id": "theta",
-    "engines": [
+    "backends": [
      "theta"
     ]
    },
    {
     "id": "nuxmv-ic3-invar",
-    "engines": [
+    "backends": [
      "nuxmv"
     ]
    },
    {
     "id": "spin-safe-dfs",
-    "engines": [
+    "backends": [
      "spin"
     ]
    },
    {
     "id": "uppaal-default",
-    "engines": [
+    "backends": [
      "uppaal"
     ]
    }
