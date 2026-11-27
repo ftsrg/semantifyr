@@ -9,12 +9,7 @@ set -eu
 cd "$(dirname "$0")"
 
 release=$1
-files=
-for path in "$release"/*; do
-    [ -f "$path" ] || { echo "${path##*/} is not a file" >&2; exit 65; }
-    file=${path##*/}
-    [ "$file" = deploy.sh ] || files="$files $file"
-done
+files=$(cd "$release" && find . -type f ! -path ./deploy.sh | sed 's|^\./||' | sort)
 
 # the tunnel drops while cloudflared restarts, so everything that can fail runs before it
 docker compose --project-directory . -f "$release/compose.yaml" config --quiet || exit 65
@@ -30,10 +25,14 @@ if [ -n "$changed" ]; then
     rm -rf previous
     mkdir previous
     for file in $files; do
-        [ ! -f "$file" ] || cp -p "$file" previous/
+        if [ -f "$file" ]; then
+            install -d "previous/$(dirname "$file")"
+            cp -p "$file" "previous/$file"
+        fi
     done
     for file in $changed; do
         # containers read mounted files as their own unprivileged users
+        install -d -m 755 "$(dirname "$file")"
         install -m 644 "$release/$file" "$file"
         # compose recreates a service when its definition changes, not when a file it mounts does
         [ "$file" = compose.yaml ] || recreate=--force-recreate
@@ -49,7 +48,7 @@ echo "${PWD##*/} failed to start" >&2
 docker compose logs --tail 50 >&2 || true
 
 if [ -n "$changed" ]; then
-    cp -p previous/* .
+    cp -pR previous/. .
     if docker compose up -d --wait --wait-timeout 180 --remove-orphans --force-recreate; then
         echo "restored the previous ${PWD##*/}" >&2
         exit 70

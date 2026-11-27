@@ -6,7 +6,7 @@ name: Deploy Edge
 on:
   push:
     branches: [ "main" ]
-    paths: [ "deploy/edge/**" ]
+    paths: [ "deploy/edge/**", ".github/scripts/deploy-compose-project.sh" ]
   workflow_dispatch:
 permissions: {}
 jobs:
@@ -31,7 +31,13 @@ jobs:
           port: ${{ vars.DEPLOY_PORT }}
           user: ${{ vars.DEPLOY_USER }}
       - name: Deploy
-        run: tar -C deploy/edge --exclude env.example -cz . | ssh fured edge
+        run: |
+          release="$RUNNER_TEMP/release"
+          mkdir "$release"
+          cp deploy/edge/* "$release"
+          cp .github/scripts/deploy-compose-project.sh "$release/deploy.sh"
+          rm "$release"/env.example
+          tar -C "$release" -cz . | ssh fured edge
 
   smoke-test:
     name: Smoke test ${{ matrix.url }}

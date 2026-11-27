@@ -10,7 +10,7 @@ on:
 permissions: {}
 jobs:
   nightly:
-    name: Nightly
+    name: Nightly Tests
     runs-on: ubuntu-latest
     timeout-minutes: 240
     permissions:

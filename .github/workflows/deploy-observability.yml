@@ -6,7 +6,7 @@ name: Deploy Observability
 on:
   push:
     branches: [ "main" ]
-    paths: [ "deploy/observability/**", "deploy/edge/deploy.sh" ]
+    paths: [ "deploy/observability/**", ".github/scripts/deploy-compose-project.sh" ]
   workflow_dispatch:
 permissions: {}
 jobs:
@@ -26,15 +26,17 @@ jobs:
         run: |
           release="$RUNNER_TEMP/release"
           mkdir "$release"
-          cp deploy/observability/* deploy/edge/deploy.sh "$release"
+          cp deploy/observability/* "$release"
+          cp .github/scripts/deploy-compose-project.sh "$release/deploy.sh"
           rm "$release"/env.example "$release"/live-*
+          mkdir -p "$release/dashboards/production" "$release/dashboards/staging"
           for source in deploy/observability/live-*.json; do
             name=${source##*/live-}
-            sed -e 's/@instance@/semantifyr-live/g' -e 's/@environment@/production/g' "$source" > "$release/production-$name"
-            sed -e 's/@instance@/semantifyr-live-staging/g' -e 's/@environment@/staging/g' "$source" > "$release/staging-$name"
+            sed -e 's/@instance@/semantifyr-live/g' -e 's/@environment@/production/g' "$source" > "$release/dashboards/production/$name"
+            sed -e 's/@instance@/semantifyr-live-staging/g' -e 's/@environment@/staging/g' "$source" > "$release/dashboards/staging/$name"
           done
       - name: Check the dashboards
-        run: jq empty "$RUNNER_TEMP"/release/*.json
+        run: jq empty "$RUNNER_TEMP"/release/*.json "$RUNNER_TEMP"/release/dashboards/*/*.json
       - name: Configure SSH
         uses: ./.github/actions/ssh
         with:

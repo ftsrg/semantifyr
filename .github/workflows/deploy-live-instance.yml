@@ -46,7 +46,11 @@ jobs:
           TAG: ${{ inputs.tag }}
         run: |
           tag=${TAG:-$(ssh fured status semantifyr-live-staging)}
-          tar -C deploy/live -cz compose.yaml deploy.sh | ssh fured deploy "$INSTANCE" "$tag"
+          release="$RUNNER_TEMP/release"
+          mkdir "$release"
+          cp deploy/live/compose.yaml "$release"
+          cp .github/scripts/deploy-live-instance.sh "$release/deploy.sh"
+          tar -C "$release" -cz compose.yaml deploy.sh | ssh fured deploy "$INSTANCE" "$tag"
 
   smoke-test:
     name: Smoke test ${{ inputs.instance }}
