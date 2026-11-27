@@ -10,7 +10,6 @@ import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.frontends.sysml.testing.CorpusEntry
 import hu.bme.mit.semantifyr.frontends.sysml.testing.CorpusTier
 import hu.bme.mit.semantifyr.frontends.sysml.testing.CorpusVerdict
-import hu.bme.mit.semantifyr.frontends.sysml.testing.SysMLCorpus
 import hu.bme.mit.semantifyr.frontends.sysml.testing.SysMLv2FrontendTestHelper
 import hu.bme.mit.semantifyr.portfolios.Portfolios
 import org.assertj.core.api.Assertions.assertThat
@@ -24,14 +23,14 @@ class SysMLNightlyVerificationTests {
 
         @JvmStatic
         fun `Nightly Cases Reach Their Expected Verdict`(): List<CorpusEntry> {
-            return SysMLCorpus.load().entries.filter {
+            return SysMLv2FrontendTestHelper.corpusEntries.filter {
                 it.case.tier == CorpusTier.Nightly && it.case.verdict != CorpusVerdict.Unknown
             }
         }
 
         @JvmStatic
         fun `Nightly Cases Without A Known Verdict Reach A Decided Verdict`(): List<CorpusEntry> {
-            return SysMLCorpus.load().entries.filter {
+            return SysMLv2FrontendTestHelper.corpusEntries.filter {
                 it.case.tier == CorpusTier.Nightly && it.case.verdict == CorpusVerdict.Unknown
             }
         }

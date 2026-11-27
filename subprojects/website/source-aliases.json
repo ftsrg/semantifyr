@@ -1,6 +1,5 @@
 {
   "@oxsts-phases-models": "models/phases",
   "@oxsts-lesson-stages": "models/tutorial",
-  "@oxsts-library": "../oxsts.lang/src/main/resources/hu/bme/mit/semantifyr/oxsts/lang/library",
-  "@sysml-reference-trace": "../frontends/sysml/models/etc"
+  "@oxsts-library": "../oxsts.lang/src/main/resources/hu/bme/mit/semantifyr/oxsts/lang/library"
 }

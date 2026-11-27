@@ -5,16 +5,79 @@ sidebar_position: 5
 description: How the run of a case is represented as a SysML v2 model.
 ---
 
-import CodeBlock from '@theme/CodeBlock';
-import trace from '@sysml-reference-trace/room-lamp-lit.trace.sysml';
-
 # SysML v2 Traces
 
 `semantifyr-sysml verify` and Live show the run of a case as a SysML v2 model, `trace.sysml`. It is a package `<Case>Trace` whose part definition `Run` specializes the verified part's definition and states which states each part was in, which transitions fired with the items they sent, and how much time passed. Since `Run` refines the model, any SysML v2 tool reads the trace next to it. A run that cannot be expressed in SysML v2 keeps its verdict and gets no trace.
 
 The trace of `LampLitOnlyWhileSwitchOnViolated` from the [lesson](lesson.md):
 
-<CodeBlock language="sysmlv2">{trace}</CodeBlock>
+```sysmlv2
+package LampLitOnlyWhileSwitchOnViolatedTrace {
+    private import Occurrences::HappensJustBefore;
+    private import Time::DurationOf;
+    private import SI::s;
+    private import VerificationCases::VerdictKind;
+
+    verification witness : LampLitOnlyWhileSwitchOnViolated {
+        subject :>> system : Run;
+        return :>> verdict = VerdictKind::fail;
+    }
+
+    part def Run :> Room {
+        bind init.startShot = self.startShot;
+
+        timeslice init [1] {
+            assert constraint { DurationOf(init) == 0 [s] }
+            event switch.Behaviour.start [1];
+            event lamp.Behaviour.start [1];
+        }
+        succession : HappensJustBefore [1] first init then step1;
+        timeslice step1 [1] {
+            assert constraint { DurationOf(step1) == 0 [s] }
+            event switch.Behaviour.turnOn1 [1];
+        }
+        succession : HappensJustBefore [1] first step1 then step2;
+        timeslice step2 [1] {
+            assert constraint { DurationOf(step2) == 0 [s] }
+            event switch.Behaviour.turnOff1 [1];
+            event lamp.Behaviour.lightUp1 [1];
+        }
+
+        part switch :>> switch {
+            exhibit state Behaviour :>> Behaviour [1] {
+                state off1 [1] :> Off;
+                transition turnOn1 [1] :> turnOn
+                    first off1
+                    accept Press via button
+                    do action {
+                        action sendToggle1 [1] send new Toggle() via output;
+                    }
+                    then on1;
+                state on1 [1] :> On;
+                transition turnOff1 [1] :> turnOff
+                    first on1
+                    accept Press via button
+                    do action {
+                        action sendToggle1 [1] send new Toggle() via output;
+                    }
+                    then off2;
+                state off2 [1] :> Off;
+            }
+        }
+
+        part lamp :>> lamp {
+            exhibit state Behaviour :>> Behaviour [1] {
+                state dark1 [1] :> Dark;
+                transition lightUp1 [1] :> lightUp
+                    first dark1
+                    accept Toggle via input
+                    then lit1;
+                state lit1 [1] :> Lit;
+            }
+        }
+    }
+}
+```
 
 - The verification usage `witness` redefines the subject to `Run` and binds the verdict: `fail` for a run that breaks `mustAlways`, `pass` for one that reaches what `eventually` asks for.
 - `Run` specializes the system definition, so its values are the system lives the run is a prefix of.

@@ -194,18 +194,28 @@ tasks.processResources {
     }
 }
 
-val examplesSourceDirectory = layout.projectDirectory.dir("../models/examples")
-val appendedCorpusDirectory = layout.buildDirectory.dir("corpus")
+val testCorpusDirectory = layout.buildDirectory.dir("corpus")
 
 val appendFurtherCases = tasks.register<AppendFurtherCases>("appendFurtherCases") {
-    corpusDirectory = examplesSourceDirectory
-    outputDirectory = appendedCorpusDirectory
+    corpusDirectory = layout.projectDirectory.dir("../models/examples")
+    outputDirectory = testCorpusDirectory.map {
+        it.dir("examples")
+    }
+}
+
+val cloneSemantics = tasks.register<Sync>("cloneSemantics") {
+    from(layout.projectDirectory.dir("../models/semantics"))
+    into(
+        testCorpusDirectory.map {
+            it.dir("semantics")
+        },
+    )
 }
 
 configurations.consumable("sysmlCorpusElements") {
     attributes(semantifyrArtifact("sysml-corpus"))
-    outgoing.artifact(appendedCorpusDirectory) {
-        builtBy(appendFurtherCases)
+    outgoing.artifact(testCorpusDirectory) {
+        builtBy(appendFurtherCases, cloneSemantics)
     }
 }
 
@@ -252,13 +262,5 @@ configurations.consumable("compiledSmokeElements") {
 }
 
 tasks.named("integrationTest") {
-    inputs.files(appendFurtherCases).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.files(
-        layout.projectDirectory.file("../models/etc/crossroads-green.trace.sysml"),
-        layout.projectDirectory.file("../models/etc/crossroads-green.report.json"),
-        layout.projectDirectory.file("../models/etc/crossroads-green.witness.semantifyr"),
-        layout.projectDirectory.file("../models/etc/room-lamp-lit.trace.sysml"),
-        layout.projectDirectory.file("../models/tutorial/room.sysml"),
-    ).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.dir(layout.projectDirectory.dir("../models/libraries/default")).withPathSensitivity(PathSensitivity.RELATIVE)
 }

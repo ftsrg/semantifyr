@@ -105,7 +105,7 @@ class SysMLVerifyCommandTest {
 
     @Test
     suspend fun `a model directory is an input error`() {
-        val result = runSysMLCli("verify", tutorialModel.parent.toString())
+        val result = runSysMLCli("verify", smokeModel.parent.toString())
 
         assertThat(result.statusCode).isEqualTo(3)
         assertThat(result.stderr).contains(".sysml")
@@ -113,7 +113,7 @@ class SysMLVerifyCommandTest {
 
     @Test
     suspend fun `a missing library path is an input error`(@TempDir directory: Path) {
-        val result = runSysMLCli("verify", "-l", directory.resolve("absent").toString(), tutorialModel.toString())
+        val result = runSysMLCli("verify", "-l", directory.resolve("absent").toString(), smokeModel.toString())
 
         assertThat(result.statusCode).isEqualTo(3)
         assertThat(result.stderr).contains("Library path")
@@ -121,7 +121,7 @@ class SysMLVerifyCommandTest {
 
     @Test
     suspend fun `a library of another kind is an input error naming the extensions of OXSTS`() {
-        val result = runSysMLCli("verify", "-l", tutorialModel.toString(), tutorialModel.toString())
+        val result = runSysMLCli("verify", "-l", smokeModel.toString(), smokeModel.toString())
 
         assertThat(result.statusCode).isEqualTo(3)
         for (extension in oxstsExtensions) {

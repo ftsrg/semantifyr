@@ -1,0 +1,13 @@
+{
+    "models": [
+        {
+            "file": "guarded_initial_transition.sysml",
+            "cases": [
+                { "name": "GuardedInitialTransitionEntersLowTestCase", "verdict": "Passed", "tier": "Integration" },
+                { "name": "GuardedInitialTransitionNeverEntersHighTestCase", "verdict": "Passed", "tier": "Integration" },
+                { "name": "GuardedNestedInitialTransitionEntersRightTestCase", "verdict": "Passed", "tier": "Integration" },
+                { "name": "GuardedNestedInitialTransitionNeverEntersLeftTestCase", "verdict": "Passed", "tier": "Integration" }
+            ]
+        }
+    ]
+}

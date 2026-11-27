@@ -114,7 +114,7 @@
     {
       "id": "room",
       "language": "sysml",
-      "file": "subprojects/frontends/sysml/models/tutorial/room.sysml",
+      "file": "subprojects/frontends/sysml/models/examples/room.sysml",
       "label": "Room",
       "cases": [
         "LampLitReachable",

@@ -62,7 +62,7 @@ class SysMLv2FrontendTestHelper {
         outputDirectory: Path,
         timeout: Duration = 2.minutes,
     ): SysMLv2Frontend {
-        return buildFrontend(modelPath(entry.model.file), portfolio, outputDirectory, entry.model.variant, timeout)
+        return buildFrontend(entry.modelPath, portfolio, outputDirectory, entry.model.variant, timeout)
     }
 
     private fun verificationCase(frontend: SysMLv2Frontend, entry: CorpusEntry): VerificationCase {
@@ -121,41 +121,31 @@ class SysMLv2FrontendTestHelper {
     }
 
     companion object {
-        val MODELS_ROOT: Path = Path("build", "test-models")
+        val EXAMPLES_ROOT: Path = Path("build", "test-models", "examples")
 
-        val TUTORIAL_ROOT: Path = Path("..", "models", "tutorial")
+        val SEMANTICS_ROOT: Path = Path("build", "test-models", "semantics")
 
-        val ETC_ROOT: Path = Path("..", "models", "etc")
-
-        val tutorialEntries: List<CorpusEntry>
+        val corpusEntries: List<CorpusEntry>
             get() {
-                return SysMLCorpus.load(TUTORIAL_ROOT.resolve("manifest.json")).entries
+                return SysMLCorpus.entries(EXAMPLES_ROOT) + SysMLCorpus.entries(SEMANTICS_ROOT)
             }
 
-        fun guardedInitialTransitionEntries(variant: SysMLv2Variant): List<CorpusEntry> {
-            return SysMLCorpus.load(ETC_ROOT.resolve("manifest.json")).models.map {
-                it.copy(variant = variant)
-            }.flatMap { model ->
-                model.cases.map {
-                    CorpusEntry(model, it)
-                }
+        fun guardedInitialTransitionEntries(fixture: Path, variant: SysMLv2Variant): List<CorpusEntry> {
+            return SysMLCorpus.entries(fixture).map {
+                it.copy(model = it.model.copy(variant = variant))
             }
         }
 
         // the SysML CLI reads every model next to the source, so the fixture gets a workspace of its own
-        fun guardedInitialTransitionModel(workspace: Path): Path {
-            val model = SysMLCorpus.load(ETC_ROOT.resolve("manifest.json")).models.single().file
+        fun guardedInitialTransitionModel(fixture: Path, workspace: Path): Path {
+            val model = SysMLCorpus.load(fixture).models.single().file
             workspace.createDirectories()
-            modelPath("Verification.sysml").copyTo(workspace.resolve("Verification.sysml"), overwrite = true)
-            return ETC_ROOT.resolve(model).copyTo(workspace.resolve(model), overwrite = true)
+            fixture.resolve("Verification.sysml").copyTo(workspace.resolve("Verification.sysml"), overwrite = true)
+            return fixture.resolve(model).copyTo(workspace.resolve(model), overwrite = true)
         }
 
         fun testArtifactRoot(testClass: Class<*>): Path {
             return Path("build", "test-artifacts", testClass.simpleName)
-        }
-
-        fun modelPath(name: String): Path {
-            return MODELS_ROOT.resolve(name)
         }
     }
 }

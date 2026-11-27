@@ -6,7 +6,6 @@
 
 import hu.bme.mit.semantifyr.frontends.sysml.testing.CorpusEntry
 import hu.bme.mit.semantifyr.frontends.sysml.testing.CorpusTier
-import hu.bme.mit.semantifyr.frontends.sysml.testing.SysMLCorpus
 import hu.bme.mit.semantifyr.frontends.sysml.testing.SysMLv2FrontendTestHelper
 import hu.bme.mit.semantifyr.portfolios.Portfolios
 import org.junit.jupiter.params.ParameterizedTest
@@ -20,7 +19,7 @@ class SpacecraftFalsificationTests {
 
         @JvmStatic
         fun `Nightly Falsification Twins Should Fail`(): List<CorpusEntry> {
-            return SysMLCorpus.load().entries.filter {
+            return SysMLv2FrontendTestHelper.corpusEntries.filter {
                 it.case.falsification && it.case.tier == CorpusTier.Nightly
             }
         }

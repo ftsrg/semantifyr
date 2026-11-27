@@ -28,20 +28,6 @@ val Project.oxstsFileExtension: String
         return extensions.groupValues[1].substringBefore(',')
     }
 
-class CorpusModel(
-    val file: String,
-)
-
-fun corpusModels(manifest: String): List<CorpusModel> {
-    val models = (JsonSlurper().parseText(manifest) as Map<*, *>)["models"] as List<*>
-    return models.map {
-        val model = it as Map<*, *>
-        CorpusModel(
-            model["file"] as String,
-        )
-    }
-}
-
 const val FURTHER_CASES_EXTENSION = "further-cases"
 
 // sysml-2ls transforms one root namespace per document, so a model's further cases cannot sit in a second file that imports it

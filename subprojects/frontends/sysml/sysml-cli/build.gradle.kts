@@ -38,10 +38,11 @@ distributions.main {
     }
 }
 
-tasks.named("test") {
-    inputs.dir(layout.projectDirectory.dir("../models/tutorial")).withPathSensitivity(PathSensitivity.RELATIVE)
-}
-
-tasks.named("endToEndTest") {
-    inputs.file(layout.projectDirectory.file("../models/smoke/smoke.sysml")).withPathSensitivity(PathSensitivity.RELATIVE)
+listOf(
+    "test",
+    "endToEndTest",
+).forEach {
+    tasks.named(it) {
+        inputs.file(layout.projectDirectory.file("../models/smoke/smoke.sysml")).withPathSensitivity(PathSensitivity.RELATIVE)
+    }
 }

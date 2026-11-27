@@ -105,12 +105,11 @@ jobs:
           if-no-files-found: error
           compression-level: 0
           retention-days: 90
-      - name: Pack the frontend test harness and the SysML v2 corpus
+      - name: Pack the frontend test harness
         if: ${{ runner.os == 'Linux' }}
         run: >-
           tar -czf "$RUNNER_TEMP/frontend-tests.tar.gz" -C subprojects
           corpus-check/build/distributions
-          frontends/sysml/sysml-wrapper/build/corpus
       - name: Upload the frontend test harness
         if: ${{ runner.os == 'Linux' }}
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
@@ -161,9 +160,6 @@ jobs:
           frontend: gamma
       - name: Run the frontend tests of the semantic library
         run: corpus-check --launcher "$LAUNCHER" --corpus subprojects/frontends/gamma/models/semantics --timeout-seconds 120
-      - name: Run the frontend tests of the examples
-        if: ${{ !cancelled() }}
-        run: corpus-check --launcher "$LAUNCHER" --corpus subprojects/frontends/gamma/models/examples --timeout-seconds 1800
 
   frontend-tests-sysml:
     name: Frontend Tests (SysML)
@@ -181,7 +177,7 @@ jobs:
       - name: Run the frontend tests
         run: >-
           corpus-check --launcher "$LAUNCHER"
-          --corpus "$RUNNER_TEMP/frontend-tests/frontends/sysml/sysml-wrapper/build/corpus"
+          --corpus subprojects/frontends/sysml/models/semantics
           --case-namespace semantifyr::sysml::model::
           --timeout-seconds 120
 

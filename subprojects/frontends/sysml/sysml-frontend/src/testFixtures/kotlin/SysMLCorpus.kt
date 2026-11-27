@@ -52,9 +52,15 @@ data class CorpusModel(
 )
 
 data class CorpusEntry(
+    val directory: Path,
     val model: CorpusModel,
     val case: CorpusCase,
 ) {
+    val modelPath: Path
+        get() {
+            return directory.resolve(model.file)
+        }
+
     override fun toString(): String {
         return "${model.file} - ${case.name}"
     }
@@ -64,18 +70,17 @@ data class CorpusEntry(
 data class SysMLCorpus(
     val models: List<CorpusModel>,
 ) {
-    val entries: List<CorpusEntry>
-        get() {
-            return models.flatMap { model ->
-                model.cases.map {
-                    CorpusEntry(model, it)
-                }
-            }
+    companion object {
+        fun load(directory: Path): SysMLCorpus {
+            return Json.decodeFromString(directory.resolve("manifest.json").readText())
         }
 
-    companion object {
-        fun load(path: Path = SysMLv2FrontendTestHelper.modelPath("manifest.json")): SysMLCorpus {
-            return Json.decodeFromString(path.readText())
+        fun entries(directory: Path): List<CorpusEntry> {
+            return load(directory).models.flatMap { model ->
+                model.cases.map {
+                    CorpusEntry(directory, model, it)
+                }
+            }
         }
     }
 }

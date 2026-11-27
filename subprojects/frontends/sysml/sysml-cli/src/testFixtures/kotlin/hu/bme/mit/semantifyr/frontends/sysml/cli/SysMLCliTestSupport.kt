@@ -15,7 +15,6 @@ import hu.bme.mit.semantifyr.verifier.portfolio.VerificationPortfolio
 import org.eclipse.xtext.resource.FileExtensionProvider
 import kotlin.io.path.Path
 
-val tutorialModel = Path("../models/tutorial/room.sysml")
 val smokeModel = Path("../models/smoke/smoke.sysml")
 
 val oxstsInjector by lazy {
