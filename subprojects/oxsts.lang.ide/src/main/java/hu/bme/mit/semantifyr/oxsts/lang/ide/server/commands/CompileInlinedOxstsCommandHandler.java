@@ -7,8 +7,7 @@
 package hu.bme.mit.semantifyr.oxsts.lang.ide.server.commands;
 
 import com.google.inject.Inject;
-import com.google.inject.Injector;
-import hu.bme.mit.semantifyr.compiler.SemantifyrCompiler;
+import hu.bme.mit.semantifyr.compiler.SemantifyrCompilerFactory;
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.ArtifactKind;
 import hu.bme.mit.semantifyr.compiler.reader.SemantifyrLoader;
 import hu.bme.mit.semantifyr.lang.ide.server.OpenDocumentTexts;
@@ -43,7 +42,7 @@ public class CompileInlinedOxstsCommandHandler extends AbstractCommandHandler<Lo
     protected ServerSettings serverSettings;
 
     @Inject
-    protected Injector injector;
+    protected SemantifyrCompilerFactory semantifyrCompilerFactory;
 
     @Override
     public String getId() {
@@ -80,8 +79,7 @@ public class CompileInlinedOxstsCommandHandler extends AbstractCommandHandler<Lo
                 arguments.eResource().getResourceSet(),
                 openDocumentTexts.of(arguments.eResource().getResourceSet()));
         var inlinedOxsts = (InlinedOxsts) context.getResourceSet().getEObject(EcoreUtil.getURI(arguments), true);
-        var compiler = new SemantifyrCompiler(
-                injector,
+        var compiler = semantifyrCompilerFactory.create(
                 serverSettings.resolveArtifactConfig().withEnabled(ArtifactKind.FlattenedModel),
                 serverSettings.resolveOptimizationConfig());
         var outputDirectory = serverSettings.resolveArtifactOutputDirectory(access);

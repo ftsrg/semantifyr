@@ -7,7 +7,6 @@
 package hu.bme.mit.semantifyr.oxsts.lang.ide.server.commands;
 
 import com.google.inject.Inject;
-import com.google.inject.Injector;
 import hu.bme.mit.semantifyr.lang.ide.server.ServerSettings;
 import hu.bme.mit.semantifyr.lang.ide.server.commands.AbstractCommandHandler;
 import hu.bme.mit.semantifyr.lang.ide.server.commands.CommandProgressContext;
@@ -15,7 +14,7 @@ import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationCaseRequest;
 import hu.bme.mit.semantifyr.lang.ide.server.wire.VerificationStatus;
 import hu.bme.mit.semantifyr.lang.ide.server.wire.WitnessValidationResult;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts;
-import hu.bme.mit.semantifyr.verifier.SemantifyrVerifier;
+import hu.bme.mit.semantifyr.verifier.SemantifyrVerifierFactory;
 import hu.bme.mit.semantifyr.verifier.VerificationOutcome;
 import java.util.List;
 import java.util.concurrent.CancellationException;
@@ -33,7 +32,7 @@ public class ValidateWitnessClassCommandHandler
     protected ServerSettings serverSettings;
 
     @Inject
-    protected Injector injector;
+    protected SemantifyrVerifierFactory semantifyrVerifierFactory;
 
     @Override
     public String getId() {
@@ -76,15 +75,13 @@ public class ValidateWitnessClassCommandHandler
 
         return performBackgroundWork(() -> {
             try {
-                var verifier = SemantifyrVerifier.builder()
-                        .injector(injector)
-                        .portfolio(portfolio)
-                        .environment(serverSettings.resolveExecutionEnvironment())
-                        .timeout(serverSettings.resolveTimeout())
-                        .artifacts(serverSettings.resolveArtifactConfig())
-                        .outputDirectory(outputDirectory)
-                        .optimization(serverSettings.resolveOptimizationConfig())
-                        .build();
+                var verifier = semantifyrVerifierFactory.create(
+                        portfolio,
+                        serverSettings.resolveExecutionEnvironment(),
+                        serverSettings.resolveTimeout(),
+                        serverSettings.resolveArtifactConfig(),
+                        outputDirectory,
+                        serverSettings.resolveOptimizationConfig());
 
                 progressContext.checkIsCancelled();
                 VerificationOutcome outcome =

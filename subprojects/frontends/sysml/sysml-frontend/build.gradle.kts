@@ -48,11 +48,6 @@ configurations.consumable("sysmlLibraryElements") {
     outgoing.artifact(librariesDirectory.dir("default"))
 }
 
-configurations.consumable("sysmlLibrariesElements") {
-    attributes(semantifyrArtifact("sysml-libraries"))
-    outgoing.artifact(librariesDirectory)
-}
-
 configurations.consumable("sysmlExamplesElements") {
     attributes(semantifyrArtifact("sysml-examples"))
     outgoing.artifact(examplesDirectory)

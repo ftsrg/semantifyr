@@ -107,6 +107,10 @@ public final class InlineModels {
 
     private InlineModels() {}
 
+    public static String trafficLightWith(String addition) {
+        return TRAFFIC_LIGHT + "\n" + addition;
+    }
+
     public static String crossing(String members) {
         return """
                 package example::crossing

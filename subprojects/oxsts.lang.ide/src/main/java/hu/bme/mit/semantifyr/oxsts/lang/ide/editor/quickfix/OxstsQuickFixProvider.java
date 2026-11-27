@@ -69,8 +69,6 @@ import org.eclipse.xtext.Keyword;
 import org.eclipse.xtext.ide.editor.quickfix.DiagnosticResolution;
 import org.eclipse.xtext.ide.editor.quickfix.DiagnosticResolutionAcceptor;
 import org.eclipse.xtext.ide.editor.quickfix.IQuickFixProvider;
-import org.eclipse.xtext.ide.editor.quickfix.ISemanticModification;
-import org.eclipse.xtext.ide.editor.quickfix.ITextModification;
 import org.eclipse.xtext.ide.server.Document;
 import org.eclipse.xtext.ide.server.codeActions.ICodeActionService2.Options;
 import org.eclipse.xtext.naming.IQualifiedNameConverter;
@@ -226,7 +224,11 @@ public class OxstsQuickFixProvider implements IQuickFixProvider {
         var written = NodeModelUtils.getTokenText(node);
         for (var match : nearMatches(written, List.copyOf(targets.keySet()))) {
             var targetUri = targets.get(match);
-            acceptModelChange(site, "Change to " + match, referencingElement, (referencing, resourceSet) -> referencing.eSet(reference, resourceSet.getEObject(targetUri, true)));
+            acceptModelChange(
+                    site,
+                    "Change to " + match,
+                    referencingElement,
+                    (referencing, resourceSet) -> referencing.eSet(reference, resourceSet.getEObject(targetUri, true)));
         }
     }
 
@@ -258,7 +260,8 @@ public class OxstsQuickFixProvider implements IQuickFixProvider {
         var memberNames = issueData(site.diagnostic());
         var members = domainMemberCollectionProvider.getMemberCollection(classDeclaration).getDeclarations().stream()
                 .filter(OxstsUtils::isDeclarationAbstract)
-                .filter(member -> member.eContainer() != classDeclaration && memberNames.contains(NamingUtil.getName(member)))
+                .filter(member ->
+                        member.eContainer() != classDeclaration && memberNames.contains(NamingUtil.getName(member)))
                 .toList();
         if (members.isEmpty()) {
             return;
@@ -281,7 +284,12 @@ public class OxstsQuickFixProvider implements IQuickFixProvider {
         if (value == null) {
             return;
         }
-        acceptModelChange(site, "Initialize with " + value, variable, (initialized, _) -> initialized.setExpression(defaultExpressionOrNull(initialized.getTypeSpecification())));
+        acceptModelChange(
+                site,
+                "Initialize with " + value,
+                variable,
+                (initialized, _) ->
+                        initialized.setExpression(defaultExpressionOrNull(initialized.getTypeSpecification())));
     }
 
     private void addMissingArguments(IssueSite site) {

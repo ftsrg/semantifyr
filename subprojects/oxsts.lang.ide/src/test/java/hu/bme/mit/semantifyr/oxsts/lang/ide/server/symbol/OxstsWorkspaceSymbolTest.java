@@ -8,9 +8,9 @@ package hu.bme.mit.semantifyr.oxsts.lang.ide.server.symbol;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import hu.bme.mit.semantifyr.oxsts.lang.ide.InlineModels;
 import hu.bme.mit.semantifyr.oxsts.lang.ide.MarkedText;
 import hu.bme.mit.semantifyr.oxsts.lang.ide.OxstsLanguageServerTest;
-import hu.bme.mit.semantifyr.oxsts.lang.ide.TestModels;
 import java.util.List;
 import org.eclipse.lsp4j.SymbolKind;
 import org.eclipse.lsp4j.WorkspaceSymbol;
@@ -33,7 +33,7 @@ class OxstsWorkspaceSymbolTest extends OxstsLanguageServerTest {
                 }
                 """);
         var libraryUri = addLibraryFile("Lamps.semantifyr", library.text());
-        openModel(TestModels.TRAFFIC_LIGHTS);
+        openModel(InlineModels.TRAFFIC_LIGHT);
 
         var symbols = symbols("switchOn");
 
@@ -47,7 +47,7 @@ class OxstsWorkspaceSymbolTest extends OxstsLanguageServerTest {
 
     @Test
     void workspaceSymbolsFindTheBuiltinLibraryOutsideTheWorkspace() throws Exception {
-        openModel(TestModels.TRAFFIC_LIGHTS);
+        openModel(InlineModels.TRAFFIC_LIGHT);
 
         var symbols = symbols("Anything");
 

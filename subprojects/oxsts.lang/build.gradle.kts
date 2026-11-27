@@ -57,8 +57,3 @@ configurations.consumable("textMateGrammarElements") {
         builtBy(generateXtextLanguage)
     }
 }
-
-configurations.consumable("oxstsLibraryElements") {
-    attributes(semantifyrArtifact("oxsts-library"))
-    outgoing.artifact(layout.projectDirectory.dir("src/main/resources/hu/bme/mit/semantifyr/oxsts/lang/library"))
-}

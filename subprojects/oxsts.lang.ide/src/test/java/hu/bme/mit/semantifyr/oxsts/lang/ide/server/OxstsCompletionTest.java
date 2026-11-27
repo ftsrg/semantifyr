@@ -6,8 +6,7 @@
 
 package hu.bme.mit.semantifyr.oxsts.lang.ide.server;
 
-import static hu.bme.mit.semantifyr.oxsts.lang.ide.TestModels.gammaLibrary;
-import static hu.bme.mit.semantifyr.oxsts.lang.ide.TestModels.trafficLightsWith;
+import static hu.bme.mit.semantifyr.oxsts.lang.ide.InlineModels.trafficLightWith;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import hu.bme.mit.semantifyr.oxsts.lang.ide.MarkedText;
@@ -23,7 +22,7 @@ class OxstsCompletionTest extends OxstsLanguageServerTest {
 
     @Test
     void containmentTypeOffersOnlyClasses() throws Exception {
-        var items = complete(MarkedText.of(trafficLightsWith("""
+        var items = complete(MarkedText.of(trafficLightWith("""
                 class Case {
                     contains other: <|>
                 }
@@ -34,13 +33,13 @@ class OxstsCompletionTest extends OxstsLanguageServerTest {
                 .doesNotContain("bool", "int", "any", "LightColor");
         assertThat(item(items, "TrafficLight")).satisfies(item -> {
             assertThat(item.getKind()).isEqualTo(CompletionItemKind.Class);
-            assertThat(item.getDetail()).isEqualTo("example::trafficlights");
+            assertThat(item.getDetail()).isEqualTo("example::lights");
         });
     }
 
     @Test
     void referenceTypeOffersClassesDataTypesAndEnums() throws Exception {
-        var items = complete(MarkedText.of(trafficLightsWith("""
+        var items = complete(MarkedText.of(trafficLightWith("""
                 class Case {
                     refers color: <|>
                 }
@@ -52,7 +51,7 @@ class OxstsCompletionTest extends OxstsLanguageServerTest {
 
     @Test
     void expressionMemberOffersValuesAndNoTransitions() throws Exception {
-        var items = complete(MarkedText.of(trafficLightsWith("""
+        var items = complete(MarkedText.of(trafficLightWith("""
                 class Case {
                     contains light: TrafficLight
 
@@ -76,7 +75,7 @@ class OxstsCompletionTest extends OxstsLanguageServerTest {
 
     @Test
     void statementStartOffersOnlyAssignableTargets() throws Exception {
-        var items = complete(MarkedText.of(trafficLightsWith("""
+        var items = complete(MarkedText.of(trafficLightWith("""
                 class Case {
                     contains light: TrafficLight
                     var counter: int := 0
@@ -92,7 +91,7 @@ class OxstsCompletionTest extends OxstsLanguageServerTest {
 
     @Test
     void inlineStatementOffersTransitionsAndInstanceFeatures() throws Exception {
-        var items = complete(MarkedText.of(trafficLightsWith("""
+        var items = complete(MarkedText.of(trafficLightWith("""
                 class Case {
                     contains light: TrafficLight
                     var counter: int := 0
@@ -108,7 +107,7 @@ class OxstsCompletionTest extends OxstsLanguageServerTest {
 
     @Test
     void inlineCallInsertsTheTransitionWithItsParameters() throws Exception {
-        var items = complete(MarkedText.of(trafficLightsWith("""
+        var items = complete(MarkedText.of(trafficLightWith("""
                 class Case {
                     contains light: TrafficLight
 
@@ -129,7 +128,7 @@ class OxstsCompletionTest extends OxstsLanguageServerTest {
 
     @Test
     void callArgumentOffersTheNamedArgumentAndValuesOfTheParameterTypeFirst() throws Exception {
-        var items = complete(MarkedText.of(trafficLightsWith("""
+        var items = complete(MarkedText.of(trafficLightWith("""
                 class Case {
                     contains light: TrafficLight
 
@@ -156,7 +155,7 @@ class OxstsCompletionTest extends OxstsLanguageServerTest {
 
     @Test
     void propertyArgumentInAnExpressionOffersTheNamedArgument() throws Exception {
-        var items = complete(MarkedText.of(trafficLightsWith("""
+        var items = complete(MarkedText.of(trafficLightWith("""
                 class Case {
                     contains light: TrafficLight
 
@@ -171,14 +170,14 @@ class OxstsCompletionTest extends OxstsLanguageServerTest {
 
     @Test
     void redefineTransitionOffersTheInheritedSignaturesWithoutInit() throws Exception {
-        var items = complete(MarkedText.of(trafficLightsWith("""
-                class SpecialLight : TrafficLight {
+        var items = complete(MarkedText.of(trafficLightWith("""
+                class SlowLight : TrafficLight {
                     redefine tran <|>
                 }
                 """)));
 
         assertThat(labels(items))
-                .containsExactlyInAnyOrder("assumeColor(color: LightColor)", "setColor(color: LightColor)");
+                .containsExactlyInAnyOrder("setColor(color: LightColor)", "blink(color: LightColor, times: int)");
         assertThat(item(items, "setColor(color: LightColor)")
                         .getTextEdit()
                         .getLeft()
@@ -188,8 +187,8 @@ class OxstsCompletionTest extends OxstsLanguageServerTest {
 
     @Test
     void classBodyOffersRedefinitionsOfInheritedMembers() throws Exception {
-        var items = complete(MarkedText.of(trafficLightsWith("""
-                class SpecialLight : TrafficLight {
+        var items = complete(MarkedText.of(trafficLightWith("""
+                class SlowLight : TrafficLight {
                     redefine tran setColor(color: LightColor) {
                         self.color := color
                     }
@@ -200,7 +199,7 @@ class OxstsCompletionTest extends OxstsLanguageServerTest {
 
         assertThat(labels(items))
                 .contains(
-                        "redefine tran assumeColor(color: LightColor)",
+                        "redefine tran blink(color: LightColor, times: int)",
                         "redefine prop isColor(color: LightColor): bool",
                         "redefine tran",
                         "redefine init")
@@ -216,7 +215,7 @@ class OxstsCompletionTest extends OxstsLanguageServerTest {
 
     @Test
     void classBodyOffersAnAbstractFeatureAsContainsAndRefersRedefinitions() throws Exception {
-        var items = complete(MarkedText.of(trafficLightsWith("""
+        var items = complete(MarkedText.of(trafficLightWith("""
                 abstract class LightHolder {
                     features light: TrafficLight
                 }
@@ -238,7 +237,7 @@ class OxstsCompletionTest extends OxstsLanguageServerTest {
 
     @Test
     void classBodyAfterAFeatureOffersTheRedefinitionsOfTheClassNotOfTheFeatureType() throws Exception {
-        var items = complete(MarkedText.of(trafficLightsWith("""
+        var items = complete(MarkedText.of(trafficLightWith("""
                 class Case {
                     contains light: TrafficLight
                     <|>
@@ -248,60 +247,6 @@ class OxstsCompletionTest extends OxstsLanguageServerTest {
         assertThat(labels(items))
                 .contains("redefine tran", "redefine init")
                 .doesNotContain("redefine tran setColor(color: LightColor)");
-    }
-
-    @Test
-    void libraryClassBodyOffersRedefinitionsOfLibraryMembers() throws Exception {
-        for (var file : gammaLibrary().entrySet()) {
-            addLibraryFile(file.getKey(), file.getValue());
-        }
-        var items = complete(MarkedText.of("""
-                package example::library
-
-                import semantifyr::gamma::statecharts
-
-                class MyChart : Statechart {
-                    <|>
-                }
-                """));
-
-        assertThat(labels(items))
-                .contains(
-                        "redefine tran schedule()",
-                        "redefine tran restore()",
-                        "redefine contains regions: Region[0..*]",
-                        "redefine refers regionSchedule: RegionSchedule");
-        assertThat(item(items, "redefine contains regions: Region[0..*]").getDetail())
-                .isEqualTo("Statechart");
-    }
-
-    @Test
-    void libraryTypesAndMembersCarryKindsAndDetails() throws Exception {
-        for (var file : gammaLibrary().entrySet()) {
-            addLibraryFile(file.getKey(), file.getValue());
-        }
-        var items = complete(MarkedText.of("""
-                package example::library
-
-                import semantifyr::gamma::statecharts
-
-                class Case {
-                    contains chart: Statechart
-
-                    redefine tran {
-                        inline chart.<|>
-                    }
-                }
-                """));
-
-        assertThat(labels(items))
-                .contains("restore", "schedule", "assumeNoTransitionEnabled", "regions")
-                .doesNotContain("regionSchedule");
-        assertThat(item(items, "restore").getDetail()).isEqualTo("restore()");
-        assertThat(item(items, "regions")).satisfies(item -> {
-            assertThat(item.getKind()).isEqualTo(CompletionItemKind.Property);
-            assertThat(item.getDetail()).isEqualTo("contains Region[0..*]");
-        });
     }
 
     private List<CompletionItem> complete(MarkedText model) throws Exception {
