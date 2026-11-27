@@ -26,7 +26,7 @@ import org.junit.jupiter.params.provider.EnumSource
 import org.opentest4j.AssertionFailedError
 import org.opentest4j.TestAbortedException
 import java.nio.file.Path
-import kotlin.io.path.Path
+import kotlin.io.path.writeText
 
 @InjectWithOxsts
 class SemantifyrVerifierTestHelperTest {
@@ -37,7 +37,8 @@ class SemantifyrVerifierTestHelperTest {
     @TempDir
     lateinit var output: Path
 
-    private val simpleModel = Path("../../oxsts-test-models/simple/simple.semantifyr")
+    @TempDir
+    lateinit var modelDirectory: Path
 
     @ParameterizedTest
     @EnumSource(
@@ -88,7 +89,7 @@ class SemantifyrVerifierTestHelperTest {
 
     @Test
     fun `the witness cases are the passed reachabilities and the failed invariants`() {
-        val context = helper.semantifyrLoader.loadStandaloneModel(simpleModel)
+        val context = helper.semantifyrLoader.loadStandaloneModel(writeModel())
         val names = helper.collectVerificationCases(context, helper.casesExpectingWitness).map {
             it.qualifiedName.substringAfterLast("::")
         }
@@ -103,7 +104,7 @@ class SemantifyrVerifierTestHelperTest {
         caseName: String = "Incrementing",
         validationPortfolio: VerificationPortfolio? = null,
     ) {
-        val context = helper.semantifyrLoader.loadStandaloneModel(simpleModel)
+        val context = helper.semantifyrLoader.loadStandaloneModel(writeModel())
         val case = helper.collectVerificationCases(context).first {
             it.qualifiedName.endsWith("::$caseName")
         }
@@ -114,6 +115,12 @@ class SemantifyrVerifierTestHelperTest {
             outputDirectory = output,
             validationPortfolio = validationPortfolio,
         )
+    }
+
+    private fun writeModel(): Path {
+        val model = modelDirectory.resolve("cases.semantifyr")
+        model.writeText(MODEL)
+        return model
     }
 
     private class FixedPortfolio(
@@ -143,5 +150,60 @@ class SemantifyrVerifierTestHelperTest {
         ): BackendVerificationResult {
             return BackendVerificationResult(verdict = verdict, metadata = fakeMetadata(FakeExecutorKey.name))
         }
+    }
+
+    companion object {
+        // one case of each verdict for each temporal operator, so that exactly two of them expect a witness
+        private val MODEL = """
+            package verifier::helper
+
+            @VerificationCase
+            @Tag("expect-pass")
+            class Incrementing {
+                var x: int := 0
+
+                redefine tran {
+                    x := x + 1
+                }
+
+                redefine prop {
+                    return EF x == 10
+                }
+            }
+
+            @VerificationCase
+            @Tag("expect-fail")
+            class StaysAtOne {
+                var x: int := 1
+
+                redefine prop {
+                    return EF x == 0
+                }
+            }
+
+            @VerificationCase
+            @Tag("expect-pass")
+            class StaysAtZero {
+                var x: int := 0
+
+                redefine prop {
+                    return AG x == 0
+                }
+            }
+
+            @VerificationCase
+            @Tag("expect-fail")
+            class CounterExceedsBound {
+                var x: int := 0
+
+                redefine tran {
+                    x := x + 1
+                }
+
+                redefine prop {
+                    return AG x < 5
+                }
+            }
+        """.trimIndent()
     }
 }

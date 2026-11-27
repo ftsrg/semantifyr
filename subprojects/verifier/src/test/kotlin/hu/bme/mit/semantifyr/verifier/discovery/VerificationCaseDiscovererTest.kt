@@ -13,7 +13,9 @@ import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
-import kotlin.io.path.Path
+import org.junit.jupiter.api.io.TempDir
+import java.nio.file.Path
+import kotlin.io.path.writeText
 
 @InjectWithOxsts
 class VerificationCaseDiscovererTest {
@@ -24,7 +26,8 @@ class VerificationCaseDiscovererTest {
     @Inject
     private lateinit var discoverer: VerificationCaseDiscoverer
 
-    private val modelPath = Path("../../oxsts-test-models/simple/simple.semantifyr")
+    @TempDir
+    private lateinit var modelDirectory: Path
 
     @Test
     fun `discover returns every class annotated with VerificationCase`() {
@@ -33,10 +36,8 @@ class VerificationCaseDiscovererTest {
 
         assertThat(cases).extracting<String> { it.qualifiedName }
             .containsExactlyInAnyOrder(
-                "semantifyr::verification::simple::Incrementing",
-                "semantifyr::verification::simple::StaysAtOne",
-                "semantifyr::verification::simple::FlipFlopInvariant",
-                "semantifyr::verification::simple::CounterExceedsBound",
+                "verifier::discovery::Passing",
+                "verifier::discovery::Failing",
             )
     }
 
@@ -45,9 +46,9 @@ class VerificationCaseDiscovererTest {
         val context = loadContext()
         val cases = discoverer.discover(context).associateBy { it.qualifiedName }
 
-        assertThat(cases.getValue("semantifyr::verification::simple::Incrementing").tags)
+        assertThat(cases.getValue("verifier::discovery::Passing").tags)
             .containsExactly("expect-pass")
-        assertThat(cases.getValue("semantifyr::verification::simple::CounterExceedsBound").tags)
+        assertThat(cases.getValue("verifier::discovery::Failing").tags)
             .containsExactly("expect-fail")
     }
 
@@ -58,8 +59,7 @@ class VerificationCaseDiscovererTest {
 
         assertThat(filtered).extracting<String> { it.qualifiedName }
             .containsExactly(
-                "semantifyr::verification::simple::Incrementing",
-                "semantifyr::verification::simple::FlipFlopInvariant",
+                "verifier::discovery::Passing",
             )
     }
 
@@ -70,24 +70,23 @@ class VerificationCaseDiscovererTest {
 
         assertThat(filtered).extracting<String> { it.qualifiedName }
             .containsExactly(
-                "semantifyr::verification::simple::Incrementing",
-                "semantifyr::verification::simple::FlipFlopInvariant",
+                "verifier::discovery::Passing",
             )
     }
 
     @Test
     fun `findByQualifiedNameOrNull returns the matching case`() {
         val context = loadContext()
-        val case = discoverer.findByQualifiedNameOrNull(context, "semantifyr::verification::simple::Incrementing")
+        val case = discoverer.findByQualifiedNameOrNull(context, "verifier::discovery::Passing")
 
         assertThat(case).isNotNull
-        assertThat(case!!.qualifiedName).isEqualTo("semantifyr::verification::simple::Incrementing")
+        assertThat(case!!.qualifiedName).isEqualTo("verifier::discovery::Passing")
     }
 
     @Test
     fun `findByQualifiedNameOrNull returns null for an unknown name`() {
         val context = loadContext()
-        val case = discoverer.findByQualifiedNameOrNull(context, "semantifyr::verification::simple::Missing")
+        val case = discoverer.findByQualifiedNameOrNull(context, "verifier::discovery::Missing")
 
         assertThat(case).isNull()
     }
@@ -97,11 +96,39 @@ class VerificationCaseDiscovererTest {
         val context = loadContext()
 
         assertThatThrownBy {
-            discoverer.findByQualifiedName(context, "semantifyr::verification::simple::Missing")
-        }.hasMessageContaining("semantifyr::verification::simple::Missing")
+            discoverer.findByQualifiedName(context, "verifier::discovery::Missing")
+        }.hasMessageContaining("verifier::discovery::Missing")
     }
 
     private fun loadContext(): SemantifyrModelContext {
-        return loader.loadStandaloneModel(modelPath)
+        val model = modelDirectory.resolve("discovery.semantifyr")
+        model.writeText(MODEL)
+        return loader.loadStandaloneModel(model)
+    }
+
+    companion object {
+        private val MODEL = """
+            package verifier::discovery
+
+            class Counter {
+                var count: int := 0
+            }
+
+            @VerificationCase
+            @Tag("expect-pass")
+            class Passing {
+                redefine prop {
+                    return AG true
+                }
+            }
+
+            @VerificationCase
+            @Tag("expect-fail")
+            class Failing {
+                redefine prop {
+                    return AG false
+                }
+            }
+        """.trimIndent()
     }
 }

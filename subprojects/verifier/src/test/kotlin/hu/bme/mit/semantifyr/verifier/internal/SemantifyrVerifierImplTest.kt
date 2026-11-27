@@ -62,7 +62,6 @@ import org.mockito.kotlin.doAnswer
 import org.mockito.kotlin.mock
 import java.nio.file.Path
 import kotlin.coroutines.cancellation.CancellationException
-import kotlin.io.path.Path
 import kotlin.io.path.exists
 import kotlin.io.path.readText
 import kotlin.io.path.writeText
@@ -84,7 +83,8 @@ class SemantifyrVerifierImplTest {
     @Inject
     private lateinit var serializer: ISerializer
 
-    private val modelPath = Path("../../oxsts-test-models/simple/simple.semantifyr")
+    @TempDir
+    lateinit var modelDirectory: Path
 
     @Test
     suspend fun `successful portfolio verdict propagates to VerificationResult`(@TempDir output: Path) {
@@ -155,7 +155,7 @@ class SemantifyrVerifierImplTest {
         val result = build(portfolio, output).verify(loadFirstCase()).report.result
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.NotSupported)
-        assertThat(result.message).isEqualTo("scripted does not support simple.semantifyr:12: variables of type int (x)")
+        assertThat(result.message).isEqualTo("scripted does not support simple.semantifyr:5: variables of type int (x)")
     }
 
     @Test
@@ -437,6 +437,8 @@ class SemantifyrVerifierImplTest {
     }
 
     private fun loadFirstCase(): VerificationCase {
+        val modelPath = modelDirectory.resolve("simple.semantifyr")
+        modelPath.writeText(MODEL)
         val context = loader.loadStandaloneModel(modelPath)
         val classDeclaration = context.modelResources.asSequence()
             .flatMap {
@@ -610,5 +612,28 @@ class SemantifyrVerifierImplTest {
             invocations++
             return behavior(request, progress)
         }
+    }
+
+    companion object {
+        private val MODEL = """
+            package semantifyr::verification::simple
+
+            @VerificationCase
+            class Incrementing {
+                var x: int := 0
+
+                redefine init {
+                    x := 1
+                }
+
+                redefine tran {
+                    x := x + 1
+                }
+
+                redefine prop {
+                    return EF x == 10
+                }
+            }
+        """.trimIndent()
     }
 }
