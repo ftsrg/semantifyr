@@ -86,6 +86,7 @@ include(
     "corpus-check",
     "semantifyr-cli",
     "semantifyr-editor-common",
+    "metamodel-builder",
     "oxsts.model",
     "oxsts.lang",
     "oxsts.lang.ide",

@@ -22,11 +22,7 @@ dependencies {
     testFixturesApi(libs.junit.api)
     testFixturesApi(libs.xtext.testing)
 
-    add(metamodel.implementationConfigurationName, project(":oxsts.model")) {
-        capabilities {
-            requireFeature("metamodel")
-        }
-    }
+    add(metamodel.implementationConfigurationName, project(":metamodel-builder"))
 }
 
 val emfGeneratedDirectory = layout.projectDirectory.dir("src/main/emf-gen")

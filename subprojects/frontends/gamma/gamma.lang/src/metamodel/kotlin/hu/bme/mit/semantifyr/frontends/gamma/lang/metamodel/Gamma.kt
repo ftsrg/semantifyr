@@ -6,14 +6,14 @@
 
 package hu.bme.mit.semantifyr.frontends.gamma.lang.metamodel
 
-import hu.bme.mit.semantifyr.oxsts.model.metamodel.AbstractMetaClass
-import hu.bme.mit.semantifyr.oxsts.model.metamodel.Bounds.MANY
-import hu.bme.mit.semantifyr.oxsts.model.metamodel.EBoolean
-import hu.bme.mit.semantifyr.oxsts.model.metamodel.EInt
-import hu.bme.mit.semantifyr.oxsts.model.metamodel.EString
-import hu.bme.mit.semantifyr.oxsts.model.metamodel.MetaClass
-import hu.bme.mit.semantifyr.oxsts.model.metamodel.MetaEnum
-import hu.bme.mit.semantifyr.oxsts.model.metamodel.MetaPackage
+import hu.bme.mit.semantifyr.metamodel.AbstractMetaClass
+import hu.bme.mit.semantifyr.metamodel.Bounds.MANY
+import hu.bme.mit.semantifyr.metamodel.EBoolean
+import hu.bme.mit.semantifyr.metamodel.EInt
+import hu.bme.mit.semantifyr.metamodel.EString
+import hu.bme.mit.semantifyr.metamodel.MetaClass
+import hu.bme.mit.semantifyr.metamodel.MetaEnum
+import hu.bme.mit.semantifyr.metamodel.MetaPackage
 
 object Gamma : MetaPackage(
     name = "gamma",

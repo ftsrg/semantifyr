@@ -4,11 +4,21 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
+@file:Suppress("unused")
+
 package hu.bme.mit.semantifyr.oxsts.model.metamodel
 
-import hu.bme.mit.semantifyr.oxsts.model.metamodel.Bounds.MANY
-import hu.bme.mit.semantifyr.oxsts.model.metamodel.Bounds.ONE
-import hu.bme.mit.semantifyr.oxsts.model.metamodel.Bounds.ONE_OR_MORE
+import hu.bme.mit.semantifyr.metamodel.AbstractMetaClass
+import hu.bme.mit.semantifyr.metamodel.Bounds.MANY
+import hu.bme.mit.semantifyr.metamodel.Bounds.ONE
+import hu.bme.mit.semantifyr.metamodel.Bounds.ONE_OR_MORE
+import hu.bme.mit.semantifyr.metamodel.EBoolean
+import hu.bme.mit.semantifyr.metamodel.EDouble
+import hu.bme.mit.semantifyr.metamodel.EInt
+import hu.bme.mit.semantifyr.metamodel.EString
+import hu.bme.mit.semantifyr.metamodel.MetaClass
+import hu.bme.mit.semantifyr.metamodel.MetaEnum
+import hu.bme.mit.semantifyr.metamodel.MetaPackage
 
 object Oxsts : MetaPackage(
     name = "oxsts",
