@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import com.github.gradle.node.npm.task.NpmTask
+import com.github.gradle.node.pnpm.task.PnpmTask
 import com.github.gradle.node.variant.VariantComputer
 import hu.bme.mit.semantifyr.gradle.ExampleDescriptions
 import hu.bme.mit.semantifyr.gradle.artifactsOf
@@ -12,7 +12,7 @@ import hu.bme.mit.semantifyr.gradle.commitHash
 import hu.bme.mit.semantifyr.gradle.oxstsFileExtension
 import hu.bme.mit.semantifyr.gradle.readsPackage
 import hu.bme.mit.semantifyr.gradle.registerBrandingAssets
-import hu.bme.mit.semantifyr.gradle.registerNpmCheck
+import hu.bme.mit.semantifyr.gradle.registerPnpmCheck
 import hu.bme.mit.semantifyr.gradle.semantifyrArtifact
 import hu.bme.mit.semantifyr.gradle.servedExamples
 import org.apache.tools.ant.taskdefs.condition.Os
@@ -153,7 +153,7 @@ val cloneSysmlWorker = tasks.register<Sync>("cloneSysmlWorker") {
 
 val cloneBrandingAssets = registerBrandingAssets(publicDirectory)
 
-fun NpmTask.configureSharedInputs() {
+fun PnpmTask.configureSharedInputs() {
     inputs.files(editorCommon).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(cloneGammaExamples).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(cloneSysmlExamples).withPathSensitivity(PathSensitivity.RELATIVE)
@@ -163,12 +163,12 @@ fun NpmTask.configureSharedInputs() {
     inputs.files(cloneBrandingAssets).withPathSensitivity(PathSensitivity.RELATIVE)
 }
 
-fun NpmTask.passesVersionAndCommit() {
+fun PnpmTask.passesVersionAndCommit() {
     environment.put("SEMANTIFYR_VERSION", project.version.toString())
     environment.put("SEMANTIFYR_COMMIT", commitHash())
 }
 
-val npmAssemble = tasks.register<NpmTask>("npmAssemble") {
+val pnpmAssemble = tasks.register<PnpmTask>("pnpmAssemble") {
     group = LifecycleBasePlugin.BUILD_GROUP
 
     readsPackage()
@@ -177,7 +177,7 @@ val npmAssemble = tasks.register<NpmTask>("npmAssemble") {
     inputs.file(layout.projectDirectory.file("index.html")).withPathSensitivity(PathSensitivity.RELATIVE)
     passesVersionAndCommit()
 
-    npmCommand = listOf("run", "assemble")
+    pnpmCommand = listOf("run", "assemble")
     outputs.dir(layout.projectDirectory.dir("dist"))
     outputs.cacheIf {
         true
@@ -187,25 +187,25 @@ val npmAssemble = tasks.register<NpmTask>("npmAssemble") {
 configurations.consumable("webDistributionElements") {
     attributes(semantifyrArtifact("web-distribution"))
     outgoing.artifact(layout.projectDirectory.dir("dist")) {
-        builtBy(npmAssemble)
+        builtBy(pnpmAssemble)
     }
 }
 
-registerNpmCheck {
+registerPnpmCheck {
     configureSharedInputs()
     // an example's page is tested against live's head and the rights the REUSE file gives
     inputs.file(layout.projectDirectory.file("index.html")).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.file(isolated.rootProject.projectDirectory.file("REUSE.toml")).withPathSensitivity(PathSensitivity.RELATIVE)
 }
 
-tasks.register<NpmTask>("integrationTest") {
+tasks.register<PnpmTask>("integrationTest") {
     group = LifecycleBasePlugin.VERIFICATION_GROUP
 
     readsPackage()
     configureSharedInputs()
     inputs.file(layout.projectDirectory.file("vite.config.ts")).withPathSensitivity(PathSensitivity.RELATIVE)
 
-    npmCommand = listOf("run", "test:integration")
+    pnpmCommand = listOf("run", "test:integration")
 
     outputs.file(layout.buildDirectory.file("test-results/integration.xml"))
     outputs.cacheIf {
@@ -213,7 +213,7 @@ tasks.register<NpmTask>("integrationTest") {
     }
 }
 
-fun NpmTask.runsInBrowser(
+fun PnpmTask.runsInBrowser(
     browser: String,
     suite: String,
     configuration: String,
@@ -225,7 +225,7 @@ fun NpmTask.runsInBrowser(
     inputs.file(layout.projectDirectory.file(configuration)).withPathSensitivity(PathSensitivity.RELATIVE)
 
     val report = "build/test-results/$suite-$browser.xml"
-    npmCommand = listOf("run", suite, "--", "--reporter=default", "--reporter=junit", "--outputFile.junit=$report")
+    pnpmCommand = listOf("run", suite, "--", "--reporter=default", "--reporter=junit", "--outputFile.junit=$report")
     environment.put("TEST_BROWSER", browser)
 
     outputs.file(layout.projectDirectory.file(report))
@@ -243,7 +243,7 @@ listOf(
         it.uppercase()
     }
 
-    val screenTest = tasks.register<NpmTask>("screenTest$taskSuffix") {
+    val screenTest = tasks.register<PnpmTask>("screenTest$taskSuffix") {
         runsInBrowser(browser, "screens", "vitest.screen.config.ts")
         val screensDirectory = layout.buildDirectory.dir("screens/$browser")
         outputs.dir(screensDirectory)
@@ -252,9 +252,9 @@ listOf(
         }
     }
 
-    val applicationTest = tasks.register<NpmTask>("applicationTest$taskSuffix") {
+    val applicationTest = tasks.register<PnpmTask>("applicationTest$taskSuffix") {
         runsInBrowser(browser, "ui", "vitest.ui.config.ts")
-        inputs.files(npmAssemble).withPathSensitivity(PathSensitivity.RELATIVE)
+        inputs.files(pnpmAssemble).withPathSensitivity(PathSensitivity.RELATIVE)
         inputs.files(cloneSysmlWorker).withPathSensitivity(PathSensitivity.RELATIVE)
     }
 
@@ -264,16 +264,16 @@ listOf(
     }
 }
 
-val screenshots = tasks.register<NpmTask>("screenshots") {
+val screenshots = tasks.register<PnpmTask>("screenshots") {
     group = LifecycleBasePlugin.BUILD_GROUP
 
     readsPackage()
     configureSharedInputs()
     inputs.file(layout.projectDirectory.file("vitest.screenshots.config.ts")).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.files(npmAssemble).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.files(pnpmAssemble).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(cloneSysmlWorker).withPathSensitivity(PathSensitivity.RELATIVE)
 
-    npmCommand = listOf("run", "screenshots")
+    pnpmCommand = listOf("run", "screenshots")
     environment.put("TEST_BROWSER", "chromium")
     val screenshotsDirectory = layout.buildDirectory.dir("screenshots")
     outputs.dir(screenshotsDirectory)
@@ -292,7 +292,7 @@ configurations.consumable("screenshotsElements") {
     }
 }
 
-tasks.register<NpmTask>("runDev") {
+tasks.register<PnpmTask>("runDev") {
     group = ApplicationPlugin.APPLICATION_GROUP
 
     readsPackage()
@@ -300,12 +300,12 @@ tasks.register<NpmTask>("runDev") {
     inputs.file(layout.projectDirectory.file("vite.config.ts")).withPathSensitivity(PathSensitivity.RELATIVE)
     passesVersionAndCommit()
 
-    npmCommand = listOf("run", "dev")
+    pnpmCommand = listOf("run", "dev")
 }
 
 tasks.register("pack") {
     group = LifecycleBasePlugin.BUILD_GROUP
-    dependsOn(npmAssemble)
+    dependsOn(pnpmAssemble)
 }
 
 tasks.register("continuousIntegration") {

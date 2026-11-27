@@ -7,6 +7,7 @@
 package hu.bme.mit.semantifyr
 
 import com.github.gradle.node.npm.proxy.ProxySettings
+import hu.bme.mit.semantifyr.gradle.pnpmVersionOf
 
 plugins {
     base
@@ -21,10 +22,11 @@ node {
     distBaseUrl = null
     // CodeQL's autobuild sets empty proxy system properties, which the plugin turns into HTTPS_PROXY=http://:
     nodeProxySettings = ProxySettings.OFF
+    pnpmVersion = pnpmVersionOf(isolated.rootProject.projectDirectory.file("package.json"))
 }
 
 if (isolated != isolated.rootProject) {
-    tasks.npmInstall {
+    tasks.pnpmInstall {
         enabled = false
     }
 }

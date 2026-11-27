@@ -8,6 +8,7 @@ import com.github.gradle.node.pnpm.task.PnpmTask
 import com.github.gradle.node.task.NodeTask
 import hu.bme.mit.semantifyr.gradle.AppendFurtherCases
 import hu.bme.mit.semantifyr.gradle.oxstsFileExtension
+import hu.bme.mit.semantifyr.gradle.pnpmVersionOf
 import hu.bme.mit.semantifyr.gradle.semantifyrArtifact
 import org.apache.tools.ant.taskdefs.condition.Os
 
@@ -38,10 +39,7 @@ val sysmlDirectory = layout.projectDirectory.dir("sysml-2ls")
 
 node {
     nodeProjectDir = sysmlDirectory
-    // pnpm switches itself to the fork's packageManager, so the installed one must match it
-    pnpmVersion = providers.fileContents(sysmlDirectory.file("package.json")).asText.map {
-        Regex("\"packageManager\"\\s*:\\s*\"pnpm@([^\"+]+)").find(it)?.groupValues?.get(1)
-    }.orElse(libs.versions.pnpm)
+    pnpmVersion = pnpmVersionOf(sysmlDirectory.file("package.json"))
 }
 
 val checkoutSysml = tasks.register<Exec>("checkoutSysml") {
@@ -58,6 +56,7 @@ val checkoutSysml = tasks.register<Exec>("checkoutSysml") {
 }
 
 tasks.pnpmInstall {
+    enabled = true
     // the checkout's working tree is not a declared output of checkoutSysml
     dependsOn(checkoutSysml)
     // every pnpm run records its run state here

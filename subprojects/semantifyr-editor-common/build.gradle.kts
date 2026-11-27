@@ -4,14 +4,14 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import hu.bme.mit.semantifyr.gradle.registerNpmCheck
+import hu.bme.mit.semantifyr.gradle.registerPnpmCheck
 import hu.bme.mit.semantifyr.gradle.semantifyrArtifact
 
 plugins {
     id("hu.bme.mit.semantifyr.nodejs")
 }
 
-registerNpmCheck {
+registerPnpmCheck {
     listOf(
         "subprojects/website/models",
         "subprojects/frontends/gamma/models",

@@ -4,10 +4,10 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import com.github.gradle.node.npm.task.NpmTask
+import com.github.gradle.node.pnpm.task.PnpmTask
 import hu.bme.mit.semantifyr.gradle.artifactsOf
 import hu.bme.mit.semantifyr.gradle.readsPackage
-import hu.bme.mit.semantifyr.gradle.registerNpmCheck
+import hu.bme.mit.semantifyr.gradle.registerPnpmCheck
 import hu.bme.mit.semantifyr.gradle.registerRenderPictures
 import hu.bme.mit.semantifyr.gradle.runsWithTheta
 import hu.bme.mit.semantifyr.gradle.semantifyrArtifact
@@ -59,18 +59,18 @@ val cloneLicense = tasks.register("cloneLicense") {
     }
 }
 
-fun NpmTask.configureSharedInputs() {
+fun PnpmTask.configureSharedInputs() {
     inputs.file(layout.projectDirectory.file("esbuild.mjs")).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(editorCommon).withPathSensitivity(PathSensitivity.RELATIVE)
 }
 
-registerNpmCheck {
+registerPnpmCheck {
     configureSharedInputs()
 }
 
 val vsixFile = layout.buildDirectory.file("semantifyr-$extensionVersion.vsix")
 
-val bundleExtension = tasks.register<NpmTask>("bundleExtension") {
+val bundleExtension = tasks.register<PnpmTask>("bundleExtension") {
     group = LifecycleBasePlugin.BUILD_GROUP
 
     readsPackage()
@@ -83,7 +83,7 @@ val bundleExtension = tasks.register<NpmTask>("bundleExtension") {
     inputs.file(layout.projectDirectory.file("CHANGELOG.md")).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(cloneLicense).withPathSensitivity(PathSensitivity.RELATIVE)
 
-    npmCommand = listOf("run", "bundle", "--", extensionVersion, "--no-git-tag-version", "--no-update-package-json")
+    pnpmCommand = listOf("run", "bundle", "--", extensionVersion, "--no-git-tag-version", "--no-update-package-json")
 
     outputs.file(vsixFile)
     outputs.cacheIf {
@@ -91,7 +91,7 @@ val bundleExtension = tasks.register<NpmTask>("bundleExtension") {
     }
 }
 
-tasks.register<NpmTask>("endToEndTest") {
+tasks.register<PnpmTask>("endToEndTest") {
     group = LifecycleBasePlugin.VERIFICATION_GROUP
 
     readsPackage()
@@ -100,7 +100,7 @@ tasks.register<NpmTask>("endToEndTest") {
     inputs.file(isolated.rootProject.projectDirectory.file("oxsts-test-models/smoke/smoke.semantifyr")).withPathSensitivity(PathSensitivity.RELATIVE)
     runsWithTheta()
 
-    npmCommand = listOf("run", "test:end-to-end")
+    pnpmCommand = listOf("run", "test:end-to-end")
     environment.put(
         "SEMANTIFYR_VSIX",
         vsixFile.map {

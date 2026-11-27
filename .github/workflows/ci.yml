@@ -292,21 +292,21 @@ jobs:
         env:
           SEMANTIFYR_LIVE_URL: http://localhost:8080
           TEST_BROWSER: chromium
-        run: npm run flows -w @ftsrg/semantifyr-live-frontend
+        run: pnpm --filter @ftsrg/semantifyr-live-frontend run flows
       - name: Run the live flows on the image on Firefox
         if: ${{ !cancelled() && steps.browsers.outcome == 'success' }}
         timeout-minutes: 15
         env:
           SEMANTIFYR_LIVE_URL: http://localhost:8080
           TEST_BROWSER: firefox
-        run: npm run flows -w @ftsrg/semantifyr-live-frontend
+        run: pnpm --filter @ftsrg/semantifyr-live-frontend run flows
       - name: Run the live flows on the image on WebKit
         if: ${{ !cancelled() && steps.browsers.outcome == 'success' }}
         timeout-minutes: 15
         env:
           SEMANTIFYR_LIVE_URL: http://localhost:8080
           TEST_BROWSER: webkit
-        run: npm run flows -w @ftsrg/semantifyr-live-frontend
+        run: pnpm --filter @ftsrg/semantifyr-live-frontend run flows
       - name: Upload the evidence of failed live flows
         if: ${{ failure() }}
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2

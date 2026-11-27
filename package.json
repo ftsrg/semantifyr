@@ -3,12 +3,7 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "workspaces": [
-    "subprojects/semantifyr-editor-common",
-    "subprojects/semantifyr-live/frontend",
-    "subprojects/semantifyr-vscode",
-    "subprojects/website"
-  ],
+  "packageManager": "pnpm@12.16.1",
   "devDependencies": {
     "@eslint/js": "^9.20.1",
     "@resvg/resvg-js": "^2.6.2",

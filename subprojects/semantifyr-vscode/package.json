@@ -2,7 +2,7 @@
   "name": "semantifyr",
   "displayName": "Semantifyr",
   "description": "Edit and verify Semantifyr and Gamma models with Semantifyr, a framework to support the declarative definition of engineering model semantics.",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "type": "module",
   "publisher": "ftsrg",
   "license": "EPL-2.0",
@@ -284,16 +284,16 @@
     "test": "vitest run --reporter=default --reporter=junit --outputFile.junit=build/test-results/unit.xml",
     "test:watch": "vitest",
     "test:end-to-end": "node src/__end-to-end__/run.mjs",
-    "check": "npm run typecheck && npm run lint && npm run test",
+    "check": "pnpm run typecheck && pnpm run lint && pnpm run test",
     "assemble": "node esbuild.mjs",
     "assemble:watch": "node esbuild.mjs --watch",
     "assemble:production": "node esbuild.mjs --minify",
-    "build": "npm run check && npm run assemble",
-    "bundle": "npm run assemble:production && vsce package --no-dependencies --out build/",
-    "dev": "concurrently -k \"npm run typecheck:watch\" \"npm run assemble:watch\""
+    "build": "pnpm run check && pnpm run assemble",
+    "bundle": "pnpm run assemble:production && vsce package --no-dependencies --out build/",
+    "dev": "concurrently -k \"pnpm run typecheck:watch\" \"pnpm run assemble:watch\""
   },
   "dependencies": {
-    "@semantifyr/editor-common": "*",
+    "@semantifyr/editor-common": "workspace:*",
     "vscode-languageclient": "^11.0.0"
   },
   "devDependencies": {

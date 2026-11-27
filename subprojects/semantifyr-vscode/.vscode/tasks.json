@@ -3,7 +3,7 @@
   "tasks": [
     {
       "label": "Build",
-      "command": "npm run build",
+      "command": "pnpm run build",
       "type": "shell",
       "group": {
         "kind": "build",

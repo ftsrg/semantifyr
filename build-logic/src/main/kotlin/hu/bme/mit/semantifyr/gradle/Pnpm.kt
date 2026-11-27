@@ -6,9 +6,11 @@
 
 package hu.bme.mit.semantifyr.gradle
 
-import com.github.gradle.node.npm.task.NpmTask
+import com.github.gradle.node.pnpm.task.PnpmTask
 import com.github.gradle.node.task.BaseTask
 import org.gradle.api.Project
+import org.gradle.api.file.RegularFile
+import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.PathSensitivity
 import org.gradle.kotlin.dsl.assign
 import org.gradle.kotlin.dsl.register
@@ -20,12 +22,13 @@ fun BaseTask.readsWorkspace() {
         root.file(".nvmrc"),
         root.file("tsconfig.base.json"),
         root.file("package.json"),
-        root.file("package-lock.json"),
-        project.artifactsOf("npm-workspace", ":"),
+        root.file("pnpm-workspace.yaml"),
+        root.file("pnpm-lock.yaml"),
+        project.artifactsOf("pnpm-workspace", ":"),
     ).withPathSensitivity(PathSensitivity.RELATIVE)
 }
 
-fun NpmTask.readsPackage() {
+fun PnpmTask.readsPackage() {
     readsWorkspace()
     val packageDirectory = project.layout.projectDirectory
     inputs.dir(packageDirectory.dir("src")).withPathSensitivity(PathSensitivity.RELATIVE)
@@ -33,8 +36,8 @@ fun NpmTask.readsPackage() {
     inputs.file(packageDirectory.file("tsconfig.json")).withPathSensitivity(PathSensitivity.RELATIVE)
 }
 
-fun Project.registerNpmCheck(ownInputs: NpmTask.() -> Unit) {
-    val npmCheck = tasks.register<NpmTask>("npmCheck") {
+fun Project.registerPnpmCheck(ownInputs: PnpmTask.() -> Unit) {
+    val pnpmCheck = tasks.register<PnpmTask>("pnpmCheck") {
         group = LifecycleBasePlugin.VERIFICATION_GROUP
 
         readsPackage()
@@ -49,7 +52,7 @@ fun Project.registerNpmCheck(ownInputs: NpmTask.() -> Unit) {
         ).withPathSensitivity(PathSensitivity.RELATIVE)
         ownInputs()
 
-        npmCommand = listOf("run", "check")
+        pnpmCommand = listOf("run", "check")
 
         outputs.file(layout.buildDirectory.file("tsconfig.tsbuildinfo"))
         outputs.file(layout.buildDirectory.file("eslint.json"))
@@ -60,6 +63,13 @@ fun Project.registerNpmCheck(ownInputs: NpmTask.() -> Unit) {
     }
 
     tasks.named("check") {
-        dependsOn(npmCheck)
+        dependsOn(pnpmCheck)
+    }
+}
+
+// pnpm switches itself to the packageManager its manifest names, so the installed one must match it
+fun Project.pnpmVersionOf(manifest: RegularFile): Provider<String> {
+    return providers.fileContents(manifest).asText.map {
+        Regex("\"packageManager\"\\s*:\\s*\"pnpm@([^\"+]+)").find(it)?.groupValues?.get(1)
     }
 }

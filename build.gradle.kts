@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import groovy.json.JsonSlurper
 import hu.bme.mit.semantifyr.gradle.semantifyrArtifact
 
 plugins {
@@ -65,26 +64,21 @@ sonar {
     }
 }
 
-val workspaceManifests = providers.fileContents(layout.projectDirectory.file("package.json")).asText.map { manifest ->
-    ((JsonSlurper().parseText(manifest) as Map<*, *>)["workspaces"] as List<*>).map {
-        "$it/package.json"
-    }
+val workspaceManifests = providers.fileContents(layout.projectDirectory.file("pnpm-workspace.yaml")).asText.map { workspace ->
+    Regex("""^\s*-\s*(\S+)\s*$""", RegexOption.MULTILINE).findAll(workspace).map {
+        "${it.groupValues[1]}/package.json"
+    }.toList()
 }
 
-node {
-    npmInstallCommand = providers.environmentVariable("CI").map {
-        "ci"
-    }.orElse("install")
-}
-
-tasks.npmInstall {
+tasks.pnpmInstall {
+    inputs.file(layout.projectDirectory.file("pnpm-workspace.yaml")).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(workspaceManifests).withPathSensitivity(PathSensitivity.RELATIVE)
 }
 
-configurations.consumable("npmWorkspaceElements") {
-    attributes(semantifyrArtifact("npm-workspace"))
-    outgoing.artifact(layout.projectDirectory.file("node_modules/.package-lock.json")) {
-        builtBy(tasks.npmInstall)
+configurations.consumable("pnpmWorkspaceElements") {
+    attributes(semantifyrArtifact("pnpm-workspace"))
+    outgoing.artifact(layout.projectDirectory.file("node_modules/.modules.yaml")) {
+        builtBy(tasks.pnpmInstall)
     }
 }
 

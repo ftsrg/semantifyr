@@ -57,7 +57,7 @@ jobs:
           VERSION: ${{ steps.version.outputs.version }}
         run: |
           : "${VSCE_PAT:?}" "${OVSX_PAT:?}"
-          vsce=$(jq -r '.packages["node_modules/@vscode/vsce"].version' package-lock.json)
+          vsce=$(sed -n "s/^  '@vscode\/vsce@\([0-9.]*\)':$/\1/p" pnpm-lock.yaml | head -n 1)
           npx --yes "@vscode/vsce@$vsce" publish --packagePath "distributions/semantifyr-$VERSION.vsix" --skip-duplicate
           npx --yes ovsx@1.3.0 publish "distributions/semantifyr-$VERSION.vsix" --skip-duplicate
       - name: Create the GitHub release

@@ -66,7 +66,7 @@ function serve(): Server {
 
 export default async function setup(project: TestProject): Promise<() => Promise<void>> {
   if (!existsSync(join(DIST, 'index.html'))) {
-    throw new Error('The UI tests serve the production build: run npm run assemble first')
+    throw new Error('The UI tests serve the production build: run pnpm run assemble first')
   }
   if (!existsSync(join(SYSML_WORKER, 'syside-worker.cjs'))) {
     throw new Error('The UI tests serve the SysML worker: run ./gradlew :semantifyr-live-frontend:cloneSysmlWorker first')

@@ -17,7 +17,7 @@ runs:
       env:
         BROWSERS: ${{ inputs.browsers }}
       run: |
-        version=$(jq -r '.packages["node_modules/playwright"].version' package-lock.json)
+        version=$(sed -n 's/^  playwright@\([0-9.]*\):$/\1/p' pnpm-lock.yaml | head -n 1)
         echo "version=$version" >> "$GITHUB_OUTPUT"
         echo "key=browsers-$ImageOS-$version-$(echo "$BROWSERS" | tr ' ' '-')" >> "$GITHUB_OUTPUT"
         mkdir -p "$HOME/.cache/apt-archives/partial"
@@ -35,5 +35,5 @@ runs:
         BROWSERS: ${{ inputs.browsers }}
         VERSION: ${{ steps.cache-key.outputs.version }}
       run: |
-        npx --yes "playwright@$VERSION" install --with-deps $BROWSERS
+        pnpm dlx "playwright@$VERSION" install --with-deps $BROWSERS
         sudo chmod -R a+rX "$HOME/.cache/apt-archives"

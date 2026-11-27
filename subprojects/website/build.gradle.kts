@@ -4,13 +4,13 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import com.github.gradle.node.npm.task.NpmTask
+import com.github.gradle.node.pnpm.task.PnpmTask
 import groovy.json.JsonSlurper
 import hu.bme.mit.semantifyr.gradle.artifactsOf
 import hu.bme.mit.semantifyr.gradle.readsPackage
 import hu.bme.mit.semantifyr.gradle.readsWorkspace
 import hu.bme.mit.semantifyr.gradle.registerBrandingAssets
-import hu.bme.mit.semantifyr.gradle.registerNpmCheck
+import hu.bme.mit.semantifyr.gradle.registerPnpmCheck
 import hu.bme.mit.semantifyr.gradle.semantifyrArtifact
 import hu.bme.mit.semantifyr.gradle.servedExampleSources
 
@@ -109,7 +109,7 @@ val cloneApiDocs = tasks.register<Sync>("cloneApiDocs") {
     into(layout.buildDirectory.dir("api-static/api"))
 }
 
-fun NpmTask.configureSharedInputs() {
+fun PnpmTask.configureSharedInputs() {
     inputs.files(editorCommon).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.file(layout.projectDirectory.file("docusaurus.config.ts")).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.file(layout.projectDirectory.file("sidebars.ts")).withPathSensitivity(PathSensitivity.RELATIVE)
@@ -117,7 +117,7 @@ fun NpmTask.configureSharedInputs() {
     inputs.files(cloneGrammars).withPathSensitivity(PathSensitivity.RELATIVE)
 }
 
-val npmAssemble = tasks.register<NpmTask>("npmAssemble") {
+val pnpmAssemble = tasks.register<PnpmTask>("pnpmAssemble") {
     group = LifecycleBasePlugin.BUILD_GROUP
 
     readsPackage()
@@ -129,7 +129,7 @@ val npmAssemble = tasks.register<NpmTask>("npmAssemble") {
     inputs.files(cloneScreenshots).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(cloneApiDocs).withPathSensitivity(PathSensitivity.RELATIVE)
 
-    npmCommand = listOf("run", "assemble")
+    pnpmCommand = listOf("run", "assemble")
 
     outputs.dir(layout.buildDirectory.dir("docusaurus"))
     outputs.cacheIf {
@@ -137,7 +137,7 @@ val npmAssemble = tasks.register<NpmTask>("npmAssemble") {
     }
 }
 
-tasks.register<NpmTask>("serve") {
+tasks.register<PnpmTask>("serve") {
     group = ApplicationPlugin.APPLICATION_GROUP
 
     readsPackage()
@@ -146,20 +146,20 @@ tasks.register<NpmTask>("serve") {
     inputs.files(cloneScreenshots).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(cloneApiDocs).withPathSensitivity(PathSensitivity.RELATIVE)
 
-    npmCommand = listOf("run", "dev")
+    pnpmCommand = listOf("run", "dev")
 }
 
-registerNpmCheck {
+registerPnpmCheck {
     configureSharedInputs()
 }
 
-val extractFences = tasks.register<NpmTask>("extractFences") {
+val extractFences = tasks.register<PnpmTask>("extractFences") {
     readsWorkspace()
     inputs.dir(layout.projectDirectory.dir("src/docs")).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.dir(layout.projectDirectory.dir("src/plugins")).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.file(layout.projectDirectory.file("package.json")).withPathSensitivity(PathSensitivity.RELATIVE)
 
-    npmCommand = listOf("run", "fences")
+    pnpmCommand = listOf("run", "fences")
 
     outputs.dir(layout.buildDirectory.dir("fences"))
     outputs.cacheIf {
@@ -183,7 +183,7 @@ configurations.consumable("oxstsTutorialElements") {
 
 tasks.register("pack") {
     group = LifecycleBasePlugin.BUILD_GROUP
-    dependsOn(npmAssemble)
+    dependsOn(pnpmAssemble)
 }
 
 tasks.named<Delete>("clean") {
