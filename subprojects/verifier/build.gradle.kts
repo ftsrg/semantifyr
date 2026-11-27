@@ -27,5 +27,4 @@ dependencies {
     testFixturesImplementation(libs.assertj.core)
     testFixturesImplementation(libs.junit.api)
     testFixturesImplementation(libs.kotlinx.coroutines.core)
-    testFixturesImplementation(libs.kotlinx.serialization.json)
 }

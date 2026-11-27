@@ -9,7 +9,6 @@ package hu.bme.mit.semantifyr.cli.common
 import com.github.ajalt.clikt.core.CliktError
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
 
-// scripts rely on these codes; --help lists them
 enum class ExitCode(
     val code: Int,
     val meaning: String,

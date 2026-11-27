@@ -28,7 +28,6 @@ class MetricsHandler @Inject constructor(
 
     private val logger by loggerFactory()
 
-    // the counters hold their source weakly, so the handler keeps it
     private val containerMetrics = ContainerMetrics.ofCurrentProcess()
 
     init {
@@ -46,14 +45,12 @@ class MetricsHandler @Inject constructor(
         logger.info { "Serving Prometheus metrics on port $metricsPort at /metrics" }
         install(MicrometerMetrics) {
             registry = this@MetricsHandler.registry
-            // the managers register meters before this plugin installs, too early for its registry-wide filter
             registerDistributionStatisticConfig = false
             filter {
                 it.request.local.localPort != metricsPort
             }
         }
         routing {
-            // the edge proxy reaches only server.port, so the public hostname never routes here
             localPort(metricsPort) {
                 get("/metrics") {
                     call.respondText(registry.scrape(), prometheusTextFormat)

@@ -7,7 +7,6 @@
 package hu.bme.mit.semantifyr.oxsts.lang.ide.server.commands;
 
 import com.google.inject.Inject;
-import hu.bme.mit.semantifyr.compiler.reader.SemantifyrLoader;
 import hu.bme.mit.semantifyr.lang.ide.server.ServerSettings;
 import hu.bme.mit.semantifyr.lang.ide.server.commands.AbstractCommandHandler;
 import hu.bme.mit.semantifyr.lang.ide.server.commands.CommandProgressContext;
@@ -34,9 +33,6 @@ public class VerifyInlinedOxstsCommandHandler
 
     @Inject
     protected SemantifyrVerifierFactory semantifyrVerifierFactory;
-
-    @Inject
-    protected SemantifyrLoader semantifyrLoader;
 
     @Override
     public String getId() {
