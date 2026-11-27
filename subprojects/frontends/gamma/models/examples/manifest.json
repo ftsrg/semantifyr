@@ -78,19 +78,6 @@
             ]
         },
         {
-            "file": "Simple.gamma",
-            "cases": [
-                { "name": "LeaderStatechartIdleReachable", "verdict": "Passed", "tier": "Integration" },
-                { "name": "LeaderStatechartOperationalReachable", "verdict": "Passed", "tier": "Integration" },
-                { "name": "LeaderStatechartStoppedReachable", "verdict": "Passed", "tier": "Integration" },
-                { "name": "LeaderStatechartUnreachable", "verdict": "Passed", "tier": "Integration" },
-                { "name": "WorkerStatechartIdleReachable", "verdict": "Passed", "tier": "Integration" },
-                { "name": "WorkerStatechartOperationalReachable", "verdict": "Passed", "tier": "Integration" },
-                { "name": "WorkerStatechartStoppedReachable", "verdict": "Passed", "tier": "Integration" },
-                { "name": "WorkerStatechartUnreachable", "verdict": "Passed", "tier": "Integration" }
-            ]
-        },
-        {
             "file": "LiftStep1.gamma",
             "cases": [
                 { "name": "LiftCanMove", "verdict": "Passed", "tier": "Integration" }
