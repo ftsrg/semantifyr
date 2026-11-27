@@ -6,7 +6,6 @@
 
 import hu.bme.mit.semantifyr.gradle.artifactsOf
 import hu.bme.mit.semantifyr.gradle.oxstsFileExtension
-import hu.bme.mit.semantifyr.gradle.readsTestModels
 
 plugins {
     id("hu.bme.mit.semantifyr.suites")
@@ -30,26 +29,6 @@ dependencies {
     testImplementation(testFixtures(project(":oxsts.lang")))
 
     add(benchmark.implementationConfigurationName, project(":logging"))
-}
-
-listOf(
-    "test",
-    "integrationTest",
-).forEach {
-    tasks.named<Test>(it) {
-        readsTestModels()
-    }
-}
-
-testing {
-    suites {
-        named<JvmTestSuite>("integrationTest") {
-            dependencies {
-                implementation(testFixtures(project(":oxsts.lang")))
-                implementation(libs.kotlinx.coroutines.core)
-            }
-        }
-    }
 }
 
 val sysmlCompiledCorpus = artifactsOf("compiled-corpus", ":sysml-wrapper")
