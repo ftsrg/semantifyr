@@ -10,9 +10,8 @@ import * as esbuild from 'esbuild';
 const watch = process.argv.includes('--watch');
 const minify = process.argv.includes('--minify');
 
-const ctx = await esbuild.context({
+const context = await esbuild.context({
     external: ['vscode'],
-    // Entry points for the vscode extension and the language server
     entryPoints: [
         'src/extension.ts'
     ],
@@ -30,8 +29,8 @@ const ctx = await esbuild.context({
 });
 
 if (watch) {
-    await ctx.watch();
+    await context.watch();
 } else {
-    await ctx.rebuild();
-    await ctx.dispose();
+    await context.rebuild();
+    await context.dispose();
 }

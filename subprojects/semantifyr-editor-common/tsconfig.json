@@ -4,10 +4,10 @@
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "lib": ["ES2023", "DOM"],
-    "types": [],
+    "types": ["node"],
     "allowImportingTsExtensions": true,
     "noEmit": true,
     "jsx": "react-jsx"
   },
-  "include": ["src/**/*", "vitest.config.ts"]
+  "include": ["src/**/*"]
 }

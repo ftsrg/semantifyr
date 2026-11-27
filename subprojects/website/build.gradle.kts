@@ -7,8 +7,10 @@
 import com.github.gradle.node.npm.task.NpmTask
 import groovy.json.JsonSlurper
 import hu.bme.mit.semantifyr.gradle.artifactsOf
+import hu.bme.mit.semantifyr.gradle.readsPackage
 import hu.bme.mit.semantifyr.gradle.readsWorkspace
 import hu.bme.mit.semantifyr.gradle.registerBrandingAssets
+import hu.bme.mit.semantifyr.gradle.registerNpmCheck
 import hu.bme.mit.semantifyr.gradle.servedExampleSources
 
 plugins {
@@ -76,13 +78,6 @@ val sourceAliasDirectories = (JsonSlurper().parseText(providers.fileContents(sou
     layout.projectDirectory.dir(it)
 }
 
-val linkingFilesFile = layout.projectDirectory.file("linking-files.json")
-
-@Suppress("UNCHECKED_CAST")
-val linkingFiles = (JsonSlurper().parseText(providers.fileContents(linkingFilesFile).asText.get()) as List<String>).map {
-    isolated.rootProject.projectDirectory.file(it)
-}
-
 val cloneGeneratedWitness = tasks.register<Sync>("cloneGeneratedWitness") {
     from(generatedWitness)
     into(layout.buildDirectory.dir("generated-witness"))
@@ -114,29 +109,20 @@ val cloneApiDocs = tasks.register<Sync>("cloneApiDocs") {
     into(layout.buildDirectory.dir("api-static/api"))
 }
 
-fun NpmTask.readsSite() {
-    readsWorkspace()
-    inputs.files(
-        layout.projectDirectory.dir("src").asFileTree.matching {
-            exclude("docs/**")
-        },
-    ).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.file(layout.projectDirectory.file("tsconfig.json")).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.file(layout.projectDirectory.file("package.json")).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.file(isolated.rootProject.projectDirectory.file(".nvmrc")).withPathSensitivity(PathSensitivity.RELATIVE)
+fun NpmTask.configureSharedInputs() {
     inputs.files(editorCommon).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.file(layout.projectDirectory.file("docusaurus.config.ts")).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.file(layout.projectDirectory.file("sidebars.ts")).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.file(sourceAliasesFile).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.file(linkingFilesFile).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(cloneGrammars).withPathSensitivity(PathSensitivity.RELATIVE)
 }
 
 val npmAssemble = tasks.register<NpmTask>("npmAssemble") {
-    readsSite()
-    inputs.dir(layout.projectDirectory.dir("src/docs")).withPathSensitivity(PathSensitivity.RELATIVE)
+    group = LifecycleBasePlugin.BUILD_GROUP
+
+    readsPackage()
+    configureSharedInputs()
     inputs.property("liveBackendUrl", providers.environmentVariable("SEMANTIFYR_LIVE_URL").orElse(""))
-    inputs.files(linkingFiles).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(cloneGeneratedWitness).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(sourceAliasDirectories).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(servedExampleSources()).withPathSensitivity(PathSensitivity.RELATIVE)
@@ -153,9 +139,10 @@ val npmAssemble = tasks.register<NpmTask>("npmAssemble") {
 }
 
 tasks.register<NpmTask>("serve") {
-    group = "application"
+    group = ApplicationPlugin.APPLICATION_GROUP
 
-    readsSite()
+    readsPackage()
+    configureSharedInputs()
     inputs.files(cloneGeneratedWitness).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(cloneBrandingAssets).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(cloneScreenshots).withPathSensitivity(PathSensitivity.RELATIVE)
@@ -164,19 +151,8 @@ tasks.register<NpmTask>("serve") {
     npmCommand = listOf("run", "dev")
 }
 
-val npmCheck = tasks.register<NpmTask>("npmCheck") {
-    readsSite()
-    inputs.file(layout.projectDirectory.file("eslint.config.mjs")).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.file(layout.projectDirectory.file("vitest.config.mts")).withPathSensitivity(PathSensitivity.RELATIVE)
-
-    npmCommand = listOf("run", "check")
-
-    outputs.file(layout.buildDirectory.file("tsconfig.tsbuildinfo"))
-    outputs.file(layout.buildDirectory.file("eslint.json"))
-    outputs.file(layout.buildDirectory.file("test-results/unit.xml"))
-    outputs.cacheIf {
-        true
-    }
+registerNpmCheck {
+    configureSharedInputs()
 }
 
 val extractFences = tasks.register<NpmTask>("extractFences") {
@@ -184,7 +160,6 @@ val extractFences = tasks.register<NpmTask>("extractFences") {
     inputs.dir(layout.projectDirectory.dir("src/docs")).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.dir(layout.projectDirectory.dir("src/plugins")).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.file(layout.projectDirectory.file("package.json")).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.file(isolated.rootProject.projectDirectory.file(".nvmrc")).withPathSensitivity(PathSensitivity.RELATIVE)
 
     npmCommand = listOf("run", "fences")
 
@@ -194,7 +169,7 @@ val extractFences = tasks.register<NpmTask>("extractFences") {
     }
 }
 
-tasks.named<Test>("test") {
+tasks.named("test") {
     inputs.files(extractFences).withPathSensitivity(PathSensitivity.RELATIVE)
 }
 
@@ -203,11 +178,9 @@ tasks.register("pack") {
     dependsOn(npmAssemble)
 }
 
-tasks.named("check") {
-    dependsOn(npmCheck)
-}
-
 tasks.named<Delete>("clean") {
-    delete(".docusaurus")
-    delete(importedBrandingDirectory)
+    delete(
+        ".docusaurus",
+        importedBrandingDirectory,
+    )
 }

@@ -7,8 +7,6 @@
 import { defineConfig } from 'vitest/config'
 
 export default defineConfig({
-  // out of node_modules, which Gradle fingerprints as the install's output: a run's results would make the next run stale
-  cacheDir: 'build/vite/screenshots',
   test: {
     include: ['src/__shots__/**/*.shots.ts'],
     globalSetup: ['./src/__shots__/browser.ts', './src/__ui__/staticServer.ts'],

@@ -6,8 +6,10 @@
 
 import com.github.gradle.node.npm.task.NpmTask
 import hu.bme.mit.semantifyr.gradle.artifactsOf
-import hu.bme.mit.semantifyr.gradle.readsWorkspace
+import hu.bme.mit.semantifyr.gradle.readsPackage
+import hu.bme.mit.semantifyr.gradle.registerNpmCheck
 import hu.bme.mit.semantifyr.gradle.registerRenderPictures
+import hu.bme.mit.semantifyr.gradle.runsWithTheta
 import hu.bme.mit.semantifyr.gradle.semantifyrArtifact
 
 plugins {
@@ -17,11 +19,14 @@ plugins {
 val editorCommon = artifactsOf("npm-package", ":semantifyr-editor-common")
 val languageServers = artifactsOf("application-distribution", ":oxsts.lang.ide", ":gamma.lang.ide")
 val grammars = artifactsOf("textmate-grammar", ":oxsts.lang", ":gamma.lang")
-val thetaDirectory = artifactsOf("theta-xsts-cli", ":theta-executor")
+
+val extensionVersion = version.toString()
 
 val renderIcons = registerRenderPictures(
     "renderIcons",
-    layout.projectDirectory.dir("icons"),
+    provider {
+        layout.projectDirectory.dir("icons")
+    },
     listOf(
         "icon.png=logo@128",
         "semantifyr-file-icon.png=logo@128+104",
@@ -42,35 +47,20 @@ val cloneGrammars = tasks.register<Sync>("cloneGrammars") {
 }
 
 fun NpmTask.configureSharedInputs() {
-    readsWorkspace()
-    inputs.dir(layout.projectDirectory.dir("src")).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.file(layout.projectDirectory.file("esbuild.mjs")).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.file(layout.projectDirectory.file("vitest.config.ts")).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.file(layout.projectDirectory.file("eslint.config.js")).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.file(layout.projectDirectory.file("tsconfig.json")).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.file(layout.projectDirectory.file("package.json")).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(editorCommon).withPathSensitivity(PathSensitivity.RELATIVE)
 }
 
-val npmCheck = tasks.register<NpmTask>("npmCheck") {
+registerNpmCheck {
     configureSharedInputs()
-
-    npmCommand = listOf("run", "check")
-
-    outputs.file(layout.buildDirectory.file("tsconfig.tsbuildinfo"))
-    outputs.file(layout.buildDirectory.file("eslint.json"))
-    outputs.file(layout.buildDirectory.file("test-results/unit.xml"))
-    outputs.cacheIf {
-        true
-    }
 }
 
-val vsixFile = layout.buildDirectory.file("semantifyr-$version.vsix")
+val vsixFile = layout.buildDirectory.file("semantifyr-$extensionVersion.vsix")
 
 val bundleExtension = tasks.register<NpmTask>("bundleExtension") {
-    val version = project.version.toString()
-    inputs.property("version", version)
+    group = LifecycleBasePlugin.BUILD_GROUP
 
+    readsPackage()
     configureSharedInputs()
     inputs.files(cloneDistribution).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(cloneGrammars).withPathSensitivity(PathSensitivity.RELATIVE)
@@ -80,7 +70,7 @@ val bundleExtension = tasks.register<NpmTask>("bundleExtension") {
     inputs.file(layout.projectDirectory.file("CHANGELOG.md")).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.file(layout.projectDirectory.file("LICENSE")).withPathSensitivity(PathSensitivity.RELATIVE)
 
-    npmCommand = listOf("run", "bundle", "--", version, "--no-git-tag-version", "--no-update-package-json")
+    npmCommand = listOf("run", "bundle", "--", extensionVersion, "--no-git-tag-version", "--no-update-package-json")
 
     outputs.file(vsixFile)
     outputs.cacheIf {
@@ -91,22 +81,17 @@ val bundleExtension = tasks.register<NpmTask>("bundleExtension") {
 tasks.register<NpmTask>("endToEndTest") {
     group = LifecycleBasePlugin.VERIFICATION_GROUP
 
+    readsPackage()
     configureSharedInputs()
-    inputs.files(bundleExtension)
-    inputs.files(thetaDirectory)
-    inputs.file(isolated.rootProject.projectDirectory.file("oxsts-test-models/smoke/smoke.semantifyr"))
+    inputs.files(bundleExtension).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.file(isolated.rootProject.projectDirectory.file("oxsts-test-models/smoke/smoke.semantifyr")).withPathSensitivity(PathSensitivity.RELATIVE)
+    runsWithTheta()
 
     npmCommand = listOf("run", "test:end-to-end")
     environment.put(
         "SEMANTIFYR_VSIX",
         vsixFile.map {
             it.asFile.absolutePath
-        },
-    )
-    environment.put(
-        "PATH",
-        thetaDirectory.elements.zip(providers.environmentVariable("PATH")) { directories, path ->
-            "${directories.single().asFile.absolutePath}${File.pathSeparator}$path"
         },
     )
 }
@@ -121,12 +106,13 @@ tasks.register("continuousIntegration") {
     dependsOn(tasks.named("endToEndTest"))
 }
 
-tasks.named("check") {
-    dependsOn(npmCheck)
-}
-
 tasks.named<Delete>("clean") {
-    delete("dist", "icons", "bin", "syntaxes")
+    delete(
+        "dist",
+        "icons",
+        "bin",
+        "syntaxes",
+    )
 }
 
 configurations.consumable("vscodeExtensionElements") {
@@ -140,4 +126,3 @@ configurations.consumable("languageConfigurationElements") {
     attributes(semantifyrArtifact("language-configuration"))
     outgoing.artifact(layout.projectDirectory.file("language-configuration.json"))
 }
-

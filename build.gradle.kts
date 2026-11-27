@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
+import groovy.json.JsonSlurper
 import hu.bme.mit.semantifyr.gradle.semantifyrArtifact
-import hu.bme.mit.semantifyr.gradle.semantifyrKtlint
 
 plugins {
     alias(libs.plugins.kotlin.jvm) apply false
@@ -34,18 +34,13 @@ val suiteReportTasks = listOf(
 ).map { suite ->
     reporting.reports.register<JacocoCoverageReport>("${suite}CoverageReport") {
         testSuiteName = suite
-        reportTask.configure {
-            reports {
-                xml.required = true
-            }
-        }
     }.flatMap {
         it.reportTask
     }
 }
 
 tasks.named("sonar") {
-    inputs.files(suiteReportTasks)
+    inputs.files(suiteReportTasks).withPathSensitivity(PathSensitivity.RELATIVE)
 }
 
 sonar {
@@ -56,26 +51,33 @@ sonar {
                 it.get().reports.xml.outputLocation.get().asFile
             },
         )
-        property("sonar.exclusions", "**/generated/**,**/xtext-gen/**,**/emf-gen/**")
+        property(
+            "sonar.exclusions",
+            listOf(
+                "**/generated/**",
+                "**/xtext-gen/**",
+                "**/emf-gen/**",
+            ),
+        )
         property("sonar.projectKey", "ftsrg_semantifyr")
         property("sonar.organization", "ftsrg-github")
         property("sonar.projectName", "Semantifyr")
     }
 }
 
-val workspaceMembers = listOf(
-    "subprojects/semantifyr-editor-common",
-    "subprojects/semantifyr-live/frontend",
-    "subprojects/semantifyr-vscode",
-    "subprojects/website",
-)
+val workspaceManifests = providers.fileContents(layout.projectDirectory.file("package.json")).asText.map { manifest ->
+    ((JsonSlurper().parseText(manifest) as Map<*, *>)["workspaces"] as List<*>).map {
+        "$it/package.json"
+    }
+}
 
-val workspaceManifests = workspaceMembers.map {
-    layout.projectDirectory.file("$it/package.json")
+node {
+    npmInstallCommand = providers.environmentVariable("CI").map {
+        "ci"
+    }.orElse("install")
 }
 
 tasks.npmInstall {
-    inputs.file(layout.projectDirectory.file("package-lock.json")).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(workspaceManifests).withPathSensitivity(PathSensitivity.RELATIVE)
 }
 
@@ -93,7 +95,7 @@ spotless {
                 include("**/*.kt")
             },
         )
-        semantifyrKtlint(libs.versions.ktlint.get())
+        ktlint(libs.versions.ktlint.get())
     }
 
     kotlinGradle {

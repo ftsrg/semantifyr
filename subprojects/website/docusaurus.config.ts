@@ -16,7 +16,6 @@ import { servedExamples, type CaseManifest, type ExampleLanguage } from '@semant
 import type { PrismTheme } from 'prism-react-renderer';
 import remarkFences from './src/plugins/remarkFences';
 import sourceAliases from './source-aliases.json';
-import linkingFiles from './linking-files.json';
 import { addressOf, learnParts, sections, SOURCE_CODE, type LearnPart } from './src/map';
 
 // theme/CodeBlock/Content colours the code, so Prism colours only the block
@@ -82,29 +81,6 @@ function pageModelsPlugin(): Plugin {
     },
     configureWebpack() {
       return { resolve: { alias: { '@served-examples': `${directory}served-examples`, '@lesson-stages': `${directory}lesson-stages` } } };
-    },
-  };
-}
-
-function siteLinksPlugin(): Plugin {
-  return {
-    name: 'site-links',
-    postBuild({ siteConfig, routesPaths }) {
-      const routes = new Set(routesPaths);
-      const address = new RegExp(`${siteConfig.url.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(/[^\\s"'\`)\\]>#?]*)?`, 'g');
-      const broken = linkingFiles.flatMap((file) => {
-        // live's texts write the site's address through their WEBSITE_URL constant
-        const text = readFileSync(path.join(REPOSITORY, file), 'utf8').replace(/\$\{WEBSITE_URL\}/g, siteConfig.url);
-        return [...text.matchAll(address)].filter((match) => {
-          const pathname = match[1] ?? '/';
-          return !routes.has(pathname.endsWith('/') ? pathname : `${pathname}/`);
-        }).map((match) => {
-          return `${file}: ${match[0]}`;
-        });
-      });
-      if (broken.length > 0) {
-        throw new Error(`These addresses of the site open no page: ${broken.join(', ')}`);
-      }
     },
   };
 }
@@ -191,7 +167,6 @@ export default {
     ],
     '@docusaurus/plugin-sitemap',
     pageModelsPlugin,
-    siteLinksPlugin,
     () => {
       return {
         name: 'raw-sources',

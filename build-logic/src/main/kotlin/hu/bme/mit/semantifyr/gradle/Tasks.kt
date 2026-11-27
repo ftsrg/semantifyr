@@ -6,6 +6,7 @@
 
 package hu.bme.mit.semantifyr.gradle
 
+import com.github.gradle.node.npm.task.NpmTask
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.provider.Provider
@@ -19,6 +20,17 @@ fun <T> T.runsWithTheta() where T : Task, T : ProcessForkOptions {
     doFirst {
         environment("PATH", "${thetaDirectory.singleFile.absolutePath}${File.pathSeparator}${System.getenv("PATH")}")
     }
+}
+
+fun NpmTask.runsWithTheta() {
+    val thetaDirectory = project.artifactsOf("theta-xsts-cli", ":theta-executor")
+    inputs.files(thetaDirectory).withPathSensitivity(PathSensitivity.RELATIVE)
+    environment.put(
+        "PATH",
+        thetaDirectory.elements.zip(providers.environmentVariable("PATH")) { directories, path ->
+            "${directories.single().asFile.absolutePath}${File.pathSeparator}$path"
+        },
+    )
 }
 
 fun Project.commitHash(): Provider<String> {

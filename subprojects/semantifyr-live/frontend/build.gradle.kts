@@ -9,9 +9,12 @@ import hu.bme.mit.semantifyr.gradle.ExampleDescriptions
 import hu.bme.mit.semantifyr.gradle.artifactsOf
 import hu.bme.mit.semantifyr.gradle.commitHash
 import hu.bme.mit.semantifyr.gradle.oxstsFileExtension
+import hu.bme.mit.semantifyr.gradle.readsPackage
 import hu.bme.mit.semantifyr.gradle.readsWorkspace
 import hu.bme.mit.semantifyr.gradle.registerBrandingAssets
+import hu.bme.mit.semantifyr.gradle.registerNpmCheck
 import hu.bme.mit.semantifyr.gradle.semantifyrArtifact
+import hu.bme.mit.semantifyr.gradle.servedExampleSources
 import hu.bme.mit.semantifyr.gradle.servedExamples
 import org.gradle.api.file.RegularFile
 
@@ -102,13 +105,6 @@ val cloneSysmlWorker = tasks.register<Sync>("cloneSysmlWorker") {
 val cloneBrandingAssets = registerBrandingAssets(publicDirectory)
 
 fun NpmTask.configureSharedInputs() {
-    readsWorkspace()
-    inputs.dir(layout.projectDirectory.dir("src")).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.file(layout.projectDirectory.file("vite.config.ts")).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.file(layout.projectDirectory.file("tsconfig.json")).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.file(layout.projectDirectory.file("eslint.config.js")).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.file(layout.projectDirectory.file("package.json")).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.file(isolated.rootProject.projectDirectory.file("gradle.properties")).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(editorCommon).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(cloneGammaExamples).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(cloneSysmlExamples).withPathSensitivity(PathSensitivity.RELATIVE)
@@ -118,12 +114,19 @@ fun NpmTask.configureSharedInputs() {
     inputs.files(cloneBrandingAssets).withPathSensitivity(PathSensitivity.RELATIVE)
 }
 
+fun NpmTask.passesVersionAndCommit() {
+    environment.put("SEMANTIFYR_VERSION", project.version.toString())
+    environment.put("SEMANTIFYR_COMMIT", commitHash())
+}
+
 val npmAssemble = tasks.register<NpmTask>("npmAssemble") {
     group = LifecycleBasePlugin.BUILD_GROUP
 
+    readsPackage()
     configureSharedInputs()
+    inputs.file(layout.projectDirectory.file("vite.config.ts")).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.file(layout.projectDirectory.file("index.html")).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.property("commit", commitHash())
+    passesVersionAndCommit()
 
     npmCommand = listOf("run", "assemble")
     outputs.dir(layout.projectDirectory.dir("dist"))
@@ -139,29 +142,21 @@ configurations.consumable("webDistributionElements") {
     }
 }
 
-val npmCheck = tasks.register<NpmTask>("npmCheck") {
-    group = LifecycleBasePlugin.VERIFICATION_GROUP
-
+registerNpmCheck {
     configureSharedInputs()
     // an example's page is tested against live's head and the rights the REUSE file gives, and the load test's models are read as it sends them
     inputs.file(layout.projectDirectory.file("index.html")).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.file(isolated.rootProject.projectDirectory.file("REUSE.toml")).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(cloneLoadTestModels).withPathSensitivity(PathSensitivity.RELATIVE)
-
-    npmCommand = listOf("run", "check")
-
-    outputs.file(layout.buildDirectory.file("tsconfig.tsbuildinfo"))
-    outputs.file(layout.buildDirectory.file("eslint.json"))
-    outputs.file(layout.buildDirectory.file("test-results/unit.xml"))
-    outputs.cacheIf {
-        true
-    }
+    inputs.files(servedExampleSources()).withPathSensitivity(PathSensitivity.RELATIVE)
 }
 
 tasks.register<NpmTask>("integrationTest") {
     group = LifecycleBasePlugin.VERIFICATION_GROUP
 
+    readsPackage()
     configureSharedInputs()
+    inputs.file(layout.projectDirectory.file("vite.config.ts")).withPathSensitivity(PathSensitivity.RELATIVE)
 
     npmCommand = listOf("run", "test:integration")
 
@@ -171,9 +166,14 @@ tasks.register<NpmTask>("integrationTest") {
     }
 }
 
-fun NpmTask.runsInBrowser(browser: String, suite: String, configuration: String) {
+fun NpmTask.runsInBrowser(
+    browser: String,
+    suite: String,
+    configuration: String,
+) {
     group = LifecycleBasePlugin.VERIFICATION_GROUP
 
+    readsPackage()
     configureSharedInputs()
     inputs.file(layout.projectDirectory.file(configuration)).withPathSensitivity(PathSensitivity.RELATIVE)
 
@@ -198,7 +198,11 @@ listOf(
 
     val screenTest = tasks.register<NpmTask>("screenTest$taskSuffix") {
         runsInBrowser(browser, "screens", "vitest.screen.config.ts")
-        outputs.dir(layout.buildDirectory.dir("screens/$browser"))
+        val screensDirectory = layout.buildDirectory.dir("screens/$browser")
+        outputs.dir(screensDirectory)
+        doFirst {
+            screensDirectory.get().asFile.deleteRecursively()
+        }
     }
 
     val applicationTest = tasks.register<NpmTask>("applicationTest$taskSuffix") {
@@ -216,6 +220,7 @@ listOf(
 val screenshots = tasks.register<NpmTask>("screenshots") {
     group = LifecycleBasePlugin.BUILD_GROUP
 
+    readsPackage()
     configureSharedInputs()
     inputs.file(layout.projectDirectory.file("vitest.screenshots.config.ts")).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(npmAssemble).withPathSensitivity(PathSensitivity.RELATIVE)
@@ -243,7 +248,10 @@ configurations.consumable("screenshotsElements") {
 tasks.register<NpmTask>("runDev") {
     group = ApplicationPlugin.APPLICATION_GROUP
 
+    readsPackage()
     configureSharedInputs()
+    inputs.file(layout.projectDirectory.file("vite.config.ts")).withPathSensitivity(PathSensitivity.RELATIVE)
+    passesVersionAndCommit()
 
     npmCommand = listOf("run", "dev")
 }
@@ -252,7 +260,7 @@ tasks.register<NpmTask>("loadTest") {
     group = LifecycleBasePlugin.VERIFICATION_GROUP
 
     readsWorkspace()
-    inputs.files(cloneLoadTestModels)
+    inputs.files(cloneLoadTestModels).withPathSensitivity(PathSensitivity.RELATIVE)
 
     npmCommand = listOf("run", "load-test", "--")
     args = providers.gradleProperty("loadTest.args").map { value ->
@@ -264,7 +272,7 @@ tasks.register<NpmTask>("loadTest") {
 
 tasks.register("pack") {
     group = LifecycleBasePlugin.BUILD_GROUP
-    dependsOn(npmAssemble, cloneSysmlWorker)
+    dependsOn(npmAssemble)
 }
 
 tasks.register("continuousIntegration") {
@@ -272,13 +280,11 @@ tasks.register("continuousIntegration") {
     dependsOn(tasks.named("integrationTest"))
 }
 
-tasks.named("check") {
-    dependsOn(npmCheck)
-}
-
 tasks.named<Delete>("clean") {
-    delete("dist")
-    delete(importedSnippetsDirectory)
-    delete(importedVscodeDirectory)
-    delete(publicDirectory)
+    delete(
+        "dist",
+        importedSnippetsDirectory,
+        importedVscodeDirectory,
+        publicDirectory,
+    )
 }

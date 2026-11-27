@@ -9,16 +9,18 @@ package hu.bme.mit.semantifyr.gradle
 import com.github.gradle.node.task.NodeTask
 import org.gradle.api.Project
 import org.gradle.api.file.Directory
+import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.Sync
 import org.gradle.api.tasks.TaskProvider
 import org.gradle.kotlin.dsl.assign
+import org.gradle.kotlin.dsl.register
 
 fun Project.registerBrandingAssets(outputDirectory: Directory): TaskProvider<Sync> {
     val brandingDirectory = isolated.rootProject.projectDirectory.dir("branding")
     val renderBrandingPictures = registerRenderPictures(
         "renderBrandingPictures",
-        layout.buildDirectory.dir("branding").get(),
+        layout.buildDirectory.dir("branding"),
         listOf(
             "favicon.ico=logo@16,32,48",
             "apple-touch-icon.png=logo@180",
@@ -28,7 +30,7 @@ fun Project.registerBrandingAssets(outputDirectory: Directory): TaskProvider<Syn
         ),
     )
 
-    return tasks.register("cloneBrandingAssets", Sync::class.java) {
+    return tasks.register<Sync>("cloneBrandingAssets") {
         from(renderBrandingPictures)
         from(brandingDirectory) {
             include(
@@ -43,29 +45,27 @@ fun Project.registerBrandingAssets(outputDirectory: Directory): TaskProvider<Syn
 
 fun Project.registerRenderPictures(
     taskName: String,
-    outputDirectory: Directory,
+    outputDirectory: Provider<Directory>,
     specifications: List<String>,
 ): TaskProvider<NodeTask> {
     val brandingDirectory = isolated.rootProject.projectDirectory.dir("branding")
-    val renderScript = brandingDirectory.file("render.mjs")
+    val packageDirectory = projectDir
 
-    return tasks.register(taskName, NodeTask::class.java) {
+    return tasks.register<NodeTask>(taskName) {
         inputs.files(
             brandingDirectory.asFileTree.matching {
                 include("*.svg")
             },
         ).withPathSensitivity(PathSensitivity.RELATIVE)
-        inputs.file(renderScript).withPathSensitivity(PathSensitivity.NONE)
         readsWorkspace()
         outputs.dir(outputDirectory)
         outputs.cacheIf {
             true
         }
 
-        workingDir = projectDir
-        script = renderScript
-        args = listOf(
-            projectDir.toPath().relativize(outputDirectory.asFile.toPath()).toString(),
-        ) + specifications
+        script = brandingDirectory.file("render.mjs")
+        args = outputDirectory.map {
+            listOf(it.asFile.relativeTo(packageDirectory).path) + specifications
+        }
     }
 }

@@ -7,7 +7,6 @@
 package hu.bme.mit.semantifyr
 
 import com.github.gradle.node.npm.proxy.ProxySettings
-import hu.bme.mit.semantifyr.gradle.artifactsOf
 
 plugins {
     base
@@ -16,11 +15,9 @@ plugins {
 }
 
 node {
-    // .nvmrc is the one Node.js version: the workflows' set-up and the website read it too
     version = providers.fileContents(isolated.rootProject.projectDirectory.file(".nvmrc")).asText.get().trim()
     download = true
     fastNpmInstall = true
-    // the Node.js repository is declared in settings, which forbids project repositories
     distBaseUrl = null
     // CodeQL's autobuild sets empty proxy system properties, which the plugin turns into HTTPS_PROXY=http://:
     nodeProxySettings = ProxySettings.OFF
@@ -30,5 +27,4 @@ if (isolated != isolated.rootProject) {
     tasks.npmInstall {
         enabled = false
     }
-    artifactsOf("npm-workspace", ":")
 }

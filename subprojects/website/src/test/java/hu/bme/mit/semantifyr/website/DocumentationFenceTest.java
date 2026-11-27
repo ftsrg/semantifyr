@@ -51,8 +51,11 @@ public class DocumentationFenceTest {
 
     static Stream<Arguments> fencesValidate() throws IOException {
         try (var reader = Files.newBufferedReader(FENCES.resolve("manifest.json"))) {
-            return new Gson().fromJson(reader, Manifest.class).pages().stream().flatMap(page -> page.fences().stream()
-                    .map(fence -> Arguments.of(Named.of(page.page() + ":" + fence.line(), fence), page)));
+            return new Gson()
+                    .fromJson(reader, Manifest.class).pages().stream()
+                            .flatMap(page -> page.fences().stream()
+                                    .map(fence ->
+                                            Arguments.of(Named.of(page.page() + ":" + fence.line(), fence), page)));
         }
     }
 
@@ -62,16 +65,23 @@ public class DocumentationFenceTest {
         var context = loader.startContext();
         if (!fence.continued()) {
             for (var sibling : page.fences()) {
-                if (!sibling.equals(fence) && !sibling.continued() && sibling.issue() == null && declaresPackage(sibling)) {
+                if (!sibling.equals(fence)
+                        && !sibling.continued()
+                        && sibling.issue() == null
+                        && declaresPackage(sibling)) {
                     context.loadModel(FENCES.resolve(sibling.file()));
                 }
             }
         }
         context.loadModel(FENCES.resolve(fence.file()));
         EcoreUtil2.resolveAll(context.getResourceSet());
-        var issues = resourceValidator.validate(context.getModelResources().getLast(), CheckMode.ALL, CancelIndicator.NullImpl).stream()
-                .filter(issue -> issue.getSeverity() == Severity.ERROR || issue.getSeverity() == Severity.WARNING)
-                .toList();
+        var issues =
+                resourceValidator
+                        .validate(context.getModelResources().getLast(), CheckMode.ALL, CancelIndicator.NullImpl)
+                        .stream()
+                        .filter(issue ->
+                                issue.getSeverity() == Severity.ERROR || issue.getSeverity() == Severity.WARNING)
+                        .toList();
         var codes = issues.stream().map(Issue::getCode).distinct().toList();
         var described = issues.stream()
                 .map(issue -> locationOf(page, fence, issue) + " " + issue.getCode() + " " + issue.getMessage())
@@ -79,21 +89,31 @@ public class DocumentationFenceTest {
 
         var location = page.page() + ":" + fence.line();
         if (fence.issue() == null) {
-            assertThat(described).as("issues of the oxsts fence at %s", location).isEmpty();
+            assertThat(described)
+                    .as("issues of the oxsts fence at %s", location)
+                    .isEmpty();
         } else if (fence.issue().equals("syntax")) {
-            assertThat(codes).as("the issue codes of the oxsts fence at %s: %s", location, described).contains(Diagnostic.SYNTAX_DIAGNOSTIC);
+            assertThat(codes)
+                    .as("the issue codes of the oxsts fence at %s: %s", location, described)
+                    .contains(Diagnostic.SYNTAX_DIAGNOSTIC);
         } else {
-            assertThat(codes).as("the issue codes of the oxsts fence at %s: %s", location, described).containsExactly(fence.issue());
+            assertThat(codes)
+                    .as("the issue codes of the oxsts fence at %s: %s", location, described)
+                    .containsExactly(fence.issue());
         }
     }
 
     private static boolean declaresPackage(Fence fence) throws IOException {
-        return PACKAGE_DECLARATION.matcher(Files.readString(FENCES.resolve(fence.file()))).find();
+        return PACKAGE_DECLARATION
+                .matcher(Files.readString(FENCES.resolve(fence.file())))
+                .find();
     }
 
     private static String locationOf(Page page, Fence fence, Issue issue) {
         var index = issue.getLineNumber() - 1;
-        var pageLine = index >= 0 && index < fence.pageLines().size() ? fence.pageLines().get(index) : fence.line();
+        var pageLine = index >= 0 && index < fence.pageLines().size()
+                ? fence.pageLines().get(index)
+                : fence.line();
         return page.page() + ":" + pageLine;
     }
 }
