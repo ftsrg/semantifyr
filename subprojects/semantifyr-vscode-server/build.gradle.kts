@@ -14,10 +14,10 @@ plugins {
 
 val vscodeExtensions = artifactsOf("vscode-extension", ":semantifyr-vscode", ":sysml-wrapper")
 val theta = artifactsOf("theta-xsts-cli", ":theta-executor")
-val gammaLibrary = artifactsOf("gamma-library", ":gamma-frontend")
-val sysmlLibrary = artifactsOf("sysml-library", ":sysml-frontend")
-val gammaExamples = artifactsOf("gamma-examples", ":gamma-frontend")
-val sysmlExamples = artifactsOf("sysml-examples", ":sysml-frontend")
+val gammaLibrary = isolated.rootProject.projectDirectory.dir("subprojects/frontends/gamma/models/libraries/default")
+val sysmlLibrary = isolated.rootProject.projectDirectory.dir("subprojects/frontends/sysml/models/libraries/default")
+val gammaExamples = isolated.rootProject.projectDirectory.dir("subprojects/frontends/gamma/models/examples")
+val sysmlExamples = isolated.rootProject.projectDirectory.dir("subprojects/frontends/sysml/models/examples")
 val oxstsTutorial = artifactsOf("oxsts-tutorial", ":website")
 
 val cloneDistribution = tasks.register<Sync>("cloneDistribution") {
@@ -54,7 +54,7 @@ val cloneSysmlExamples = tasks.register<Sync>("cloneSysmlExamples") {
     from(examples) {
         // the corpus models share its isStateActive and eventually
         include { element ->
-            val modelFiles = corpusModels(examples.singleFile.resolve("manifest.json").readText()).map {
+            val modelFiles = corpusModels(examples.asFile.resolve("manifest.json").readText()).map {
                 it.file
             }
             element.isDirectory || element.name == "Verification.sysml" || element.relativePath.pathString in modelFiles
