@@ -141,38 +141,6 @@ val bundleCli = tasks.register<Sync>("bundleCli") {
     into(cliBundleDirectory)
 }
 
-val sysmlConstructsDirectory = layout.buildDirectory.dir("sysml-constructs")
-
-// the website's table of SysML constructs comes from the translation's own registry
-val sysmlConstructs = tasks.register<NodeTask>("sysmlConstructs") {
-    inputs.files(bundleCli).withPathSensitivity(PathSensitivity.RELATIVE)
-    val targetFile = sysmlConstructsDirectory.map {
-        it.file("constructs.tsv")
-    }
-    outputs.file(targetFile)
-    script = cliBundleDirectory.map {
-        it.file("cli.cjs")
-    }
-    workingDir = layout.projectDirectory
-    args = provider {
-        listOf(
-            "constructs",
-            "-o",
-            targetFile.get().asFile.relativeTo(projectDir).invariantSeparatorsPath,
-        )
-    }
-    outputs.cacheIf {
-        true
-    }
-}
-
-configurations.consumable("sysmlConstructsElements") {
-    attributes(semantifyrArtifact("sysml-constructs"))
-    outgoing.artifact(sysmlConstructsDirectory) {
-        builtBy(sysmlConstructs)
-    }
-}
-
 val assembleFork = tasks.register<PnpmTask>("assembleFork") {
     dependsOn(tasks.pnpmInstall)
     mustRunAfter(buildCli, bundleExtension)

@@ -20,7 +20,7 @@ const val THETA_DEFAULT_IMAGE = "ftsrg/theta-xsts-cli:8.6.0"
 val ThetaExecutorKey = ExecutorKey(
     name = "theta",
     unavailableHints = listOf(
-        "Put theta-xsts-cli on PATH; the launchers carry it in their theta-xsts-cli folder.",
+        "Put theta-xsts-cli on PATH.",
         "Or install Docker, which runs the image $THETA_DEFAULT_IMAGE.",
     ),
 ) {

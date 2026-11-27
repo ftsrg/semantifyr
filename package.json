@@ -2,7 +2,6 @@
   "name": "semantifyr-workspace",
   "private": true,
   "version": "0.0.0",
-  "description": "Workspace root for the Semantifyr TypeScript packages (live editor, vscode extension, shared editor-common).",
   "type": "module",
   "workspaces": [
     "subprojects/semantifyr-editor-common",

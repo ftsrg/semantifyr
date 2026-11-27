@@ -7,7 +7,7 @@ description: Verify the cases of a Semantifyr or a Gamma model in VS Code.
 
 # Try in VS Code
 
-The VS Code lets you edit and verify Semantifyr and Gamma models in your workspace, using the backends installed on your machine. To install it, see [Install](install.md#the-vs-code-extension).
+The VS Code extension lets you edit and verify Semantifyr and Gamma models in your workspace, using the backends installed on your machine. To install it, see [Install](install.md#the-vs-code-extension).
 
 For SysML v2, install the [sysml-2ls extension](https://github.com/arminzavada/sysml-2ls/releases/latest) beside it. It compiles a SysML v2 model into a Semantifyr model.
 
@@ -17,4 +17,4 @@ Usage:
 2. Run a case from the *Testing* view. Its verdict is the test's result.
 3. If a case has a witness, run **Show Witness** on its result to open the witness and the trace beside the model.
 
-You can choose the portfolio, the timeout, and the backends' options in the [extension's settings](../reference/vscode-settings.mdx).
+Its settings are under Semantifyr in VS Code's settings.

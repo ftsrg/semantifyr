@@ -6,21 +6,18 @@
 
 import type React from 'react';
 import useBaseUrl from '@docusaurus/useBaseUrl';
-import { usePluginData } from '@docusaurus/useGlobalData';
 import clsx from 'clsx';
 
 import styles from './styles.module.css';
 
 const STACK_OFFSET = 6;
 
-interface Backend {
-  name: string;
-}
-
-// the backends the reference has a page for, read from those pages when the site is built
-function useBackends(): Backend[] {
-  return (usePluginData('backends') as { backends: Backend[] }).backends;
-}
+const BACKENDS = [
+  'Theta',
+  'nuXmv',
+  'Spin',
+  'Uppaal',
+];
 
 interface Rectangle {
   x: number;
@@ -192,19 +189,16 @@ function Logo({ area, vertical }: { area: Rectangle; vertical: boolean }): React
   );
 }
 
-// the backends under their box, two lines beside the vertical figure and one under the turned one
-function BackendNames({ layout, backends }: { layout: Layout; backends: Backend[] }): React.ReactNode {
+function BackendNames({ layout }: { layout: Layout }): React.ReactNode {
   const [x, y] = layout.backendsCaption;
-  const half = Math.ceil(backends.length / 2);
-  const lines = layout.vertical ? [backends.slice(0, half), backends.slice(half)] : [backends];
+  const half = Math.ceil(BACKENDS.length / 2);
+  const lines = layout.vertical ? [BACKENDS.slice(0, half), BACKENDS.slice(half)] : [BACKENDS];
   return (
     <text className={styles.caption} x={x} y={y} fontSize={layout.fontSize * 0.86} textAnchor="middle">
       {lines.map((line, lineIndex) => {
         return (
-          <tspan key={line[0]?.name} x={x} dy={lineIndex === 0 ? 0 : '1.2em'}>
-            {`${line.map((backend) => {
-              return backend.name;
-            }).join(', ')}${lineIndex < lines.length - 1 ? ',' : ''}`}
+          <tspan key={line[0]} x={x} dy={lineIndex === 0 ? 0 : '1.2em'}>
+            {`${line.join(', ')}${lineIndex < lines.length - 1 ? ',' : ''}`}
           </tspan>
         );
       })}
@@ -212,15 +206,12 @@ function BackendNames({ layout, backends }: { layout: Layout; backends: Backend[
   );
 }
 
-function Figure({ layout, backends }: { layout: Layout; backends: Backend[] }): React.ReactNode {
-  const names = backends.map((backend) => {
-    return backend.name;
-  });
+function Figure({ layout }: { layout: Layout }): React.ReactNode {
   const { vertical, fontSize } = layout;
   const marker = `architecture-arrow-${layout.name}`;
   const refinesMarker = `architecture-refines-${layout.name}`;
   return (
-    <svg className={clsx(styles.figure, styles[layout.name])} viewBox={`0 0 ${String(layout.width)} ${String(layout.height)}`} role="img" aria-label={`A model goes through a frontend to a Semantifyr model, which Semantifyr compiles with the semantic library to a formal model for a backend, ${names.join(', ')}; the traces come back the same way, each refining its model`}>
+    <svg className={clsx(styles.figure, styles[layout.name])} viewBox={`0 0 ${String(layout.width)} ${String(layout.height)}`} role="img" aria-label={`A model goes through a frontend to a Semantifyr model, which Semantifyr compiles with the semantic library to a formal model for a backend, ${BACKENDS.join(', ')}; the traces come back the same way, each refining its model`}>
       <defs>
         <marker id={marker} viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
           <path className={styles.head} d="M 0 0 L 10 5 L 0 10 z" />
@@ -236,7 +227,7 @@ function Figure({ layout, backends }: { layout: Layout; backends: Backend[] }): 
       <Logo area={layout.semantifyr} vertical={vertical} />
       <Box area={layout.formalModel} text="Formal model" kind="artifact" vertical={false} fontSize={fontSize} />
       <Stack area={layout.backend} text="Backend" kind="tool" vertical={vertical} fontSize={fontSize} />
-      <BackendNames layout={layout} backends={backends} />
+      <BackendNames layout={layout} />
       <Box area={layout.formalTrace} text="Formal trace" kind="artifact" vertical={false} fontSize={fontSize} />
       <Box area={layout.semantifyrTrace} text="Semantifyr trace" kind="artifact" vertical={false} fontSize={fontSize} />
       <Box area={layout.trace} text="Trace" kind="artifact" vertical={false} fontSize={fontSize} />
@@ -260,11 +251,10 @@ function Figure({ layout, backends }: { layout: Layout; backends: Backend[] }): 
 }
 
 export default function Architecture(): React.ReactNode {
-  const backends = useBackends();
   return (
     <figure className={styles.picture}>
-      <Figure layout={DESKTOP} backends={backends} />
-      <Figure layout={PHONE} backends={backends} />
+      <Figure layout={DESKTOP} />
+      <Figure layout={PHONE} />
     </figure>
   );
 }

@@ -6,7 +6,6 @@ description: Verify a SysML v2, Gamma, or Semantifyr model in Semantifyr Live, i
 
 import ThemedImage from '@theme/ThemedImage';
 import useBaseUrl from '@docusaurus/useBaseUrl';
-import LiveLimit from '@site/src/components/LiveLimit';
 
 # Try in the Browser
 
@@ -21,7 +20,5 @@ import LiveLimit from '@site/src/components/LiveLimit';
 3. Press **Verify all**. Each case gets its verdict as the server answers.
 4. Select a case with a trace to read it below the cases.
 5. Edit the model, then **Save** it to a file or **Share** it.
-
-The public instance stops a verification after <LiveLimit />.
 
 What the server keeps of your model is on the [Privacy](privacy.md) page.

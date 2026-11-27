@@ -11,11 +11,6 @@
   white-space: nowrap;
 }
 
-.verdict :global(.verdict-mark) {
-  width: 1em;
-  height: 1em;
-}
-
 .word {
   color: var(--status);
   font-weight: 600;

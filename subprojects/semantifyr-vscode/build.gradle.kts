@@ -141,7 +141,3 @@ configurations.consumable("languageConfigurationElements") {
     outgoing.artifact(layout.projectDirectory.file("language-configuration.json"))
 }
 
-configurations.consumable("vscodeManifestElements") {
-    attributes(semantifyrArtifact("vscode-manifest"))
-    outgoing.artifact(layout.projectDirectory.file("package.json"))
-}

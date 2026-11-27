@@ -1,7 +1,7 @@
 ---
 title: 'Semantic Variants'
 sidebar_position: 3
-description: The third lesson of the Semantifyr Language. Move into the statechart library the rule of how the parts of a system step, change it as statechart languages differ on it, and see the same junction meet or break its requirements.
+description: Move the rule of how the parts of a system step into the statechart library, change it as statechart languages do, and see the same junction break its requirements.
 ---
 
 import LiveLink from '@site/src/components/LiveLink';
@@ -36,13 +36,13 @@ The junction still writes how it steps: its `init` starts its lights, and its ma
 - A system starts every part, and in every step the environment sets every sensor and then one of the parts steps.
 - The junction is a system and says only which sensors and which parts it has: its own `init` and main transition go.
 
-Verify all. The junction does what it did before, so every case keeps its verdict: <CaseVerdict example={step1} name="NorthCanTurnGreen" />, <CaseVerdict example={step1} name="NeverBothGreen" />, <CaseVerdict example={step1} name="NorthGreenOnlyWhileEastRed" />, <CaseVerdict example={step1} name="PedestriansCanWalk" /> and <CaseVerdict example={step1} name="WalkOnlyWhileEastRed" />. The junction is data alone now, as in <LiveLink example={step1}>this state of the lesson</LiveLink>.
+Verify all. The junction does what it did before, so every case keeps its verdict. The junction is data alone now, as in <LiveLink example={step1}>this state of the lesson</LiveLink>.
 
 ## Cascade composition
 
 Let us change the rule so that every part steps in every step, one after the other, in the order the parts are declared, as a cascade composition does. Change only `System`, and before you verify, decide the verdict of each case.
 
-Every case keeps its verdict again: <CaseVerdict example={step2} name="NorthCanTurnGreen" />, <CaseVerdict example={step2} name="NeverBothGreen" />, <CaseVerdict example={step2} name="NorthGreenOnlyWhileEastRed" />, <CaseVerdict example={step2} name="PedestriansCanWalk" /> and <CaseVerdict example={step2} name="WalkOnlyWhileEastRed" />. Both lights may now move in the same step: why are they still never green together? Compare your rule with <LiveLink example={step2}>the cascade rule of this state</LiveLink>.
+Every case keeps its verdict again. Both lights may now move in the same step: why are they still never green together? Compare your rule with <LiveLink example={step2}>the cascade rule of this state</LiveLink>.
 
 ## Synchronous composition
 
@@ -50,7 +50,7 @@ In a synchronous composition, every part reacts to the same moment: each sees th
 
 First, split what a transition does into two transitions of its own: `assumeEnabled`, which can be taken only when the transition can fire, and `fire`, which activates the target. `@Trace` marks `fire`. The main transition of `Transition` calls both, so nothing changes yet: verify all, and every case keeps its verdict. Compare with <LiveLink example={step3}>this state</LiveLink>.
 
-Second, let a statechart choose before it moves. It remembers its choice in a variable that holds one of its transitions or nothing, as `activeState` holds one of its states. Give `Statechart` two transitions, `choose`, which chooses one of the transitions that can fire, or none, and `move`, which fires the chosen one. Nothing calls them yet, so every case keeps its verdict again. Compare with <LiveLink example={step4}>this state</LiveLink>.
+Second, let a statechart choose before it moves. It remembers its choice in a [variable that holds one of its transitions](../reference/classes-and-behaviour/variables.md#feature-typed-variables) or nothing, as `activeState` holds one of its states. Give `Statechart` two transitions, `choose`, which chooses one of the transitions that can fire, or none, and `move`, which fires the chosen one. Nothing calls them yet, so every case keeps its verdict again. Compare with <LiveLink example={step4}>this state</LiveLink>.
 
 Third, switch the system: after the sensors, every part chooses, and then every part moves. Before you verify, decide the verdict of each case.
 
@@ -58,7 +58,7 @@ This time three of them fail: <CaseVerdict example={final} name="NeverBothGreen"
 
 <TraceTimeline rows={[{ name: 'north', lamps: ['Red', 'Green'] }, { name: 'east', lamps: ['Red', 'Green'] }, { name: 'north car', flags: [false, true] }, { name: 'east car', flags: [false, true] }]} broken="NeverBothGreen" />
 
-Notice that we did not change any of the primary classes, only their behaviors. The lights, the junction and their cases are as they were. The library's classes kept their features too, except for the one new variable that holds a statechart's choice. In the first lesson, we fixed the guard so that a light turns green only while the other one is red. That guard is enough only as long as the two lights never decide at the same moment. Under the new rule they do: each sees the other one red, and both turn green. <LiveLink example={final}>The final state of this lesson</LiveLink> has the library with the synchronous rule.
+Notice that we did not change any of the primary classes, only their behaviour. The lights, the junction and their cases are as they were. The library's classes kept their features too, except for the one new variable that holds a statechart's choice. In the first lesson, we fixed the guard so that a light turns green only while the other one is red. That guard is enough only as long as the two lights never decide at the same moment. Under the new rule they do: each sees the other one red, and both turn green. <LiveLink example={final}>The final state of this lesson</LiveLink> has the library with the synchronous rule.
 
 Why do the two cases that ask whether something can happen still pass?
 

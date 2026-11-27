@@ -5,16 +5,13 @@ sidebar_position: 4
 description: What the Gamma semantic library decides where Gamma leaves a choice, and where it differs from Gamma.
 ---
 
-import { GammaDifferences } from '@site/src/components/GammaConstructs';
-import constructs from '@gamma-models/constructs.tsv';
-
 # Gamma Semantic Decisions
 
 The Gamma frontend gives a model the meaning Gamma gives it, as the Gamma semantic library writes it in the Semantifyr Language, except in the differences it declares at the end of this page. The sections below state what the library assumes where Gamma leaves a choice or where the library simplifies, and those differences.
 
 ## The Step
 
-A verification runs the component of its case in steps, from the state its `init` reaches. Before each step time passes, as the [Semantifyr Language's time](../../language/specification/classes-and-behaviour/time.md) has it and the component's scheduling constraint bounds it, and then the step does four things in order:
+A verification runs the component of its case in steps, from the state its `init` reaches. Before each step time passes, as the [Semantifyr Language's time](../../language/reference/classes-and-behaviour/time.md) has it and the component's scheduling constraint bounds it, and then the step does four things in order:
 
 1. Every timeout of the component, at any depth, that has not expired expires or stays, as the next section states.
 2. The output events raised in the step before are cleared.
@@ -59,12 +56,14 @@ A queue reset on the same message takes the place of the `reset` control functio
 
 ## What a Verdict Covers
 
-Every test the library makes of a timeout, a clock or a scheduling constraint is a [closed clock test](../../language/specification/classes-and-behaviour/time.md#closed-clock-tests), so a run of a timed model is a run over dense time on every backend, and a proof of it is trusted from every backend configuration that is exact, Theta's included, as [the backends' pages](../../backends/index.mdx) say. Apart from its deviating constructs, the asynchronous composition keeps the runs of Gamma's analysis with the optimization of the environment's queues switched off, the environment's bound on a queue of lower priority included, since that bound is Gamma's own. Gamma's default analysis differs: it shrinks a queue the environment fills to the smaller of its capacity and the adapter's turns in a step, and it gives an adapter at the root no queue, where the library keeps every queue as written. A failed `AG` and a passed `EF` rest on one run the library found, which Gamma admits too unless a deviation is involved in it: then the run may be one Gamma excludes. The table's deviating constructs are these:
-
-<GammaDifferences table={constructs} outcome="deviating" />
+Every test the library makes of a timeout, a clock or a scheduling constraint is a [closed clock test](../../language/reference/classes-and-behaviour/time.md#closed-clock-tests), so a run of a timed model is a run over dense time on every backend, and a proof of it is trusted from every backend configuration that is exact, Theta's included, as [the backends' pages](../../backends/index.mdx) say. Apart from the [deviations](#declared-differences), the asynchronous composition keeps the runs of Gamma's analysis with the optimization of the environment's queues switched off, the environment's bound on a queue of lower priority included, since that bound is Gamma's own. A failed `AG` and a passed `EF` rest on one run the library found, which Gamma admits too unless a deviation is involved in it: then the run may be one Gamma excludes.
 
 ## Declared Differences
 
-A conformant construct behaves as it does in Gamma. These are the declared differences, each an abstraction, a deviation or an extension:
+Every other supported construct behaves as it does in Gamma.
 
-<GammaDifferences table={constructs} />
+- **Time passing**, an abstraction: Gamma's analysis without a scheduling constraint, over dense time on Uppaal, also brings a cycle within the model's greatest time value, and the library does not. The bound changes no verdict, since a longer wait shows a component nothing more once every timeout it set has expired.
+- **A written priority under priority off**, a deviation: the library ignores the priority, and the validator warns that it has no effect, where Gamma's transformation honours it.
+- **Queues as written**, a deviation: Gamma's default analysis shrinks a queue the environment fills to the smaller of its capacity and the adapter's turns in a step, and gives an adapter at the root that it can simplify no queue. The library keeps every queue as written, as Gamma does with that optimization switched off.
+- **An output event reaching several queues**, a deviation: every queue receives the event with its parameter values, where Gamma's transformation resets the parameters after the first queue, so a later queue receives default values, and of several simple channels from one port serves only the first.
+- **Verification cases**, a deviation: a case names its component in its header and holds its property as its body, where Gamma keeps properties in a separate property file. The atoms of a property resolve in the component's scope, without a named instance and without `self`.

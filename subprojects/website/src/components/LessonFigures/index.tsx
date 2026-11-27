@@ -8,7 +8,7 @@ import type React from 'react';
 import { createContext, useContext, useId } from 'react';
 import styles from './styles.module.css';
 
-export type Lamp = 'Red' | 'Yellow' | 'Green' | 'Walk' | 'Stop' | 'Standby';
+type Lamp = 'Red' | 'Yellow' | 'Green' | 'Walk' | 'Stop' | 'Standby';
 
 const LAMP_CLASS: Readonly<Record<Lamp, string | undefined>> = {
   Red: styles.red,
@@ -73,7 +73,6 @@ function Text({ x, y, children, anchor = 'middle', kind = 'label', size = 16 }: 
   );
 }
 
-// where the segment from a box's centre towards a point leaves the box
 function edgeOf(area: Area, towards: Point): Point {
   const center = centerOf(area);
   const dx = towards.x - center.x;
@@ -186,9 +185,8 @@ export function LightCycle(): React.JSX.Element {
   );
 }
 
-export type TraceRow = { name: string; lamps: Lamp[] } | { name: string; flags: boolean[] } | { name: string; numbers: number[] };
+type TraceRow = { name: string; lamps: Lamp[] } | { name: string; flags: boolean[] } | { name: string; numbers: number[] };
 
-// the states of a trace in columns, a row for each light, sensor or number the page follows
 export function TraceTimeline({ rows, broken }: { rows: TraceRow[]; broken?: string }): React.JSX.Element {
   const left = 132;
   const top = 40;
@@ -354,6 +352,31 @@ export function CompositionRules(): React.JSX.Element {
       <RulePanel x={160} title={['one after', 'the other']} north="Green" east="Red" note="east sees green" />
       <line className={styles.rule} x1={318} y1={10} x2={318} y2={250} />
       <RulePanel x={320} title={['all at', 'once']} north="Green" east="Green" note="both saw red" broken />
+    </Picture>
+  );
+}
+
+export function InstanceTree(): React.JSX.Element {
+  const root = { x: 120, y: 44, width: 220, height: 32 };
+  const hall = { x: 170, y: 112, width: 120, height: 32 };
+  const top = { x: 36, y: 186, width: 130, height: 32 };
+  const bottom = { x: 294, y: 186, width: 130, height: 32 };
+  const fuse = { x: 170, y: 262, width: 120, height: 32 };
+  return (
+    <Picture width={460} height={316} label="The instance tree of the room model inside the universe: the root, an instance of BothLampsCanBeOn, contains the hall, the hall contains the top lamp, a Lamp, and the bottom lamp, a Spot, and both lamps share one fuse">
+      <rect className={styles.state} x={6} y={6} width={448} height={304} rx={14} />
+      <Text x={22} y={24} anchor="start" kind="caption" size={14}>universe</Text>
+      <Line className={styles.line} x1={230} y1={root.y + root.height} x2={230} y2={hall.y} start="diamond" />
+      <Line className={styles.line} x1={200} y1={hall.y + hall.height} x2={101} y2={top.y} start="diamond" />
+      <Line className={styles.line} x1={260} y1={hall.y + hall.height} x2={359} y2={bottom.y} start="diamond" />
+      <Line className={styles.dashed} x1={101} y1={top.y + top.height} x2={200} y2={fuse.y} start="diamond" />
+      <Line className={styles.dashed} x1={359} y1={bottom.y + bottom.height} x2={260} y2={fuse.y} start="diamond" />
+      <ObjectBox area={root} name="root: BothLampsCanBeOn" />
+      <ObjectBox area={hall} name="hall: Hall" />
+      <ObjectBox area={top} name="top: Lamp" />
+      <ObjectBox area={bottom} name="bottom: Spot" />
+      <ObjectBox area={fuse} name="fuse: Fuse" />
+      <Text x={300} y={278} anchor="start" kind="caption" size={14}>shared</Text>
     </Picture>
   );
 }

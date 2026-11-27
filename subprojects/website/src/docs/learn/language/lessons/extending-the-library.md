@@ -1,7 +1,7 @@
 ---
 title: 'Extending the Library'
 sidebar_position: 4
-description: The fourth lesson of the Semantifyr Language. Extend the statechart library with a new concept, time, so that a light says as data how long it stays green, and grow it further with nested states and events.
+description: Extend the statechart library with time, so that a light says as data how long it stays green, and grow it further with nested states and events.
 ---
 
 import LiveEmbed from '@site/src/components/LiveEmbed';
@@ -33,7 +33,7 @@ A case that checks how long something lasts has to count. It does its own counti
 
 <LiveEmbed example={step1} show={['NorthGreenForThreeSteps']} />
 
-The case contains the junction, as a system contains its parts. It starts the junction in its `init` and steps it in its own main transition. A feature can hold a number, not only an instance. Here `required` is bound to 3, and a subclass or a nested block could redefine it, as it redefines a reference. Before the step, the case remembers in a [local variable](../specification/classes-and-behaviour/operations.md#local-variable) whether the north light was green. A local variable lives only in the step that declares it, and it may read the state. After the step, an [`if`](../specification/classes-and-behaviour/operations.md#if) counts the steps the light stays green in an integer variable, up to the required number. The condition of an `if` is checked in every step, while the model runs. When the light leaves green before that, `leftGreenEarly` becomes true, and the case requires that it never does.
+The case contains the junction, as a system contains its parts. It starts the junction in its `init` and steps it in its own main transition. A feature can hold a number, not only an instance. Here `required` is [bound](../reference/classes-and-behaviour/features.md#feature-binding) to 3, and a subclass or a nested block could redefine it, as it redefines a reference. Before the step, the case remembers in a [local variable](../reference/classes-and-behaviour/operations.md#local-variable) whether the north light was green. A local variable lives until the end of the block that declares it, and it may read the state. After the step, an [`if`](../reference/classes-and-behaviour/operations.md#if) counts the steps the light stays green in an integer variable, up to the required number. The condition of an `if` is checked in every step, while the model runs. When the light leaves green before that, `leftGreenEarly` becomes true, and the case requires that it never does.
 
 Open <LiveLink example={step1}>the junction with this case</LiveLink> and verify all. The new case fails, <CaseVerdict example={step1} name="NorthGreenForThreeSteps" />, and its trace shows the north light turning yellow in the step right after it turned green.
 
@@ -54,7 +54,7 @@ A minimum that never ends would also meet the requirement: a light that never le
 
 The problem is in the library. Find and fix it!
 
-When it is fixed, every case passes: <CaseVerdict example={final} name="NorthCanTurnGreen" />, <CaseVerdict example={final} name="NeverBothGreen" />, <CaseVerdict example={final} name="NorthGreenOnlyWhileEastRed" />, <CaseVerdict example={final} name="PedestriansCanWalk" />, <CaseVerdict example={final} name="WalkOnlyWhileEastRed" />, <CaseVerdict example={final} name="NorthGreenForThreeSteps" /> and <CaseVerdict example={final} name="NorthCanTurnYellow" />. One way to write the library with time is <LiveLink example={final}>the final state of this lesson</LiveLink>.
+When it is fixed, every case passes, <CaseVerdict example={final} name="NorthGreenForThreeSteps" /> among them. One way to write the library with time is <LiveLink example={final}>the final state of this lesson</LiveLink>.
 
 A state's time belongs to one stay in the state. Before the fix, the green state kept the time it had counted. So when the light came back to green, the state had already lasted its minimum:
 
@@ -88,11 +88,11 @@ Start from the state with standby, so that your library is the one this page spe
 So far a light goes to standby and back at any time. An operator should decide, with two events, pause and resume. A sensor says how things are, for as long as they stay so. The operator's pause happens at one moment, and the light should react to it once. This task starts from <LiveLink example={nestedStates}>the solution of nested states</LiveLink>.
 
 - An event belongs to a statechart. A statechart has at most one current event in a step, as it has one active state. An event is a condition that is active while it is the current one, so a transition takes it as a guard like any other.
-- In every step, before time passes, every part gets any one of its events, or none. [`havoc`](../specification/classes-and-behaviour/operations.md#havoc) on a variable that holds an instance chooses any instance it can hold, or nothing.
+- In every step, before time passes, every part gets any one of its events, or none. [`havoc`](../reference/classes-and-behaviour/operations.md#havoc) on a variable that holds an instance chooses any instance it can hold, or nothing if the variable is optional.
 - The traffic light goes to standby only on pause, and back only on resume.
 
 Every case keeps its verdict, and in the trace of `NorthCanStandBy` the north light's event is pause in the step it goes to standby. Compare with <LiveLink example={events}>one solution</LiveLink>.
 
 ## The libraries of Gamma and SysML v2
 
-You have built a small statechart language in the Semantifyr Language: states, transitions and guards, how the parts of a system step, time, and with the optional tasks nested states and events. Each is a few classes of a library, and the library's rules decide the verdicts of models that never changed. The libraries that give Gamma and SysML v2 their meaning are built from the same patterns. Gamma's library also has orthogonal regions, entry and exit actions, history and priorities. Every construct of the language is in the [specification](../specification/index.md), and [How a Semantifyr Model Compiles](../compilation/index.mdx) shows how a model becomes what a backend checks.
+You have built a small statechart language in the Semantifyr Language: states, transitions and guards, how the parts of a system step, time, and with the optional tasks nested states and events. Each is a few classes of a library, and the library's rules decide the verdicts of models that never changed. The libraries that give Gamma and SysML v2 their meaning are built from the same patterns. Gamma's library also has orthogonal regions, entry and exit actions, history and priorities. Every construct of the language is in the [language reference](../reference/index.md), and [How a Semantifyr Model Compiles](../compilation/index.mdx) shows how a model becomes what a backend checks.

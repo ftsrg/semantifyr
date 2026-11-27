@@ -35,7 +35,6 @@ function Brand(): React.JSX.Element {
   );
 }
 
-// Learn leads to its page, and its button opens the menu of its parts
 function LearnSegment({ current }: { current: boolean }): React.JSX.Element {
   const [open, setOpen] = useState(false);
   const menu = useId();

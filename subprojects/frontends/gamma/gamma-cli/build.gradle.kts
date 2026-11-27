@@ -4,8 +4,6 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import hu.bme.mit.semantifyr.gradle.registerCliReference
-
 plugins {
     id("hu.bme.mit.semantifyr.distribution-test")
     kotlin("jvm")
@@ -36,14 +34,6 @@ application {
     mainClass = "hu.bme.mit.semantifyr.frontends.gamma.cli.SemantifyrGammaCliKt"
     applicationName = "semantifyr-gamma"
 }
-
-registerCliReference(
-    mapOf(
-        "gamma-help" to listOf("--help"),
-        "gamma-verify" to listOf("verify", "--help"),
-        "gamma-compile" to listOf("compile", "--help"),
-    ),
-)
 
 distributions.main {
     contents {

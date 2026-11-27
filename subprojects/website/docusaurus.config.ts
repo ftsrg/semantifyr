@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import { readdirSync, readFileSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import type { Options as DocsOptions } from '@docusaurus/plugin-content-docs';
 import type { Options as PagesOptions } from '@docusaurus/plugin-content-pages';
@@ -16,6 +16,7 @@ import { servedExamples, type CaseManifest, type ExampleLanguage } from '@semant
 import type { PrismTheme } from 'prism-react-renderer';
 import remarkFences from './src/plugins/remarkFences';
 import sourceAliases from './source-aliases.json';
+import linkingFiles from './linking-files.json';
 import { addressOf, learnParts, sections, SOURCE_CODE, type LearnPart } from './src/map';
 
 // the code blocks take their colours from live's grammars in theme/CodeBlock/Content; the block itself from the tokens
@@ -86,6 +87,29 @@ function pageModelsPlugin(): Plugin {
   };
 }
 
+// every address of the site that the repository's files write opens a page of the built site; live's texts write it through their constant
+function siteLinksPlugin(): Plugin {
+  return {
+    name: 'site-links',
+    postBuild({ siteConfig, routesPaths }) {
+      const routes = new Set(routesPaths);
+      const address = new RegExp(`${siteConfig.url.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(/[^\\s"'\`)\\]>#?]*)?`, 'g');
+      const broken = linkingFiles.flatMap((file) => {
+        const text = readFileSync(path.join(REPOSITORY, file), 'utf8').replace(/\$\{WEBSITE_URL\}/g, siteConfig.url);
+        return [...text.matchAll(address)].filter((match) => {
+          const pathname = match[1] ?? '/';
+          return !routes.has(pathname.endsWith('/') ? pathname : `${pathname}/`);
+        }).map((match) => {
+          return `${file}: ${match[0]}`;
+        });
+      });
+      if (broken.length > 0) {
+        throw new Error(`These addresses of the site open no page: ${broken.join(', ')}`);
+      }
+    },
+  };
+}
+
 function directoriesOf(part: LearnPart): string[] {
   return [
     ...(part.directory === undefined ? [] : [part.directory]),
@@ -98,74 +122,20 @@ const partDirectories = new Set(learnParts.flatMap(directoriesOf));
 // the docs are routed at the site's root, so a page's address is its path under them
 const DOCS = 'src/docs';
 
-// a backend's page is the one place that adds it, so the architecture's names cannot fall behind the backends' pages
-function backendsPlugin(): Plugin {
-  const directory = path.resolve(__dirname, DOCS, 'learn/backends');
-  return {
-    name: 'backends',
-    contentLoaded({ actions }) {
-      const backends = readdirSync(directory).filter((file) => {
-        return /^backend: true$/m.test(readFileSync(path.join(directory, file), 'utf8'));
-      }).map((file) => {
-        const text = readFileSync(path.join(directory, file), 'utf8');
-        const name = /^title: (['"]?)(.+)\1$/m.exec(text)?.[2];
-        const position = Number(/^sidebar_position: (.+)$/m.exec(text)?.[1]);
-        if (name === undefined || Number.isNaN(position)) {
-          throw new Error(`The backend's page ${file} names no title or no sidebar position`);
-        }
-        return { name, position };
-      }).sort((left, right) => {
-        return left.position - right.position;
-      }).map(({ name }) => {
-        return { name };
-      });
-      actions.setGlobalData({ backends });
-    },
-  };
-}
-
-// every built page names its own description and the card for a shared link, or the build fails
-function pageHeadsPlugin(): Plugin {
-  return {
-    name: 'page-heads',
-    postBuild({ outDir }) {
-      const pages = readdirSync(outDir, { recursive: true, encoding: 'utf8' }).filter((file) => {
-        return file.endsWith('.html') && !file.startsWith(`api${path.sep}`);
-      });
-      const failing = pages.filter((file) => {
-        const html = readFileSync(path.join(outDir, file), 'utf8');
-        // the minifier drops the quotes it can
-        return !/<meta[^>]+name="?description"?[^>]+content="?[^"\s>]/.test(html) || !/<meta[^>]+property="?og:image"?[^>]+content="?[^"\s>]*social-card\.png/.test(html);
-      });
-      if (failing.length > 0) {
-        throw new Error(`These pages name no description or no card for a shared link: ${failing.join(', ')}`);
-      }
-    },
-  };
-}
-
 const nodeVersion = readFileSync(path.resolve(__dirname, '../../.nvmrc'), 'utf8').trim();
-
-// the limit of the public instance, as the deployment's example configuration sets it
-const liveLimitSeconds = /^VERIFY_TIMEOUT_SECONDS=(\d+)$/m.exec(readFileSync(path.resolve(__dirname, '../../deploy/live/env.example'), 'utf8'))?.[1];
-if (liveLimitSeconds === undefined) {
-  throw new Error('deploy/live/env.example sets no VERIFY_TIMEOUT_SECONDS');
-}
-
-const baseUrl = '/';
 
 export default {
   title: 'Semantifyr',
   favicon: 'img/favicon.ico',
   url: 'https://semantifyr.org',
-  baseUrl,
+  baseUrl: '/',
   baseUrlIssueBanner: false,
   trailingSlash: true,
+  onBrokenAnchors: 'throw',
   staticDirectories: ['static-imported-branding', 'build/live-screenshots', 'build/api-static'],
   customFields: {
     liveBackendUrl,
     nodeVersion,
-    liveLimitSeconds,
   },
   headTags: [
     {
@@ -174,7 +144,7 @@ export default {
         rel: 'icon',
         type: 'image/png',
         sizes: '192x192',
-        href: `${baseUrl}img/logo-192.png`,
+        href: '/img/logo-192.png',
       },
     },
     {
@@ -183,7 +153,7 @@ export default {
         rel: 'icon',
         type: 'image/png',
         sizes: '512x512',
-        href: `${baseUrl}img/logo-512.png`,
+        href: '/img/logo-512.png',
       },
     },
     {
@@ -191,7 +161,7 @@ export default {
       attributes: {
         rel: 'apple-touch-icon',
         sizes: '180x180',
-        href: `${baseUrl}img/apple-touch-icon.png`,
+        href: '/img/apple-touch-icon.png',
       },
     },
   ],
@@ -225,38 +195,34 @@ export default {
     ],
     '@docusaurus/plugin-sitemap',
     pageModelsPlugin,
-    pageHeadsPlugin,
-    backendsPlugin,
-    () => ({
-      name: 'raw-sources',
-      configureWebpack: () => ({
-        resolve: {
-          alias: {
-            // the sources the pages import, which the website's test and its Gradle tasks read from the same file
-            ...Object.fromEntries(
-              Object.entries(sourceAliases).map(([alias, directory]) => {
-                return [alias, path.resolve(__dirname, directory)];
-              }),
-            ),
-            '@cli-reference': path.resolve(__dirname, 'build/cli-reference'),
-            // written by the cloneSysmlConstructs Gradle task from the SysML translation's registry
-            '@sysml-constructs': path.resolve(__dirname, 'build/sysml-constructs'),
-            // written by the cloneGrammars Gradle task
-            '@grammars': path.resolve(__dirname, 'build/grammars'),
-            '@generated-reference': path.resolve(__dirname, 'build/generated-reference'),
-            '@phases': path.resolve(__dirname, 'build/phases'),
-            '@vscode-extension': path.resolve(__dirname, '../semantifyr-vscode'),
-          },
+    siteLinksPlugin,
+    () => {
+      return {
+        name: 'raw-sources',
+        configureWebpack: () => {
+          return {
+            resolve: {
+              alias: {
+                // the sources the pages import, which the website's test and its Gradle tasks read from the same file
+                ...Object.fromEntries(
+                  Object.entries(sourceAliases).map(([alias, directory]) => {
+                    return [alias, path.resolve(__dirname, directory)];
+                  }),
+                ),
+                // written by the cloneGrammars Gradle task
+                '@grammars': path.resolve(__dirname, 'build/grammars'),
+                '@phases': path.resolve(__dirname, 'build/phases'),
+              },
+            },
+            module: {
+              rules: [
+                { test: /\.(semantifyr|sysml|gamma|get)$/, type: 'asset/source' },
+              ],
+            },
+          };
         },
-        module: {
-          rules: [
-            { test: /\.(semantifyr|sysml|gamma|get|txt|tsv)$/, type: 'asset/source' },
-            // a JSON file a page shows as it is written
-            { test: /\.json$/, resourceQuery: /raw/, type: 'asset/source' },
-          ],
-        },
-      }),
-    }),
+      };
+    },
   ],
   themes: [
     [

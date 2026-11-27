@@ -5,7 +5,6 @@
  */
 
 import hu.bme.mit.semantifyr.gradle.oxstsFileExtension
-import hu.bme.mit.semantifyr.gradle.registerCliReference
 import hu.bme.mit.semantifyr.gradle.semantifyrArtifact
 
 plugins {
@@ -42,18 +41,6 @@ application {
     applicationName = "semantifyr"
 }
 
-registerCliReference(
-    mapOf(
-        "help" to listOf("--help"),
-        "verify" to listOf("verify", "--help"),
-        "compile" to listOf("compile", "--help"),
-        "list" to listOf("list", "--help"),
-        "metrics" to listOf("metrics", "--help"),
-        "portfolios-help" to listOf("portfolios", "--help"),
-        "portfolios" to listOf("portfolios"),
-    ),
-)
-
 val rootDirectory = isolated.rootProject.projectDirectory
 
 tasks.withType<Test>().configureEach {
@@ -81,7 +68,7 @@ val phases = tasks.register<JavaExec>("phases") {
     }
     val outputDirectory = phasesDirectory.get().asFile
     workingDir = outputDirectory
-    args("compile", "--artifacts=debug", "--disable-artifact=mapping", "--artifact-directory=.", "--output=compiled.$oxstsFileExtension", phasesModel.asFile.relativeTo(outputDirectory).invariantSeparatorsPath)
+    args("compile", "--disable-artifact=mapping", "--artifact-directory=.", "--output=compiled.$oxstsFileExtension", phasesModel.asFile.relativeTo(outputDirectory).invariantSeparatorsPath)
     doFirst {
         outputDirectory.deleteRecursively()
         outputDirectory.mkdirs()
@@ -95,8 +82,8 @@ val phases = tasks.register<JavaExec>("phases") {
     }
 }
 
-configurations.consumable("phaseWalkElements") {
-    attributes(semantifyrArtifact("phase-walk"))
+configurations.consumable("phasesElements") {
+    attributes(semantifyrArtifact("phases"))
     outgoing.artifact(phasesDirectory) {
         builtBy(phases)
     }

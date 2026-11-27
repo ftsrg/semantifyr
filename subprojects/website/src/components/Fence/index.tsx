@@ -17,7 +17,6 @@ interface Props {
   open?: boolean;
 }
 
-// an oxsts fence as remarkFences leaves it, when what it shows is not its whole model or it is embedded or opened
 export default function Fence({ model, shown, lines, embed, open = false }: Props): React.JSX.Element {
   if (embed !== undefined) {
     const [first, last] = (lines ?? '').split('-').map(Number);

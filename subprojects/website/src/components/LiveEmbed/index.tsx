@@ -5,11 +5,10 @@
  */
 
 import type React from 'react';
-import type { LiveEditorLines, LiveEditorView } from '@semantifyr/editor-common';
+import type { LiveEditorLines } from '@semantifyr/editor-common';
 import type { CaseManifest, ExampleLanguage } from '@semantifyr/editor-common/examples';
 import { EmbeddedExample } from './EmbeddedExample';
 
-// a model as a page imports it, a served example by @served-examples/<language>/<id> and a lesson's stage by @lesson-stages/<name>
 export interface PageModel {
   language: ExampleLanguage;
   // from the repository's root
@@ -25,8 +24,6 @@ export type ExpectedVerdict = CaseManifest['models'][number]['cases'][number]['v
 
 interface Props {
   example: PageModel;
-  library?: 'gamma' | 'sysml';
-  view?: LiveEditorView;
   show?: string[];
 }
 
@@ -48,10 +45,16 @@ interface Selection {
   lines: LiveEditorLines;
 }
 
+interface Block {
+  names: string[];
+  lines: string[];
+  first: number;
+}
+
 // relies on the models separating top-level declarations with blank lines
 function select(code: string, names: string[]): Selection {
-  const blocks: { names: string[]; lines: string[]; first: number }[] = [];
-  let current: { names: string[]; lines: string[]; first: number } | null = null;
+  const blocks: Block[] = [];
+  let current: Block | null = null;
   let depth = 0;
   code.split('\n').forEach((line, index) => {
     if (depth === 0 && line.trim() === '') {
@@ -63,25 +66,39 @@ function select(code: string, names: string[]): Selection {
       blocks.push(current);
     }
     current.lines.push(line);
-    const name = DECLARATION_NAME.map((pattern) => pattern.exec(line)?.[1]).find((match) => match !== undefined);
+    const name = DECLARATION_NAME.map((pattern) => {
+      return pattern.exec(line)?.[1];
+    }).find((match) => {
+      return match !== undefined;
+    });
     if (depth === 0 && name !== undefined) {
       current.names.push(name);
     }
     const uncommented = line.replace(/\/\/.*$/, '');
     depth += (uncommented.match(/\{/g)?.length ?? 0) - (uncommented.match(/\}/g)?.length ?? 0);
   });
-  const missing = names.filter((name) => !blocks.some((block) => block.names.includes(name)));
+  const missing = names.filter((name) => {
+    return !blocks.some((block) => {
+      return block.names.includes(name);
+    });
+  });
   if (missing.length > 0) {
     throw new Error(`The model declares no ${missing.join(', ')}`);
   }
-  const selected = blocks.filter((block) => block.names.some((name) => names.includes(name)));
+  const selected = blocks.filter((block) => {
+    return block.names.some((name) => {
+      return names.includes(name);
+    });
+  });
   const first = selected[0];
   const last = selected[selected.length - 1];
   if (first === undefined || last === undefined) {
     throw new Error('No declaration is selected');
   }
   return {
-    text: selected.map((block) => block.lines.join('\n')).join('\n\n'),
+    text: selected.map((block) => {
+      return block.lines.join('\n');
+    }).join('\n\n'),
     lines: { first: first.first, last: last.first + last.lines.length - 1 },
   };
 }
@@ -90,10 +107,8 @@ export function selectDeclarations(code: string, names: string[]): string {
   return select(code, names).text;
 }
 
-// a model shown whole or by its declarations, which opens in live's editor at the declarations shown
-export default function LiveEmbed({ example, library, view, show }: Props): React.JSX.Element {
+export default function LiveEmbed({ example, show }: Props): React.JSX.Element {
   const model = example.text;
-  const language = example.language;
   const selection = show ? select(model, show) : null;
   return (
     <EmbeddedExample
@@ -101,10 +116,9 @@ export default function LiveEmbed({ example, library, view, show }: Props): Reac
       example={example.id}
       shown={selection?.text ?? model}
       lines={selection?.lines}
-      language={language}
-      library={library}
-      view={view ?? (VERIFICATION_CASE.test(model) ? 'embed' : 'edit-only')}
-      open={selection === null && language !== 'sysml'}
+      language={example.language}
+      view={VERIFICATION_CASE.test(model) ? 'embed' : 'edit-only'}
+      open={selection === null && example.language !== 'sysml'}
     />
   );
 }

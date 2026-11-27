@@ -1,6 +1,5 @@
 ---
 title: 'Lesson: A Level Crossing'
-sidebar_label: 'Lesson: A Level Crossing'
 sidebar_position: 2
 description: Read the Gamma level crossing, verify its two cases, and read the trace of the one that fails.
 ---
@@ -34,11 +33,11 @@ The model runs in steps. In each step the environment may raise the sensors' eve
 
 ## Verification Cases
 
-A verification case names its component and holds its property. The first case claims that no train is ever in the crossing while the barrier is up; `AG` states that every reachable state satisfies the condition:
+A verification case names its component and holds its property, as [Writing a Verification Case](verifying.mdx#writing-a-verification-case) says. The first case claims that no train is ever in the crossing while the barrier is up:
 
 <LiveEmbed example={levelCrossing} show={['BarrierDownWhileTrainInCrossing']} />
 
-The second asks whether trains on both tracks can be in the crossing at once; `EF` states that some run reaches the condition:
+The second asks whether trains on both tracks can be in the crossing at once:
 
 <LiveEmbed example={levelCrossing} show={['TwoTrainsCanBeInTheCrossing']} />
 

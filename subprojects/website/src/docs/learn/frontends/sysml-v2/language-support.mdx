@@ -2,18 +2,50 @@
 title: SysML v2 Language Support
 sidebar_label: Language Support
 sidebar_position: 3
-description: The SysML v2 constructs the frontend reads, each with its outcome, generated from the frontend's registry.
+description: Which SysML v2 constructs the frontend supports and how it reads them, what it does not support, and what is planned.
 ---
-
-import SysmlConstructTable from '@site/src/components/SysmlConstructs';
-import constructs from '@sysml-constructs/constructs.tsv';
 
 # SysML v2 Language Support
 
-The SysML v2 frontend supports the part of the language that describes behaviour at the level of states: part and port definitions with their usages, items sent over flows between ports, attributes of type Integer and Boolean, exhibited state machines, and verification cases whose objectives are requirements over a part.
+The SysML v2 frontend supports the part of the language that describes behaviour at the level of states: parts that exchange items over ports, each with one exhibited state machine, attributes of type Integer and Boolean, and verification cases over a part. It reports a construct it does not support on the construct, and then translates nothing of the model. [Semantic Decisions](semantic-decisions.mdx) gives the meaning of every supported construct.
 
-The table lists every SysML v2 construct the frontend reads, with its outcome. A planned or unsupported construct is reported on the construct, and the model is not translated. Every other construct is translated unless its detail says otherwise, and one with a warning says what to watch for.
+## Structure
 
-<SysmlConstructTable table={constructs} />
+- **Supported:** part and port definitions, part and port usages typed by one of them, with the multiplicity `[1]`, `[0]`, or a literal `[n]`, and the binding of a part's own port to a sub-part's port.
+- **Not supported:** specialization of definitions, subsetting and redefinition, and connections, interfaces, allocations, and messages.
+- **Planned:** packages, the multiplicity `[0..1]`, and usages with more than one typing. Until packages are supported, a model's elements stand at the top level of its file.
 
-Their semantics are on [Semantic Decisions](semantic-decisions.mdx).
+## State Machines
+
+- **Supported:** one exhibited state per part, typed by a state definition or not, or a plain `state` in its place, with nested and parallel states, transitions with a trigger, a guard, and an effect, entry and exit actions, and transitions to `done`.
+- **Not supported:** a composite state without an initial transition, a transition declared in a parallel state, a trigger on an initial transition, and a transition to or from an action, a decision, or `terminate`.
+- **Planned:** do actions, a second exhibited state per part, and an effect on a transition without `first` in a state's body. Until then, write `transition first <state> do ... then X;`.
+
+## Actions
+
+- **Supported:** sends and assignments to the part's own attributes, in entry actions, exit actions, and effects, and composite actions.
+- **Not supported:** `if`, loops, and `perform` by reference.
+- **Planned:** actions and `perform` in a part definition, and accept actions and control nodes inside an action.
+
+## Items, Ports, and Flows
+
+- **Supported:** item definitions, sent with `send new X() via p`, accepted with `accept X via p`, and carried by flows between sub-parts' ports.
+- **Not supported:** a send or an accept without `via`, a send with `to`, and a send of anything but `new X()`.
+- **Planned:** item payloads: attributes of an item definition, and `new X(...)` with arguments.
+
+## Time
+
+- **Supported:** `accept after d` with a literal duration in seconds, minutes, hours, or days, and `accept when c`.
+- **Not supported:** `accept at t`, and `accept after` with a duration that is not a literal or has no unit.
+
+## Attributes and Expressions
+
+- **Supported:** attributes of type Integer and Boolean in part definitions, with `= e`, `:= e`, `default`, or no value; Integer and Boolean literals; and the operators `+ - * / == != < <= > >= and or not`.
+- **Not supported:** attributes of other types, such as String, Natural, and quantities, attributes outside part definitions, a reference to another part's attribute outside a verification case or a requirement, the operators `xor`, `implies`, `if ? else`, `??`, and `===`, and calculations of the user's own.
+- **Planned:** attributes and literals of type Real, enumerations, attributes with a multiplicity `[n]`, and the operators `%`, `**`, and `^`.
+
+## Verification
+
+- **Supported:** verification case definitions whose subject is typed by a part definition and whose objective verifies one requirement or holds its own `require constraint`, over `mustAlways`, `eventually`, and `isStateActive` ([Writing a Verification Case](verifying.md#writing-a-verification-case)).
+- **Not supported:** `assume constraint`, a verification case without an objective, and an objective with both its own `require` and a `verify`.
+- **Planned:** a second `verify` in a case, a second `require constraint` in a requirement, and temporal operators below the root of a constraint.

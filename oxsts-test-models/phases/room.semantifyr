@@ -1,5 +1,3 @@
-package room
-
 class Fuse {
     var ok: bool := true
 }
@@ -58,7 +56,7 @@ class BothLampsCanBeOn {
         inline hall.main()
     }
 
-    prop {
+    redefine prop {
         return EF hall.top.isOn() && hall.bottom.isOn()
     }
 }

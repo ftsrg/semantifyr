@@ -7,7 +7,7 @@
 import { createContext, type ReactNode } from 'react';
 
 // what a code block shows may be a part of its model; copying and opening it in live take the whole model
-export interface FenceValue {
+interface FenceValue {
   model: string;
   control: ReactNode;
   // a served example opens in the full live by its address, not by its text

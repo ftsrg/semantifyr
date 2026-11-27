@@ -16,14 +16,13 @@ import OpenInLiveLink from '@site/src/theme/CodeBlock/OpenInLiveLink';
 import controlStyles from '@site/src/theme/CodeBlock/Buttons/styles.module.css';
 import styles from './styles.module.css';
 
-export interface EmbeddedExampleProps {
+interface EmbeddedExampleProps {
   model: string;
   // the registry's identifier of a served example, which opens by its address
   example?: string | undefined;
   shown: string;
   lines?: LiveEditorLines | undefined;
   language: 'oxsts' | 'gamma' | 'sysml';
-  library?: 'gamma' | 'sysml' | undefined;
   view: LiveEditorView;
   open?: boolean;
 }
@@ -74,8 +73,7 @@ function OpenIcon(): React.JSX.Element {
   );
 }
 
-// closed it is the page's code block; on the press live's editor loads unseen over it and takes its place once it shows the model
-export function EmbeddedExample({ model, example, shown, lines, language, library, view, open = false }: EmbeddedExampleProps): React.JSX.Element {
+export function EmbeddedExample({ model, example, shown, lines, language, view, open = false }: EmbeddedExampleProps): React.JSX.Element {
   const liveBackendUrl = useLiveBackendUrl();
   const { colorMode } = useColorMode();
   const [phase, setPhase] = useState<Phase>('closed');
@@ -96,7 +94,7 @@ export function EmbeddedExample({ model, example, shown, lines, language, librar
     }
     let active = true;
     const range = first === undefined || last === undefined ? undefined : { first, last };
-    void liveEditorUrl(`${normalizeBaseUrl(liveBackendUrl).http}/`, { language, example, library, view, theme: colorMode, lines: range, model: example === undefined ? model : undefined }).then((address) => {
+    void liveEditorUrl(`${normalizeBaseUrl(liveBackendUrl).http}/`, { language, example, view, theme: colorMode, lines: range, model: example === undefined ? model : undefined }).then((address) => {
       if (active) {
         setUrl(address);
       }
@@ -104,7 +102,7 @@ export function EmbeddedExample({ model, example, shown, lines, language, librar
     return () => {
       active = false;
     };
-  }, [opened, liveBackendUrl, language, example, library, view, colorMode, model, first, last]);
+  }, [opened, liveBackendUrl, language, example, view, colorMode, model, first, last]);
 
   useEffect(() => {
     if (phase !== 'loading') {
@@ -120,7 +118,6 @@ export function EmbeddedExample({ model, example, shown, lines, language, librar
     };
   }, [phase]);
 
-  // the block comes back where the editor's top was, and the focus to its control
   useLayoutEffect(() => {
     if (phase !== 'closed' || closedAt.current === null || !block.current) {
       return;

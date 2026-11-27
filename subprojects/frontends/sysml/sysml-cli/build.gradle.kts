@@ -4,8 +4,6 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import hu.bme.mit.semantifyr.gradle.registerCliReference
-
 plugins {
     id("hu.bme.mit.semantifyr.distribution-test")
     kotlin("jvm")
@@ -58,14 +56,6 @@ application {
     mainClass = "hu.bme.mit.semantifyr.frontends.sysml.cli.SemantifyrSysMLCliKt"
     applicationName = "semantifyr-sysml"
 }
-
-registerCliReference(
-    mapOf(
-        "sysml-help" to listOf("--help"),
-        "sysml-verify" to listOf("verify", "--help"),
-        "sysml-compile" to listOf("compile", "--help"),
-    ),
-)
 
 val rootDirectory = isolated.rootProject.projectDirectory
 

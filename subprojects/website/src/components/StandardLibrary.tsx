@@ -8,7 +8,6 @@ import type React from 'react';
 import { Fragment } from 'react';
 import CodeBlock from '@theme/CodeBlock';
 import Heading from '@theme/Heading';
-import { withCode } from '@site/src/lib/inlineCode';
 
 type Kind = 'package' | 'datatype' | 'class' | 'annotation';
 
@@ -124,6 +123,22 @@ function parseLibrary(library: string): Declaration[] {
     comment = null;
   }
   return declarations;
+}
+
+export function declarationOf(library: string, name: string): string {
+  const declaration = parseLibrary(library).find((candidate) => {
+    return candidate.name === name;
+  });
+  if (declaration === undefined) {
+    throw new Error(`standard.semantifyr declares no ${name}`);
+  }
+  return declaration.code;
+}
+
+function withCode(text: string): React.ReactNode[] {
+  return text.split('`').map((part, index) => {
+    return index % 2 === 1 ? <code key={index}>{part}</code> : part;
+  });
 }
 
 function idOf(heading: string): string {

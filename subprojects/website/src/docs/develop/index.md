@@ -19,7 +19,7 @@ A frontend takes a model in an engineering language and translates it onto that 
 
 ### The Compiler {#compiler}
 
-The compiler reads a Semantifyr model on its semantic library and never learns which language the model came from. A verification case is a class of the model that carries its own property. The compiler takes one case through instantiation, inlining and flattening, optimizing between them, to a transition system: variables, an initial transition, a main transition and the property. [How a Semantifyr Model Compiles](../learn/language/compilation/index.mdx) shows the phases, and the [Semantifyr Language Specification](../learn/language/specification/index.md) specifies the language.
+The compiler reads a Semantifyr model on its semantic library and never learns which language the model came from. A verification case is a class of the model that carries its own property. The compiler takes one case through instantiation, inlining and flattening, optimizing between them, to a transition system: variables, an initial transition, a main transition and the property. [How a Semantifyr Model Compiles](../learn/language/compilation/index.mdx) shows the phases, and the [Semantifyr Language Reference](../learn/language/reference/index.md) specifies the language.
 
 ### The Backends {#backends}
 
@@ -31,7 +31,7 @@ A portfolio is a strategy for the backend runs: which backends run under which c
 
 ### The Verifier {#verifier}
 
-The verifier drives the path: it finds the cases of a model, has each one compiled and verified by the portfolio, and back-annotates the evidence into a report of the one execution the backend found, from which every trace is made and the witness, a Semantifyr model of that execution, is derived. Validating a witness is a request of its own: the witness is verified again, as any model is. [Inlined Models](../learn/language/specification/library-and-output/inlined-models.md#witnesses) says what a witness is, and [Portfolios and Verdicts](../learn/backends/portfolios-and-verdicts.mdx#validation) how it is validated.
+The verifier drives the path: it finds the cases of a model, has each one compiled and verified by the portfolio, and back-annotates the evidence into a report of the one execution the backend found, from which every trace is made and the witness, a Semantifyr model of that execution, is derived. Validating a witness is a request of its own: the witness is verified again, as any model is. [Inlined Models](../learn/language/reference/library-and-output/inlined-models.md#witnesses) says what a witness is, and [Portfolios and Verdicts](../learn/backends/portfolios-and-verdicts.mdx#validation) how it is validated.
 
 ## What Runs the Path {#what-runs-the-path}
 

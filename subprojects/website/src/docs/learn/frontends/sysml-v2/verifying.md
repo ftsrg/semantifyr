@@ -6,14 +6,13 @@ description: Verify a SysML v2 model in Live or on your machine, and write its v
 
 import CodeBlock from '@theme/CodeBlock';
 import { selectDeclarations } from '@site/src/components/LiveEmbed';
-import NodeVersion from '@site/src/components/NodeVersion';
 import room from '@served-examples/sysml/room';
 
 # Verifying SysML v2 Models
 
 ## In Live
 
-Open one of the [SysML v2 examples](index.mdx#examples-in-live) in Live, or write your own model, and press **Verify all**.
+Open [Live](https://live.semantifyr.org), pick one of its SysML v2 examples in the toolbar or write your own model, and press **Verify all**.
 
 ## On Your Machine
 
@@ -21,7 +20,7 @@ Open one of the [SysML v2 examples](index.mdx#examples-in-live) in Live, or writ
 semantifyr-sysml verify model.sysml
 ```
 
-`semantifyr-sysml` needs Node.js <NodeVersion /> or newer on `PATH`. To install it, see [Install](../../start/install.md#the-command-line).
+In VS Code, see [Try in VS Code](../../start/vscode.md). To install either, see [Install](../../start/install.md).
 
 ## Writing a Verification Case
 

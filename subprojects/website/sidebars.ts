@@ -23,9 +23,7 @@ function sidebarItemOf(part: LearnPart): SidebarItem {
   return {
     type: 'category',
     label: part.label,
-    link: 'doc' in part.opening
-      ? { type: 'doc', id: part.opening.doc }
-      : { type: 'generated-index', slug: part.opening.index, description: part.opening.description },
+    link: { type: 'doc', id: part.doc },
     items: itemsOf(part),
   };
 }

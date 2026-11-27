@@ -10,9 +10,6 @@
   border: 1px solid var(--border);
   border-radius: var(--radius-large);
   background: var(--surface-panel);
-}
-
-.path {
   container-type: inline-size;
 }
 

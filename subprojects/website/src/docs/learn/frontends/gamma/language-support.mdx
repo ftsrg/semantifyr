@@ -2,18 +2,51 @@
 title: Gamma Language Support
 sidebar_label: Language Support
 sidebar_position: 3
-description: Every construct and variation point of Gamma, with its outcome in the Gamma frontend.
+description: Which Gamma constructs and variation points the frontend supports, what it does not support, and what is planned.
 ---
-
-import GammaConstructTable from '@site/src/components/GammaConstructs';
-import constructs from '@gamma-models/constructs.tsv';
 
 # Gamma Language Support
 
-The Gamma frontend supports Gamma's statecharts, their synchronous, cascade and asynchronous composition, and verification cases written in the model, in Gamma's syntax with Gamma's packages and imports.
+The Gamma frontend supports Gamma's statecharts, their synchronous, cascade, and asynchronous composition, and verification cases written in the model, in Gamma's syntax with Gamma's packages and imports. It reports each construct it does not support with its line, and then translates nothing of the model. [Semantic Decisions](semantic-decisions.mdx) gives the meaning of every supported construct.
 
-The table lists every construct and variation point of Gamma, with its outcome. One with a warning draws a warning from the validator.
+## Statecharts
 
-<GammaConstructTable table={constructs} />
+- **Supported:** regions, simple and composite states, and nested regions, initial pseudostates and initial transitions with an action, entry and exit actions, shallow history and transitions into its node, transitions declared at the statechart level between any two of its states, and transition ids, `@(id)`.
+- **Not supported:** choice, merge, fork, and join, deep history, internal transitions, initial transitions with a trigger or a guard, and state and statechart invariants.
 
-Their semantics are on [Semantic Decisions](semantic-decisions.mdx).
+## Triggers, Guards, and Actions
+
+- **Supported:** event and timeout triggers, guards, `raise`, `set` of a timeout to a constant, and assignment.
+- **Not supported:** complex triggers, `any`, `cycle`, and the `else` guard, blocks, local variables, `if`, `switch`, loops, choice, `havoc`, `assert`, and `deactivate`, and a timeout set to a value other than a constant.
+
+## Ports and Events
+
+- **Supported:** interfaces with `in`, `out`, and `inout` events and interface inheritance, provided and required ports, event parameters, and several events raised on one port in one step.
+- **Not supported:** internal events, interface variables and functions, port invariants, and event priority.
+
+## Types and Expressions
+
+- **Supported:** integer, boolean, and record types, nested records included, variables with a literal initial value, and the arithmetic, comparison, and boolean operators.
+- **Not supported:** enumeration, array, rational, decimal, and subrange types, constants, functions, procedures, and lambdas, and `xor`, `imply`, the conditional expression, `div`, `mod`, `forall`, `exists`, and select expressions.
+- **Planned:** variables with an initial value that is not a literal.
+
+## Time
+
+- **Supported:** timeouts in seconds and milliseconds, and a scheduling constraint on a statechart, a synchronous composite, or a cascade composite.
+- **Not supported:** a scheduling constraint on an asynchronous component or per instance, and an orchestrating period that is not a constant.
+- **Planned:** timeouts in nanoseconds, microseconds, and hours.
+
+## Composition
+
+- **Supported:** synchronous and cascade composites with port bindings, channels, and execution lists, asynchronous statecharts, asynchronous adapters with message queues, clocks, and control specifications, `run`, `reset-queue`, `reset-queues`, `reset-other-queues`, and the `reset` control function, and asynchronous and scheduled-asynchronous composites. A queued message may carry record parameters, and a full queue may discard its oldest message.
+- **Not supported:** an asynchronous composite inside another, a queue that holds messages of the environment together with messages of other components or clock ticks, broadcast channels, component parameters and arguments, `initial execute`, and the `full-step` control function.
+
+## Variation Points
+
+- **Supported:** event persistency with transient and persistent parameters, on-the-fly and beginning-of-step guard evaluation, top-down and bottom-up region schedules, orthogonal regions in declaration order, and transition priority off, order-based, and value-based.
+- **Not supported:** unordered and parallel orthogonal regions.
+
+## Verification
+
+- **Supported:** verification cases written in the model, `verification case N of Component { property }`, with `AG` or `EF` over `state`, `variable`, and `raise` atoms joined by `and`, `or`, and `not` ([Writing a Verification Case](verifying.mdx#writing-a-verification-case)).
+- **Not supported:** other temporal operators, CTL*, and LTL, and the queue size and overflow atoms.

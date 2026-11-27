@@ -1,7 +1,6 @@
 ---
 title: Spin
 sidebar_position: 5
-backend: true
 description: The Spin backend, what it needs, which of its verdicts are trusted, how it handles time, and what it refuses.
 ---
 
@@ -19,7 +18,7 @@ Spin computes with 32-bit integers and havocs an integer only among candidate va
 
 ## Time
 
-Spin realizes the [wait before every main step](../language/specification/classes-and-behaviour/time.md#the-wait-before-a-step) as a whole delay, as [Theta](theta.mdx#time) does, so a trace it finds is a run of the model whether or not every clock test is [closed](../language/specification/classes-and-behaviour/time.md#closed-clock-tests).
+Spin realizes the [wait before every main step](../language/reference/classes-and-behaviour/time.md#the-wait-before-a-step) as a whole delay, as [Theta](theta.mdx#time) does, so a trace it finds is a run of the model whether or not every clock test is [closed](../language/reference/classes-and-behaviour/time.md#closed-clock-tests).
 
 ## What the backend refuses
 

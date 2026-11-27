@@ -5,11 +5,12 @@
  */
 
 import type React from 'react';
+import Link from '@docusaurus/Link';
 import clsx from 'clsx';
 
 import styles from './develop.module.css';
 
-export interface PathBox {
+interface PathBox {
   id: string;
   title: string;
   line: string;
@@ -19,7 +20,7 @@ export interface PathBox {
 }
 
 // in the order a model takes through them; the picture turns at the portfolio and comes back below
-export const PATH: PathBox[] = [
+const PATH: PathBox[] = [
   {
     id: 'model',
     title: 'Model',
@@ -85,8 +86,7 @@ export const PATH: PathBox[] = [
   },
 ];
 
-// the portfolio holds the backends, each of which runs the one tool drawn outside Semantifyr
-export const BACKENDS: PathBox = {
+const BACKENDS: PathBox = {
   id: 'backends',
   title: 'Backends',
   line: 'one per model checker',
@@ -94,7 +94,7 @@ export const BACKENDS: PathBox = {
   kind: 'component',
 };
 
-export const MODEL_CHECKER: PathBox = {
+const MODEL_CHECKER: PathBox = {
   id: 'model-checker',
   title: 'Model checker',
   line: 'outside Semantifyr',
@@ -102,8 +102,7 @@ export const MODEL_CHECKER: PathBox = {
   kind: 'external',
 };
 
-// what runs the path
-export const AROUND: PathBox[] = [
+const AROUND: PathBox[] = [
   {
     id: 'launchers',
     title: 'Launchers',
@@ -145,12 +144,12 @@ function Exchange(): React.ReactNode {
 
 function Box({ box, arrow, down, placed }: { box: PathBox; arrow?: 'right' | 'left' | undefined; down: boolean; placed: boolean }): React.ReactNode {
   return (
-    <a href={`#${box.section}`} className={clsx(styles.box, styles[box.kind])} style={placed ? { gridArea: box.id } : undefined}>
+    <Link to={`#${box.section}`} className={clsx(styles.box, styles[box.kind])} {...(placed ? { style: { gridArea: box.id } } : {})}>
       <strong className={styles.title}>{box.title}</strong>
       <span className={styles.line}>{box.line}</span>
       {arrow === undefined ? null : <Arrow direction={arrow} />}
       {down ? <Arrow direction="down" /> : null}
-    </a>
+    </Link>
   );
 }
 
@@ -158,25 +157,24 @@ function Station({ portfolio }: { portfolio: PathBox }): React.ReactNode {
   return (
     <div className={styles.station} style={{ gridArea: portfolio.id }}>
       <div className={styles.frame} />
-      <a href={`#${portfolio.section}`} className={styles.frameTitle}>
+      <Link to={`#${portfolio.section}`} className={clsx(styles.frameTitle)}>
         <strong className={styles.title}>{portfolio.title}</strong>
         <span className={styles.line}>{portfolio.line}</span>
-      </a>
-      <a href={`#${BACKENDS.section}`} className={clsx(styles.box, styles[BACKENDS.kind], styles.stack)}>
+      </Link>
+      <Link to={`#${BACKENDS.section}`} className={clsx(styles.box, styles[BACKENDS.kind], styles.stack)}>
         <strong className={styles.title}>{BACKENDS.title}</strong>
         <span className={styles.line}>{BACKENDS.line}</span>
-      </a>
+      </Link>
       <Exchange />
-      <a href={`#${MODEL_CHECKER.section}`} className={clsx(styles.box, styles[MODEL_CHECKER.kind], styles.checker)}>
+      <Link to={`#${MODEL_CHECKER.section}`} className={clsx(styles.box, styles[MODEL_CHECKER.kind], styles.checker)}>
         <strong className={styles.title}>{MODEL_CHECKER.title}</strong>
         <span className={styles.line}>{MODEL_CHECKER.line}</span>
-      </a>
+      </Link>
       <Arrow direction="down" />
     </div>
   );
 }
 
-// the upper row runs to the portfolio, the lower one back towards the model
 function arrowOf(index: number, turn: number): 'right' | 'left' | undefined {
   if (index < turn) {
     return 'right';

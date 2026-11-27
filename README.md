@@ -27,8 +27,8 @@ Visit [https://live.semantifyr.org](https://live.semantifyr.org) to verify SysML
 ## Learn
 
 - [Tutorials](https://semantifyr.org/learn/language/lessons/)
-- [Command line](https://semantifyr.org/learn/reference/command-line/)
-- [Language specification](https://semantifyr.org/learn/language/specification/)
+- [Command line](https://semantifyr.org/learn/command-line/)
+- [Language reference](https://semantifyr.org/learn/language/reference/)
 
 ## Install
 

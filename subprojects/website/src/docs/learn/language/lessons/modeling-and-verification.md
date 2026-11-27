@@ -1,7 +1,7 @@
 ---
 title: 'Modeling and Verification'
 sidebar_position: 1
-description: The first lesson of the Semantifyr Language. Model a junction of two traffic lights and the cars that arrive at it, write its requirements as verification cases, and find and fix a flaw with the verifier.
+description: Model a junction of two traffic lights, write its requirements as verification cases, and find and fix a flaw with the verifier.
 ---
 
 import LiveEmbed from '@site/src/components/LiveEmbed';
@@ -39,17 +39,17 @@ Why verify a junction at all? Its controller is a few lines of logic, and it is 
 
 ## Modeling a light
 
-Let us start with a single light that only switches between red and green. Its colors are an [enumeration](../specification/foundations/datatypes.md#enumerations):
+Let us start with a single light that only switches between red and green. Its colors are an [enumeration](../reference/foundations/datatypes.md#enumerations):
 
 <LiveEmbed example={step1} show={['LightColor']} />
 
-The light is a [class](../specification/classes-and-behaviour/classes.md). Its state is held in two [variables](../specification/classes-and-behaviour/variables.md): its color, which starts red, and whether its sensor sees a waiting car. What the light does in one step is its main transition. It is written as `redefine tran`, since every class inherits an empty one:
+The light is a [class](../reference/classes-and-behaviour/classes.md). Its state is held in two [variables](../reference/classes-and-behaviour/variables.md): its color, which starts red, and whether its sensor sees a waiting car. What the light does in one step is its [main transition](../reference/classes-and-behaviour/transitions.md#the-implicit-main-and-init). It is written as `redefine tran`, since every class inherits an empty one and only `redefine` replaces it; a `tran` without `redefine` would be a new transition that no step runs:
 
 <LiveEmbed example={step1} show={['TrafficLight']} />
 
-The step starts with the environment: [`havoc`](../specification/classes-and-behaviour/operations.md#havoc) gives `carWaiting` any value, so that the verifier tries both a waiting car and an empty road. Then a [`choice`](../specification/classes-and-behaviour/operations.md#choice) takes one of its branches. A branch that starts with an [`assume`](../specification/classes-and-behaviour/operations.md#assumption) can only be taken in a state where the assumption holds. So the light turns green only from red and only for a waiting car, and a green light turns red again. The last branch is empty: the light may also stay as it is, since nothing in the model says how long a light keeps its color.
+The step starts with the environment: [`havoc`](../reference/classes-and-behaviour/operations.md#havoc) gives `carWaiting` any value, so that the verifier tries both a waiting car and an empty road. Then a [`choice`](../reference/classes-and-behaviour/operations.md#choice) takes one of its branches. A branch that starts with an [`assume`](../reference/classes-and-behaviour/operations.md#assumption) can only be taken in a state where the assumption holds. So the light turns green only from red and only for a waiting car, and a green light turns red again. The last branch is empty: the light may also stay as it is, since nothing in the model says how long a light keeps its color.
 
-A model starts in the state given by the initial values of its variables, and every step runs its main transition once. A step in which no branch can be taken does not happen, and the verifier explores every choice that a step can make.
+A model starts in the state given by the initial values of its variables, and every step runs its main transition once. A step in which no branch can be taken does not happen ([Blocking](../reference/classes-and-behaviour/operations.md#blocking)), and the verifier explores every choice that a step can make.
 
 ## Verification cases
 
@@ -57,7 +57,7 @@ A question about the model is asked in a verification case. The following case a
 
 <LiveEmbed example={step1} show={['LightCanTurnGreen']} />
 
-`@VerificationCase` marks a class that the verifier checks. The case [extends](../specification/classes-and-behaviour/classes.md#inheritance) the light, so it is the light with a [property](../specification/classes-and-behaviour/properties.md#the-verification-property) added. `EF` asks whether something can ever happen: whether at least one execution reaches a state where the expression holds.
+[`@VerificationCase`](../reference/library-and-output/standard-library.md#verificationcase) marks a class that the verifier checks. The case [extends](../reference/classes-and-behaviour/classes.md#inheritance) the light, so it is the light with a [property](../reference/classes-and-behaviour/properties.md#the-verification-property) added, written as `redefine prop` since every class also inherits one, which always holds. `EF` asks whether something can ever happen: whether at least one execution reaches a state where the expression holds.
 
 Press **Open** on the block above. It opens the model in Live, the editor and verifier of Semantifyr in the browser. Every **Open** button on this page does the same. Then press **Verify all** under the editor. The case passes, <CaseVerdict example={step1} name="LightCanTurnGreen" />, and below it Live opens its trace, the execution that the verifier found. In the *Steps* view of the trace, the sensor sees a car in the first step, and the light is green after it.
 
@@ -103,7 +103,7 @@ class TrafficLight {
 // hide-end
 @VerificationCase
 class LightIsNeverYellow : TrafficLight {
-    prop {
+    redefine prop {
         return AG (color != LightColor::Yellow)
     }
 }

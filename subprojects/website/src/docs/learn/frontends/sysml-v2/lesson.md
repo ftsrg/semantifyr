@@ -1,6 +1,5 @@
 ---
 title: 'Lesson: A Switch and a Lamp'
-sidebar_label: 'Lesson: A Switch and a Lamp'
 sidebar_position: 2
 description: Model a room with a switch and a lamp in SysML v2, verify three requirements, and read the trace of one that does not hold.
 ---
@@ -44,7 +43,7 @@ Requirements talk to the verifier through three calculation definitions, declare
 
 <LiveEmbed example={room} show={['import', 'eventually', 'mustAlways', 'isStateActive']} />
 
-Semantifyr recognizes them by their names: `eventually` (short name `EF`) states that some execution reaches a situation, `mustAlways` (short name `AG`) that every execution stays in one, and `isStateActive` asks whether a state is currently active.
+Semantifyr recognizes them by their names, as [Writing a Verification Case](verifying.md#writing-a-verification-case) says.
 
 A verification case is a `verification def` whose subject is the system under verification and whose objective is a requirement over it. The first case asks whether the lamp can ever be lit:
 

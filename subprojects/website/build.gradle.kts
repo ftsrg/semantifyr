@@ -17,23 +17,19 @@ plugins {
 }
 
 val editorCommon = artifactsOf("npm-package", ":semantifyr-editor-common")
-val sysmlConstructs = artifactsOf("sysml-constructs", ":sysml-wrapper")
 val sysmlWorker = artifactsOf("sysml-worker", ":sysml-wrapper")
 val grammars = artifactsOf("textmate-grammar", ":oxsts.lang", ":gamma.lang")
 val liveScreenshots = artifactsOf("screenshots", ":semantifyr-live-frontend")
 val liveWebDistribution = artifactsOf("web-distribution", ":semantifyr-live-frontend")
 val liveUiMock = artifactsOf("live-ui-mock", ":semantifyr-live-frontend")
-val vscodeManifest = artifactsOf("vscode-manifest", ":semantifyr-vscode")
-val cliReference = artifactsOf("cli-reference", ":semantifyr-cli", ":sysml-cli", ":gamma-cli")
-val generatedReference = artifactsOf("generated-reference", ":cli-common", ":verifier")
 val generatedWitness = artifactsOf("generated-witness", ":verifier")
-val phaseWalk = artifactsOf("phase-walk", ":semantifyr-cli")
+val phases = artifactsOf("phases", ":semantifyr-cli")
 
 dependencies {
     testImplementation(project(":oxsts.lang"))
-    testImplementation(project(":oxsts.model"))
     testImplementation(testFixtures(project(":oxsts.lang")))
     testImplementation(libs.ecore)
+    testImplementation(libs.gson)
     testImplementation(libs.guice)
     testImplementation(libs.xtext.core)
     testImplementation(libs.xtext.testing)
@@ -81,7 +77,6 @@ dokka {
     moduleName = "Semantifyr"
 }
 
-// the directories the pages import sources from, which the site's configuration and the test read too
 val sourceAliasesFile = layout.projectDirectory.file("source-aliases.json")
 
 @Suppress("UNCHECKED_CAST")
@@ -89,7 +84,6 @@ val sourceAliasDirectories = (JsonSlurper().parseText(providers.fileContents(sou
     layout.projectDirectory.dir(it)
 }
 
-// one list for the site links test and the check's inputs, so that a file the test reads cannot be missing from the cache key
 val linkingFilesFile = layout.projectDirectory.file("linking-files.json")
 
 @Suppress("UNCHECKED_CAST")
@@ -97,25 +91,13 @@ val linkingFiles = (JsonSlurper().parseText(providers.fileContents(linkingFilesF
     isolated.rootProject.projectDirectory.file(it)
 }
 
-val cloneCliReference = tasks.register<Sync>("cloneCliReference") {
-    from(cliReference)
-    into(layout.buildDirectory.dir("cli-reference"))
-}
-
-// written for the alias @generated-reference: what the pages show of a type, generated from it
-val cloneGeneratedReference = tasks.register<Sync>("cloneGeneratedReference") {
-    from(generatedReference)
-    into(layout.buildDirectory.dir("generated-reference"))
-}
-
-// written for the alias @generated-witness: the witness model the verifier derives from the stored timed report
 val cloneGeneratedWitness = tasks.register<Sync>("cloneGeneratedWitness") {
     from(generatedWitness)
     into(layout.buildDirectory.dir("generated-witness"))
 }
 
-val clonePhaseWalk = tasks.register<Sync>("clonePhaseWalk") {
-    from(phaseWalk)
+val clonePhases = tasks.register<Sync>("clonePhases") {
+    from(phases)
     into(layout.buildDirectory.dir("phases"))
 }
 
@@ -123,13 +105,6 @@ val importedBrandingDirectory = layout.projectDirectory.dir("static-imported-bra
 
 val cloneBrandingAssets = registerBrandingAssets(importedBrandingDirectory.dir("img"))
 
-// written for the alias @sysml-constructs
-val cloneSysmlConstructs = tasks.register<Sync>("cloneSysmlConstructs") {
-    from(sysmlConstructs)
-    into(layout.buildDirectory.dir("sysml-constructs"))
-}
-
-// written for the alias @grammars: the grammars live's editor loads
 val cloneGrammars = tasks.register<Sync>("cloneGrammars") {
     from(grammars)
     from(sysmlWorker) {
@@ -154,39 +129,43 @@ val cloneApiDocs = tasks.register<Sync>("cloneApiDocs") {
     into(layout.buildDirectory.dir("api-static/api"))
 }
 
-fun NpmTask.configureSharedInputs() {
+fun NpmTask.readsPackage() {
     readsWorkspace()
-    inputs.dir(layout.projectDirectory.dir("src")).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.file(layout.projectDirectory.file("docusaurus.config.ts")).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.file(layout.projectDirectory.file("sidebars.ts")).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.file(layout.projectDirectory.file("babel.config.cts")).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.files(
+        layout.projectDirectory.dir("src").asFileTree.matching {
+            exclude("docs/**")
+        },
+    ).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.file(layout.projectDirectory.file("tsconfig.json")).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.file(layout.projectDirectory.file("eslint.config.mjs")).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.file(layout.projectDirectory.file("vitest.config.mts")).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.file(layout.projectDirectory.file("package.json")).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.file(isolated.rootProject.projectDirectory.file(".nvmrc")).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.file(isolated.rootProject.projectDirectory.file("deploy/live/env.example")).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.files(vscodeManifest).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.file(sourceAliasesFile).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.files(cloneGeneratedWitness).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.files(sourceAliasDirectories).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.files(servedExampleSources()).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.files(cloneGrammars).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.files(cloneBrandingAssets).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(editorCommon).withPathSensitivity(PathSensitivity.RELATIVE)
 }
 
+fun NpmTask.readsSite() {
+    readsPackage()
+    inputs.file(layout.projectDirectory.file("docusaurus.config.ts")).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.file(layout.projectDirectory.file("sidebars.ts")).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.file(sourceAliasesFile).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.file(linkingFilesFile).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.files(cloneGrammars).withPathSensitivity(PathSensitivity.RELATIVE)
+}
+
 val npmAssemble = tasks.register<NpmTask>("npmAssemble") {
-    configureSharedInputs()
+    readsSite()
+    inputs.dir(layout.projectDirectory.dir("src/docs")).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.property("liveBackendUrl", providers.environmentVariable("SEMANTIFYR_LIVE_URL").orElse(""))
-    inputs.files(cloneCliReference).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.files(cloneGeneratedReference).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.files(clonePhaseWalk).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.files(cloneSysmlConstructs).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.files(linkingFiles).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.files(cloneGeneratedWitness).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.files(sourceAliasDirectories).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.files(servedExampleSources()).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.files(cloneBrandingAssets).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.files(clonePhases).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(cloneScreenshots).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.files(cloneApiDocs).withPathSensitivity(PathSensitivity.RELATIVE)
 
     npmCommand = listOf("run", "assemble")
-    inputs.files(cloneApiDocs).withPathSensitivity(PathSensitivity.RELATIVE)
+
     outputs.dir(layout.buildDirectory.dir("docusaurus"))
     outputs.cacheIf {
         true
@@ -194,9 +173,10 @@ val npmAssemble = tasks.register<NpmTask>("npmAssemble") {
 }
 
 val npmCheck = tasks.register<NpmTask>("npmCheck") {
-    configureSharedInputs()
-    inputs.file(linkingFilesFile).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.files(linkingFiles).withPathSensitivity(PathSensitivity.RELATIVE)
+    readsSite()
+    inputs.file(layout.projectDirectory.file("eslint.config.mjs")).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.file(layout.projectDirectory.file("vitest.config.mts")).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.file(layout.projectDirectory.file("vitest.ui.config.mts")).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(liveUiMock).withPathSensitivity(PathSensitivity.RELATIVE)
 
     npmCommand = listOf("run", "check")
@@ -209,34 +189,44 @@ val npmCheck = tasks.register<NpmTask>("npmCheck") {
     }
 }
 
-listOf(
-    "Chromium",
-    "Firefox",
-    "Webkit",
-).forEach { browser ->
-    val report = "build/test-results/walk-${browser.lowercase()}.xml"
-    tasks.register<NpmTask>("uiTest$browser") {
-        group = LifecycleBasePlugin.VERIFICATION_GROUP
+tasks.register<NpmTask>("uiTestChromium") {
+    group = LifecycleBasePlugin.VERIFICATION_GROUP
 
-        configureSharedInputs()
-        inputs.file(layout.projectDirectory.file("vitest.walk.config.mts")).withPathSensitivity(PathSensitivity.RELATIVE)
-        inputs.files(npmAssemble).withPathSensitivity(PathSensitivity.RELATIVE)
-        inputs.files(liveWebDistribution).withPathSensitivity(PathSensitivity.RELATIVE)
-        inputs.files(liveUiMock).withPathSensitivity(PathSensitivity.RELATIVE)
+    readsPackage()
+    inputs.file(layout.projectDirectory.file("vitest.ui.config.mts")).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.files(npmAssemble).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.files(liveWebDistribution).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.files(liveUiMock).withPathSensitivity(PathSensitivity.RELATIVE)
 
-        npmCommand = listOf("run", "walk", "--", "--reporter=default", "--reporter=junit", "--outputFile.junit=$report")
-        environment.put("TEST_BROWSER", browser.lowercase())
+    val report = "build/test-results/ui-chromium.xml"
+    npmCommand = listOf("run", "ui", "--", "--reporter=default", "--reporter=junit", "--outputFile.junit=$report")
 
-        outputs.file(layout.projectDirectory.file(report))
-        outputs.cacheIf {
-            true
-        }
+    outputs.file(layout.projectDirectory.file(report))
+    outputs.cacheIf {
+        true
+    }
+}
+
+val extractFences = tasks.register<NpmTask>("extractFences") {
+    readsWorkspace()
+    inputs.dir(layout.projectDirectory.dir("src/docs")).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.dir(layout.projectDirectory.dir("src/plugins")).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.file(sourceAliasesFile).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.file(layout.projectDirectory.file("package.json")).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.file(isolated.rootProject.projectDirectory.file(".nvmrc")).withPathSensitivity(PathSensitivity.RELATIVE)
+
+    npmCommand = listOf("run", "fences")
+
+    outputs.dir(layout.buildDirectory.dir("fences"))
+    outputs.cacheIf {
+        true
     }
 }
 
 tasks.named<Test>("test") {
-    inputs.dir(layout.projectDirectory.dir("src/docs")).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.file(isolated.rootProject.projectDirectory.file("oxsts-test-models/phases/room.semantifyr")).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.files(extractFences).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.files(cloneGeneratedWitness).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.files(sourceAliasDirectories).withPathSensitivity(PathSensitivity.RELATIVE)
 }
 
 tasks.register("pack") {

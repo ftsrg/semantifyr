@@ -6,7 +6,6 @@
 
 import hu.bme.mit.semantifyr.gradle.oxstsFileExtension
 import hu.bme.mit.semantifyr.gradle.semantifyrArtifact
-import hu.bme.mit.semantifyr.gradle.writesStandardOutputTo
 
 plugins {
     id("hu.bme.mit.semantifyr.jvm")
@@ -68,29 +67,6 @@ val witnessDirectory = isolated.rootProject.projectDirectory.dir("oxsts-test-mod
 tasks.test {
     inputs.dir(isolated.rootProject.projectDirectory.dir("oxsts-test-models/simple")).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.dir(witnessDirectory).withPathSensitivity(PathSensitivity.RELATIVE)
-}
-
-val generatedReferenceDirectory = layout.buildDirectory.dir("generated-reference")
-
-val generatedReference = tasks.register<JavaExec>("generatedReference_report-fields") {
-    classpath = generate.runtimeClasspath
-    mainClass = "hu.bme.mit.semantifyr.verifier.GenerateReferenceKt"
-    args("report-fields")
-    writesStandardOutputTo(
-        generatedReferenceDirectory.map {
-            it.file("report-fields.json")
-        },
-    )
-    outputs.cacheIf {
-        true
-    }
-}
-
-configurations.consumable("generatedReferenceElements") {
-    attributes(semantifyrArtifact("generated-reference"))
-    outgoing.artifact(generatedReferenceDirectory) {
-        builtBy(generatedReference)
-    }
 }
 
 val generatedWitnessDirectory = layout.buildDirectory.dir("generated-witness")

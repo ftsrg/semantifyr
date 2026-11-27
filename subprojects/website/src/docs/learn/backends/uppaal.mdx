@@ -1,7 +1,6 @@
 ---
 title: Uppaal
 sidebar_position: 6
-backend: true
 description: The Uppaal backend, what it needs, which of its verdicts are trusted, how it handles time and integers, and what it refuses.
 ---
 
@@ -19,7 +18,7 @@ Uppaal havocs an integer only among candidate values, so its configurations are 
 
 ## Time
 
-Uppaal realizes the [wait before every main step](../language/specification/classes-and-behaviour/time.md#the-wait-before-a-step) over dense time with its own clocks. Its trace is a path through clock zones that names no times; the backend reads back the earliest times that path allows, so the elapsed times and clock values of its trace are one run along the path Uppaal found.
+Uppaal realizes the [wait before every main step](../language/reference/classes-and-behaviour/time.md#the-wait-before-a-step) over dense time with its own clocks. Its trace is a path through clock zones that names no times; the backend reads back the earliest times that path allows, so the elapsed times and clock values of its trace are one run along the path Uppaal found.
 
 ## Integers
 
