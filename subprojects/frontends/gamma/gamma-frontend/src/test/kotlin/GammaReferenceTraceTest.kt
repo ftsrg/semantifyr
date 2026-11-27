@@ -61,13 +61,6 @@ class GammaReferenceTraceTest {
     }
 
     @Test
-    fun `the level crossing reference trace validates against the level crossing model`() {
-        val (_, trace) = read(LEVEL_CROSSING, LEVEL_CROSSING_TRACE)
-
-        assertThat(trace).isInstanceOf(ExecutionTrace::class.java)
-    }
-
-    @Test
     fun `the trace generated from the reference report reads back as the reference trace`() {
         val (verificationCase, compiledModel) = compileReferenceCase()
 
@@ -172,12 +165,10 @@ class GammaReferenceTraceTest {
     )
 
     companion object {
-        private val CROSSROADS_CASES = Path("..", "models", "examples", "CrossroadsFurtherCases.gamma")
-        private val PAIR = Path("..", "models", "etc")
-        private val REFERENCE_TRACE = PAIR.resolve("crossroads-ACanBeGreen.trace.get")
-        private val REFERENCE_REPORT = PAIR.resolve("crossroads-ACanBeGreen.report.json")
-        private val LEVEL_CROSSING = Path("..", "models", "examples", "LevelCrossing.gamma")
-        private val LEVEL_CROSSING_TRACE = PAIR.resolve("level-crossing-BarrierDownWhileTrainInCrossing.trace.get")
+        private val RESOURCES = Path("src", "test", "resources", "GammaReferenceTraceTest")
+        private val CROSSROADS_CASES = RESOURCES.resolve("CrossroadsFurtherCases.gamma")
+        private val REFERENCE_TRACE = RESOURCES.resolve("crossroads-ACanBeGreen.trace.get")
+        private val REFERENCE_REPORT = RESOURCES.resolve("crossroads-ACanBeGreen.report.json")
         private const val RAISE_INPUT_EVENT = "semantifyr::gamma::ports::Port::raiseInputEvent"
         private const val SET_OUTPUT_EVENT = "semantifyr::gamma::ports::Port::setOutputEvent"
     }

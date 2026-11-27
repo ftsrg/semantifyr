@@ -1,0 +1,36 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package test
+
+type Point : record {
+    x : integer,
+    y : integer
+}
+
+type Box : record {
+    corner : Point,
+    open : boolean
+}
+
+interface Control {
+    in event start
+}
+
+statechart Plotter [
+    port control : provides Control
+] {
+    var position : Point := #Point { x := 3 }
+    var copy : Point
+    var box : Box := #Box { corner := #Point { y := -2 }, open := true }
+    region Main {
+        initial MainInitial
+        state Start
+        state Done
+    }
+    transition from MainInitial to Start
+    transition from Start to Done when control.start [ box.corner.x > 4 ] / box.corner.x := 5; copy := position;
+}

@@ -28,12 +28,14 @@ distributions.main {
         from(layout.projectDirectory.dir("../models/libraries/default")) {
             into("libraries/gamma")
         }
-        from(layout.projectDirectory.file("../models/examples/Simple.gamma")) {
-            into("models/smoke")
-        }
     }
 }
 
-tasks.named("test") {
-    inputs.file(layout.projectDirectory.file("../models/examples/Simple.gamma")).withPathSensitivity(PathSensitivity.RELATIVE)
+listOf(
+    "test",
+    "endToEndTest",
+).forEach {
+    tasks.named(it) {
+        inputs.file(layout.projectDirectory.file("../models/smoke/smoke.gamma")).withPathSensitivity(PathSensitivity.RELATIVE)
+    }
 }

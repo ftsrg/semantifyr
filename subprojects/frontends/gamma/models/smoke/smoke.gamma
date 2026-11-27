@@ -1,0 +1,33 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package smoke
+
+interface Control {
+    in event toggle
+}
+
+statechart Switch [
+    port control : provides Control
+] {
+    region Main {
+        initial MainInitial
+        state Off
+        state On
+    }
+
+    transition from MainInitial to Off
+    transition from Off to On when control.toggle
+    transition from On to Off when control.toggle
+}
+
+verification case OnReachable of Switch {
+    EF state Main.On
+}
+
+verification case OffReachable of Switch {
+    EF state Main.Off
+}

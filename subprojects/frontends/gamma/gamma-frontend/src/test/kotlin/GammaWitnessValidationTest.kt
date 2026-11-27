@@ -34,7 +34,7 @@ class GammaWitnessValidationTest {
     }
 
     private val case: GammaVerificationCase by lazy {
-        helper.discover(Path("..", "models", "examples", "Simple.gamma")).first()
+        helper.discover(Path("..", "models", "smoke", "smoke.gamma")).first()
     }
 
     @Test

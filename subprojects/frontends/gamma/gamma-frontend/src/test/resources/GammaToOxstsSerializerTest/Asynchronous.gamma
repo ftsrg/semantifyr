@@ -1,0 +1,50 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package test
+
+interface Signals {
+    in event first(value : integer)
+    in event second
+}
+
+interface Replies {
+    out event done
+}
+
+@Asynchronous
+statechart Sender [
+    port signals : provides Signals,
+    port replies : provides Replies
+] {
+}
+
+statechart Receiver [
+    port signals : provides Signals,
+    port replies : requires Replies
+] {
+}
+
+adapter Buffered of component receiver : Receiver {
+    clock ticker (rate = 3 ms)
+    when ticker / run
+    queue low (priority = 1, capacity = 2) {
+        replies.any, ticker
+    }
+    queue high (priority = 2, capacity = 1) {
+        signals.any
+    }
+}
+
+scheduled-async System [
+    port signals : provides Signals
+] {
+    component sender : Sender
+    component buffered : Buffered
+    bind signals -> sender.signals
+    channel [ sender.replies ] -o)- [ buffered.replies ]
+    execute sender, buffered, buffered
+}

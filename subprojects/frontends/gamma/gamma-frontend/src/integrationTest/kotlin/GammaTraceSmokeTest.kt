@@ -10,17 +10,17 @@ import hu.bme.mit.semantifyr.portfolios.Portfolios
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
-class GammaVerificationTests {
+class GammaTraceSmokeTest {
 
     companion object {
         private val helper = GammaFrontendTestHelper()
-        private val artifactRoot = GammaFrontendTestHelper.testArtifactRoot(GammaVerificationTests::class.java)
+        private val artifactRoot = GammaFrontendTestHelper.testArtifactRoot(GammaTraceSmokeTest::class.java)
     }
 
     @Test
-    suspend fun `A passing EF case returns its witness with a Gamma trace`() {
-        val entry = GammaCorpus.load(GammaCorpus.examples).single {
-            it.case.name == "LeaderStatechartIdleReachable"
+    suspend fun `the smoke model's EF case is verified and its witness and Gamma trace written`() {
+        val entry = GammaCorpus.load(GammaCorpus.smoke).single {
+            it.case.name == "OnReachable"
         }
         val gammaVerificationCase = helper.discoverInWorkspace(entry.directory, entry.model.file).single {
             it.declaration.name == entry.case.name

@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
+package hu.bme.mit.semantifyr.frontends.gamma.lang
+
 import com.google.inject.Inject
 import com.google.inject.Provider
 import hu.bme.mit.semantifyr.frontends.gamma.lang.gamma.GammaPackage
@@ -18,8 +20,6 @@ import org.eclipse.xtext.serializer.ISerializer
 import org.eclipse.xtext.testing.util.ParseHelper
 import org.eclipse.xtext.testing.validation.ValidationTestHelper
 import org.junit.jupiter.api.Test
-import kotlin.io.path.Path
-import kotlin.io.path.absolutePathString
 
 @InjectWithGamma
 class GammaTraceLanguageTest {
@@ -87,7 +87,7 @@ class GammaTraceLanguageTest {
         assertion: String,
     ): GammaRoot {
         val resourceSet = resourceSetProvider.get()
-        resourceSet.getResource(URI.createFileURI(Path("..", "models", "examples", "$model.gamma").absolutePathString()), true)
+        resourceSet.getResource(URI.createURI(checkNotNull(javaClass.getResource("GammaTraceLanguageTest/$model.gamma")).toString()), true)
         return parseHelper.parse(
             """
             import $model

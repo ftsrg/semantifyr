@@ -1,0 +1,135 @@
+package CrossroadsFurtherCases
+
+import Crossroads
+
+verification case ControllerOperatingReachable of CrossroadSystem {
+    EF state controller.Main.Operating
+}
+
+verification case ControllerOperatingBothYellowReachable of CrossroadSystem {
+    EF state controller.OperatingRegion.BothYellow
+}
+
+verification case ControllerOperatingBothRedReachable of CrossroadSystem {
+    EF state controller.OperatingRegion.BothRed
+}
+
+verification case ControllerOperatingStoppingAReachable of CrossroadSystem {
+    EF state controller.OperatingRegion.StoppingA
+}
+
+verification case ControllerOperatingStoppingBReachable of CrossroadSystem {
+    EF state controller.OperatingRegion.StoppingB
+}
+
+verification case ControllerOperatingTrafficOnAReachable of CrossroadSystem {
+    EF state controller.OperatingRegion.TrafficOnA
+}
+
+verification case ControllerOperatingTrafficOnBReachable of CrossroadSystem {
+    EF state controller.OperatingRegion.TrafficOnB
+}
+
+verification case ANormalReachable of CrossroadSystem {
+    EF state trafficLightA.Main.Normal
+}
+
+verification case AInterruptedReachable of CrossroadSystem {
+    EF state trafficLightA.Main.Interrupted
+}
+
+verification case ACanBeYellow of CrossroadSystem {
+    EF state trafficLightA.NormalRegion.Yellow
+}
+
+verification case ACanBeRed of CrossroadSystem {
+    EF state trafficLightA.NormalRegion.Red
+}
+
+verification case ACanBeGreen of CrossroadSystem {
+    EF state trafficLightA.NormalRegion.Green
+}
+
+verification case ACanBeBlinkingYellow of CrossroadSystem {
+    EF state trafficLightA.InterruptedRegion.BlinkingYellow
+}
+
+verification case BNormalReachable of CrossroadSystem {
+    EF state trafficLightB.Main.Normal
+}
+
+verification case BInterruptedReachable of CrossroadSystem {
+    EF state trafficLightB.Main.Interrupted
+}
+
+verification case BCanBeYellow of CrossroadSystem {
+    EF state trafficLightB.NormalRegion.Yellow
+}
+
+verification case BCanBeRed of CrossroadSystem {
+    EF state trafficLightB.NormalRegion.Red
+}
+
+verification case BCanBeBlinkingYellow of CrossroadSystem {
+    EF state trafficLightB.InterruptedRegion.BlinkingYellow
+}
+
+verification case BCanBeBlinkingBlack of CrossroadSystem {
+    EF state trafficLightB.InterruptedRegion.Black
+}
+
+verification case ReachableRedRed of CrossroadSystem {
+    EF (
+        state trafficLightA.NormalRegion.Red
+        and state trafficLightB.NormalRegion.Red
+    )
+}
+
+verification case ReachableRedGreen of CrossroadSystem {
+    EF (
+        state trafficLightA.NormalRegion.Red
+        and state trafficLightB.NormalRegion.Green
+    )
+}
+
+verification case ReachableRedYellow of CrossroadSystem {
+    EF (
+        state trafficLightA.NormalRegion.Red
+        and state trafficLightB.NormalRegion.Yellow
+    )
+}
+
+verification case ReachableGreenRed of CrossroadSystem {
+    EF (
+        state trafficLightA.NormalRegion.Green
+        and state trafficLightB.NormalRegion.Red
+    )
+}
+
+verification case UnreachableGreenYellow of CrossroadSystem {
+    AG not (
+        state trafficLightA.NormalRegion.Green
+        and state trafficLightB.NormalRegion.Yellow
+    )
+}
+
+verification case ReachableYellowRed of CrossroadSystem {
+    EF (
+        state trafficLightA.NormalRegion.Yellow
+        and state trafficLightB.NormalRegion.Red
+    )
+}
+
+verification case UnreachableYellowGreen of CrossroadSystem {
+    AG not (
+        state trafficLightA.NormalRegion.Yellow
+        and state trafficLightB.NormalRegion.Green
+    )
+}
+
+verification case ReachableYellowYellow of CrossroadSystem {
+    EF (
+        state trafficLightA.NormalRegion.Yellow
+        and state trafficLightB.NormalRegion.Yellow
+    )
+}

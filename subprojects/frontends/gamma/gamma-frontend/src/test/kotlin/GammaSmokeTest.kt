@@ -18,12 +18,12 @@ class GammaSmokeTest {
     private val helper = GammaFrontendTestHelper()
 
     @Test
-    suspend fun `a gamma case reaches the verifier and the report of its verification comes back`() {
+    suspend fun `the smoke model's case reaches the verifier and the report of its verification comes back`() {
         val frontend = helper.buildFrontend(
             portfolio = SingleBackendPortfolio(FakeBackend.verdict("fake", VerificationVerdict.Passed), FakeConfig()),
             outputDirectory = GammaFrontendTestHelper.testArtifactRoot(GammaSmokeTest::class.java),
         )
-        val case = helper.discover(Path("..", "models", "examples", "Simple.gamma")).first()
+        val case = helper.discover(Path("..", "models", "smoke", "smoke.gamma")).first()
 
         val result = frontend.verify(case)
 

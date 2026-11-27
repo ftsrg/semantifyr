@@ -9,15 +9,16 @@ package hu.bme.mit.semantifyr.frontends.gamma.cli
 import hu.bme.mit.semantifyr.cli.common.DistributionTestBase
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import kotlin.io.path.Path
 
 class DistributionTest : DistributionTestBase("semantifyr-gamma") {
 
     @Test
-    fun `the bundled smoke model is verified and its trace written`() {
+    fun `the smoke model is verified and its trace written`() {
         val run = run(
             "verify", "--json", "--theta-executor", "shell", "--portfolio", "theta-bounded-bmc", "-d", "artifacts",
-            "--case-name", "Simple.WorkerStatechartOperationalReachable",
-            home.resolve("models/smoke/Simple.gamma").toString(),
+            "--case-name", "smoke.OnReachable",
+            Path("../models/smoke/smoke.gamma").toAbsolutePath().toString(),
         )
 
         assertThat(run.exitCode).describedAs(run.stderr).isZero()

@@ -15,8 +15,8 @@ import hu.bme.mit.semantifyr.portfolios.Portfolios
 import hu.bme.mit.semantifyr.verifier.portfolio.VerificationPortfolio
 import kotlin.io.path.Path
 
-val simpleModel = Path("../models/examples/Simple.gamma")
-const val SIMPLE_CASE = "Simple.WorkerStatechartIdleReachable"
+val smokeModel = Path("../models/smoke/smoke.gamma")
+const val SMOKE_CASE = "smoke.OnReachable"
 
 private val gammaInjector by lazy {
     GammaStandaloneSetup().createInjectorAndDoEMFRegistration()

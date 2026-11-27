@@ -1,0 +1,28 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package test
+
+interface Signals {
+    in event first
+}
+
+statechart Receiver [
+    port signals : provides Signals
+] {
+}
+
+adapter Ticking of component receiver : Receiver {
+    clock ticker (rate = 1 s)
+    when ticker / run
+    queue messages (priority = 1, capacity = 1) {
+        ticker, signals.any
+    }
+}
+
+verification case Ticks of Ticking {
+    EF true
+}

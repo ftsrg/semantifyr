@@ -52,6 +52,11 @@ SPDX-License-Identifier = "EPL-1.0"
 path = [
     "subprojects/frontends/gamma/models/examples/Crossroads.gamma",
     "subprojects/frontends/gamma/models/examples/CrossroadsFurtherCases.gamma",
+    "subprojects/frontends/gamma/gamma-frontend/src/test/resources/GammaReferenceTraceTest/Crossroads.gamma",
+    "subprojects/frontends/gamma/gamma-frontend/src/test/resources/GammaReferenceTraceTest/CrossroadsFurtherCases.gamma",
+    "subprojects/frontends/gamma/gamma.lang/src/test/resources/hu/bme/mit/semantifyr/frontends/gamma/lang/GammaTraceLanguageTest/Crossroads.gamma",
+    "subprojects/frontends/gamma/gamma.lang/src/test/resources/hu/bme/mit/semantifyr/frontends/gamma/lang/GammaTraceLinkingTest/Crossroads.gamma",
+    "subprojects/frontends/gamma/gamma.lang/src/test/resources/hu/bme/mit/semantifyr/frontends/gamma/lang/GammaTraceLinkingTest/CrossroadsFurtherCases.gamma",
 ]
 precedence = "override"
 SPDX-FileCopyrightText = "The contributors to the Gamma project"
@@ -61,6 +66,7 @@ SPDX-License-Identifier = "EPL-1.0"
 [[annotations]]
 path = [
     "subprojects/frontends/gamma/models/examples/Spacecraft.gamma",
+    "subprojects/frontends/gamma/gamma.lang/src/test/resources/hu/bme/mit/semantifyr/frontends/gamma/lang/GammaTraceLanguageTest/Spacecraft.gamma",
     "subprojects/frontends/gamma/models/examples/SpacecraftFurtherCases.gamma",
     "subprojects/frontends/sysml/models/examples/crossroads.sysml",
     "subprojects/frontends/sysml/models/examples/crossroads.further-cases",

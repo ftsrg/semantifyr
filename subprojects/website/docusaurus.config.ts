@@ -186,7 +186,7 @@ export default {
             },
             module: {
               rules: [
-                { test: /\.(semantifyr|sysml|gamma|get)$/, type: 'asset/source' },
+                { test: /\.(semantifyr|sysml|gamma)$/, type: 'asset/source' },
               ],
             },
           };

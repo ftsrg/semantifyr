@@ -1,0 +1,36 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+import test::model
+
+trace Checked of Case
+
+step {
+    act {
+        reset
+    }
+    assert {
+    }
+}
+
+step {
+    act {
+        raise control.start
+        elapse 1000
+        schedule component
+    }
+    assert {
+        state machine->inner.Main.Idle;
+        state Main.Idle;
+        variable count = 1;
+        variable machine.count = 1;
+        transition machine from Idle to Busy when control.start;
+        transition from Idle to Busy;
+        transition First;
+        raise control.done;
+        raise machine->inner.control.done;
+    }
+}

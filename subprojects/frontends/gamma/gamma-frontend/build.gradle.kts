@@ -52,16 +52,24 @@ tasks.processResources {
 }
 
 tasks.withType<Test>().configureEach {
-    inputs.dir(examplesDirectory).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.dir(layout.projectDirectory.dir("../models/etc")).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(
         layout.projectDirectory.dir("../models").asFileTree.matching {
             include(
                 "corpus/**",
                 "semantics/**",
+                "smoke/**",
             )
         },
     ).withPathSensitivity(PathSensitivity.RELATIVE)
+}
+
+listOf(
+    "integrationTest",
+    "nightlyTest",
+).forEach {
+    tasks.named(it) {
+        inputs.dir(examplesDirectory).withPathSensitivity(PathSensitivity.RELATIVE)
+    }
 }
 
 val compiledExamplesDirectory = layout.buildDirectory.dir("compiled-examples")
@@ -99,12 +107,28 @@ corpusModels(examplesDirectory).filter { model ->
     }
 }
 
-configurations.consumable("gammaLibraryElements") {
-    attributes(semantifyrArtifact("gamma-library"))
-    outgoing.artifact(librariesDirectory.dir("default"))
+val smokeSourceFile = layout.projectDirectory.file("../models/smoke/smoke.gamma")
+val compiledSmokeFile = layout.buildDirectory.file("compiled-smoke/smoke.$oxstsFileExtension")
+
+val compileGammaSmoke = tasks.register<JavaExec>("compileGammaSmoke") {
+    // the argument provider takes locals, since the configuration cache cannot serialize the script's own vals
+    val sourceFile = smokeSourceFile
+    val targetFile = compiledSmokeFile
+    inputs.file(sourceFile).withPathSensitivity(PathSensitivity.NAME_ONLY)
+    outputs.file(targetFile)
+    outputs.cacheIf {
+        true
+    }
+    mainClass = "hu.bme.mit.semantifyr.frontends.gamma.examples.CompileGammaExampleKt"
+    classpath = files(sourceSets["main"].runtimeClasspath, exampleLoggingClasspath)
+    argumentProviders += CommandLineArgumentProvider {
+        listOf(sourceFile.asFile.absolutePath, targetFile.get().asFile.absolutePath)
+    }
 }
 
-configurations.consumable("gammaExamplesElements") {
-    attributes(semantifyrArtifact("gamma-examples"))
-    outgoing.artifact(examplesDirectory)
+configurations.consumable("compiledSmokeElements") {
+    attributes(semantifyrArtifact("compiled-smoke"))
+    outgoing.artifact(compiledSmokeFile) {
+        builtBy(compileGammaSmoke)
+    }
 }

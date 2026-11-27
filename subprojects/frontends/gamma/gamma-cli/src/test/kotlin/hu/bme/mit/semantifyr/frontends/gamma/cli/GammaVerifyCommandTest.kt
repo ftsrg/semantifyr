@@ -24,23 +24,19 @@ class GammaVerifyCommandTest {
 
     @Test
     suspend fun `every case of the model is verified and the highest exit code wins`(@TempDir artifacts: Path) {
-        val verdicts = Array(8) {
-            VerificationVerdict.Passed
-        }
-        verdicts[2] = VerificationVerdict.Failed
-        val portfolio = fakePortfolio("fixed", *verdicts)
+        val portfolio = fakePortfolio("fixed", VerificationVerdict.Passed, VerificationVerdict.Failed)
 
-        val result = runGammaCli("verify", "--json", "--portfolio", portfolio.id, "-d", artifacts.toString(), simpleModel.toString(), portfolios = listOf(portfolio))
+        val result = runGammaCli("verify", "--json", "--portfolio", portfolio.id, "-d", artifacts.toString(), smokeModel.toString(), portfolios = listOf(portfolio))
 
         assertThat(result.statusCode).describedAs(result.output).isEqualTo(5)
         val lines = jsonLines<VerifyOutcomeLine>(result.stdout)
-        assertThat(lines).hasSize(8)
+        assertThat(lines).hasSize(2)
         assertThat(
             lines.map {
                 it.case
             },
-        ).contains(SIMPLE_CASE).allMatch {
-            it.startsWith("Simple.")
+        ).contains(SMOKE_CASE).allMatch {
+            it.startsWith("smoke.")
         }
         assertThat(
             lines.map {
@@ -55,14 +51,14 @@ class GammaVerifyCommandTest {
 
         val result = runGammaCli(
             "verify", "--json", "--portfolio", portfolio.id, "-d", artifacts.toString(),
-            "--case-name", SIMPLE_CASE,
-            simpleModel.toString(),
+            "--case-name", SMOKE_CASE,
+            smokeModel.toString(),
             portfolios = listOf(portfolio),
         )
 
         assertThat(result.statusCode).describedAs(result.output).isZero()
         val line = jsonLines<VerifyOutcomeLine>(result.stdout).single()
-        assertThat(line.case).isEqualTo(SIMPLE_CASE)
+        assertThat(line.case).isEqualTo(SMOKE_CASE)
         val report = Path(line.report)
         assertThat(report).isAbsolute().startsWith(artifacts.toAbsolutePath())
         assertThat(Json.decodeFromString<VerificationReport>(report.readText()).result.verdict).isEqualTo(VerificationVerdict.Passed)
@@ -72,7 +68,7 @@ class GammaVerifyCommandTest {
     suspend fun `quiet mode prints only the verdict`(@TempDir artifacts: Path) {
         val portfolio = fakePortfolio("fixed", VerificationVerdict.Failed)
 
-        val result = runGammaCli("verify", "-q", "--case-name", SIMPLE_CASE, "--portfolio", portfolio.id, "-d", artifacts.toString(), simpleModel.toString(), portfolios = listOf(portfolio))
+        val result = runGammaCli("verify", "-q", "--case-name", SMOKE_CASE, "--portfolio", portfolio.id, "-d", artifacts.toString(), smokeModel.toString(), portfolios = listOf(portfolio))
 
         assertThat(result.statusCode).isEqualTo(5)
         assertThat(result.stdout).isEqualTo("FAILED\n")
@@ -80,10 +76,10 @@ class GammaVerifyCommandTest {
 
     @Test
     suspend fun `a case name that names no case is an input error`() {
-        val result = runGammaCli("verify", "--case-name", "Simple.Absent", simpleModel.toString())
+        val result = runGammaCli("verify", "--case-name", "smoke.Absent", smokeModel.toString())
 
         assertThat(result.statusCode).isEqualTo(3)
-        assertThat(result.stderr).contains("Simple.Absent")
+        assertThat(result.stderr).contains("smoke.Absent")
     }
 
     @Test
@@ -112,12 +108,13 @@ class GammaVerifyCommandTest {
     @Test
     suspend fun `a workspace resolves imports from another directory`(@TempDir artifacts: Path) {
         val portfolio = fakePortfolio("fixed", VerificationVerdict.Passed)
-        val model = Path("src/test/resources/workspace/models/Panel.gamma")
+        val workspace = Path("src/test/resources/hu/bme/mit/semantifyr/frontends/gamma/cli/GammaVerifyCommandTest/workspace")
+        val model = workspace.resolve("models/Panel.gamma")
 
         val withoutWorkspace = runGammaCli("verify", "--portfolio", portfolio.id, "-d", artifacts.toString(), model.toString(), portfolios = listOf(portfolio))
         val withWorkspace = runGammaCli(
             "verify", "--portfolio", portfolio.id, "-d", artifacts.toString(),
-            "--workspace", "src/test/resources/workspace",
+            "--workspace", workspace.toString(),
             model.toString(),
             portfolios = listOf(portfolio),
         )

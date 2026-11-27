@@ -32,6 +32,8 @@ object GammaCorpus {
 
     val examples: Path = Path("..", "models", "examples")
 
+    val smoke: Path = Path("..", "models", "smoke")
+
     fun load(directory: Path): List<GammaCorpusEntry> {
         return CaseManifest.load(directory).models.flatMap { model ->
             model.cases.map {

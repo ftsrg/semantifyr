@@ -17,24 +17,24 @@ class GammaCompileCommandTest {
 
     @Test
     suspend fun `writes the OXSTS model next to the Gamma model`(@TempDir directory: Path) {
-        val model = simpleModel.copyTo(directory.resolve("Simple.gamma"))
+        val model = smokeModel.copyTo(directory.resolve("smoke.gamma"))
 
         val result = runGammaCli("compile", model.toString())
 
         assertThat(result.statusCode).describedAs(result.output).isZero()
-        val target = directory.resolve("Simple.semantifyr")
+        val target = directory.resolve("smoke.semantifyr")
         assertThat(result.stdout).isEqualTo("Compiling $model to $target\n")
-        assertThat(target.readText()).contains("WorkerStatechartIdleReachable")
+        assertThat(target.readText()).contains("OnReachable")
     }
 
     @Test
     suspend fun `writes the OXSTS model to the output path`(@TempDir directory: Path) {
-        val target = directory.resolve("out").resolve("Simple.semantifyr")
+        val target = directory.resolve("out").resolve("smoke.semantifyr")
 
-        val result = runGammaCli("compile", "-o", target.toString(), simpleModel.toString())
+        val result = runGammaCli("compile", "-o", target.toString(), smokeModel.toString())
 
         assertThat(result.statusCode).describedAs(result.output).isZero()
-        assertThat(target.readText()).contains("WorkerStatechartIdleReachable")
+        assertThat(target.readText()).contains("OnReachable")
     }
 
     @Test

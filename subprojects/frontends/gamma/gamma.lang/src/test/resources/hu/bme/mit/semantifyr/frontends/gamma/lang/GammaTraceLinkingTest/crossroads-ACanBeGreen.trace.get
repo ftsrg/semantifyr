@@ -1,0 +1,83 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+import CrossroadsFurtherCases
+
+trace ACanBeGreenTrace of ACanBeGreen
+
+step {
+    act {
+        reset
+    }
+    assert {
+        raise trafficLightA.lightControl.yellow;
+        raise trafficLightB.lightControl.yellow;
+        state controller.Main.Operating;
+        state controller.OperatingRegion.BothYellow;
+        state trafficLightA.Main.Normal;
+        state trafficLightA.NormalRegion.Yellow;
+        state trafficLightB.Main.Normal;
+        state trafficLightB.NormalRegion.Yellow;
+    }
+}
+step {
+    act {
+        raise control.toggle
+        elapse 1000
+        schedule component
+    }
+    assert {
+        transition controller from BothYellow to BothRed;
+        raise controller.controlA.toggle;
+        raise controller.controlB.toggle;
+        state controller.Main.Operating;
+        state controller.OperatingRegion.BothRed;
+        state trafficLightA.Main.Normal;
+        state trafficLightA.NormalRegion.Yellow;
+        state trafficLightB.Main.Normal;
+        state trafficLightB.NormalRegion.Yellow;
+    }
+}
+step {
+    act {
+        raise control.toggle
+        elapse 2000
+        schedule component
+    }
+    assert {
+        transition controller from BothRed to TrafficOnA;
+        raise controller.controlA.toggle;
+        transition trafficLightA from Yellow to Red;
+        raise trafficLightA.lightControl.red;
+        transition trafficLightB from Yellow to Red;
+        raise trafficLightB.lightControl.red;
+        state controller.Main.Operating;
+        state controller.OperatingRegion.TrafficOnA;
+        state trafficLightA.Main.Normal;
+        state trafficLightA.NormalRegion.Red;
+        state trafficLightB.Main.Normal;
+        state trafficLightB.NormalRegion.Red;
+    }
+}
+step {
+    act {
+        raise control.police
+        raise control.toggle
+        schedule component
+    }
+    assert {
+        transition controller from Operating to Interrupted;
+        raise controller.controlA.police;
+        raise controller.controlB.police;
+        transition trafficLightA from Red to Green;
+        raise trafficLightA.lightControl.green;
+        state controller.Main.Interrupted;
+        state trafficLightA.Main.Normal;
+        state trafficLightA.NormalRegion.Green;
+        state trafficLightB.Main.Normal;
+        state trafficLightB.NormalRegion.Red;
+    }
+}
