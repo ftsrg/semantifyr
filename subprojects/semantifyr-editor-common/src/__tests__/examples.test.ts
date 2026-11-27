@@ -27,7 +27,7 @@ const LANGUAGE_OF_EXTENSION: Readonly<Record<string, ExampleLanguage>> = {
 
 // where the corpora keep their manifests
 const MODEL_ROOTS = [
-  'oxsts-test-models',
+  'subprojects/website/models',
   'subprojects/frontends/gamma/models',
   'subprojects/frontends/sysml/models',
 ];

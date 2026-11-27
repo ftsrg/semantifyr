@@ -18,6 +18,7 @@ val gammaLibrary = artifactsOf("gamma-library", ":gamma-frontend")
 val sysmlLibrary = artifactsOf("sysml-library", ":sysml-frontend")
 val gammaExamples = artifactsOf("gamma-examples", ":gamma-frontend")
 val sysmlExamples = artifactsOf("sysml-examples", ":sysml-frontend")
+val oxstsTutorial = artifactsOf("oxsts-tutorial", ":website")
 
 val cloneDistribution = tasks.register<Sync>("cloneDistribution") {
     from(vscodeExtensions)
@@ -63,7 +64,7 @@ val cloneSysmlExamples = tasks.register<Sync>("cloneSysmlExamples") {
 }
 
 val cloneTutorialModels = tasks.register<Sync>("cloneTutorialModels") {
-    from(isolated.rootProject.projectDirectory.dir("oxsts-test-models/tutorial"))
+    from(oxstsTutorial)
     into("examples/tutorial/")
 }
 

@@ -6,8 +6,6 @@ description: The inlined model, the one-file form of a compiled case, and the wi
 ---
 
 import CodeBlock from '@theme/CodeBlock';
-import timedModel from '@oxsts-witness-reference/blinker.semantifyr';
-import timedWitness from '@generated-witness/blinker.witness.semantifyr';
 
 # Inlined Models
 
@@ -72,8 +70,67 @@ If the flat model keeps a [clock](../classes-and-behaviour/time.md), the witness
 
 This case asks for a switch strictly between 2 and 3 after the start:
 
-<CodeBlock language="oxsts" title="blinker.semantifyr">{timedModel}</CodeBlock>
+<CodeBlock language="oxsts" title="blinker.semantifyr">{`package example::blinker
+
+class Blinker {
+    var on: bool := false
+    var since: clock := 0
+
+    redefine tran {
+        assume (since <= 5)
+        assume (since >= 2)
+        on := !on
+        since := 0
+    }
+}
+
+@VerificationCase
+class BlinkerSwitchesBetweenTwoAndThree {
+    contains blinker: Blinker
+    var running: clock := 0
+    var switchedBetween: bool := false
+
+    redefine tran {
+        inline blinker.main()
+        if (running > 2 && running < 3) {
+            switchedBetween := true
+        }
+    }
+
+    redefine prop {
+        return EF (switchedBetween)
+    }
+}`}</CodeBlock>
 
 No whole time lies strictly between 2 and 3, so the run waits 5/2, and its witness counts time in halves:
 
-<CodeBlock language="oxsts" title="witness.semantifyr">{timedWitness}</CodeBlock>
+<CodeBlock language="oxsts" title="witness.semantifyr">{`witness of example::blinker::BlinkerSwitchesBetweenTwoAndThree timescale 2
+
+var step: int := 0
+
+var time: clock := 0
+
+contains root: example::blinker::BlinkerSwitchesBetweenTwoAndThree
+
+init {
+    assume(step == 0)
+    inline root.init()
+    assume(root.switchedBetween == false)
+    assume(root.running == 0)
+    assume(root.blinker.since == 0)
+    step := 1
+}
+
+tran {
+    assume(step == 1)
+    inline root.main()
+    assume(time == 5)
+    assume(root.switchedBetween == true)
+    assume(root.running == 5)
+    assume(root.blinker.since == 0)
+    step := 2
+}
+
+prop {
+    root.prop()
+}`}</CodeBlock>

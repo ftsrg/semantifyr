@@ -170,7 +170,7 @@
     {
       "id": "level-crossing",
       "language": "oxsts",
-      "file": "oxsts-test-models/tutorial/level-crossing.semantifyr",
+      "file": "subprojects/website/models/tutorial/level-crossing.semantifyr",
       "label": "Level crossing",
       "cases": [
         "BarrierDownWhileTrainInCrossing",
@@ -180,7 +180,7 @@
     {
       "id": "modeling-and-verification",
       "language": "oxsts",
-      "file": "oxsts-test-models/tutorial/modeling-and-verification.semantifyr",
+      "file": "subprojects/website/models/tutorial/modeling-and-verification.semantifyr",
       "label": "Lesson 1: Modeling and Verification",
       "cases": [
         "NorthCanTurnGreen",
@@ -191,7 +191,7 @@
     {
       "id": "semantic-libraries",
       "language": "oxsts",
-      "file": "oxsts-test-models/tutorial/semantic-libraries.semantifyr",
+      "file": "subprojects/website/models/tutorial/semantic-libraries.semantifyr",
       "label": "Lesson 2: Semantic Libraries",
       "cases": [
         "NorthCanTurnGreen",
@@ -204,7 +204,7 @@
     {
       "id": "semantic-variants",
       "language": "oxsts",
-      "file": "oxsts-test-models/tutorial/semantic-variants.semantifyr",
+      "file": "subprojects/website/models/tutorial/semantic-variants.semantifyr",
       "label": "Lesson 3: Semantic Variants",
       "cases": [
         "NorthCanTurnGreen",
@@ -217,7 +217,7 @@
     {
       "id": "extending-the-library",
       "language": "oxsts",
-      "file": "oxsts-test-models/tutorial/extending-the-library.semantifyr",
+      "file": "subprojects/website/models/tutorial/extending-the-library.semantifyr",
       "label": "Lesson 4: Extending the Library",
       "cases": [
         "NorthCanTurnGreen",

@@ -8,26 +8,32 @@ import com.github.gradle.node.npm.task.NpmTask
 import groovy.json.JsonSlurper
 import hu.bme.mit.semantifyr.gradle.artifactsOf
 import hu.bme.mit.semantifyr.gradle.readsPackage
+import hu.bme.mit.semantifyr.gradle.readsServedExamples
 import hu.bme.mit.semantifyr.gradle.readsWorkspace
 import hu.bme.mit.semantifyr.gradle.registerBrandingAssets
 import hu.bme.mit.semantifyr.gradle.registerNpmCheck
+import hu.bme.mit.semantifyr.gradle.semantifyrArtifact
 import hu.bme.mit.semantifyr.gradle.servedExampleSources
 
 plugins {
-    id("hu.bme.mit.semantifyr.jvm")
+    id("hu.bme.mit.semantifyr.theta")
+    id("hu.bme.mit.semantifyr.suites")
     id("hu.bme.mit.semantifyr.nodejs")
+    kotlin("jvm")
+    kotlin("plugin.serialization")
 }
 
 val editorCommon = artifactsOf("npm-package", ":semantifyr-editor-common")
 val sysmlWorker = artifactsOf("sysml-worker", ":sysml-wrapper")
 val grammars = artifactsOf("textmate-grammar", ":oxsts.lang", ":gamma.lang")
 val liveScreenshots = artifactsOf("screenshots", ":semantifyr-live-frontend")
-val generatedWitness = artifactsOf("generated-witness", ":verifier")
+
+val tutorialDirectory = layout.projectDirectory.dir("models/tutorial")
 
 dependencies {
     testImplementation(project(":compiler"))
     testImplementation(testFixtures(project(":oxsts.lang")))
-    testImplementation(libs.gson)
+    testImplementation(libs.kotlinx.serialization.json)
 
     listOf(
         ":backend",
@@ -78,11 +84,6 @@ val sourceAliasDirectories = (JsonSlurper().parseText(providers.fileContents(sou
     layout.projectDirectory.dir(it)
 }
 
-val cloneGeneratedWitness = tasks.register<Sync>("cloneGeneratedWitness") {
-    from(generatedWitness)
-    into(layout.buildDirectory.dir("generated-witness"))
-}
-
 val importedBrandingDirectory = layout.projectDirectory.dir("static-imported-branding")
 
 val cloneBrandingAssets = registerBrandingAssets(importedBrandingDirectory.dir("img"))
@@ -123,7 +124,6 @@ val npmAssemble = tasks.register<NpmTask>("npmAssemble") {
     readsPackage()
     configureSharedInputs()
     inputs.property("liveBackendUrl", providers.environmentVariable("SEMANTIFYR_LIVE_URL").orElse(""))
-    inputs.files(cloneGeneratedWitness).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(sourceAliasDirectories).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(servedExampleSources()).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(cloneBrandingAssets).withPathSensitivity(PathSensitivity.RELATIVE)
@@ -143,7 +143,6 @@ tasks.register<NpmTask>("serve") {
 
     readsPackage()
     configureSharedInputs()
-    inputs.files(cloneGeneratedWitness).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(cloneBrandingAssets).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(cloneScreenshots).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(cloneApiDocs).withPathSensitivity(PathSensitivity.RELATIVE)
@@ -169,8 +168,29 @@ val extractFences = tasks.register<NpmTask>("extractFences") {
     }
 }
 
-tasks.named("test") {
+tasks.named<Test>("test") {
     inputs.files(extractFences).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.dir(layout.projectDirectory.dir("models")).withPathSensitivity(PathSensitivity.RELATIVE)
+}
+
+testing {
+    suites {
+        named<JvmTestSuite>("integrationTest") {
+            dependencies {
+                implementation(testFixtures(project(":portfolios")))
+            }
+        }
+    }
+}
+
+tasks.named<Test>("integrationTest") {
+    readsServedExamples()
+    inputs.dir(tutorialDirectory).withPathSensitivity(PathSensitivity.RELATIVE)
+}
+
+configurations.consumable("oxstsTutorialElements") {
+    attributes(semantifyrArtifact("oxsts-tutorial"))
+    outgoing.artifact(tutorialDirectory)
 }
 
 tasks.register("pack") {

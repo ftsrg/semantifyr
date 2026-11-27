@@ -13,7 +13,7 @@ plugins {
 
 registerNpmCheck {
     listOf(
-        "oxsts-test-models",
+        "subprojects/website/models",
         "subprojects/frontends/gamma/models",
         "subprojects/frontends/sysml/models",
     ).forEach {

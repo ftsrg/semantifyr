@@ -23,7 +23,7 @@ Records what a live server answers while a browser walks every example of every 
   --transcript <file>       write the raw exchanges here, or with --replay read them from here
   --replay                  build the fixtures from --transcript without a browser`
 
-const LESSON_STAGES_DIRECTORY = join(import.meta.dirname, '../../../../../../oxsts-test-models/tutorial')
+const LESSON_STAGES_DIRECTORY = join(import.meta.dirname, '../../../../../website/models/tutorial')
 
 const SETTLED_TIMEOUT_MS = 4 * 60 * 1000
 const RUN_TIMEOUT_MS = 10 * 60 * 1000

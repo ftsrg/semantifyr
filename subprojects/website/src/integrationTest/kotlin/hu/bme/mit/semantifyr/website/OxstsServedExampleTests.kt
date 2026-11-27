@@ -4,9 +4,10 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package hu.bme.mit.semantifyr.portfolios
+package hu.bme.mit.semantifyr.website
 
 import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup
+import hu.bme.mit.semantifyr.portfolios.Portfolios
 import hu.bme.mit.semantifyr.portfolios.testing.ExampleLanguage
 import hu.bme.mit.semantifyr.portfolios.testing.ServedExample
 import hu.bme.mit.semantifyr.portfolios.testing.ServedExamples
@@ -29,7 +30,7 @@ class OxstsServedExampleTests {
         private val helper = injector.getInstance(SemantifyrVerifierTestHelper::class.java)
 
         // the lessons link into live with a stage's text in the address, so live runs a stage as it runs a served example
-        private val lessonStages = ServedExamples.repository.resolve("oxsts-test-models/tutorial")
+        private val lessonStages = ServedExamples.repository.resolve("subprojects/website/models/tutorial")
 
         @JvmStatic
         fun `Served Cases Reach Their Expected Verdict On Live's Backends`(): List<Arguments> {

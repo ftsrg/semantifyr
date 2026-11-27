@@ -4,11 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import hu.bme.mit.semantifyr.gradle.readsServedExamples
-import hu.bme.mit.semantifyr.gradle.readsTestModels
-
 plugins {
-    id("hu.bme.mit.semantifyr.theta")
     id("hu.bme.mit.semantifyr.suites")
     kotlin("jvm")
     kotlin("plugin.serialization")
@@ -27,9 +23,4 @@ dependencies {
     testImplementation(libs.kotlinx.coroutines.test)
 
     testFixturesApi(libs.kotlinx.serialization.json)
-}
-
-tasks.named<Test>("integrationTest") {
-    readsServedExamples()
-    readsTestModels("tutorial")
 }

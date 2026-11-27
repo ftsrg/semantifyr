@@ -18,7 +18,7 @@ path = [
     "subprojects/semantifyr-editor-common/src/terms/terms.json",
     "subprojects/semantifyr-editor-common/src/examples/examples.json",
     "subprojects/website/source-aliases.json",
-    "oxsts-test-models/tutorial/**",
+    "subprojects/website/models/tutorial/**",
     ".nvmrc",
 ]
 SPDX-FileCopyrightText = "2023-2026 The Semantifyr Authors"
