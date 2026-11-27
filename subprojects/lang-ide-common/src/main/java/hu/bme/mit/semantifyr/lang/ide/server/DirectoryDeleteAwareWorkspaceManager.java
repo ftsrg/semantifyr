@@ -20,7 +20,6 @@ public class DirectoryDeleteAwareWorkspaceManager extends WorkspaceManager {
     @Inject
     protected WitnessOwners witnessOwners;
 
-    // a witness under temporary artifacts lies outside every project and links against the project of its case
     @Override
     public ProjectManager getProjectManager(URI uri) {
         var projectManager = super.getProjectManager(uri);

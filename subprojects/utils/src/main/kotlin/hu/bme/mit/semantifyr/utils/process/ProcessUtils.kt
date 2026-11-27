@@ -12,7 +12,6 @@ import kotlin.time.TimeSource
 
 private val treeExitTimeout = 2.seconds
 
-// a script whose child dies first runs its next command, so the root goes first and its descendants after
 fun Process.destroyTree() {
     val handle = toHandle()
     val descendants = handle.descendants().toList()
