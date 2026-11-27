@@ -1,12 +1,12 @@
 ---
 title: Artifacts
 sidebar_position: 2
-description: What a verification writes for each case and where, and what the launchers keep in other folders.
+description: What a verification writes for each case and where, and what the CLI keeps in other folders.
 ---
 
 # Artifacts
 
-A verification writes the artifacts of each case into a directory of its own: what the compiler made of the model, what each backend was given and printed, and the report, which holds the verdict and, for a verdict with a trace, the run the backend found, with the witness model derived from it. The launchers write the case directories into `--artifact-directory`, the VS Code extension where `semantifyr.artifacts.location` says, and Live into the working folder of the session, which it deletes when the session ends ([Privacy](../start/live/privacy.md)).
+A verification writes the artifacts of each case into a directory of its own: what the compiler made of the model, what each backend was given and printed, and the report, which holds the verdict and, for a verdict with a trace, the run the backend found, with the witness model derived from it. The CLI writes the case directories into `--artifact-directory`, the VS Code extension where `semantifyr.artifacts.location` says, and Live into the working folder of the session, which it deletes when the session ends ([Privacy](../start/live/privacy.md)).
 
 ## The case directory
 
@@ -26,11 +26,11 @@ A case directory is named after the model file without its extension and the qua
 
 ## Folders
 
-Besides the artifact directory, a launcher writes under `~/.semantifyr` in the user's home directory and in the system's temporary directory.
+Besides the artifact directory, the CLI writes under `~/.semantifyr` in the user's home directory and in the system's temporary directory.
 
 Under `~/.semantifyr` it unpacks what it carries, each into a folder named by a digest of its contents; the folders of older versions stay until they are deleted by hand.
 
-- `builtin/<digest>/`: the standard library, `standard.semantifyr`, unpacked by every launcher.
+- `builtin/<digest>/`: the standard library, `standard.semantifyr`, unpacked by every CLI.
 - `gamma/default/<digest>/`: the Gamma semantic library, unpacked by `semantifyr-gamma`.
 - `sysmlv2/default/<digest>/`: the SysML v2 semantic library, unpacked by `semantifyr-sysml verify`.
 - `sysml-cli/<digest>/`: the SysML v2 frontend with the SysML v2 standard library, unpacked by `semantifyr-sysml`.

@@ -2,7 +2,7 @@
 title: Install
 slug: /learn/install
 sidebar_position: 4
-description: Install the VS Code extension or the command-line launchers of Semantifyr.
+description: Install the VS Code extension or the CLI of Semantifyr.
 ---
 
 import NodeVersion from '@site/src/components/NodeVersion';

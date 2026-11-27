@@ -1,40 +1,35 @@
 ---
-title: Architecture
+title: Contributing
 sidebar_position: 0
-hide_table_of_contents: true
-description: The path of a model through Semantifyr's components and what each of them is for, for a contributor about to read the code.
+description: How to build Semantifyr from a clone and contribute a change.
 ---
 
-import ComponentPath from '@site/src/components/Develop/ComponentPath';
+# Contributing to Semantifyr
 
-# Architecture
+You can clone the Semantifyr repository from GitHub at https://github.com/ftsrg/semantifyr. If you want to contribute code, we recommend [forking](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/fork-a-repo) the repository, so that you can open a [pull request](https://github.com/ftsrg/semantifyr/pulls) later. For anything beyond a small fix, open an [issue](https://github.com/ftsrg/semantifyr/issues) or a [discussion](https://github.com/ftsrg/semantifyr/discussions) first, so that we can agree on the approach before you write the code.
 
-<ComponentPath />
+## Required Tools
 
-## The Path
+Semantifyr is written in Kotlin, Java, and TypeScript. To build it, you need a Java 25 compatible JDK. Gradle downloads everything else, including Node.js and the Theta backend. The tests that need nuXmv, Spin, or Uppaal are skipped when that backend is not on your `PATH`.
 
-### Frontends {#frontends}
+## Building Semantifyr {#building}
 
-A frontend translates a model from an engineering language into the Semantifyr Language, onto that language's semantic library. The library is a set of Semantifyr classes that say what the language's constructs mean, so the meaning is a model you can read, vary, and verify, not code inside a translator. A construct the frontend cannot translate is reported, and no model is written for it. At the end of the path, the same frontend turns the witness back into a trace in the original language. A model written by hand in the Semantifyr Language needs no frontend. [Frontends](../learn/frontends/index.mdx) lists them.
+To build Semantifyr, run
 
-### The Compiler {#compiler}
+```bash
+./gradlew build
+```
 
-The compiler reads a Semantifyr model and never learns which language it came from. It compiles one class, usually a verification case, through instantiation, inlining, and flattening into a flat model: variables, an `init` transition, a main transition, and a property. [How a Semantifyr Model Compiles](../learn/language/compilation/index.mdx) shows the phases, and the [Semantifyr Language Reference](../learn/language/reference/index.md) describes the language.
+in the cloned repository. This compiles all code, runs the static checks and the unit tests, and should complete without errors. Run it before you open a pull request. CI runs it too, together with the longer test suites.
 
-### The Backends {#backends}
+To build the CLIs and the VS Code extension, run
 
-A backend connects Semantifyr to one model checker outside it. Every backend receives the same flat model. First it refuses, construct by construct, what its model checker cannot express. Then it translates the rest into the checker's input, runs the checker, and reads back a verdict and, as evidence, the states the checker found. A backend is trusted in one direction, the one its configuration backs, or in both when the configuration is exact. [Backends](../learn/backends/index.mdx) says what each one refuses.
+```bash
+./gradlew pack
+```
 
-### The Portfolio {#portfolio}
+It builds the CLIs in [`semantifyr-cli`](https://github.com/ftsrg/semantifyr/tree/main/subprojects/semantifyr-cli), [`sysml-cli`](https://github.com/ftsrg/semantifyr/tree/main/subprojects/frontends/sysml/sysml-cli), and [`gamma-cli`](https://github.com/ftsrg/semantifyr/tree/main/subprojects/frontends/gamma/gamma-cli), and the extension in [`semantifyr-vscode`](https://github.com/ftsrg/semantifyr/tree/main/subprojects/semantifyr-vscode).
 
-A portfolio is a strategy for running backends: which backends run, under which configurations, side by side, and how their answers decide the verdict. Each answer counts only in the direction its backend is trusted. A case without variables and transitions is decided without a backend. [Portfolios and Verdicts](../learn/backends/portfolios-and-verdicts.mdx) explains the strategies.
+The maintainers are listed in [`CONTRIBUTORS.md`](https://github.com/ftsrg/semantifyr/blob/main/CONTRIBUTORS.md).
 
-### The Verifier {#verifier}
-
-The verifier drives the path. It finds the verification cases of a model, has each one compiled and then verified by the portfolio, and back-annotates the evidence into a report of the one execution the backend found. Every trace is made from that report, and so is the witness, a Semantifyr model of the execution. Validating a witness is a request of its own: the witness is verified like any other model. [Inlined Models](../learn/language/reference/library-and-output/inlined-models.md#witnesses) says what a witness is, and [Portfolios and Verdicts](../learn/backends/portfolios-and-verdicts.mdx#validation) how it is validated.
-
-## What Runs the Path {#what-runs-the-path}
-
-The launchers run the path on the command line, one for each language, with the same options, output, and exit codes. Language servers bring each language into an editor, and the editor's extension runs them and shows a case's witness and trace. Live is a server that hosts the same language servers and verifications for many visitors, with a browser application over it. Where a language server runs in the browser, the server receives only the translated Semantifyr model.
-
-The [API documentation](pathname:///api/) is generated from the code.
+By contributing, you agree that your contribution is licensed under the project's [Eclipse Public License v2.0](https://github.com/ftsrg/semantifyr/blob/main/LICENSE).

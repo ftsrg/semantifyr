@@ -8,8 +8,6 @@
 
 Ask questions and propose designs in [Discussions](https://github.com/ftsrg/semantifyr/discussions), and report bugs with a minimal model in [Issues](https://github.com/ftsrg/semantifyr/issues).
 
-For information on the architecture, see the [architecture page](https://semantifyr.org/develop/).
-
 ## Building from source
 
 Requirements:

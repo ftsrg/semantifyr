@@ -46,7 +46,7 @@ Requirements:
 
 Build with `./gradlew build`.
 
-`./gradlew pack` builds the launchers in [`semantifyr-cli`](subprojects/semantifyr-cli), [`sysml-cli`](subprojects/frontends/sysml/sysml-cli), and [`gamma-cli`](subprojects/frontends/gamma/gamma-cli), and the extension in [`semantifyr-vscode`](subprojects/semantifyr-vscode).
+`./gradlew pack` builds the CLIs in [`semantifyr-cli`](subprojects/semantifyr-cli), [`sysml-cli`](subprojects/frontends/sysml/sysml-cli), and [`gamma-cli`](subprojects/frontends/gamma/gamma-cli), and the extension in [`semantifyr-vscode`](subprojects/semantifyr-vscode).
 
 ## Contributing
 

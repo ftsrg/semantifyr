@@ -71,7 +71,7 @@ jobs:
           browsers: chromium
       - name: Pack Distribution
         if: ${{ runner.os == 'Linux' }}
-        run: ./gradlew pack -Pwebsite.apiDocs=true
+        run: ./gradlew pack
       - name: Upload GitHub Pages artifact
         if: ${{ runner.os == 'Linux' && inputs.publish }}
         uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0

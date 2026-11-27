@@ -113,13 +113,11 @@ val cloneScreenshots = tasks.register<Sync>("cloneScreenshots") {
 }
 
 val cloneApiDocs = tasks.register<Sync>("cloneApiDocs") {
-    if (providers.gradleProperty("website.apiDocs").getOrElse("false").toBoolean()) {
-        from(
-            tasks.dokkaGeneratePublicationHtml.flatMap {
-                it.outputDirectory
-            },
-        )
-    }
+    from(
+        tasks.dokkaGeneratePublicationHtml.flatMap {
+            it.outputDirectory
+        },
+    )
     into(layout.buildDirectory.dir("api-static/api"))
 }
 
@@ -163,6 +161,18 @@ val npmAssemble = tasks.register<NpmTask>("npmAssemble") {
     outputs.cacheIf {
         true
     }
+}
+
+tasks.register<NpmTask>("serve") {
+    group = "application"
+
+    readsSite()
+    inputs.files(cloneGeneratedWitness).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.files(cloneBrandingAssets).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.files(cloneScreenshots).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.files(cloneApiDocs).withPathSensitivity(PathSensitivity.RELATIVE)
+
+    npmCommand = listOf("run", "dev")
 }
 
 val npmCheck = tasks.register<NpmTask>("npmCheck") {
