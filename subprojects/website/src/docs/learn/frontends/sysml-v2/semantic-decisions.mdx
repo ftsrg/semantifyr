@@ -53,7 +53,7 @@ A verification case runs the verified part in steps, each after a wait in which 
 ### Part Tree {#part-tree}
 
 - **Standard**: constrained. Occurrences are created and destroyed (SysML 7.9.1), and every feature has a multiplicity (KerML 7.4.12).
-- **Semantifyr**: the part tree is fixed and finite, built at initialization and alive for the whole run. A usage with multiplicity `[0]` is absent, and a literal `[n]` on a part or a port is n instances. The frontend does not read `individual`, `snapshot` or `timeslice` on a part usage and translates such a part as any other.
+- **Semantifyr**: the part tree is fixed and finite, built at initialization and alive for the whole run. A usage with multiplicity `[0]` is absent, and a literal `[n]` on a part or a port is n instances. The frontend does not read `individual`, `snapshot` or `timeslice` on a part usage and transforms such a part as any other.
 - **Other interpretation**: parts created and destroyed during the run.
 - **Kind**: abstraction, in the frontend and the library.
 
@@ -186,7 +186,7 @@ A send puts its item on the outgoing slot of the port its `via` names (SysML 7.1
 ### Flow Delivery {#flow-delivery}
 
 - **Standard**: fixed. A send through a port is targeted across interfaces and not across other connections (SysML 7.14.2, 7.17.7, 8.4.8.1); a flow produces a flow transfer, which no accept action accepts (KerML 9.2.7, SysML 8.4.12.2, 8.4.13.6).
-- **Semantifyr**: a flow from a sub-part's port to a sub-part's port moves the item sent through its source port to its target port at the end of the step, where an accept via the target port takes it. A `succession flow` is translated as such a flow, its succession not read.
+- **Semantifyr**: a flow from a sub-part's port to a sub-part's port moves the item sent through its source port to its target port at the end of the step, where an accept via the target port takes it. A `succession flow` is transformed as such a flow, its succession not read.
 - **Other interpretation**: the standard's, under which a flow delivers no sent item and an interface does.
 - **Kind**: abstraction, in the library.
 

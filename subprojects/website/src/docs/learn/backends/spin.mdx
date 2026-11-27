@@ -6,7 +6,7 @@ description: The Spin backend, what it needs, which of its verdicts are trusted,
 
 # Spin
 
-[Spin](https://spinroot.com/) is an explicit-state model checker. The backend translates a case into Promela, Spin's input language.
+[Spin](https://spinroot.com/) is an explicit-state model checker. The backend transforms a case into Promela, Spin's input language.
 
 ## Install
 
@@ -25,7 +25,7 @@ Spin realizes the [wait before every main step](../language/reference/classes-an
 The backend answers Not supported, naming each construct, or the variable it concerns, and its source line, when a case holds one of these:
 
 - Variables of type `real`, `string`, or `any`: Promela has integer, boolean, and mtype variables only.
-- For-operations: the Promela translation has no loop.
+- For-operations: the Promela transformation has no loop.
 - Real literals: Promela has no real numbers.
 - String literals: Promela has no strings.
 - Array literals: the backend receives arrays split into one variable per slot and has no form for an array value.

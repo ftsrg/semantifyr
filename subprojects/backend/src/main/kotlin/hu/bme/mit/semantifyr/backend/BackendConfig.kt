@@ -31,7 +31,7 @@ enum class SoundnessDirection {
             return this
         }
         if (this != Exact && this != lowering) {
-            error("A $this run cannot take a $lowering translation of the model")
+            error("A $this run cannot take a $lowering transformation of the model")
         }
         return lowering
     }

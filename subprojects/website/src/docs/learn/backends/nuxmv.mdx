@@ -6,7 +6,7 @@ description: The nuXmv backend, what it needs, which of its verdicts are trusted
 
 # nuXmv
 
-[nuXmv](https://nuxmv.fbk.eu/) is a symbolic model checker of Fondazione Bruno Kessler. The backend translates a case into SMV, nuXmv's input language, and verifies it with unbounded integers.
+[nuXmv](https://nuxmv.fbk.eu/) is a symbolic model checker of Fondazione Bruno Kessler. The backend transforms a case into SMV, nuXmv's input language, and verifies it with unbounded integers.
 
 ## Install
 
@@ -24,10 +24,10 @@ nuXmv realizes the [wait before every main step](../language/reference/classes-a
 
 The backend answers Not supported, naming each construct and its source line, when a case holds one of these:
 
-- Variables of type `real`, `string`, or `any`: the SMV translation declares integer, boolean, and enumeration variables only.
-- For-operations: the SMV translation has no loop.
+- Variables of type `real`, `string`, or `any`: the SMV transformation declares integer, boolean, and enumeration variables only.
+- For-operations: the SMV transformation has no loop.
 - String literals: SMV has no strings.
 - Array literals: the backend receives arrays split into one variable per slot and has no form for an array value.
 - Array indexing: the backend receives arrays split into one variable per slot and has no form for indexing.
-- Integer variables, in the `bdd-invar` configuration only: the translation declares every integer unbounded, and nuXmv cannot build its binary decision diagrams over unbounded integers.
-- Clocks, in the `bdd-invar` configuration only: the translation declares every clock real, and nuXmv cannot build its binary decision diagrams over reals.
+- Integer variables, in the `bdd-invar` configuration only: the transformation declares every integer unbounded, and nuXmv cannot build its binary decision diagrams over unbounded integers.
+- Clocks, in the `bdd-invar` configuration only: the transformation declares every clock real, and nuXmv cannot build its binary decision diagrams over reals.

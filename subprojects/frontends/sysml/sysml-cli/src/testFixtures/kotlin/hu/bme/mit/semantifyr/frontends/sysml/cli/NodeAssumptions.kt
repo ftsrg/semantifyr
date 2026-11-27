@@ -15,5 +15,5 @@ fun assumeNodeOnPath() {
     } catch (_: IOException) {
         false
     }
-    assumeTrue(available, "translating SysML v2 needs node on PATH")
+    assumeTrue(available, "transforming SysML v2 needs node on PATH")
 }

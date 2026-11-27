@@ -17,7 +17,7 @@ enum class ExitCode(
     Internal(1, "Internal error, or Java could not start."),
     Usage(2, "Usage error: bad command, option, value, or portfolio."),
     Input(3, "Input error: a bad model or library path, or no case selected."),
-    Compilation(4, "Compilation error: the model does not parse, validate, or translate."),
+    Compilation(4, "Compilation error: the model does not parse, validate, or transform."),
     Failed(5, "Failed: a property does not hold."),
     Undecided(6, "Inconclusive or not supported."),
     Timeout(7, "Timeout."),

@@ -22,7 +22,7 @@ A case directory is named after the model file without its extension and the qua
 - `witness.semantifyr`, for a verdict with a trace: the [witness](../language/reference/library-and-output/inlined-models.md#witnesses), derived from the report. `semantifyr-sysml` writes `trace.sysml` beside it ([SysML v2 traces](../frontends/sysml-v2/traces.mdx)), `semantifyr-gamma` `trace.get` ([Gamma traces](../frontends/gamma/traces.mdx)).
 - `validation/`: the case directory of the last [witness validation](../backends/portfolios-and-verdicts.mdx#validation), with the same files, its `report.json` the validation's own.
 
-`semantifyr-sysml` writes the translation of the model into `compiled/default/<model>.semantifyr` at the top of the artifact directory, and the case directories next to `compiled/`. `semantifyr-gamma` gives every case a directory named after its Gamma qualified name, holding the compiled model, `model.semantifyr`, one package of the Semantifyr Language per imported Gamma package under `imports/`, and the case directory under `verification/`.
+`semantifyr-sysml` writes the transformed model into `compiled/default/<model>.semantifyr` at the top of the artifact directory, and the case directories next to `compiled/`. `semantifyr-gamma` gives every case a directory named after its Gamma qualified name, holding the compiled model, `model.semantifyr`, one package of the Semantifyr Language per imported Gamma package under `imports/`, and the case directory under `verification/`.
 
 ## Folders
 
@@ -34,6 +34,6 @@ Under `~/.semantifyr` it unpacks what it carries, each into a folder named by a 
 - `gamma/default/<digest>/`: the Gamma semantic library, unpacked by `semantifyr-gamma`.
 - `sysmlv2/default/<digest>/`: the SysML v2 semantic library, unpacked by `semantifyr-sysml verify`.
 - `sysml-cli/<digest>/`: the SysML v2 frontend with the SysML v2 standard library, unpacked by `semantifyr-sysml`.
-- `sysml-cache/<frontend digest>/`: the translations of `semantifyr-sysml`, a Semantifyr model and its name map for each model, named after the model file and a digest of every `.sysml` and `.kerml` file in the model's directory and below it, so a model is translated again only when one of those files or the frontend changes.
+- `sysml-cache/<frontend digest>/`: the transformations of `semantifyr-sysml`, a Semantifyr model and its name map for each model, named after the model file and a digest of every `.sysml` and `.kerml` file in the model's directory and below it, so a model is transformed again only when one of those files or the frontend changes.
 
 In the temporary directory, `verify` and `compile` without `--artifact-directory` write the artifacts into a new `semantifyr-<number>` directory, which they leave in place; `metrics` compiles in a `semantifyr-metrics-<number>` directory, which it deletes when it ends.
