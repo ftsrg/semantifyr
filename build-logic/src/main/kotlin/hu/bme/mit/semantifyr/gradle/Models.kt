@@ -10,7 +10,6 @@ import groovy.json.JsonSlurper
 import org.gradle.api.DefaultTask
 import org.gradle.api.Project
 import org.gradle.api.file.ConfigurableFileCollection
-import org.gradle.api.file.Directory
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.file.RegularFile
 import org.gradle.api.tasks.CacheableTask
@@ -31,15 +30,7 @@ val Project.oxstsFileExtension: String
 
 class CorpusModel(
     val file: String,
-    val conformance: Boolean,
-) {
-    val name: String
-        get() = file.substringBeforeLast('.')
-}
-
-fun Project.corpusModels(corpusDirectory: Directory): List<CorpusModel> {
-    return corpusModels(providers.fileContents(corpusDirectory.file("manifest.json")).asText.get())
-}
+)
 
 fun corpusModels(manifest: String): List<CorpusModel> {
     val models = (JsonSlurper().parseText(manifest) as Map<*, *>)["models"] as List<*>
@@ -47,14 +38,13 @@ fun corpusModels(manifest: String): List<CorpusModel> {
         val model = it as Map<*, *>
         CorpusModel(
             model["file"] as String,
-            model["conformance"] == true,
         )
     }
 }
 
 const val FURTHER_CASES_EXTENSION = "further-cases"
 
-// sysml-2ls translates one root namespace per document, so a model's further cases cannot sit in a second file that imports it
+// sysml-2ls transforms one root namespace per document, so a model's further cases cannot sit in a second file that imports it
 @CacheableTask
 abstract class AppendFurtherCases : DefaultTask() {
     @get:InputDirectory
@@ -87,6 +77,7 @@ abstract class AppendFurtherCases : DefaultTask() {
 class ServedExample(
     val language: String,
     val file: String,
+    val hidden: Boolean,
 ) {
     val name: String
         get() = file.substringAfterLast('/').substringBeforeLast('.')
@@ -103,6 +94,7 @@ private fun Project.servedExamples(): List<ServedExample> {
         ServedExample(
             example["language"] as String,
             example["file"] as String,
+            example["hidden"] == true,
         )
     }
 }

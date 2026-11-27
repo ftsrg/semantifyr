@@ -6,6 +6,7 @@
 
 package hu.bme.mit.semantifyr
 
+import hu.bme.mit.semantifyr.gradle.semantifyrArtifact
 import org.gradle.accessors.dm.LibrariesForLibs
 
 plugins {
@@ -69,4 +70,17 @@ tasks.startScripts {
 
 tasks.distTar {
     enabled = false
+}
+
+configurations.consumable("cliDistributionElements") {
+    attributes(semantifyrArtifact("cli-distribution"))
+    outgoing.artifact(
+        layout.dir(
+            tasks.installDist.map {
+                it.destinationDir
+            },
+        ),
+    ) {
+        builtBy(tasks.installDist)
+    }
 }

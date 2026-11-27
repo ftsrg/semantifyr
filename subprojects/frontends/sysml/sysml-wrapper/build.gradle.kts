@@ -7,7 +7,6 @@
 import com.github.gradle.node.pnpm.task.PnpmTask
 import com.github.gradle.node.task.NodeTask
 import hu.bme.mit.semantifyr.gradle.AppendFurtherCases
-import hu.bme.mit.semantifyr.gradle.corpusModels
 import hu.bme.mit.semantifyr.gradle.oxstsFileExtension
 import hu.bme.mit.semantifyr.gradle.semantifyrArtifact
 import org.apache.tools.ant.taskdefs.condition.Os
@@ -195,7 +194,6 @@ tasks.processResources {
     }
 }
 
-val compiledExamplesDirectory = layout.buildDirectory.dir("compiled-examples")
 val examplesSourceDirectory = layout.projectDirectory.dir("../models/examples")
 val appendedCorpusDirectory = layout.buildDirectory.dir("corpus")
 
@@ -211,99 +209,47 @@ configurations.consumable("sysmlCorpusElements") {
     }
 }
 
-val compiledExamplesElements = configurations.consumable("compiledExamplesElements") {
-    attributes(semantifyrArtifact("compiled-examples"))
-}
-
-// the CLI builds every SysML and KerML file under the model's directory as its workspace
-fun registerSysmlCompile(
-    taskName: String,
-    sourceDirectory: Provider<Directory>,
-    workspace: FileCollection,
-    name: String,
-    targetDirectory: Provider<Directory>,
-    elements: NamedDomainObjectProvider<ConsumableConfiguration>,
-) {
-    val sourceFile = sourceDirectory.map {
-        it.file("$name.sysml")
-    }
-    val targetFile = targetDirectory.map {
-        it.file("$name.$oxstsFileExtension")
-    }
-    val namesFile = targetDirectory.map {
-        it.file("$name.names.json")
-    }
-    val compile = tasks.register<NodeTask>(taskName) {
-        inputs.files(bundleCli).withPathSensitivity(PathSensitivity.RELATIVE)
-        inputs.files(workspace).withPathSensitivity(PathSensitivity.RELATIVE)
-        outputs.file(targetFile)
-        outputs.file(namesFile)
-        outputs.cacheIf {
-            true
-        }
-        script = cliBundleDirectory.map {
-            it.file("cli.cjs")
-        }
-        workingDir = layout.projectDirectory
-        args = provider {
-            listOf("compile", sourceFile.get().asFile.relativeTo(projectDir).invariantSeparatorsPath, cliBundleDirectory.get().dir("sysml.library").asFile.relativeTo(projectDir).invariantSeparatorsPath, "-o", targetFile.get().asFile.relativeTo(projectDir).invariantSeparatorsPath)
-        }
-    }
-    elements.configure {
-        outgoing.artifact(targetFile) {
-            builtBy(compile)
-        }
-        outgoing.artifact(namesFile) {
-            builtBy(compile)
-        }
-    }
-}
-
-val examplesWorkspace = fileTree(examplesSourceDirectory) {
-    include(
-        "**/*.sysml",
-        "**/*.kerml",
-    )
-}
-
-// every model on the default library, as live serves it: live shows the compiled served models, and the live backend's tests take others
-corpusModels(examplesSourceDirectory).filter {
-    !it.conformance
-}.forEach {
-    registerSysmlCompile(
-        "compileSysmlExample_${it.name}",
-        provider {
-            examplesSourceDirectory
-        },
-        examplesWorkspace,
-        it.name,
-        compiledExamplesDirectory,
-        compiledExamplesElements,
-    )
-}
-
 val smokeSourceDirectory = layout.projectDirectory.dir("../models/smoke")
 val compiledSmokeDirectory = layout.buildDirectory.dir("compiled-smoke")
-
-val compiledSmokeElements = configurations.consumable("compiledSmokeElements") {
-    attributes(semantifyrArtifact("compiled-smoke"))
+val compiledSmokeFile = compiledSmokeDirectory.map {
+    it.file("smoke.$oxstsFileExtension")
 }
 
-registerSysmlCompile(
-    "compileSysmlSmoke",
-    provider {
-        smokeSourceDirectory
-    },
-    fileTree(smokeSourceDirectory) {
-        include(
-            "**/*.sysml",
-            "**/*.kerml",
-        )
-    },
-    "smoke",
-    compiledSmokeDirectory,
-    compiledSmokeElements,
-)
+val compileSysmlSmoke = tasks.register<NodeTask>("compileSysmlSmoke") {
+    inputs.files(bundleCli).withPathSensitivity(PathSensitivity.RELATIVE)
+    // the CLI builds every SysML and KerML file under the model's directory as its workspace
+    inputs.files(
+        fileTree(smokeSourceDirectory) {
+            include(
+                "**/*.sysml",
+                "**/*.kerml",
+            )
+        },
+    ).withPathSensitivity(PathSensitivity.RELATIVE)
+    outputs.file(compiledSmokeFile)
+    outputs.file(
+        compiledSmokeDirectory.map {
+            it.file("smoke.names.json")
+        },
+    )
+    outputs.cacheIf {
+        true
+    }
+    script = cliBundleDirectory.map {
+        it.file("cli.cjs")
+    }
+    workingDir = layout.projectDirectory
+    args = provider {
+        listOf("compile", smokeSourceDirectory.file("smoke.sysml").asFile.relativeTo(projectDir).invariantSeparatorsPath, cliBundleDirectory.get().dir("sysml.library").asFile.relativeTo(projectDir).invariantSeparatorsPath, "-o", compiledSmokeFile.get().asFile.relativeTo(projectDir).invariantSeparatorsPath)
+    }
+}
+
+configurations.consumable("compiledSmokeElements") {
+    attributes(semantifyrArtifact("compiled-smoke"))
+    outgoing.artifact(compiledSmokeFile) {
+        builtBy(compileSysmlSmoke)
+    }
+}
 
 tasks.named("integrationTest") {
     inputs.files(appendFurtherCases).withPathSensitivity(PathSensitivity.RELATIVE)

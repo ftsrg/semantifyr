@@ -5,6 +5,7 @@
  */
 
 import com.github.gradle.node.npm.task.NpmTask
+import com.github.gradle.node.variant.VariantComputer
 import hu.bme.mit.semantifyr.gradle.ExampleDescriptions
 import hu.bme.mit.semantifyr.gradle.artifactsOf
 import hu.bme.mit.semantifyr.gradle.commitHash
@@ -14,15 +15,17 @@ import hu.bme.mit.semantifyr.gradle.registerBrandingAssets
 import hu.bme.mit.semantifyr.gradle.registerNpmCheck
 import hu.bme.mit.semantifyr.gradle.semantifyrArtifact
 import hu.bme.mit.semantifyr.gradle.servedExamples
+import org.apache.tools.ant.taskdefs.condition.Os
 import org.gradle.api.file.RegularFile
+import java.io.File
 
 plugins {
     id("hu.bme.mit.semantifyr.nodejs")
 }
 
 val editorCommon = artifactsOf("npm-package", ":semantifyr-editor-common")
-val gammaCompiledExamples = artifactsOf("compiled-examples", ":gamma-frontend")
-val sysmlCompiledExamples = artifactsOf("compiled-examples", ":sysml-wrapper")
+val gammaCli = artifactsOf("cli-distribution", ":gamma-cli")
+val sysmlCli = artifactsOf("cli-distribution", ":sysml-cli")
 val sysmlWorker = artifactsOf("sysml-worker", ":sysml-wrapper")
 val grammars = artifactsOf("textmate-grammar", ":oxsts.lang", ":gamma.lang")
 val languageConfiguration = artifactsOf("language-configuration", ":semantifyr-vscode")
@@ -38,26 +41,86 @@ fun servedFiles(language: String): List<RegularFile> {
     }
 }
 
-// live's libraries show the compiled form of the served models alone
-fun compiledFiles(language: String): List<String> {
-    return servedExamples(language).map {
-        "${it.name}.$oxstsFileExtension"
+val compiledExamplesDirectory = layout.buildDirectory.dir("compiled-examples").get()
+
+fun compileServedExamples(
+    language: String,
+    distribution: FileCollection,
+    vararg workspacePatterns: String,
+    configuration: Exec.() -> Unit = {},
+): FileCollection {
+    val root = isolated.rootProject.projectDirectory
+    val taskLanguage = language.replaceFirstChar {
+        it.uppercase()
     }
+    val windows = Os.isFamily(Os.FAMILY_WINDOWS)
+    val startScripts = distribution.asFileTree.matching {
+        include("bin/*")
+    }
+    val compiles = servedExamples(language).filter {
+        !it.hidden
+    }.map { example ->
+        val targetDirectory = compiledExamplesDirectory.dir("$language/${example.name}")
+        val targetFile = targetDirectory.file("${example.name}.$oxstsFileExtension")
+        tasks.register<Exec>("compile${taskLanguage}Example_${example.name}") {
+            inputs.files(
+                fileTree(root.dir(example.file.substringBeforeLast('/'))) {
+                    include(*workspacePatterns)
+                },
+            ).withPathSensitivity(PathSensitivity.RELATIVE)
+            inputs.files(startScripts).withPathSensitivity(PathSensitivity.RELATIVE)
+            inputs.files(
+                distribution.asFileTree.matching {
+                    include("lib/*.jar")
+                },
+            ).withNormalizer(ClasspathNormalizer::class.java)
+            outputs.dir(targetDirectory)
+            outputs.cacheIf {
+                true
+            }
+            workingDir = root.asFile
+            args("compile", example.file, "-o", targetFile.asFile.relativeTo(root.asFile).invariantSeparatorsPath)
+            doFirst {
+                executable = startScripts.files.single {
+                    (it.extension == "bat") == windows
+                }.absolutePath
+            }
+            configuration()
+        }
+    }
+    return files(compiles).asFileTree.matching {
+        include("*.$oxstsFileExtension")
+    }
+}
+
+fun Exec.runsWithNode() {
+    val nodeBinDirectory = VariantComputer().computeNodeBinDir(node.resolvedNodeDir, node.resolvedPlatform)
+    dependsOn(tasks.nodeSetup)
+    inputs.property("nodeVersion", node.version)
+    doFirst {
+        // Windows names the variable Path
+        val pathVariable = environment.keys.firstOrNull {
+            it.equals("PATH", ignoreCase = true)
+        } ?: "PATH"
+        environment(pathVariable, "${nodeBinDirectory.get().asFile.absolutePath}${File.pathSeparator}${environment[pathVariable]}")
+    }
+}
+
+val gammaCompiledExamples = compileServedExamples("gamma", gammaCli, "*.gamma", "*.gcd")
+
+val sysmlCompiledExamples = compileServedExamples("sysml", sysmlCli, "**/*.sysml", "**/*.kerml") {
+    runsWithNode()
 }
 
 val cloneGammaExamples = tasks.register<Sync>("cloneGammaExamples") {
     from(servedFiles("gamma"))
-    from(gammaCompiledExamples) {
-        include(compiledFiles("gamma"))
-    }
+    from(gammaCompiledExamples)
     into(importedSnippetsDirectory.dir("gamma"))
 }
 
 val cloneSysmlExamples = tasks.register<Sync>("cloneSysmlExamples") {
     from(servedFiles("sysml"))
-    from(sysmlCompiledExamples) {
-        include(compiledFiles("sysml"))
-    }
+    from(sysmlCompiledExamples)
     into(importedSnippetsDirectory.dir("sysml"))
 }
 
