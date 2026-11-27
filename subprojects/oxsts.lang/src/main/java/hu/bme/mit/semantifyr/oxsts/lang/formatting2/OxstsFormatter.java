@@ -295,6 +295,8 @@ public class OxstsFormatter extends AbstractJavaFormatter {
         formatTypeColon(featureDeclaration, document);
 
         document.append(regionFor(featureDeclaration).keyword("redefine"), this::oneSpace);
+        document.append(regionFor(featureDeclaration).keyword("global"), this::oneSpace);
+        document.append(regionFor(featureDeclaration).keyword("derived"), this::oneSpace);
         document.append(
                 regionFor(featureDeclaration).feature(OxstsPackage.Literals.FEATURE_DECLARATION__KIND), this::oneSpace);
         document.surround(regionFor(featureDeclaration).keyword("subsets"), this::oneSpace);

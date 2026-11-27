@@ -109,7 +109,7 @@ TopLevelDeclaration returns Declaration:
         ';'?
     |
         {FeatureDeclaration.annotation=current}
-        kind=TopLevelFeatureKind name=Identifier ':' typeSpecification=TypeSpecification
+        'global' kind=TopLevelFeatureKind name=Identifier ':' typeSpecification=TypeSpecification
         ('subsets' superset=[FeatureDeclaration|Identifier])?
         (
             ';'?
@@ -131,9 +131,8 @@ TopLevelDeclaration returns Declaration:
 ;
 
 enum TopLevelFeatureKind returns FeatureKind:
-    REFERENCE='global reference'
-    | CONTAINMENT='global containment'
-//    | FEATURE='global feature'
+    REFERENCE='reference'
+    | CONTAINMENT='containment'
 ;
 
 EnumLiteral:
@@ -222,7 +221,7 @@ ClassMember returns Declaration:
         )
     |
         {FeatureDeclaration.annotation=current}
-        redefine?='redefine'? kind=FeatureKind name=Identifier ':' typeSpecification=TypeSpecification
+        redefine?='redefine'? (kind=FeatureKind | 'derived' kind=DerivedFeatureKind) name=Identifier ':' typeSpecification=TypeSpecification
         (
             ('subsets' superset=[FeatureDeclaration|Identifier])?
             & ('opposite' opposite=[FeatureDeclaration|Identifier])?
@@ -244,7 +243,7 @@ AnnotationContainer:
 
 InnerFeature returns FeatureDeclaration:
     annotation = AnnotationContainer
-    redefine?='redefine'? kind=FeatureKind name=Identifier ':' typeSpecification=TypeSpecification
+    redefine?='redefine'? (kind=FeatureKind | 'derived' kind=DerivedFeatureKind) name=Identifier ':' typeSpecification=TypeSpecification
     (
         ('subsets' superset=[FeatureDeclaration|Identifier])?
         & ('opposite' opposite=[FeatureDeclaration|Identifier])?
@@ -268,8 +267,11 @@ enum FeatureKind:
     REFERENCE='refers'
     | CONTAINMENT='contains'
     | CONTAINER='container'
-    | DERIVED='derived refers'
     | FEATURE='features'
+;
+
+enum DerivedFeatureKind returns FeatureKind:
+    DERIVED='refers'
 ;
 
 Operation:
