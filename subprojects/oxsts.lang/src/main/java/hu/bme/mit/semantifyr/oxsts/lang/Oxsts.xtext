@@ -617,6 +617,10 @@ KEYWORD:
     | 'havoc'
     | 'prop'
     | 'timescale'
+    | 'global'
+    | 'reference'
+    | 'containment'
+    | 'derived'
 ;
 
 @Override

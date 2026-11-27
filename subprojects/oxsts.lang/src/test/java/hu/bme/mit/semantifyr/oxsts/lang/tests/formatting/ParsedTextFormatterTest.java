@@ -294,6 +294,18 @@ public class ParsedTextFormatterTest {
     }
 
     @Test
+    void fileWithoutAPackageLineStartsWithItsFirstDeclaration() {
+        assertFormatted("""
+
+                class First {
+                }
+                """, """
+                class First {
+                }
+                """);
+    }
+
+    @Test
     void membersKeepAtMostOneBlankLine() {
         assertFormatted("""
                 package test
