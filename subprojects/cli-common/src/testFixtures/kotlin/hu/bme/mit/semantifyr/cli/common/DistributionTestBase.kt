@@ -28,7 +28,7 @@ class LauncherRun(
 abstract class DistributionTestBase(
     private val launcher: String,
 ) {
-    protected val home: Path = Path("build/unzipped").listDirectoryEntries().single().toAbsolutePath()
+    protected val home: Path = Path("build/install").listDirectoryEntries().single().toAbsolutePath()
 
     private val windows = System.getProperty("os.name").startsWith("Windows")
 

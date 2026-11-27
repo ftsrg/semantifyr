@@ -16,14 +16,6 @@ dependencies {
     implementation(project(":cli-common"))
 }
 
-val unzipDistribution = tasks.register<Sync>("unzipDistribution") {
-    val distributionArchive = tasks.distZip.flatMap {
-        it.archiveFile
-    }
-    from(zipTree(distributionArchive))
-    into(layout.buildDirectory.dir("unzipped"))
-}
-
 testing {
     suites {
         named<JvmTestSuite>("endToEndTest") {
@@ -33,7 +25,7 @@ testing {
 
             targets.all {
                 testTask.configure {
-                    inputs.files(unzipDistribution).withPathSensitivity(PathSensitivity.RELATIVE)
+                    inputs.files(tasks.installDist).withPathSensitivity(PathSensitivity.RELATIVE)
                 }
             }
         }
