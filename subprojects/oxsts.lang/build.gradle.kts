@@ -35,15 +35,9 @@ xtext {
 }
 
 val metamodel = artifactsOf("metamodel", ":oxsts.model")
-val modelDirectory = layout.projectDirectory.dir("model")
-
 val syncModel = tasks.register<Sync>("syncModel") {
     from(metamodel)
-    into(modelDirectory)
-}
-
-tasks.clean {
-    delete(modelDirectory)
+    into(layout.buildDirectory.dir("model"))
 }
 
 val textMateDirectory = layout.buildDirectory.dir("generated/textmate")
