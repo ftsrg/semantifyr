@@ -7,10 +7,10 @@
 import type { Page } from 'playwright'
 import { describe, expect } from 'vitest'
 
+import { NEVER_LIT } from './fake/defaults'
 import { casesListed, results, statesOf, test } from './harness'
 
 const LEVEL_CROSSING = '/language/level-crossing?library=gamma'
-const BARRIER = '_BarrierDownWhileTrainInCrossing'
 
 async function choose(page: Page, kind: 'Verification' | 'Validation', portfolio: string): Promise<void> {
   await page.getByRole('button', { name: 'Portfolios and validation' }).click()
@@ -53,7 +53,7 @@ describe('the portfolio settings', () => {
     await expect.poll(async () => {
       return statesOf(results(page).rows, 'status-')
     }).toEqual(['failed', 'passed'])
-    const validate = results(page).row(BARRIER).getByRole('button', { name: `Validate ${BARRIER}` })
+    const validate = results(page).row(NEVER_LIT).getByRole('button', { name: `Validate ${NEVER_LIT}` })
     await expect.poll(async () => {
       return validate.count()
     }).toBe(1)
@@ -62,14 +62,14 @@ describe('the portfolio settings', () => {
     await validate.click()
 
     await expect.poll(async () => {
-      return results(page).row(BARRIER).locator('.validation-mark').getAttribute('class')
+      return results(page).row(NEVER_LIT).locator('.validation-mark').getAttribute('class')
     }).toContain('is-validated')
     expect(portfoliosOf(ui.backend.session().commands('oxsts.case.validateWitness'))).toEqual(['smart'])
   })
 
   test('show a validation that fails on its row, which validates again when asked', async ({ ui }) => {
-    ui.backend.answer('validate', (_request, recorded) => {
-      return { ...recorded(), status: 'invalid', message: 'The witness does not reproduce the violation' }
+    ui.backend.answer('validate', (_request, stated) => {
+      return { ...stated(), status: 'invalid', message: 'The witness does not reproduce the violation' }
     })
     const page = await ui.open(LEVEL_CROSSING)
     await casesListed(page)
@@ -77,12 +77,12 @@ describe('the portfolio settings', () => {
     await results(page).verifyAll.click()
 
     await expect.poll(async () => {
-      return results(page).row(BARRIER).locator('.validation-mark').getAttribute('class')
+      return results(page).row(NEVER_LIT).locator('.validation-mark').getAttribute('class')
     }).toContain('is-validation-failed')
     ui.backend.answers = {}
-    await results(page).row(BARRIER).getByRole('button', { name: `Validate again ${BARRIER}` }).click()
+    await results(page).row(NEVER_LIT).getByRole('button', { name: `Validate again ${NEVER_LIT}` }).click()
     await expect.poll(async () => {
-      return results(page).row(BARRIER).locator('.validation-mark').getAttribute('class')
+      return results(page).row(NEVER_LIT).locator('.validation-mark').getAttribute('class')
     }).toContain('is-validated')
   })
 })

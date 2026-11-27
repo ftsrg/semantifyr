@@ -8,21 +8,10 @@ import type { Page } from 'playwright'
 import { describe, expect } from 'vitest'
 
 import { editorKeysOf } from '../testBrowser'
+import { BUILTIN_LIBRARY, BUILTIN_LIBRARY_URI, lineOf, NEVER_LIT } from './fake/defaults'
 import { casesListed, editor, results, statesOf, test } from './harness'
-import { flavorFixture } from './mock/fixtures'
 
-const BUILTIN = 'file:///workspace/.semantifyr/builtin/standard.semantifyr'
-
-function recordedLine(flavorId: string, uri: string, text: string): number {
-  const line = flavorFixture(flavorId).reads[uri]?.split('\n').indexOf(text) ?? -1
-  if (line < 0) {
-    throw new Error(`the ${flavorId} recording reads no line '${text}' in ${uri}`)
-  }
-  return line
-}
-
-const TRACE_ANNOTATION_LINE = recordedLine('oxsts', BUILTIN, 'annotation Trace')
-const BARRIER = '_BarrierDownWhileTrainInCrossing'
+const TRACE_ANNOTATION_LINE = lineOf(BUILTIN_LIBRARY, 'annotation Trace')
 
 // the text of the line the cursor is on in the document shown
 async function currentLine(page: Page): Promise<string> {
@@ -37,12 +26,12 @@ async function currentLine(page: Page): Promise<string> {
 
 describe('going to a definition', () => {
   test('in a library the session names opens the library\'s read-only tab at the element, and Back returns to the model', async ({ ui }) => {
-    ui.backend.answer('feature', (request, recorded) => {
+    ui.backend.answer('feature', (request, stated) => {
       if (request.method !== 'textDocument/definition') {
-        return recorded()
+        return stated()
       }
       const position = { line: TRACE_ANNOTATION_LINE, character: 11 }
-      return [{ uri: BUILTIN, range: { start: position, end: position } }]
+      return [{ uri: BUILTIN_LIBRARY_URI, range: { start: position, end: position } }]
     })
     const page = await ui.open('/language/semantic-libraries')
     await casesListed(page)
@@ -81,16 +70,33 @@ function opened(session: { received: unknown[] }): string[] {
   })
 }
 
+const STATECHARTS_URI = 'file:///workspace/Library/Statecharts.semantifyr'
+
+const STATECHARTS = `package semantifyr::gamma
+
+class Component {
+}
+
+class Statechart : Component {
+}
+`
+
+const COMPILED_TRACK = `package levelcrossing
+
+class Track : Statechart {
+}
+`
+
 describe('going to a definition from inside a read-only document', () => {
   test('of a library names the library file by its server address, sends no copy of it, and lands at the answer', async ({ ui }) => {
-    const STRING_LINE = recordedLine('oxsts', BUILTIN, 'extern datatype string')
-    ui.backend.answer('feature', (request, recorded) => {
+    const STRING_LINE = lineOf(BUILTIN_LIBRARY, 'extern datatype string')
+    ui.backend.answer('feature', (request, stated) => {
       if (request.method !== 'textDocument/definition') {
-        return recorded()
+        return stated()
       }
-      const line = (request.params as DefinitionParams).textDocument.uri === BUILTIN ? STRING_LINE : TRACE_ANNOTATION_LINE
+      const line = (request.params as DefinitionParams).textDocument.uri === BUILTIN_LIBRARY_URI ? STRING_LINE : TRACE_ANNOTATION_LINE
       const position = { line, character: 0 }
-      return [{ uri: BUILTIN, range: { start: position, end: position } }]
+      return [{ uri: BUILTIN_LIBRARY_URI, range: { start: position, end: position } }]
     })
     const page = await ui.open('/language/semantic-libraries')
     await casesListed(page)
@@ -108,27 +114,28 @@ describe('going to a definition from inside a read-only document', () => {
     }).toBe('extern datatype string')
     expect(await editor(page).selectedTab.innerText()).toContain('standard.semantifyr')
     const session = ui.backend.session()
-    expect(definitionsAsked(session)).toEqual(['file:///workspace/snippet.semantifyr', BUILTIN])
+    expect(definitionsAsked(session)).toEqual(['file:///workspace/snippet.semantifyr', BUILTIN_LIBRARY_URI])
     expect(opened(session)).toEqual(['file:///workspace/snippet.semantifyr'])
   })
 
   test('of the OXSTS of a Gamma model names it under the derived address the session holds it by, and a library answer opens the library tab', async ({ ui }) => {
-    const STATECHARTS = 'file:///workspace/Library/Statecharts.semantifyr'
-    ui.backend.answer('feature', (request, recorded) => {
+    ui.backend.compiled = { status: 'compiled', oxsts: COMPILED_TRACK, message: null }
+    ui.backend.texts[STATECHARTS_URI] = STATECHARTS
+    ui.backend.answer('feature', (request, stated) => {
       if (request.method !== 'textDocument/definition') {
-        return recorded()
+        return stated()
       }
-      const position = { line: recordedLine('gamma', STATECHARTS, 'class Statechart : Component {'), character: 6 }
-      return [{ uri: STATECHARTS, range: { start: position, end: position } }]
+      const position = { line: lineOf(STATECHARTS, 'class Statechart : Component {'), character: 6 }
+      return [{ uri: STATECHARTS_URI, range: { start: position, end: position } }]
     })
     const page = await ui.open('/gamma/level-crossing', { height: 1600 })
     await casesListed(page)
     await page.locator('.results-header .model-oxsts-button').click()
     await expect.poll(async () => {
-      return page.locator('section.editor .view-line', { hasText: 'class _Track : Statechart' }).count()
+      return page.locator('section.editor .view-line', { hasText: 'class Track : Statechart' }).count()
     }).toBe(1)
 
-    await page.locator('section.editor .view-line', { hasText: 'class _Track : Statechart' }).click()
+    await page.locator('section.editor .view-line', { hasText: 'class Track : Statechart' }).click()
     await page.keyboard.press('F12')
 
     await expect.poll(async () => {
@@ -149,8 +156,8 @@ describe('the OXSTS of the model', () => {
   test('opens from the results head as a read-only tab that follows the edits of the model', async ({ ui }) => {
     const page = await ui.open('/gamma/level-crossing')
     await casesListed(page)
-    ui.backend.answer('compiled', (request, recorded) => {
-      const compiled = recorded()
+    ui.backend.answer('compiled', (request, stated) => {
+      const compiled = stated()
       return request.text.includes('// edited') ? { ...compiled, oxsts: `${compiled.oxsts ?? ''}\n// recompiled\n` } : compiled
     })
 
@@ -182,7 +189,7 @@ describe('the margin', () => {
   test('shows the marks of the shown document\'s cases alone, one state each, after another shell\'s editor showed the same model', async ({ ui }) => {
     const page = await ui.open('/language/level-crossing?library=gamma', { height: 5800 })
     await casesListed(page)
-    await results(page).row(BARRIER).getByRole('button', { name: `Run ${BARRIER}` }).click()
+    await results(page).row(NEVER_LIT).getByRole('button', { name: `Run ${NEVER_LIT}` }).click()
     await expect.poll(async () => {
       return statesOf(editor(page).marks, 'verdict-glyph-')
     }).toEqual(['failed', 'not-run'])

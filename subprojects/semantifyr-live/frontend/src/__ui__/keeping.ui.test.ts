@@ -4,16 +4,30 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import { readFileSync } from 'node:fs'
-import { join } from 'node:path'
 import type { Page } from 'playwright'
-import { servedExamplesOf } from '@semantifyr/editor-common/examples'
 import { describe, expect } from 'vitest'
 
 import { editorKeysOf, TEST_BROWSER } from '../testBrowser'
+import { lineOf, passing } from './fake/defaults'
 import { casesListed, editor, editorWorkerLoaded, results, statesOf, test } from './harness'
 
-const INTERSECTION = readFileSync(join(import.meta.dirname, '../snippets/imported/tutorial/modeling-and-verification.semantifyr'), 'utf-8')
+const MINE = `package mine
+
+class Switch {
+    var on: bool := false
+
+    redefine tran {
+        on := !on
+    }
+}
+
+@VerificationCase
+class SwitchCanTurnOn : Switch {
+    redefine prop {
+        return EF on
+    }
+}
+`
 
 interface Disk {
   // the file the open picker gives, the name the save picker gives
@@ -106,16 +120,18 @@ describe('opening a file', () => {
     skip(TEST_BROWSER !== 'chromium', NO_PICKERS)
     const page = await ui.open('/language/level-crossing', { before: stubPickers })
     await casesListed(page)
+    ui.backend.cases = [
+      passing('mine::SwitchCanTurnOn', lineOf(MINE, 'class SwitchCanTurnOn : Switch {')),
+    ]
 
-    await openFile(page, 'mine.semantifyr', INTERSECTION)
+    await openFile(page, 'mine.semantifyr', MINE)
 
     await expect.poll(async () => {
       return page.title()
     }).toBe('mine.semantifyr - Semantifyr - Semantifyr Live')
-    await casesListed(page)
-    expect(await results(page).rows.count()).toBe(servedExamplesOf('oxsts').find((example) => {
-      return example.id === 'modeling-and-verification'
-    })?.cases.length)
+    await expect.poll(async () => {
+      return results(page).rows.locator('.case-name').allInnerTexts()
+    }).toEqual(['SwitchCanTurnOn'])
   })
 
   test('through Open, where the browser has no file picker, takes the file chosen in the file dialog', async ({ ui }) => {
@@ -129,7 +145,7 @@ describe('opening a file', () => {
       const dialog = (window as unknown as { fileDialog: HTMLInputElement }).fileDialog
       dialog.files = transfer.files
       dialog.dispatchEvent(new Event('change'))
-    }, INTERSECTION)
+    }, MINE)
 
     await expect.poll(async () => {
       return page.title()
@@ -139,9 +155,7 @@ describe('opening a file', () => {
   test('by a drop opens the dropped file in its language', async ({ ui }) => {
     const page = await ui.open('/language/modeling-and-verification')
     await casesListed(page)
-    ui.backend.answer('discover', () => {
-      return []
-    })
+    ui.backend.cases = []
 
     await page.evaluate(() => {
       const transfer = new DataTransfer()
@@ -163,7 +177,7 @@ describe('saving', () => {
     skip(TEST_BROWSER !== 'chromium', NO_PICKERS)
     const page = await ui.open('/language/level-crossing', { before: stubPickers })
     await casesListed(page)
-    await openFile(page, 'mine.semantifyr', INTERSECTION)
+    await openFile(page, 'mine.semantifyr', MINE)
     await casesListed(page)
 
     await typeAtTheEnd(page, '\n// edited\n')
@@ -252,9 +266,9 @@ describe('a share link with results', () => {
     const released = new Promise<void>((resolve) => {
       release = resolve
     })
-    ui.backend.answer('verify', async (_request, recorded) => {
+    ui.backend.answer('verify', async (_request, stated) => {
       await released
-      return recorded()
+      return stated()
     })
 
     const receiver = await ui.open(`${link.pathname}${link.search}${link.hash}`)

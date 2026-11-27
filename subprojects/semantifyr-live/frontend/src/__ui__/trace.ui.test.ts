@@ -7,7 +7,36 @@
 import type { Page } from 'playwright'
 import { describe, expect } from 'vitest'
 
-import { casesListed, editor, results, statesOf, test, type Ui } from './harness'
+import { failing, LAMP_CASES, passing, type StatedCase } from './fake/defaults'
+import { casesListed, editor, results, servedExample, statesOf, test, type Ui } from './harness'
+
+// a Gamma run writes the case's Gamma trace beside its witness
+function withGammaTrace(stated: StatedCase): StatedCase {
+  if (stated.result.witnessUri === null) {
+    return stated
+  }
+  const traceUri = stated.result.witnessUri.replace(/witness\.semantifyr$/, 'trace.get')
+  const name = stated.id.split('::').at(-1) ?? stated.id
+  const trace = `package lamp
+
+trace ${name}Trace of ${name} {
+    step {
+        assert {
+            state lamp.Main.Lit
+        }
+    }
+}
+`
+  return { ...stated, result: { ...stated.result, traceUri }, documents: { ...stated.documents, [traceUri]: trace } }
+}
+
+const GAMMA_CASES = LAMP_CASES.map(withGammaTrace)
+
+// named as the Semantifyr model the served SysML level crossing maps to names its cases
+const SYSML_CASES = servedExample('sysml', 'level-crossing').cases.map((name, index) => {
+  const id = `semantifyr::sysml::model::${name}`
+  return index === 0 ? failing(id, index) : passing(id, index)
+})
 
 const VIEW_CONTENT: Readonly<Record<string, string>> = {
   steps: '[data-testid="trace-steps"]',
@@ -60,13 +89,14 @@ async function showView(page: Page, view: string): Promise<void> {
 }
 
 describe('the trace of each language', () => {
-  for (const [address, views] of [
-    ['/language/level-crossing?library=gamma', ['steps', 'calls', 'witness']],
-    ['/language/level-crossing?library=sysml', ['steps', 'calls', 'witness']],
-    ['/gamma/level-crossing', ['own', 'steps', 'calls', 'witness']],
-    ['/sysml/level-crossing', ['own', 'steps', 'calls', 'witness']],
+  for (const [address, views, cases] of [
+    ['/language/level-crossing?library=gamma', ['steps', 'calls', 'witness'], LAMP_CASES],
+    ['/language/level-crossing?library=sysml', ['steps', 'calls', 'witness'], LAMP_CASES],
+    ['/gamma/level-crossing', ['own', 'steps', 'calls', 'witness'], GAMMA_CASES],
+    ['/sysml/level-crossing', ['own', 'steps', 'calls', 'witness'], SYSML_CASES],
   ] as const) {
     test(`opens ${address} on its own view and shows each of its views`, async ({ ui }) => {
+      ui.backend.cases = cases
       const page = await traced(ui, address)
 
       expect(await caseTrace(page).getAttribute('data-view')).toBe(views[0])
@@ -79,6 +109,7 @@ describe('the trace of each language', () => {
 
 describe('the views of a trace', () => {
   test('open a text view in the editor as a read-only tab, which a middle click closes', async ({ ui }) => {
+    ui.backend.cases = GAMMA_CASES
     const page = await traced(ui, '/gamma/level-crossing')
 
     await caseTrace(page).locator('.frame-open').click()
@@ -95,8 +126,8 @@ describe('the views of a trace', () => {
 
   test('keep an open text tab readable once the server no longer has its document', async ({ ui }) => {
     let witness = ''
-    ui.backend.answer('read', (request, recorded) => {
-      const text = recorded()
+    ui.backend.answer('read', (request, stated) => {
+      const text = stated()
       if (request.uri.endsWith('/witness.semantifyr')) {
         witness = text ?? ''
       }
@@ -125,6 +156,7 @@ describe('the views of a trace', () => {
 
 describe('the chosen view of a trace', () => {
   test('stays chosen for the case selected next', async ({ ui }) => {
+    ui.backend.cases = GAMMA_CASES
     const page = await traced(ui, '/gamma/level-crossing')
     await showView(page, 'calls')
     const next = results(page).rows.and(page.locator(':not([aria-selected="true"])')).first()
@@ -141,6 +173,7 @@ describe('the chosen view of a trace', () => {
 
 describe('the text of a trace in its view', () => {
   test('stays shown after the extension host lets go of its document', async ({ ui }) => {
+    ui.backend.cases = SYSML_CASES
     const page = await ui.open('/sysml/level-crossing')
     await page.clock.install()
     await casesListed(page)
@@ -159,6 +192,7 @@ describe('the text of a trace in its view', () => {
 
 describe('a trace text over a scrolled model', () => {
   test('opens as a tab with none of the model\'s sticky lines over it, and the model tab shows them again', async ({ ui }) => {
+    ui.backend.cases = SYSML_CASES
     const page = await traced(ui, '/sysml/level-crossing')
     const sticky = page.locator('section.editor .sticky-widget')
     await page.locator('section.editor .view-line', { hasText: 'port def Sensors {' }).first().click()
@@ -198,6 +232,10 @@ describe('the documents control', () => {
 
 
   test('lists the documents of the selected case and follows the selection', async ({ ui }) => {
+    ui.backend.cases = [
+      withGammaTrace(failing('lamp::LampNeverLit', 1)),
+      passing('lamp::LampCanLight', 2, null),
+    ]
     const page = await traced(ui, '/gamma/level-crossing')
     const entries = async (): Promise<string[]> => {
       await page.getByRole('button', { name: 'Read-only documents' }).click()

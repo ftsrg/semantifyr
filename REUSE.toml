@@ -25,12 +25,6 @@ SPDX-FileCopyrightText = "2023-2026 The Semantifyr Authors"
 SPDX-License-Identifier = "EPL-2.0"
 
 [[annotations]]
-path = "subprojects/semantifyr-live/frontend/src/__ui__/mock/fixtures/**"
-precedence = "override"
-SPDX-FileCopyrightText = "2026 The Semantifyr Authors"
-SPDX-License-Identifier = "EPL-2.0"
-
-[[annotations]]
 path = "subprojects/semantifyr-editor-common/src/look/fonts/open-sans-*.woff2"
 SPDX-FileCopyrightText = "2020 The Open Sans Project Authors (https://github.com/googlefonts/opensans)"
 SPDX-License-Identifier = "OFL-1.1"

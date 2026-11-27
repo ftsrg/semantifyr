@@ -47,7 +47,7 @@ function fileOf(root: string, path: string): string | null {
   return file
 }
 
-// the production build as the backend serves it, the SysML worker's files beside it; /api and /ws never reach it, the mock backend answers them
+// the production build as the backend serves it, the SysML worker's files beside it; /api and /ws never reach it, the fake backend answers them
 function serve(): Server {
   return createServer((request, response) => {
     const path = new URL(request.url ?? '/', 'http://localhost').pathname
