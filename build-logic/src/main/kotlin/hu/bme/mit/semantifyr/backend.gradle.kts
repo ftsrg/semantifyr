@@ -17,7 +17,6 @@ dependencies {
     testImplementation(testFixtures(project(":oxsts.lang")))
 }
 
-// relative to the module, so that the test tasks stay relocatable for the build cache
 val semanticModels = layout.projectDirectory.asFile.toPath().relativize(isolated.rootProject.projectDirectory.dir("oxsts-test-models/semantic").asFile.toPath()).joinToString("/")
 
 tasks.withType<Test>().configureEach {
