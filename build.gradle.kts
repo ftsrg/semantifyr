@@ -39,7 +39,7 @@ val suiteReportTasks = listOf(
 }
 
 tasks.named("sonar") {
-    inputs.files(suiteReportTasks).withPathSensitivity(PathSensitivity.RELATIVE)
+    dependsOn(suiteReportTasks)
 }
 
 sonar {
