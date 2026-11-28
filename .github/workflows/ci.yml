@@ -63,12 +63,6 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: test -z "$SONAR_TOKEN" || ./gradlew sonar -Dsonar.qualitygate.wait=${{ github.event_name == 'pull_request' }}
-      - name: Install the browser for the screenshots
-        if: ${{ runner.os == 'Linux' }}
-        timeout-minutes: 15
-        uses: ./.github/actions/browsers
-        with:
-          browsers: chromium
       - name: Pack Distribution
         if: ${{ runner.os == 'Linux' }}
         run: ./gradlew pack

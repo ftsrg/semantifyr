@@ -104,7 +104,7 @@ export default {
   baseUrlIssueBanner: false,
   trailingSlash: true,
   onBrokenAnchors: 'throw',
-  staticDirectories: ['static-imported-branding', 'build/live-screenshots', 'build/api-static'],
+  staticDirectories: ['static-imported-branding', 'build/api-static'],
   customFields: {
     liveBackendUrl,
     nodeVersion,

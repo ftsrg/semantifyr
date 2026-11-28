@@ -4,14 +4,9 @@ slug: /learn/live
 description: Verify a SysML v2, Gamma, or Semantifyr model in Semantifyr Live, in the browser with nothing to install.
 ---
 
-import ThemedImage from '@theme/ThemedImage';
-import useBaseUrl from '@docusaurus/useBaseUrl';
-
 # Try in the Browser
 
 [Semantifyr Live](https://live.semantifyr.org) lets you edit and verify SysML v2, Gamma, and Semantifyr models in the browser.
-
-<ThemedImage alt="Live on the SysML v2 level crossing, its cases verified and a trace open" sources={{ light: useBaseUrl('/img/screenshots/live-light.png'), dark: useBaseUrl('/img/screenshots/live-dark.png') }} />
 
 ## A First Run
 

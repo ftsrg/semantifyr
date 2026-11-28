@@ -263,34 +263,6 @@ listOf(
     }
 }
 
-val screenshots = tasks.register<PnpmTask>("screenshots") {
-    group = LifecycleBasePlugin.BUILD_GROUP
-
-    readsPackage()
-    configureSharedInputs()
-    inputs.file(layout.projectDirectory.file("vitest.screenshots.config.ts")).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.files(pnpmAssemble).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.files(cloneSysmlWorker).withPathSensitivity(PathSensitivity.RELATIVE)
-
-    pnpmCommand = listOf("run", "screenshots")
-    environment.put("TEST_BROWSER", "chromium")
-    val screenshotsDirectory = layout.buildDirectory.dir("screenshots")
-    outputs.dir(screenshotsDirectory)
-    outputs.cacheIf {
-        true
-    }
-    doFirst {
-        screenshotsDirectory.get().asFile.deleteRecursively()
-    }
-}
-
-configurations.consumable("screenshotsElements") {
-    attributes(semantifyrArtifact("screenshots"))
-    outgoing.artifact(layout.buildDirectory.dir("screenshots")) {
-        builtBy(screenshots)
-    }
-}
-
 tasks.register<PnpmTask>("runDev") {
     group = ApplicationPlugin.APPLICATION_GROUP
 

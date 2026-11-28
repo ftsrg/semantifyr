@@ -23,7 +23,6 @@ plugins {
 val editorCommon = artifactsOf("npm-package", ":semantifyr-editor-common")
 val sysmlWorker = artifactsOf("sysml-worker", ":sysml-wrapper")
 val grammars = artifactsOf("textmate-grammar", ":oxsts.lang", ":gamma.lang")
-val liveScreenshots = artifactsOf("screenshots", ":semantifyr-live-frontend")
 val webBranding = artifactsOf("web-branding", ":branding")
 
 val tutorialDirectory = layout.projectDirectory.dir("models/tutorial")
@@ -97,11 +96,6 @@ val cloneGrammars = tasks.register<Sync>("cloneGrammars") {
     into(layout.buildDirectory.dir("grammars"))
 }
 
-val cloneScreenshots = tasks.register<Sync>("cloneScreenshots") {
-    from(liveScreenshots)
-    into(layout.buildDirectory.dir("live-screenshots/img/screenshots"))
-}
-
 val cloneApiDocs = tasks.register<Sync>("cloneApiDocs") {
     from(
         tasks.dokkaGeneratePublicationHtml.flatMap {
@@ -136,7 +130,6 @@ val pnpmAssemble = tasks.register<PnpmTask>("pnpmAssemble") {
         },
     ).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(cloneBrandingAssets).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.files(cloneScreenshots).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(cloneApiDocs).withPathSensitivity(PathSensitivity.RELATIVE)
 
     pnpmCommand = listOf("run", "assemble")
@@ -153,7 +146,6 @@ tasks.register<PnpmTask>("serve") {
     readsPackage()
     configureSharedInputs()
     inputs.files(cloneBrandingAssets).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.files(cloneScreenshots).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(cloneApiDocs).withPathSensitivity(PathSensitivity.RELATIVE)
 
     pnpmCommand = listOf("run", "dev")
