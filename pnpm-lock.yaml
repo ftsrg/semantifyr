@@ -218,10 +218,16 @@ importers:
       '@codingame/monaco-vscode-api':
         specifier: ~37.6.1
         version: 37.6.1
+      '@codingame/monaco-vscode-editor-api':
+        specifier: ~37.6.1
+        version: 37.6.1
       '@codingame/monaco-vscode-editor-service-override':
         specifier: ~37.6.1
         version: 37.6.1
       '@codingame/monaco-vscode-files-service-override':
+        specifier: ~37.6.1
+        version: 37.6.1
+      '@codingame/monaco-vscode-textmate-service-override':
         specifier: ~37.6.1
         version: 37.6.1
       '@semantifyr/editor-common':

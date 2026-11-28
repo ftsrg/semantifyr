@@ -24,8 +24,10 @@
   "dependencies": {
     "@base-ui/react": "^1.9.0",
     "@codingame/monaco-vscode-api": "~37.6.1",
+    "@codingame/monaco-vscode-editor-api": "~37.6.1",
     "@codingame/monaco-vscode-editor-service-override": "~37.6.1",
     "@codingame/monaco-vscode-files-service-override": "~37.6.1",
+    "@codingame/monaco-vscode-textmate-service-override": "~37.6.1",
     "@semantifyr/editor-common": "workspace:*",
     "monaco-editor": "npm:@codingame/monaco-vscode-editor-api@~37.6.1",
     "monaco-languageclient": "~11.0.3",
