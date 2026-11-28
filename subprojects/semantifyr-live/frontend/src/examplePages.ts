@@ -5,7 +5,7 @@
  */
 
 import { addressNameOf } from '@semantifyr/editor-common'
-import { fileNameOf, servedExamples } from '@semantifyr/editor-common/examples'
+import { servedExamples } from '@semantifyr/editor-common/examples'
 
 import { exampleDescription, exampleTitle, LANGUAGES } from './texts'
 
@@ -23,12 +23,12 @@ export function withHead(html: string, title: string, description: string): stri
 }
 
 // a preview of a shared link reads the page's head without running it, so each example's address gets a page whose head names the model
-export function examplePages(template: string, commentOf: (fileName: string) => string | null): ExamplePage[] {
+export function examplePages(template: string): ExamplePage[] {
   return servedExamples.map((example) => {
     const language = LANGUAGES[example.language]?.name ?? example.language
     return {
       fileName: `${addressNameOf(example.language)}/${example.id}/index.html`,
-      source: withHead(template, exampleTitle(example.label, language), exampleDescription(example.label, language, commentOf(fileNameOf(example)))),
+      source: withHead(template, exampleTitle(example.label, language), exampleDescription(example.label, language, example.description ?? null)),
     }
   })
 }

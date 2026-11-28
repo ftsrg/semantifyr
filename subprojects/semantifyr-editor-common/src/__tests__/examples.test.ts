@@ -67,12 +67,6 @@ function caseText(file: string, language: ExampleLanguage, name: string): string
   return text.slice(starts[position]!.index, starts[position + 1]?.index ?? text.length);
 }
 
-const OPENING_COMMENT: Readonly<Record<ExampleLanguage, RegExp>> = {
-  oxsts: /^\s*\/\*\*[\s*]*[^\s*/]/,
-  gamma: /^\s*\/\*\*[\s*]*[^\s*/]/,
-  sysml: /^\s*doc\s*\/\*[\s*]*[^\s*/]/,
-};
-
 const manifests = MODEL_ROOTS.flatMap((root) => {
   return readdirSync(join(REPOSITORY, root), { recursive: true, withFileTypes: true }).filter((entry) => {
     return entry.isFile() && entry.name === 'manifest.json';
@@ -137,10 +131,6 @@ describe.each(listedModels.map((example) => {
       return givesTrace(caseText(example.file, example.language, name), example.language, verdict);
     });
     expect(tracing).not.toEqual([]);
-  });
-
-  test('opens with a comment that describes it', () => {
-    expect(readFileSync(join(REPOSITORY, example.file), 'utf8')).toMatch(OPENING_COMMENT[example.language]);
   });
 });
 

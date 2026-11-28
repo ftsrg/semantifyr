@@ -17,7 +17,6 @@ path = [
     "**/tsconfig*.json",
     "**/.gitignore",
     "subprojects/semantifyr-editor-common/src/terms/terms.json",
-    "subprojects/semantifyr-editor-common/src/examples/examples.json",
     "subprojects/website/source-aliases.json",
     "subprojects/website/models/examples/**",
     "subprojects/website/models/tutorial/**",

@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import { existsSync, readFileSync } from 'node:fs';
 import type { Plugin, Rollup } from 'vite';
 import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
@@ -14,13 +13,6 @@ import { LIVE_URL, PAGE_DESCRIPTION, PRODUCT_NAME, SHORT_NAME } from './src/text
 
 const backendProxyTarget = process.env.VITE_BACKEND_PROXY_TARGET ?? 'http://localhost:18080';
 
-// a model without a comment has no description file
-function commentOf(fileName: string): string | null {
-  const file = new URL(`./build/imported/snippets/descriptions/${fileName}.description`, import.meta.url);
-  return existsSync(file) ? readFileSync(file, 'utf-8').trim() : null;
-}
-
-// one image serves staging and production, so the build knows no address of its own and the card is production's
 const CARD = `${LIVE_URL}/social-card.png`;
 
 function liveTexts(): Plugin {
@@ -38,7 +30,7 @@ function liveTexts(): Plugin {
       const index = bundle['index.html'] as Rollup.OutputAsset;
       const template = String(index.source);
       index.source = withHead(template, PRODUCT_NAME, PAGE_DESCRIPTION);
-      for (const page of examplePages(template, commentOf)) {
+      for (const page of examplePages(template)) {
         this.emitFile({
           type: 'asset',
           fileName: page.fileName,

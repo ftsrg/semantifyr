@@ -7,7 +7,6 @@
 import { describe, expect, it } from 'vitest';
 import { servedExamplesOf } from '@semantifyr/editor-common/examples';
 import {
-  descriptionOf,
   findExample,
   findFlavor,
   listedExamples,
@@ -108,15 +107,6 @@ describe('the registry\'s examples', () => {
     expect(listedExamples(sysml).map((example) => {
       return example.id;
     })).not.toContain('room');
-  });
-
-  it('shows no description for a model whose file has no comment at its top', () => {
-    const descriptions = {
-      '/build/imported/snippets/descriptions/lights.semantifyr.description': ' Two lights at a crossing.\n',
-    };
-
-    expect(descriptionOf(descriptions, 'lights.semantifyr')).toBe('Two lights at a crossing.');
-    expect(descriptionOf(descriptions, 'bare.semantifyr')).toBeNull();
   });
 });
 

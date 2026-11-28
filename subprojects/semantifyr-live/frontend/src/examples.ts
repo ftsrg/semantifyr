@@ -17,12 +17,6 @@ const importedExamples = import.meta.glob('/build/imported/snippets/{sysml,gamma
   eager: true,
 });
 
-const importedDescriptions = import.meta.glob('/build/imported/snippets/descriptions/*.description', {
-  query: '?raw',
-  import: 'default',
-  eager: true,
-});
-
 export interface LiveExample {
   id: string;
   flavor: string;
@@ -42,15 +36,10 @@ function importedText(files: Record<string, unknown>, path: string): string | nu
   return typeof text === 'string' ? text : null;
 }
 
-// a model without a comment at its top has no description file
-export function descriptionOf(descriptions: Record<string, unknown>, fileName: string): string | null {
-  return importedText(descriptions, `/build/imported/snippets/descriptions/${fileName}.description`)?.trim() ?? null;
-}
-
 function sourceExamples(language: ExampleLanguage, flavor: string): LiveExample[] {
   return servedExamplesOf(language).flatMap((served) => {
     const code = importedText(importedExamples, `/build/imported/snippets/${language}/${fileNameOf(served)}`);
-    return code === null ? [] : [{ id: served.id, flavor, label: served.label, description: descriptionOf(importedDescriptions, fileNameOf(served)), code, served }];
+    return code === null ? [] : [{ id: served.id, flavor, label: served.label, description: served.description ?? null, code, served }];
   });
 }
 
