@@ -50,6 +50,7 @@ sonar {
                 it.get().reports.xml.outputLocation.get().asFile
             },
         )
+        property("sonar.coverage.exclusions", "subprojects/metamodel-builder/**")
         property(
             "sonar.exclusions",
             listOf(
