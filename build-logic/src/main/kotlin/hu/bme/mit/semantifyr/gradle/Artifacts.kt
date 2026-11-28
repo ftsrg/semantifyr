@@ -27,16 +27,7 @@ fun Project.semantifyrArtifact(kind: String): Action<AttributeContainer> {
 }
 
 fun Project.artifactsOf(kind: String, vararg projectPaths: String): FileCollection {
-    val words = (listOf(kind) + projectPaths).flatMap {
-        it.split(Regex("[^A-Za-z0-9]"))
-    }.filter {
-        it.isNotEmpty()
-    }
-    val name = words.first() + words.drop(1).joinToString("") { word ->
-        word.replaceFirstChar {
-            it.uppercase()
-        }
-    }
+    val name = listOf(kind, *projectPaths).joinToString("")
     val filesName = "${name}Files"
     if (filesName !in configurations.names) {
         val dependencyScope = configurations.dependencyScope(name)
