@@ -11,7 +11,6 @@ import hu.bme.mit.semantifyr.gradle.readsPackage
 import hu.bme.mit.semantifyr.gradle.readsWorkspace
 import hu.bme.mit.semantifyr.gradle.registerPnpmCheck
 import hu.bme.mit.semantifyr.gradle.semantifyrArtifact
-import hu.bme.mit.semantifyr.gradle.servedExampleSources
 
 plugins {
     id("hu.bme.mit.semantifyr.theta")
@@ -127,7 +126,15 @@ val pnpmAssemble = tasks.register<PnpmTask>("pnpmAssemble") {
     configureSharedInputs()
     inputs.property("liveBackendUrl", providers.environmentVariable("SEMANTIFYR_LIVE_URL").orElse(""))
     inputs.files(sourceAliasDirectories).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.files(servedExampleSources()).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.files(
+        listOf(
+            "subprojects/frontends/gamma/models/examples",
+            "subprojects/frontends/sysml/models/examples",
+            "subprojects/website/models/examples",
+        ).map {
+            isolated.rootProject.projectDirectory.dir(it)
+        },
+    ).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(cloneBrandingAssets).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(cloneScreenshots).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(cloneApiDocs).withPathSensitivity(PathSensitivity.RELATIVE)

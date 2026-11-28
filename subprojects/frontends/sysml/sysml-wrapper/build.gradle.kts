@@ -6,7 +6,6 @@
 
 import com.github.gradle.node.pnpm.task.PnpmTask
 import com.github.gradle.node.task.NodeTask
-import hu.bme.mit.semantifyr.gradle.oxstsFileExtension
 import hu.bme.mit.semantifyr.gradle.pnpmVersionOf
 import hu.bme.mit.semantifyr.gradle.semantifyrArtifact
 import org.apache.tools.ant.taskdefs.condition.Os
@@ -215,7 +214,7 @@ configurations.consumable("sysmlCorpusElements") {
 val smokeSourceDirectory = layout.projectDirectory.dir("../models/smoke")
 val compiledSmokeDirectory = layout.buildDirectory.dir("compiled-smoke")
 val compiledSmokeFile = compiledSmokeDirectory.map {
-    it.file("smoke.$oxstsFileExtension")
+    it.file("smoke.semantifyr")
 }
 
 val compileSysmlSmoke = tasks.register<NodeTask>("compileSysmlSmoke") {

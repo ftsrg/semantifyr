@@ -6,17 +6,13 @@
 
 import com.github.gradle.node.pnpm.task.PnpmTask
 import com.github.gradle.node.variant.VariantComputer
-import hu.bme.mit.semantifyr.gradle.ExampleDescriptions
 import hu.bme.mit.semantifyr.gradle.artifactsOf
 import hu.bme.mit.semantifyr.gradle.commitHash
-import hu.bme.mit.semantifyr.gradle.oxstsFileExtension
 import hu.bme.mit.semantifyr.gradle.prependToPath
 import hu.bme.mit.semantifyr.gradle.readsPackage
 import hu.bme.mit.semantifyr.gradle.registerPnpmCheck
 import hu.bme.mit.semantifyr.gradle.semantifyrArtifact
-import hu.bme.mit.semantifyr.gradle.servedExamples
 import org.apache.tools.ant.taskdefs.condition.Os
-import org.gradle.api.file.RegularFile
 
 plugins {
     id("hu.bme.mit.semantifyr.nodejs")
@@ -35,16 +31,29 @@ val importedSnippetsDirectory = importedDirectory.dir("snippets")
 val importedVscodeDirectory = importedDirectory.dir("vscode")
 val publicDirectory = importedDirectory.dir("public")
 
-fun servedFiles(language: String): List<RegularFile> {
-    return servedExamples(language).map {
-        isolated.rootProject.projectDirectory.file(it.file)
-    }
+val gammaExamples = fileTree(isolated.rootProject.projectDirectory.dir("subprojects/frontends/gamma/models/examples")) {
+    include("*.gamma")
 }
+val sysmlExamples = fileTree(isolated.rootProject.projectDirectory.dir("subprojects/frontends/sysml/models/examples")) {
+    include("*.sysml")
+    exclude("Verification.sysml")
+}
+val oxstsExamples = files(
+    listOf(
+        "subprojects/website/models/examples",
+        "subprojects/website/models/tutorial",
+    ).map {
+        fileTree(isolated.rootProject.projectDirectory.dir(it)) {
+            include("*.semantifyr")
+        }
+    },
+)
 
 val compiledExamplesDirectory = layout.buildDirectory.dir("compiled-examples").get()
 
-fun compileServedExamples(
+fun compileExamples(
     language: String,
+    examples: FileCollection,
     distribution: FileCollection,
     vararg workspacePatterns: String,
     configuration: Exec.() -> Unit = {},
@@ -57,14 +66,13 @@ fun compileServedExamples(
     val startScripts = distribution.asFileTree.matching {
         include("*/bin/*")
     }
-    val compiles = servedExamples(language).filter {
-        !it.hidden
-    }.map { example ->
-        val targetDirectory = compiledExamplesDirectory.dir("$language/${example.name}")
-        val targetFile = targetDirectory.file("${example.name}.$oxstsFileExtension")
-        tasks.register<Exec>("compile${taskLanguage}Example_${example.name}") {
+    val compiles = examples.files.sorted().map { example ->
+        val name = example.nameWithoutExtension
+        val targetDirectory = compiledExamplesDirectory.dir("$language/$name")
+        val targetFile = targetDirectory.file("$name.semantifyr")
+        tasks.register<Exec>("compile${taskLanguage}Example_$name") {
             inputs.files(
-                fileTree(root.dir(example.file.substringBeforeLast('/'))) {
+                fileTree(example.parentFile) {
                     include(*workspacePatterns)
                 },
             ).withPathSensitivity(PathSensitivity.RELATIVE)
@@ -79,7 +87,7 @@ fun compileServedExamples(
                 true
             }
             workingDir = root.asFile
-            args("compile", example.file, "-o", targetFile.asFile.relativeTo(root.asFile).invariantSeparatorsPath)
+            args("compile", example.relativeTo(root.asFile).invariantSeparatorsPath, "-o", targetFile.asFile.relativeTo(root.asFile).invariantSeparatorsPath)
             doFirst {
                 executable = startScripts.files.single {
                     (it.extension == "bat") == windows
@@ -89,7 +97,7 @@ fun compileServedExamples(
         }
     }
     return files(compiles).asFileTree.matching {
-        include("*.$oxstsFileExtension")
+        include("*.semantifyr")
     }
 }
 
@@ -102,32 +110,27 @@ fun Exec.runsWithNode() {
     }
 }
 
-val gammaCompiledExamples = compileServedExamples("gamma", gammaCli, "*.gamma", "*.gcd")
+val gammaCompiledExamples = compileExamples("gamma", gammaExamples, gammaCli, "*.gamma", "*.gcd")
 
-val sysmlCompiledExamples = compileServedExamples("sysml", sysmlCli, "**/*.sysml", "**/*.kerml") {
+val sysmlCompiledExamples = compileExamples("sysml", sysmlExamples, sysmlCli, "**/*.sysml", "**/*.kerml") {
     runsWithNode()
 }
 
 val cloneGammaExamples = tasks.register<Sync>("cloneGammaExamples") {
-    from(servedFiles("gamma"))
+    from(gammaExamples)
     from(gammaCompiledExamples)
     into(importedSnippetsDirectory.dir("gamma"))
 }
 
 val cloneSysmlExamples = tasks.register<Sync>("cloneSysmlExamples") {
-    from(servedFiles("sysml"))
+    from(sysmlExamples)
     from(sysmlCompiledExamples)
     into(importedSnippetsDirectory.dir("sysml"))
 }
 
 val cloneOxstsExamples = tasks.register<Sync>("cloneOxstsExamples") {
-    from(servedFiles("oxsts"))
+    from(oxstsExamples)
     into(importedSnippetsDirectory.dir("oxsts"))
-}
-
-val exampleDescriptions = tasks.register<ExampleDescriptions>("exampleDescriptions") {
-    models.from(servedFiles("sysml"), servedFiles("gamma"), servedFiles("oxsts"))
-    outputDirectory = importedSnippetsDirectory.dir("descriptions")
 }
 
 val cloneVscodeLanguageAssets = tasks.register<Sync>("cloneVscodeLanguageAssets") {
@@ -157,7 +160,6 @@ fun PnpmTask.configureSharedInputs() {
     inputs.files(cloneGammaExamples).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(cloneSysmlExamples).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(cloneOxstsExamples).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.files(exampleDescriptions).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(cloneVscodeLanguageAssets).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(cloneBrandingAssets).withPathSensitivity(PathSensitivity.RELATIVE)
 }
@@ -192,9 +194,7 @@ configurations.consumable("webDistributionElements") {
 
 registerPnpmCheck {
     configureSharedInputs()
-    // an example's page is tested against live's head and the rights the REUSE file gives
     inputs.file(layout.projectDirectory.file("index.html")).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.file(isolated.rootProject.projectDirectory.file("REUSE.toml")).withPathSensitivity(PathSensitivity.RELATIVE)
 }
 
 tasks.register<PnpmTask>("integrationTest") {

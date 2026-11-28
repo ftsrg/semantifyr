@@ -67,7 +67,6 @@ fun Project.registerPnpmCheck(ownInputs: PnpmTask.() -> Unit) {
     }
 }
 
-// pnpm switches itself to the packageManager its manifest names, so the installed one must match it
 fun Project.pnpmVersionOf(manifest: RegularFile): Provider<String> {
     return providers.fileContents(manifest).asText.map {
         Regex("\"packageManager\"\\s*:\\s*\"pnpm@([^\"+]+)").find(it)?.groupValues?.get(1)

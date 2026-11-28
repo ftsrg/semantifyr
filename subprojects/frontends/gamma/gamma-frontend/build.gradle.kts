@@ -5,7 +5,6 @@
  */
 
 import hu.bme.mit.semantifyr.gradle.javaRuntimeLibrary
-import hu.bme.mit.semantifyr.gradle.oxstsFileExtension
 import hu.bme.mit.semantifyr.gradle.semantifyrArtifact
 
 plugins {
@@ -73,10 +72,9 @@ listOf(
 }
 
 val smokeSourceFile = layout.projectDirectory.file("../models/smoke/smoke.gamma")
-val compiledSmokeFile = layout.buildDirectory.file("compiled-smoke/smoke.$oxstsFileExtension")
+val compiledSmokeFile = layout.buildDirectory.file("compiled-smoke/smoke.semantifyr")
 
 val compileGammaSmoke = tasks.register<JavaExec>("compileGammaSmoke") {
-    // the argument provider takes locals, since the configuration cache cannot serialize the script's own vals
     val sourceFile = smokeSourceFile
     val targetFile = compiledSmokeFile
     inputs.file(sourceFile).withPathSensitivity(PathSensitivity.NAME_ONLY)
