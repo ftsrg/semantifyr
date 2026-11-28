@@ -6,7 +6,6 @@
 
 import com.github.gradle.node.pnpm.task.PnpmTask
 import com.github.gradle.node.task.NodeTask
-import hu.bme.mit.semantifyr.gradle.AppendFurtherCases
 import hu.bme.mit.semantifyr.gradle.oxstsFileExtension
 import hu.bme.mit.semantifyr.gradle.pnpmVersionOf
 import hu.bme.mit.semantifyr.gradle.semantifyrArtifact
@@ -195,26 +194,21 @@ tasks.processResources {
 
 val testCorpusDirectory = layout.buildDirectory.dir("corpus")
 
-val appendFurtherCases = tasks.register<AppendFurtherCases>("appendFurtherCases") {
-    corpusDirectory = layout.projectDirectory.dir("../models/examples")
-    outputDirectory = testCorpusDirectory.map {
-        it.dir("examples")
+val cloneCorpus = tasks.register<Sync>("cloneCorpus") {
+    from(layout.projectDirectory.dir("../models")) {
+        include(
+            "examples/**",
+            "semantics/**",
+            "tests/**",
+        )
     }
-}
-
-val cloneSemantics = tasks.register<Sync>("cloneSemantics") {
-    from(layout.projectDirectory.dir("../models/semantics"))
-    into(
-        testCorpusDirectory.map {
-            it.dir("semantics")
-        },
-    )
+    into(testCorpusDirectory)
 }
 
 configurations.consumable("sysmlCorpusElements") {
     attributes(semantifyrArtifact("sysml-corpus"))
     outgoing.artifact(testCorpusDirectory) {
-        builtBy(appendFurtherCases, cloneSemantics)
+        builtBy(cloneCorpus)
     }
 }
 

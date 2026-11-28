@@ -26,6 +26,7 @@ class SysMLCorpusTest {
             return listOf(
                 SysMLv2FrontendTestHelper.EXAMPLES_ROOT,
                 SysMLv2FrontendTestHelper.SEMANTICS_ROOT,
+                SysMLv2FrontendTestHelper.TESTS_ROOT,
             )
         }
     }

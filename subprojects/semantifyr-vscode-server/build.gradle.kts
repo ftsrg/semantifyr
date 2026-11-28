@@ -17,7 +17,6 @@ val gammaLibrary = isolated.rootProject.projectDirectory.dir("subprojects/fronte
 val sysmlLibrary = isolated.rootProject.projectDirectory.dir("subprojects/frontends/sysml/models/libraries/default")
 val gammaExamples = isolated.rootProject.projectDirectory.dir("subprojects/frontends/gamma/models/examples")
 val sysmlExamples = isolated.rootProject.projectDirectory.dir("subprojects/frontends/sysml/models/examples")
-val sysmlSemantics = isolated.rootProject.projectDirectory.dir("subprojects/frontends/sysml/models/semantics")
 val oxstsTutorial = artifactsOf("oxsts-tutorial", ":website")
 
 val cloneDistribution = tasks.register<Sync>("cloneDistribution") {
@@ -52,10 +51,6 @@ val cloneGammaExamples = tasks.register<Sync>("cloneGammaExamples") {
 val cloneSysmlExamples = tasks.register<Sync>("cloneSysmlExamples") {
     from(sysmlExamples) {
         include("*.sysml")
-    }
-    from(sysmlSemantics) {
-        include("*.sysml")
-        exclude("Verification.sysml")
     }
     into("examples/sysml/TestModels")
 }

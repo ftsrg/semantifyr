@@ -1,0 +1,165 @@
+/**
+ * Two traffic lights at a crossroads, cycled by one controller and interrupted by the police.
+ * On a timer, the controller toggles each light from yellow to red, to green and back to yellow, so that the two roads get green in turn.
+ * A police signal from outside interrupts the cycle and both lights blink yellow, until a second signal restarts it.
+ * The cases ask whether the police can interrupt, whether the lights blink, whether road B gets green, and whether both roads can be green at once.
+ */
+
+package Crossroads
+
+interface CentralControl {
+    out event police
+    out event toggle
+}
+
+interface LightControl {
+    out event red
+    out event yellow
+    out event green
+    out event none
+}
+
+statechart CentralController[
+    port control : requires CentralControl,
+    port controlA : provides CentralControl,
+    port controlB : provides CentralControl
+] {
+    timeout shortToggleTimeout
+    timeout longToggleTimeout
+
+    region Main {
+        initial MainInitial
+
+        state Operating {
+            region OperatingRegion {
+                initial OperatingRegionInitial
+
+                state BothYellow {
+                    entry / set shortToggleTimeout := 1 s;
+                }
+
+                state BothRed {
+                    entry / set longToggleTimeout := 2 s;
+                }
+
+                state TrafficOnA {
+                    entry / set longToggleTimeout := 2 s;
+                }
+
+                state StoppingA {
+                    entry / set shortToggleTimeout := 1 s;
+                }
+
+                state TrafficOnB {
+                    entry / set longToggleTimeout := 2 s;
+                }
+
+                state StoppingB {
+                    entry / set shortToggleTimeout := 1 s;
+                }
+            }
+        }
+
+        state Interrupted {
+            entry / raise controlA.police; raise controlB.police;
+            exit / raise controlA.police; raise controlB.police;
+        }
+    }
+
+    transition from MainInitial to Operating
+    transition from OperatingRegionInitial to BothYellow
+    transition from BothYellow to BothRed when timeout shortToggleTimeout / raise controlA.toggle; raise controlB.toggle; // switch A to Red, B to Red
+    transition from BothRed to TrafficOnA when timeout longToggleTimeout / raise controlA.toggle; // switch A to Green
+    transition from TrafficOnA to StoppingA when timeout longToggleTimeout / raise controlA.toggle; // switch A to Yellow
+    transition from StoppingA to TrafficOnB when timeout shortToggleTimeout / raise controlA.toggle; raise controlB.toggle; // switch A to Red, B to Green
+    transition from TrafficOnB to StoppingB when timeout longToggleTimeout / raise controlB.toggle; // switch B to Yellow
+    transition from StoppingB to TrafficOnA when timeout shortToggleTimeout / raise controlA.toggle; raise controlB.toggle; // switch A to Green, B to Red
+    transition from Operating to Interrupted when control.police
+    transition from Interrupted to Operating when control.police
+}
+
+statechart TrafficLightController[
+    port control : requires CentralControl,
+    port lightControl : provides LightControl
+] {
+    timeout blinkingTimeout
+
+    region Main {
+        initial MainInitial
+
+        state Normal {
+            region NormalRegion {
+                initial NormalRegionInitial
+
+                state Yellow {
+                    entry / raise lightControl.yellow;
+                }
+
+                state Red {
+                    entry / raise lightControl.red;
+                }
+
+                state Green {
+                    entry / raise lightControl.green;
+                }
+            }
+        }
+
+        state Interrupted {
+            region InterruptedRegion {
+                initial InterruptedRegionInitial
+
+                state BlinkingYellow {
+                    entry / set blinkingTimeout := 1 s; raise lightControl.yellow;
+                }
+
+                state Black {
+                    entry / set blinkingTimeout := 1 s; raise lightControl.none;
+                }
+            }
+        }
+    }
+
+    transition from MainInitial to Normal
+    transition from NormalRegionInitial to Yellow
+    transition from Yellow to Red when control.toggle
+    transition from Red to Green when control.toggle
+    transition from Green to Yellow when control.toggle
+    transition from Normal to Interrupted when control.police
+    transition from Interrupted to Normal when control.police
+    transition from InterruptedRegionInitial to BlinkingYellow
+    transition from Black to BlinkingYellow when timeout blinkingTimeout
+    transition from BlinkingYellow to Black when timeout blinkingTimeout
+}
+
+sync CrossroadSystem [
+    port control : requires CentralControl
+] {
+    component controller : CentralController
+    component trafficLightA : TrafficLightController
+    component trafficLightB : TrafficLightController
+
+    bind control -> controller.control
+
+    channel [ controller.controlA ] -o)- [ trafficLightA.control ]
+    channel [ controller.controlB ] -o)- [ trafficLightB.control ]
+}
+
+verification case PoliceCanInterrupt of CrossroadSystem {
+    EF state controller.Main.Interrupted
+}
+
+verification case LightACanBlink of CrossroadSystem {
+    EF state trafficLightA.InterruptedRegion.Black
+}
+
+verification case RoadBCanGetGreen of CrossroadSystem {
+    EF state trafficLightB.NormalRegion.Green
+}
+
+verification case NeverBothGreen of CrossroadSystem {
+    AG not (
+        state trafficLightA.NormalRegion.Green
+        and state trafficLightB.NormalRegion.Green
+    )
+}

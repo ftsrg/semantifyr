@@ -39,18 +39,6 @@ function declaredCases(file: string, language: ExampleLanguage): string[] {
   });
 }
 
-function furtherCasesOf(file: string): string {
-  return `${file.slice(0, file.length - extname(file).length)}.further-cases`;
-}
-
-function corpusCases(file: string, language: ExampleLanguage): string[] {
-  const fragment = furtherCasesOf(file);
-  if (!existsSync(join(REPOSITORY, fragment))) {
-    return declaredCases(file, language);
-  }
-  return [...declaredCases(file, language), ...declaredCases(fragment, language)];
-}
-
 // a property's negations and its root operator: a trace exists where the witness does, a reached EF or a broken AG
 const PROPERTY_ROOT: Readonly<Record<ExampleLanguage, RegExp>> = {
   oxsts: /return\s+((?:!\s*)*)(EF|AG)\b/,
@@ -165,7 +153,7 @@ describe.each(manifests)('the manifest %s', (manifest) => {
       const listed = model.cases.map((declaredCase) => {
         return declaredCase.name;
       });
-      expect(listed, file).toEqual(corpusCases(file, LANGUAGE_OF_EXTENSION[extname(file)]!));
+      expect(listed, file).toEqual(declaredCases(file, LANGUAGE_OF_EXTENSION[extname(file)]!));
     }
   });
 });

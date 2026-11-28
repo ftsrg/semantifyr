@@ -68,6 +68,7 @@ listOf(
 ).forEach {
     tasks.named(it) {
         inputs.dir(examplesDirectory).withPathSensitivity(PathSensitivity.RELATIVE)
+        inputs.dir(layout.projectDirectory.dir("../models/tests")).withPathSensitivity(PathSensitivity.RELATIVE)
     }
 }
 

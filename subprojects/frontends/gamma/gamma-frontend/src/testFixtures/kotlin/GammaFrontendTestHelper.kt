@@ -77,7 +77,7 @@ class GammaFrontendTestHelper {
     }
 
     fun witnessCasesOnEveryBackend(): Stream<Arguments> {
-        return GammaCorpus.load(GammaCorpus.examples).asSequence().flatMap { entry ->
+        return (GammaCorpus.load(GammaCorpus.examples) + GammaCorpus.load(GammaCorpus.tests)).asSequence().flatMap { entry ->
             val gammaVerificationCase = discoverInWorkspace(entry.directory, entry.model.file).single {
                 it.declaration.name == entry.case.name
             }

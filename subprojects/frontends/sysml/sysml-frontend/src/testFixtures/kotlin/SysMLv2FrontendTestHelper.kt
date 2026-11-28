@@ -125,9 +125,11 @@ class SysMLv2FrontendTestHelper {
 
         val SEMANTICS_ROOT: Path = Path("build", "test-models", "semantics")
 
+        val TESTS_ROOT: Path = Path("build", "test-models", "tests")
+
         val corpusEntries: List<CorpusEntry>
             get() {
-                return SysMLCorpus.entries(EXAMPLES_ROOT) + SysMLCorpus.entries(SEMANTICS_ROOT)
+                return SysMLCorpus.entries(EXAMPLES_ROOT) + SysMLCorpus.entries(SEMANTICS_ROOT) + SysMLCorpus.entries(TESTS_ROOT)
             }
 
         fun guardedInitialTransitionEntries(fixture: Path, variant: SysMLv2Variant): List<CorpusEntry> {
