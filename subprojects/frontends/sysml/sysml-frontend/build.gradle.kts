@@ -4,8 +4,6 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import hu.bme.mit.semantifyr.gradle.artifactsOf
-
 plugins {
     id("hu.bme.mit.semantifyr.theta")
     id("hu.bme.mit.semantifyr.suites")
@@ -28,17 +26,12 @@ dependencies {
 
 val librariesDirectory = layout.projectDirectory.dir("../models/libraries")
 
-val sysmlCorpus = artifactsOf("sysml-corpus", ":sysml-wrapper")
-
-val syncSysmlTestModels = tasks.register<Sync>("syncSysmlTestModels") {
-    from(sysmlCorpus)
-    into(layout.buildDirectory.dir("test-models"))
-}
-
 tasks.processResources {
     from(librariesDirectory)
 }
 
 tasks.withType<Test>().configureEach {
-    inputs.files(syncSysmlTestModels).withPathSensitivity(PathSensitivity.RELATIVE)
+    listOf("examples", "semantics", "tests").forEach {
+        inputs.dir(layout.projectDirectory.dir("../models/$it")).withPathSensitivity(PathSensitivity.RELATIVE)
+    }
 }

@@ -121,11 +121,11 @@ class SysMLv2FrontendTestHelper {
     }
 
     companion object {
-        val EXAMPLES_ROOT: Path = Path("build", "test-models", "examples")
+        val EXAMPLES_ROOT: Path = Path("..", "models", "examples")
 
-        val SEMANTICS_ROOT: Path = Path("build", "test-models", "semantics")
+        val SEMANTICS_ROOT: Path = Path("..", "models", "semantics")
 
-        val TESTS_ROOT: Path = Path("build", "test-models", "tests")
+        val TESTS_ROOT: Path = Path("..", "models", "tests")
 
         val corpusEntries: List<CorpusEntry>
             get() {

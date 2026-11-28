@@ -190,26 +190,6 @@ tasks.processResources {
     }
 }
 
-val testCorpusDirectory = layout.buildDirectory.dir("corpus")
-
-val cloneCorpus = tasks.register<Sync>("cloneCorpus") {
-    from(layout.projectDirectory.dir("../models")) {
-        include(
-            "examples/**",
-            "semantics/**",
-            "tests/**",
-        )
-    }
-    into(testCorpusDirectory)
-}
-
-configurations.consumable("sysmlCorpusElements") {
-    attributes(semantifyrArtifact("sysml-corpus"))
-    outgoing.artifact(testCorpusDirectory) {
-        builtBy(cloneCorpus)
-    }
-}
-
 val smokeSourceDirectory = layout.projectDirectory.dir("../models/smoke")
 val compiledSmokeDirectory = layout.buildDirectory.dir("compiled-smoke")
 val compiledSmokeFile = compiledSmokeDirectory.map {
