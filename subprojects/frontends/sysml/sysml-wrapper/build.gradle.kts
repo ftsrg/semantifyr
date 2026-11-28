@@ -99,7 +99,6 @@ val bundleExtension = tasks.register<PnpmTask>("bundleExtension") {
         },
     )
 
-    // the vsix name carries the fork's version, and collectExtension must find only the current one
     doFirst {
         vscodePackageDirectory.asFile.listFiles { file ->
             file.extension == "vsix"
@@ -131,7 +130,7 @@ val bundleCli = tasks.register<Sync>("bundleCli") {
     into(cliBundleDirectory)
 }
 
-val assembleFork = tasks.register<PnpmTask>("assembleFork") {
+val assembleLanguageServer = tasks.register<PnpmTask>("assembleLanguageServer") {
     dependsOn(tasks.pnpmInstall)
     mustRunAfter(buildCli, bundleExtension)
     inputs.file(sysmlDirectory.file("package.json")).withPathSensitivity(PathSensitivity.RELATIVE)
@@ -146,7 +145,7 @@ val languageServerDirectory = sysmlDirectory.dir("packages/syside-languageserver
 
 val bundleWorker = tasks.register<PnpmTask>("bundleWorker") {
     dependsOn(tasks.pnpmInstall)
-    inputs.files(assembleFork).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.files(assembleLanguageServer).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(sysmlSourceFiles).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.file(languageServerDirectory.file("library/Verification.sysml")).withPathSensitivity(PathSensitivity.RELATIVE)
     outputs.dir(languageServerDirectory.dir("dist/worker"))
@@ -219,7 +218,6 @@ val compiledSmokeFile = compiledSmokeDirectory.map {
 
 val compileSysmlSmoke = tasks.register<NodeTask>("compileSysmlSmoke") {
     inputs.files(bundleCli).withPathSensitivity(PathSensitivity.RELATIVE)
-    // the CLI builds every SysML and KerML file under the model's directory as its workspace
     inputs.files(
         fileTree(smokeSourceDirectory) {
             include(
