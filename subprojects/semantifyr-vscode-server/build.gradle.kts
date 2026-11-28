@@ -74,7 +74,7 @@ val vscodeServerImageContext = tasks.register<Tar>("vscodeServerImageContext") {
         cloneSysmlLibrary,
         cloneGammaExamples,
         cloneSysmlExamples,
-        cloneTutorialModels,
+        cloneExampleModels,
     )
     from(layout.projectDirectory) {
         include("Dockerfile")
