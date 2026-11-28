@@ -223,13 +223,6 @@
                 { "name": "NorthCanStandBy", "verdict": "Passed" },
                 { "name": "NorthNeverGreenInStandby", "verdict": "Passed" }
             ]
-        },
-        {
-            "file": "level-crossing.semantifyr",
-            "cases": [
-                { "name": "BarrierDownWhileTrainInCrossing", "verdict": "Failed" },
-                { "name": "TwoTrainsCanBeInTheCrossing", "verdict": "Passed" }
-            ]
         }
     ]
 }

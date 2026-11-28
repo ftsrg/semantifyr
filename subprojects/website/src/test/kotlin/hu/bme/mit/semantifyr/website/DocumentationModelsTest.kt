@@ -33,11 +33,11 @@ class DocumentationModelsTest {
         private val loader = injector.getInstance(SemantifyrLoader::class.java)
         private val validator = injector.getInstance(IResourceValidator::class.java)
         private val directories = listOf(
+            Path("models/examples"),
             Path("models/tutorial"),
             Path("models/phases"),
         )
 
-        // every model the website shows is loaded alone, as the website's live editor loads it
         private val contexts: Map<Path, SemantifyrModelContext> by lazy {
             directories.flatMap {
                 it.walk()
@@ -67,7 +67,6 @@ class DocumentationModelsTest {
             issues.map {
                 "${it.lineNumber}:${it.column} ${it.message}"
             },
-        ).describedAs("issues a reader would see in ${model.name}")
-            .isEmpty()
+        ).describedAs("issues a reader would see in ${model.name}").isEmpty()
     }
 }

@@ -170,7 +170,7 @@
     {
       "id": "level-crossing",
       "language": "oxsts",
-      "file": "subprojects/website/models/tutorial/level-crossing.semantifyr",
+      "file": "subprojects/website/models/examples/level-crossing.semantifyr",
       "label": "Level crossing",
       "cases": [
         "BarrierDownWhileTrainInCrossing",

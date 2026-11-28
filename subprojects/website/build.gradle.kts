@@ -173,6 +173,7 @@ tasks.named<Test>("test") {
 }
 
 tasks.named("integrationTest") {
+    inputs.dir(layout.projectDirectory.dir("models/examples")).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.dir(tutorialDirectory).withPathSensitivity(PathSensitivity.RELATIVE)
 }
 
