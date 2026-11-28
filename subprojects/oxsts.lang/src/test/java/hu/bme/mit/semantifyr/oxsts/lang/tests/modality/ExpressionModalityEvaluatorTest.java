@@ -184,7 +184,7 @@ public class ExpressionModalityEvaluatorTest {
                 var value: int := 0
                 var flag: bool := false
                 redefine tran { }
-                prop { return AG (value > 0 && flag) }
+                redefine prop { return AG (value > 0 && flag) }
             }
             """);
         var property = parsedPackage.classByName("Holder").anonymousProperty().expression();
@@ -208,7 +208,7 @@ public class ExpressionModalityEvaluatorTest {
             package test
             class Holder {
                 redefine tran { }
-                prop { return AG true }
+                redefine prop { return AG true }
             }
             """);
         var expression = parsedPackage.classByName("Holder").anonymousProperty().expression();

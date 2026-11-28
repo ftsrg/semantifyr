@@ -1,0 +1,22 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+inlined oxsts of semantifyr::Anything
+var source: int := 0
+var copy: int := 0
+init {
+    if (true) {
+        source := 1
+    } else {
+        source := 2
+    }
+}
+tran {
+    copy := source
+}
+prop {
+    AG true
+}

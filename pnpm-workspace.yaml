@@ -1,0 +1,17 @@
+# SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+#
+# SPDX-License-Identifier: EPL-2.0
+
+packages:
+  - subprojects/semantifyr-editor-common
+  - subprojects/semantifyr-live/frontend
+  - subprojects/semantifyr-vscode
+  - subprojects/website
+overrides:
+  monaco-editor: npm:@codingame/monaco-vscode-editor-api@~37.6.1
+allowBuilds:
+  '@swc/core': true
+  '@vscode/vsce-sign': true
+  core-js: false
+  esbuild: true
+  keytar: true

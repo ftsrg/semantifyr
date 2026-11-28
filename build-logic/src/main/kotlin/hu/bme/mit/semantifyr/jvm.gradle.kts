@@ -1,0 +1,139 @@
+/*
+ * SPDX-FileCopyrightText: 2023-2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package hu.bme.mit.semantifyr
+
+import hu.bme.mit.semantifyr.gradle.javaRuntimeLibrary
+import org.gradle.accessors.dm.LibrariesForLibs
+import org.gradle.api.tasks.testing.logging.TestExceptionFormat
+
+class MockitoAgentArgumentProvider(
+    @get:Classpath val agent: FileCollection,
+) : CommandLineArgumentProvider {
+    override fun asArguments(): Iterable<String> {
+        return listOf(
+            "-javaagent:${agent.asPath}",
+            "-Xshare:off",
+        )
+    }
+}
+
+plugins {
+    `java-library`
+    `java-test-fixtures`
+    jacoco
+    id("hu.bme.mit.semantifyr.formatting")
+    id("org.sonarqube")
+    id("org.jetbrains.dokka")
+}
+
+val libs = the<LibrariesForLibs>()
+
+spotless {
+    kotlin {
+        target(
+            fileTree("src") {
+                include("**/*.kt")
+                exclude(
+                    "**/xtext-gen/**",
+                    "**/emf-gen/**",
+                )
+            },
+        )
+        ktlint(libs.versions.ktlint.get())
+    }
+
+    java {
+        target(
+            fileTree("src") {
+                include("**/*.java")
+                exclude(
+                    "**/xtext-gen/**",
+                    "**/emf-gen/**",
+                )
+            },
+        )
+        palantirJavaFormat(libs.versions.palantirJavaFormat.get())
+    }
+}
+
+val mockitoAgent = configurations.dependencyScope("mockitoAgent")
+val mockitoAgentClasspath = configurations.resolvable("mockitoAgentClasspath") {
+    extendsFrom(mockitoAgent.get())
+    isTransitive = false
+    attributes(javaRuntimeLibrary())
+}
+
+dependencies {
+    mockitoAgent(libs.mockito.core)
+}
+
+java.toolchain {
+    languageVersion = JavaLanguageVersion.of(25)
+}
+
+tasks.jar {
+    manifest {
+        attributes("Implementation-Version" to project.version)
+    }
+}
+
+tasks.withType<Test>().configureEach {
+    testLogging.showStandardStreams = true
+    testLogging.exceptionFormat = TestExceptionFormat.FULL
+    jvmArgs("--enable-native-access=ALL-UNNAMED")
+    systemProperty("guice_bytecode_gen_option", "DISABLED")
+}
+
+tasks.withType<JavaExec>().configureEach {
+    jvmArgs("--enable-native-access=ALL-UNNAMED")
+    systemProperty("guice_bytecode_gen_option", "DISABLED")
+}
+
+testing {
+    suites {
+        withType<JvmTestSuite>().configureEach {
+            useJUnitJupiter(libs.versions.junit)
+
+            dependencies {
+                implementation.bundle(libs.bundles.junit)
+                implementation(libs.assertj.core)
+                implementation.bundle(libs.bundles.mockito)
+                runtimeOnly(libs.slf4j.log4j)
+            }
+
+            targets.all {
+                testTask.configure {
+                    jvmArgumentProviders.add(MockitoAgentArgumentProvider(files(mockitoAgentClasspath)))
+                }
+            }
+        }
+    }
+}
+
+// FIXME: plain values until the sonar plugin takes providers
+sonar {
+    properties {
+        val testSourceSets = testing.suites.withType<JvmTestSuite>().map {
+            it.sources
+        }
+
+        property(
+            "sonar.tests",
+            testSourceSets.flatMap {
+                it.allSource.srcDirs
+            }.filter {
+                it.exists()
+            },
+        )
+        property(
+            "sonar.java.test.binaries",
+            testSourceSets.flatMap {
+                it.output.classesDirs.files
+            },
+        )
+    }
+}

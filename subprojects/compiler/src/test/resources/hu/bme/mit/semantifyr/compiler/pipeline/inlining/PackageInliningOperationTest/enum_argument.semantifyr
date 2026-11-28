@@ -1,0 +1,31 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package inlining::tests
+
+enum Command {
+    Increment,
+    Decrement,
+}
+@VerificationCase
+class Host {
+    var counter: int := 0
+    tran apply(command: Command) {
+        choice {
+            assume(command == Command::Increment)
+            counter := counter + 1
+        } or {
+            assume(command == Command::Decrement)
+            counter := counter - 1
+        }
+    }
+    redefine tran {
+        inline apply(Command::Increment)
+    }
+    redefine prop {
+        return EF counter == 3
+    }
+}

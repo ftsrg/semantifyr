@@ -25,6 +25,17 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.NamedElement
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.PropertyDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 
+class ExpandedExpression(
+    val expression: Expression,
+    val dispatch: Dispatch?,
+)
+
+// a holder that holds nothing makes the expression valueless, which the operation evaluating it excludes by assuming the presence
+class Dispatch(
+    val holderPresence: Expression?,
+    val branchCount: Int,
+)
+
 class ExpressionCallExpander @Inject constructor(
     private val compileTimeExpressionEvaluatorProvider: CompileTimeExpressionEvaluatorProvider,
     private val metaCompileTimeExpressionEvaluatorProvider: MetaCompileTimeExpressionEvaluatorProvider,
@@ -35,12 +46,15 @@ class ExpressionCallExpander @Inject constructor(
     private val redefinitionAwareReferenceResolver: RedefinitionAwareReferenceResolver,
 ) {
 
-    fun expandCall(callExpression: CallSuffixExpression, instance: Instance): Expression {
+    fun expandCall(callExpression: CallSuffixExpression, instance: Instance): ExpandedExpression {
         return when (val target = callTargetResolver.resolve(callExpression, instance)) {
-            is CallTarget.DirectInstance -> expandForContainer(
-                containerInstance = target.containerInstance,
-                baseTargetDeclaration = target.targetDeclaration,
-                callExpression = callExpression,
+            is CallTarget.DirectInstance -> ExpandedExpression(
+                expandForContainer(
+                    containerInstance = target.containerInstance,
+                    baseTargetDeclaration = target.targetDeclaration,
+                    callExpression = callExpression,
+                ),
+                null,
             )
             is CallTarget.VariableDispatch -> dispatchOverVariable(
                 target = target,
@@ -85,7 +99,7 @@ class ExpressionCallExpander @Inject constructor(
     private fun dispatchOverVariable(
         target: CallTarget.VariableDispatch,
         callExpression: CallSuffixExpression,
-    ): Expression {
+    ): ExpandedExpression {
         val branches = target.branches.associate {
             it.candidateInstance to expandForContainer(
                 containerInstance = it.containerInstance,
@@ -93,27 +107,28 @@ class ExpressionCallExpander @Inject constructor(
                 callExpression = callExpression,
             )
         }
-        return dispatch(target.containerReferenceExpression, target.variable, branches, callExpression)
+        return dispatch(target.containerReferenceExpression, target.variable, target.holderMayBeAbsent, branches, callExpression)
     }
 
     fun isThroughRuntimeHolder(expression: Expression, instance: Instance): Boolean {
         return callTargetResolver.runtimeHolderOf(expression, instance) != null
     }
 
-    fun dispatchMemberReadOrNull(expression: Expression, instance: Instance): Expression? {
+    fun dispatchMemberReadOrNull(expression: Expression, instance: Instance): ExpandedExpression? {
         val runtimeHolder = callTargetResolver.runtimeHolderOf(expression, instance) ?: return null
         val branches = runtimeHolder.candidateInstances.associateWith {
             callTargetResolver.replaceHolder(expression, runtimeHolder, instanceReferenceProvider.getReference(it))
         }
-        return dispatch(runtimeHolder.holderExpression, runtimeHolder.variable, branches, expression)
+        return dispatch(runtimeHolder.holderExpression, runtimeHolder.variable, runtimeHolder.mayBeAbsent, branches, expression)
     }
 
     private fun dispatch(
         holderExpression: Expression,
         variable: VariableDeclaration,
+        holderMayBeAbsent: Boolean,
         branches: Map<Instance, Expression>,
         dispatchedExpression: Expression,
-    ): Expression {
+    ): ExpandedExpression {
         if (branches.isEmpty()) {
             sourceError(
                 dispatchedExpression,
@@ -123,7 +138,7 @@ class ExpressionCallExpander @Inject constructor(
 
         val candidates = branches.keys.toList()
 
-        // The instance tree invariant guarantees the holder holds one of the candidates, so the last one is the final else.
+        // the holder holds one of the candidates or nothing, which the presence excludes, so the last one is the final else
         var result = branches.getValue(candidates.last())
 
         for (index in candidates.size - 2 downTo 0) {
@@ -139,7 +154,16 @@ class ExpressionCallExpander @Inject constructor(
                 it.`else` = result
             }
         }
-        return result
+        val holderPresence = if (holderMayBeAbsent) {
+            OxstsFactory.createComparisonOperator().also {
+                it.op = ComparisonOp.NOT_EQ
+                it.left = holderExpression.copy()
+                it.right = OxstsFactory.createLiteralNothing()
+            }
+        } else {
+            null
+        }
+        return ExpandedExpression(result, Dispatch(holderPresence, candidates.size))
     }
 
     fun expandFeatureReferenceOrNull(expression: Expression, instance: Instance): Expression? {

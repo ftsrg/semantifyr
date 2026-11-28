@@ -7,6 +7,7 @@
 package hu.bme.mit.semantifyr.compiler.pipeline.optimization.analyses
 
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.eAllOfType
+import hu.bme.mit.semantifyr.oxsts.lang.tests.utils.TestModels.testModel
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ArithmeticBinaryOperator
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ArithmeticOp
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ForOperation
@@ -83,25 +84,7 @@ class VariableBoundsComputationTest : AnalysisTestBase() {
     @Test
     fun `a guarded decrement with a reset is bounded on both sides`() {
         val (inlined, result) = runVariableBounds(
-            """
-                inlined oxsts of semantifyr::Anything
-                var timer: int := 0
-                init {
-                    timer := 3
-                }
-                tran {
-                    choice {
-                        if (timer > 0) {
-                            timer := timer - 1
-                        }
-                    } or {
-                        timer := 3
-                    }
-                }
-                prop {
-                    AG (timer >= 0)
-                }
-            """,
+            testModel(javaClass, "guarded_decrement_with_reset.semantifyr"),
         )
 
         assertThat(result.variableRanges[inlined.varNamed("timer")]).isEqualTo(IntegerRange(0, 3))
@@ -158,27 +141,7 @@ class VariableBoundsComputationTest : AnalysisTestBase() {
     @Test
     fun `a loop over a variable range takes the range of its bounds`() {
         val (inlined, result) = runVariableBounds(
-            """
-                inlined oxsts of semantifyr::Anything
-                var bound: int := 0
-                var last: int := 0
-                init {
-                }
-                tran {
-                    choice {
-                        bound := 4
-                    } or {
-                        bound := 7
-                    }
-                    last := 0
-                    for (index in 1 ..< bound) {
-                        last := index
-                    }
-                }
-                prop {
-                    AG (last < 7)
-                }
-            """,
+            testModel(javaClass, "loop_over_variable_range.semantifyr"),
         )
 
         assertThat(result.variableRanges[inlined.loopVariable()]).isEqualTo(IntegerRange(1, 6))
@@ -188,24 +151,7 @@ class VariableBoundsComputationTest : AnalysisTestBase() {
     @Test
     fun `instance ids and nothing are bounded by the literals assigned`() {
         val (inlined, result) = runVariableBounds(
-            """
-                inlined oxsts of semantifyr::Anything
-                var current: int := -1
-                init {
-                }
-                tran {
-                    choice {
-                        current := 0
-                    } or {
-                        current := 2
-                    } or {
-                        current := -1
-                    }
-                }
-                prop {
-                    AG (current != 1)
-                }
-            """,
+            testModel(javaClass, "instance_ids_and_nothing.semantifyr"),
         )
 
         assertThat(result.variableRanges[inlined.varNamed("current")]).isEqualTo(IntegerRange(-1, 2))
@@ -389,24 +335,7 @@ class VariableBoundsComputationTest : AnalysisTestBase() {
     @Test
     fun `division by a range containing zero is unbounded`() {
         val (inlined, result) = runVariableBounds(
-            """
-                inlined oxsts of semantifyr::Anything
-                var divisor: int := 0
-                var quotient: int := 0
-                init {
-                }
-                tran {
-                    choice {
-                        divisor := 0
-                    } or {
-                        divisor := 2
-                    }
-                    quotient := 10 / divisor
-                }
-                prop {
-                    AG (quotient <= 10)
-                }
-            """,
+            testModel(javaClass, "division_by_range_with_zero.semantifyr"),
         )
 
         assertThat(result.variableRanges[inlined.varNamed("quotient")]).isEqualTo(IntegerRange.UNBOUNDED)
@@ -437,24 +366,7 @@ class VariableBoundsComputationTest : AnalysisTestBase() {
     @Test
     fun `a variable copied from a bounded one is bounded`() {
         val (inlined, result) = runVariableBounds(
-            """
-                inlined oxsts of semantifyr::Anything
-                var counter: int := 0
-                var doubled: int := 0
-                init {
-                }
-                tran {
-                    if (counter < 10) {
-                        counter := counter + 1
-                    } else {
-                        counter := 0
-                    }
-                    doubled := counter * 2
-                }
-                prop {
-                    AG (doubled <= 20)
-                }
-            """,
+            testModel(javaClass, "copied_variable.semantifyr"),
         )
 
         assertThat(result.variableRanges[inlined.varNamed("doubled")]).isEqualTo(IntegerRange(0, 20))

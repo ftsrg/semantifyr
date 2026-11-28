@@ -28,7 +28,7 @@ class SysMLLibraryRuleTests {
         private val discoverer = injector.getInstance(VerificationCaseDiscoverer::class.java)
         private val verifierTestHelper = injector.getInstance(SemantifyrVerifierTestHelper::class.java)
         private val artifactRoot = SysMLv2FrontendTestHelper.testArtifactRoot(SysMLLibraryRuleTests::class.java)
-        private val fixture = Path("..", "models", "etc", "library_rules.semantifyr")
+        private val fixture = Path("src", "semanticTest", "resources", "SysMLLibraryRuleTests", "library_rules.semantifyr")
 
         private val CASES = listOf(
             "ExhibitedStateActiveUntilDoneTestCase",

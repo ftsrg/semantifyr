@@ -8,8 +8,8 @@ package hu.bme.mit.semantifyr.oxsts.lang.ide.server.symbol;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import hu.bme.mit.semantifyr.oxsts.lang.ide.InlineModels;
 import hu.bme.mit.semantifyr.oxsts.lang.ide.OxstsLanguageServerTest;
-import hu.bme.mit.semantifyr.oxsts.lang.ide.TestModels;
 import org.eclipse.lsp4j.DocumentSymbol;
 import org.eclipse.lsp4j.DocumentSymbolCapabilities;
 import org.eclipse.lsp4j.DocumentSymbolParams;
@@ -20,7 +20,6 @@ import org.junit.jupiter.api.Test;
 
 class OxstsDocumentSymbolTest extends OxstsLanguageServerTest {
 
-    // VS Code and Monaco ask for the outline as a tree.
     @Override
     protected InitializeResult initialize() {
         return initialize(params -> {
@@ -34,7 +33,16 @@ class OxstsDocumentSymbolTest extends OxstsLanguageServerTest {
 
     @Test
     void outlineOfTheTrafficLightsHasOneKindPerDeclarationSimpleNamesAndSignatures() throws Exception {
-        var document = openModel(TestModels.TRAFFIC_LIGHTS);
+        var document = openModel(InlineModels.trafficLightWith("""
+                @VerificationCase
+                class GreenIsReachable {
+                    contains light: TrafficLight
+
+                    redefine prop {
+                        return EF (light.color == LightColor::Green)
+                    }
+                }
+                """));
 
         var symbols = languageServer
                 .documentSymbol(new DocumentSymbolParams(document))
@@ -46,28 +54,28 @@ class OxstsDocumentSymbolTest extends OxstsLanguageServerTest {
         }
         assertThat(symbols).allMatch(Either::isRight);
         assertThat(outline.toString()).isEqualTo("""
-                Package example::trafficlights
+                Package example::lights
                     Enum LightColor
                         EnumMember Red
                         EnumMember Yellow
                         EnumMember Green
                     Class TrafficLight
                         Variable color LightColor
-                        Method assumeColor (color: LightColor)
                         Method setColor (color: LightColor)
+                        Method blink (color: LightColor, times: int)
                         Method main ()
                         Function isColor (color: LightColor): bool
+                    Class SpecialLight : TrafficLight
+                        Method setColor (color: LightColor)
+                    Class DimmedLight : TrafficLight
+                        Method main ()
                     Class Intersection
-                        Property north contains TrafficLight
-                        Property east contains TrafficLight
-                        Method main ()
-                    Class GreenColorIsReachable
                         Property light contains TrafficLight[1]
-                        Method main ()
-                        Function prop
-                    Class IntersectionNeverBothGreen
-                        Property intersection contains Intersection
-                        Method main ()
+                        Property special contains SpecialLight[1]
+                        Property dimmed contains DimmedLight[1]
+                        Method cycle ()
+                    Class GreenIsReachable
+                        Property light contains TrafficLight
                         Function prop
                 """);
     }

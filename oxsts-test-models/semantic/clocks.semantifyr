@@ -23,7 +23,7 @@ class ClockDeadlineOnOtherPathReach {
         }
     }
 
-    prop {
+    redefine prop {
         return EF late
     }
 }
@@ -45,7 +45,7 @@ class ClockDeadlineOnSamePathUnreachable {
         }
     }
 
-    prop {
+    redefine prop {
         return EF late
     }
 }
@@ -68,7 +68,7 @@ class ClockInitPassesNoTime {
         assume(elapsed <= 1)
     }
 
-    prop {
+    redefine prop {
         return AG !early
     }
 }
@@ -88,7 +88,7 @@ class ClockInitPassesNoTimeViolated {
         }
     }
 
-    prop {
+    redefine prop {
         return AG !early
     }
 }
@@ -111,7 +111,7 @@ class ClockZeroDelayAfterReset {
         }
     }
 
-    prop {
+    redefine prop {
         return AG !late
     }
 }
@@ -134,7 +134,7 @@ class ClockZeroDelayAfterResetViolated {
         }
     }
 
-    prop {
+    redefine prop {
         return AG !late
     }
 }
@@ -155,7 +155,7 @@ class ClockResetReadsZero {
         }
     }
 
-    prop {
+    redefine prop {
         return AG !late
     }
 }
@@ -176,7 +176,7 @@ class ClockResetReadsZeroViolated {
         elapsed := 0
     }
 
-    prop {
+    redefine prop {
         return AG !late
     }
 }
@@ -197,7 +197,7 @@ class ClockStrictTestDenseReach {
         elapsed := 0
     }
 
-    prop {
+    redefine prop {
         return EF between
     }
 }
@@ -218,7 +218,7 @@ class ClockStrictTestDenseUnreachable {
         elapsed := 0
     }
 
-    prop {
+    redefine prop {
         return EF between
     }
 }
@@ -239,7 +239,7 @@ class ClockNegatedTestReach {
         }
     }
 
-    prop {
+    redefine prop {
         return EF late
     }
 }
@@ -260,7 +260,7 @@ class ClockNegatedTestUnreachable {
         }
     }
 
-    prop {
+    redefine prop {
         return EF late
     }
 }
@@ -281,7 +281,7 @@ class ClockStrictUpperBoundReach {
         }
     }
 
-    prop {
+    redefine prop {
         return EF hit
     }
 }
@@ -302,7 +302,7 @@ class ClockStrictUpperBoundUnreachable {
         }
     }
 
-    prop {
+    redefine prop {
         return EF hit
     }
 }
@@ -321,7 +321,7 @@ class ClockEqualityReach {
         }
     }
 
-    prop {
+    redefine prop {
         return EF hit
     }
 }
@@ -341,7 +341,7 @@ class ClockEqualityUnreachable {
         }
     }
 
-    prop {
+    redefine prop {
         return EF hit
     }
 }
@@ -361,7 +361,7 @@ class ClockNotEqualReach {
         }
     }
 
-    prop {
+    redefine prop {
         return EF hit
     }
 }
@@ -381,7 +381,7 @@ class ClockNotEqualUnreachable {
         }
     }
 
-    prop {
+    redefine prop {
         return EF hit
     }
 }
@@ -399,7 +399,7 @@ class ClockIfGuardReach {
         }
     }
 
-    prop {
+    redefine prop {
         return EF hit
     }
 }
@@ -417,7 +417,7 @@ class ClockIfGuardUnreachable {
         }
     }
 
-    prop {
+    redefine prop {
         return EF hit
     }
 }
@@ -433,7 +433,7 @@ class ClockStoredTestReach {
         late := elapsed >= 2
     }
 
-    prop {
+    redefine prop {
         return EF late
     }
 }
@@ -449,7 +449,7 @@ class ClockStoredTestUnreachable {
         late := elapsed >= 2
     }
 
-    prop {
+    redefine prop {
         return EF late
     }
 }
@@ -465,7 +465,7 @@ class ClockConditionalValueReach {
         count := if (elapsed >= 2) then 1 else 0
     }
 
-    prop {
+    redefine prop {
         return EF count == 1
     }
 }
@@ -481,7 +481,7 @@ class ClockConditionalValueUnreachable {
         count := if (elapsed >= 2) then 1 else 0
     }
 
-    prop {
+    redefine prop {
         return EF count == 1
     }
 }
@@ -513,7 +513,7 @@ class ClockThroughReferenceReach {
         }
     }
 
-    prop {
+    redefine prop {
         return EF hit
     }
 }
@@ -537,7 +537,7 @@ class ClockThroughReferenceUnreachable {
         }
     }
 
-    prop {
+    redefine prop {
         return EF hit
     }
 }
@@ -568,7 +568,7 @@ class ClockBoundFromFeatureReach {
         inline alarm.ring(3)
     }
 
-    prop {
+    redefine prop {
         return EF alarm.rang
     }
 }
@@ -584,7 +584,7 @@ class ClockBoundFromFeatureUnreachable {
         inline alarm.ring(3)
     }
 
-    prop {
+    redefine prop {
         return EF alarm.rang
     }
 }
@@ -603,7 +603,7 @@ class ClockNegativeBoundReach {
         }
     }
 
-    prop {
+    redefine prop {
         return EF hit
     }
 }
@@ -622,7 +622,7 @@ class ClockNegativeBoundUnreachable {
         }
     }
 
-    prop {
+    redefine prop {
         return EF hit
     }
 }
@@ -644,7 +644,7 @@ class ClockInstancesReach {
         }
     }
 
-    prop {
+    redefine prop {
         return EF hit
     }
 }
@@ -666,7 +666,7 @@ class ClockInstancesUnreachable {
         }
     }
 
-    prop {
+    redefine prop {
         return EF hit
     }
 }
@@ -687,7 +687,7 @@ class ClockSaturationReach {
         }
     }
 
-    prop {
+    redefine prop {
         return EF count == 3
     }
 }
@@ -708,7 +708,7 @@ class ClockSaturationUnreachable {
         }
     }
 
-    prop {
+    redefine prop {
         return EF count == 3
     }
 }

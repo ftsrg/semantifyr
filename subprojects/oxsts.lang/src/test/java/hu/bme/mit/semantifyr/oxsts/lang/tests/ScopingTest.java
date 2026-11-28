@@ -152,6 +152,31 @@ public class ScopingTest {
     }
 
     @Test
+    void aMemberThroughSelfAndItsUnqualifiedNameResolveToTheSameVariable() {
+        var parsedPackage = parseHelper.parse("""
+            package test
+            class Counter {
+                var counter: int := 0
+                redefine tran {
+                    self.counter := counter + 1
+                }
+            }
+            """);
+
+        parsedPackage.assertNoResourceErrors();
+        var counter =
+                parsedPackage.classByName("Counter").variableByName("counter").eObject();
+        var main = parsedPackage.classByName("Counter").anonymousMain().eObject();
+
+        assertThat(EcoreUtil2.eAllOfType(main, NavigationSuffixExpression.class))
+                .singleElement()
+                .satisfies(navigation -> assertThat(navigation.getMember()).isSameAs(counter));
+        assertThat(EcoreUtil2.eAllOfType(main, ElementReference.class))
+                .singleElement()
+                .satisfies(reference -> assertThat(reference.getElement()).isSameAs(counter));
+    }
+
+    @Test
     void bindingResolvesNamesInTheHolderNotInTheBoundFeaturesType() {
         var parsedPackage = parseHelper.parse("""
             package test

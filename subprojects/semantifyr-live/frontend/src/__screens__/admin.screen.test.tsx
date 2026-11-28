@@ -29,7 +29,7 @@ const SESSIONS: SessionInfo[] = [
   {
     sessionId: '3f9c1a52-7b0e-4d1e-9a64-0c7d2b5e8f11',
     remoteIp: '84.236.12.40',
-    flavorId: 'oxsts-with-sysmlv2-library',
+    flavorId: 'oxsts-with-sysml-library',
     kind: 'full',
     languageId: 'sysml',
     uptime: 'PT12M30S',
@@ -80,7 +80,7 @@ const SESSIONS: SessionInfo[] = [
   {
     sessionId: 'e9b3c6a0-4d15-4e78-92f6-7a0d1c5b8e34',
     remoteIp: '84.236.12.40',
-    flavorId: 'oxsts-with-sysmlv2-library',
+    flavorId: 'oxsts-with-sysml-library',
     kind: 'embed',
     languageId: 'sysml',
     uptime: 'PT7M2S',
@@ -96,12 +96,12 @@ const CONFIG: AdminConfigResponse = {
   sessionManager: { maxSessionsGlobal: 256, semanticLibrariesDirectory: '/srv/libraries', rootWorkDirectory: '/var/lib/semantifyr/work' },
   verification: { concurrency: 4, timeout: 'PT1M' },
   portfolios: [
-    { id: 'smart', engines: ['nuxmv', 'spin', 'theta'] },
-    { id: 'all-agree', engines: ['nuxmv', 'spin', 'theta', 'uppaal'] },
-    { id: 'theta', engines: ['theta'] },
-    { id: 'nuxmv-ic3-invar', engines: ['nuxmv'] },
-    { id: 'spin-safe-dfs', engines: ['spin'] },
-    { id: 'uppaal-default', engines: ['uppaal'] },
+    { id: 'smart', backends: ['nuxmv', 'spin', 'theta'] },
+    { id: 'all-agree', backends: ['nuxmv', 'spin', 'theta', 'uppaal'] },
+    { id: 'theta', backends: ['theta'] },
+    { id: 'nuxmv-ic3-invar', backends: ['nuxmv'] },
+    { id: 'spin-safe-dfs', backends: ['spin'] },
+    { id: 'uppaal-default', backends: ['uppaal'] },
   ],
 }
 
@@ -110,7 +110,6 @@ const INFO: InfoResponse = {
   startedAt: '2026-11-07T08:00:00Z',
   version: '0.9.4',
   commit: '8f76bf26',
-  buildTime: '2026-11-07T07:41:12Z',
   activeSessions: 5,
   maxSessions: 256,
 }
@@ -210,7 +209,7 @@ function states(): Readonly<Record<string, ScreenState>> {
         })).toEqual(['full', 'full', 'embed', 'edit-only', 'embed'])
         expect(text('.admin-deployed')).toContain('0.9.4')
         expect(text('.admin-deployed')).toContain('Verifier time')
-        expect(count('.admin-deployed .admin-engines .tag')).toBeGreaterThan(8)
+        expect(count('.admin-deployed .admin-backends .tag')).toBeGreaterThan(8)
         expect(text('.admin-deployed')).toContain('unavailable')
         expect(text('.admin-header')).toContain('Signed in as octocat')
         expect(count('.admin-header a[href*=grafana]')).toBe(1)

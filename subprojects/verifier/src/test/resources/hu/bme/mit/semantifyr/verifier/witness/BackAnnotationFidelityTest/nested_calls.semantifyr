@@ -1,0 +1,40 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package semantifyr::verification::report::nested_calls
+
+class Lamp {
+    var on: bool := false
+
+    @Trace
+    tran toggle() {
+        on := !on
+    }
+}
+
+class Panel {
+    contains first: Lamp
+    contains second: Lamp
+
+    @Trace
+    tran press() {
+        inline second.toggle()
+        inline first.toggle()
+    }
+}
+
+@VerificationCase
+class PanelPress {
+    contains panel: Panel
+
+    redefine tran {
+        inline panel.press()
+    }
+
+    redefine prop {
+        return EF (panel.first.on)
+    }
+}

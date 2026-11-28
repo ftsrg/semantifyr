@@ -5,22 +5,20 @@
  */
 
 plugins {
-    id("hu.bme.mit.semantifyr.gradle.conventions.jvm")
+    id("hu.bme.mit.semantifyr.jvm")
 }
 
 dependencies {
     api(libs.xtext.ide)
     api(libs.lsp4j)
     api(libs.lsp4j.jsonrpc)
-    api(libs.guice)
+    api(libs.gson)
+    api(libs.kotlin.stdlib)
+    api(libs.xtext.xbase.lib)
 
     api(project(":verifier"))
-    api(project(":backend"))
-    api(project(":compiler"))
-    api(project(":portfolios"))
-    api(project(":theta-backend"))
 
-    implementation(project(":logging"))
+    implementation(project(":portfolios"))
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.serialization.json)
 

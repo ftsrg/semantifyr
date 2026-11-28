@@ -5,23 +5,14 @@
  */
 
 plugins {
-    id("hu.bme.mit.semantifyr.gradle.conventions.backend")
+    id("hu.bme.mit.semantifyr.backend")
     kotlin("jvm")
-    kotlin("plugin.serialization")
 }
 
 dependencies {
-    api(project(":backend"))
-    api(project(":oxsts.lang"))
     api(project(":spin-executor"))
-    api(libs.guice.extensions.assistedinject)
+    api(project(":utils"))
 
     implementation(project(":logging"))
     implementation(libs.kotlinx.coroutines.core)
-    implementation(project(":utils"))
-    implementation(libs.kotlinx.serialization.json)
-
-    testImplementation(project(":compiler"))
-
-    testFixturesApi(testFixtures(project(":backend")))
 }

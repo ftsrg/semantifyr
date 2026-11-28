@@ -1,0 +1,39 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package test
+
+statechart Machine {
+    scheduling-constraint {
+        minimum-orchestrating-period : 500 ms
+        maximum-orchestrating-period : 1 s
+    }
+    region Main {
+        initial MainInitial
+        state Idle
+    }
+    transition from MainInitial to Idle
+}
+
+sync System {
+    component machine : Machine
+}
+
+adapter Buffered of component machine : Machine {
+    when any / run
+}
+
+verification case MachineIdleReachable of Machine {
+    EF state Main.Idle
+}
+
+verification case SystemIdleReachable of System {
+    EF state machine.Main.Idle
+}
+
+verification case BufferedIdleReachable of Buffered {
+    EF state machine.Main.Idle
+}

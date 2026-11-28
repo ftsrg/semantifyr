@@ -32,7 +32,7 @@ class ThetaAdapterTest {
     suspend fun `smoke case verifies and its witness re-verifies`() {
         val context = helper.semantifyrLoader
             .startContext()
-            .loadModels(Path("build/test-models/smoke"))
+            .loadModels(Path("../../../../oxsts-test-models/smoke"))
             .buildAndResolve()
 
         val case = helper.collectVerificationCases(context).single()

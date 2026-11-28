@@ -76,7 +76,6 @@ public class OxstsRuntimeModule extends AbstractOxstsRuntimeModule {
                 .to(OxstsLocalScopeProvider.class);
     }
 
-    // the grammar requires every feature the metamodel requires, so EMF's checks only repeat syntax and linking errors
     @SuppressWarnings("unused")
     public void configureUseEObjectValidator(Binder binder) {
         binder.bind(Boolean.class)

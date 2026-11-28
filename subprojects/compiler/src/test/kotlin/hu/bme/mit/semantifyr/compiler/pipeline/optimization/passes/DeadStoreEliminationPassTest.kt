@@ -7,6 +7,7 @@
 package hu.bme.mit.semantifyr.compiler.pipeline.optimization.passes
 
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.analyses.ReachingDefinitionsAnalysis
+import hu.bme.mit.semantifyr.oxsts.lang.tests.utils.TestModels.testModel
 import org.junit.jupiter.api.Test
 
 class DeadStoreEliminationPassTest : PassTestBase() {
@@ -76,44 +77,8 @@ class DeadStoreEliminationPassTest : PassTestBase() {
 
     @Test
     fun `property read keeps every write to a property-relevant variable alive`() = assertPassTransforms(
-        source = """
-            inlined oxsts of semantifyr::Anything
-            var state: int := -1
-            init {
-                state := 0
-            }
-            tran {
-                choice {
-                    state := 1
-                } or {
-                    state := 2
-                } or {
-                    state := 3
-                }
-            }
-            prop {
-                AG (state != 42)
-            }
-        """,
-        expectedSource = """
-            inlined oxsts of semantifyr::Anything
-            var state: int := -1
-            init {
-                state := 0
-            }
-            tran {
-                choice {
-                    state := 1
-                } or {
-                    state := 2
-                } or {
-                    state := 3
-                }
-            }
-            prop {
-                AG (state != 42)
-            }
-        """,
+        source = testModel(javaClass, "property_relevant_writes.semantifyr"),
+        expectedSource = testModel(javaClass, "property_relevant_writes_expected.semantifyr"),
         analysisClasses = listOf(ReachingDefinitionsAnalysis::class.java),
     ) {
         it.getInstance(DeadStoreEliminationPass::class.java)

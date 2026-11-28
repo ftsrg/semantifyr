@@ -1,0 +1,23 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+inlined oxsts of semantifyr::Anything
+var current: int := -1
+init {
+    choice {
+        current := 2
+    } or {
+        current := 0
+    } or {
+        current := 1
+    }
+}
+tran {
+    assume(current == 0 || current == 1 || current == 2)
+}
+prop {
+    AG (current != 99)
+}

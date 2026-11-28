@@ -1,0 +1,35 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package test
+
+interface Control {
+    in event start
+    in event stop
+}
+
+statechart Machine [
+    port control : provides Control
+] {
+    region Main {
+        initial MainInitial
+        state Working {
+            region Progress {
+                initial ProgressInitial
+                shallow history History
+                state First
+                state Second
+            }
+        }
+        state Paused
+    }
+    transition from MainInitial to Working
+    transition from ProgressInitial to First
+    transition from History to Second
+    transition from First to Second when control.start
+    transition from Working to Paused when control.stop
+    transition from Paused to History when control.stop
+}

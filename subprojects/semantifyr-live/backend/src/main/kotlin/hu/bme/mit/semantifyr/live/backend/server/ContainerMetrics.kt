@@ -19,7 +19,7 @@ import kotlin.io.path.exists
 
 private const val UNLIMITED = "max"
 
-// the cgroup counts the engines' child processes too, which the JVM's own meters cannot see
+// the cgroup counts the backends' child processes too, which the JVM's own meters cannot see
 class ContainerMetrics(
     private val cgroupDirectory: Path,
 ) : MeterBinder {

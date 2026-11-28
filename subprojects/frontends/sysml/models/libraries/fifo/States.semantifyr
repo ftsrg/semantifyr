@@ -56,7 +56,7 @@ abstract class AbstractState : StateNode {
             inline if (parent == nothing) {
                 inline transition.to.findCommonState(transition, candidate.parent)
             } else {
-                inline parent.findCommonState(transition, candidate)
+                inline parent?.findCommonState(transition, candidate)
             }
         }
     }
@@ -153,7 +153,7 @@ class State : AbstractState {
     redefine tran enterRecursive(commonState: StateNode, child: AbstractState[0..1]) {
         inline if (parent != nothing) {
             inline if (commonState != parent) {
-                inline parent.enterRecursive(commonState, self)
+                inline parent?.enterRecursive(commonState, self)
             }
 
             inline activate()
@@ -194,7 +194,7 @@ class State : AbstractState {
         if (isActive()) {
             inline exitAction.main()
 
-            inline parent.setActiveState(nothing)
+            inline parent?.setActiveState(nothing)
         }
     }
 
@@ -385,7 +385,7 @@ class ParallelState : AbstractState {
             if (isActive()) {
                 inline exitAction.main()
 
-                inline parent.setActiveState(nothing)
+                inline parent?.setActiveState(nothing)
             }
         }
     }

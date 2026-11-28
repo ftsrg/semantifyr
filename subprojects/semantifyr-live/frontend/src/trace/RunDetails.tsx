@@ -8,7 +8,7 @@ import type React from 'react'
 import { formatSeconds, isoDurationToMs, soundnessLabel, type VerificationReport } from '@semantifyr/editor-common'
 
 import { useStore } from '../lib/stores/useStore'
-import type { VerificationCaseState } from '../lib/verification/engine'
+import type { VerificationCaseState } from '../lib/verification/state'
 import { waitedPhrase } from '../lib/workspace/caseRows'
 import { useLive } from '../lib/workspace/liveContext'
 import { portfolioName } from '../lib/workspace/portfolioChoices'

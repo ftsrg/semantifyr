@@ -1,0 +1,36 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package semantifyr::verification::report::feature_typed
+
+class Job {
+    var done: bool := false
+}
+
+class Scheduler {
+    contains jobs: Job[0..*]
+    contains first: Job subsets jobs
+    contains second: Job subsets jobs
+    var current: jobs := first
+
+    @Trace
+    tran pick(job: jobs) {
+        current := job
+    }
+}
+
+@VerificationCase
+class FeatureTypedPick {
+    contains scheduler: Scheduler
+
+    redefine tran {
+        inline scheduler.pick(scheduler.second)
+    }
+
+    redefine prop {
+        return EF (scheduler.current == scheduler.second)
+    }
+}

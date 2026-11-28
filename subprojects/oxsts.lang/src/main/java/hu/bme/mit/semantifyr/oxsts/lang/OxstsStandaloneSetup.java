@@ -14,7 +14,6 @@ import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.xtext.resource.FileExtensionProvider;
 import org.eclipse.xtext.resource.IResourceServiceProvider;
 
-/** Initialization support for running Xtext languages without Equinox extension registry. */
 public class OxstsStandaloneSetup extends OxstsStandaloneSetupGenerated {
 
     @Override

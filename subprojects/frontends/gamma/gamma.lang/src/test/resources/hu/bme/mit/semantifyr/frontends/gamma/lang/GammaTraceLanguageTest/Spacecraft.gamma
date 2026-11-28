@@ -1,0 +1,146 @@
+/*
+ * SPDX-FileCopyrightText: The contributors to the Gamma project
+ * SPDX-FileCopyrightText: 2023-2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-1.0
+ */
+
+/**
+ * A spacecraft that sends its data to a ground station while it manages its battery.
+ * The station pings the spacecraft when it starts operating, every ten seconds after and on each piece of data it receives; the spacecraft then transmits while it has data and charge, and its battery recharges in an orthogonal region.
+ * The spacecraft starts a transmission only while it is not recharging; its charge and its data change in steps of ten.
+ * The cases ask whether a transmission can start, whether the charge ever falls below 40, and whether the spacecraft can transmit while it recharges.
+ */
+
+package Spacecraft
+
+interface Control {
+    out event start
+}
+
+interface Data {
+    out event data
+    in event ping
+}
+
+@RegionSchedule=bottom-up
+statechart Station [
+    port control : requires Control,
+    port connection : requires Data
+] {
+    timeout pingTimeout
+    timeout startTimeout
+
+    var receivedData: integer := 0
+
+    region Main {
+        state Idle {
+            entry / set startTimeout := 30 s;
+        }
+        state Operation {
+            entry / set pingTimeout := 10 s; raise connection.ping;
+
+            region ReceiveData {
+                state Waiting
+
+                initial ReceiveDataInitial
+            }
+        }
+
+        initial MainInitial
+    }
+
+    transition from ReceiveDataInitial to Waiting
+    transition from Waiting to Waiting when connection.data [receivedData < 100] / raise connection.ping; receivedData := receivedData + 10;
+    transition from MainInitial to Idle
+    transition from Idle to Operation when control.start
+    transition from Idle to Operation when timeout startTimeout
+    transition from Operation to Operation when timeout pingTimeout
+}
+
+@RegionSchedule=bottom-up
+statechart Spacecraft[
+    port connection : provides Data
+] {
+    timeout checkBatteryTimeout
+    timeout rechargeTimeout
+    timeout consumeTimeout
+    timeout transmitTimeout
+
+    var batteryCharge : integer := 100
+    var recharging : boolean := false
+    var data : integer := 100
+
+    region Communication {
+        state WaitingPing
+        state Transmitting {
+            region SendData {
+                state Sending {
+                    entry / set transmitTimeout := 4 s;
+                }
+
+                initial SendDataInitial
+            }
+            region ConsumePower {
+                state Consuming {
+                    entry / set consumeTimeout := 2 s;
+                }
+
+                initial ConsumePowerInitial
+            }
+        }
+
+        initial CommunicationInitial
+    }
+
+    region Battery {
+        state NotRecharging {
+            entry / set checkBatteryTimeout := 3 s; recharging := false;
+        }
+
+        state Recharging {
+            entry / set rechargeTimeout := 3 s; recharging := true;
+        }
+
+        initial BatteryInitial
+    }
+
+    transition from SendDataInitial to Sending
+    transition from Sending to Sending when timeout transmitTimeout [not (data <= 0 or batteryCharge <= 40)] / data := data - 10; raise connection.data;
+    transition from ConsumePowerInitial to Consuming
+    transition from Consuming to Consuming when timeout consumeTimeout [not (batteryCharge <= 40)] / batteryCharge := batteryCharge - 10;
+    transition from CommunicationInitial to WaitingPing
+    transition from WaitingPing to Transmitting when connection.ping [recharging = false and not (data <= 0 or batteryCharge <= 40)]
+    transition from Transmitting to WaitingPing when timeout consumeTimeout [batteryCharge <= 40]
+    transition from Transmitting to WaitingPing when timeout transmitTimeout [data <= 0 or batteryCharge <= 40]
+    transition from BatteryInitial to NotRecharging
+    transition from NotRecharging to Recharging when timeout checkBatteryTimeout [batteryCharge < 80]
+    transition from Recharging to Recharging when timeout rechargeTimeout [batteryCharge < 100] / batteryCharge := batteryCharge + 10;
+    transition from Recharging to NotRecharging when timeout rechargeTimeout [batteryCharge >= 100]
+}
+
+sync SpaceMission [
+    port control : requires Control
+] {
+    component station : Station
+    component spacecraft : Spacecraft
+
+    bind control -> station.control
+
+    channel [ spacecraft.connection ] -o)- [ station.connection ]
+}
+
+verification case TransmissionCanStart of SpaceMission {
+    EF state spacecraft.Communication.Transmitting
+}
+
+verification case ChargeNeverBelow40 of SpaceMission {
+    AG (variable spacecraft.batteryCharge >= 40)
+}
+
+verification case CanTransmitWhileRecharging of SpaceMission {
+    EF (
+        state spacecraft.Communication.Transmitting
+        and state spacecraft.Battery.Recharging
+    )
+}

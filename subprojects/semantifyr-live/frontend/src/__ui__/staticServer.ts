@@ -14,7 +14,7 @@ const FRONTEND = resolve(import.meta.dirname, '../..')
 const DIST = join(FRONTEND, 'dist')
 const SYSML_WORKER = join(FRONTEND, 'build/sysml-worker')
 
-export const CONTENT_TYPES: Readonly<Record<string, string>> = {
+const CONTENT_TYPES: Readonly<Record<string, string>> = {
   '.html': 'text/html; charset=utf-8',
   '.js': 'text/javascript; charset=utf-8',
   '.cjs': 'text/javascript; charset=utf-8',
@@ -47,7 +47,7 @@ function fileOf(root: string, path: string): string | null {
   return file
 }
 
-// the production build as the backend serves it, the SysML worker's files beside it; /api and /ws never reach it, the mock backend answers them
+// the production build as the backend serves it, the SysML worker's files beside it; /api and /ws never reach it, the fake backend answers them
 function serve(): Server {
   return createServer((request, response) => {
     const path = new URL(request.url ?? '/', 'http://localhost').pathname
@@ -66,7 +66,7 @@ function serve(): Server {
 
 export default async function setup(project: TestProject): Promise<() => Promise<void>> {
   if (!existsSync(join(DIST, 'index.html'))) {
-    throw new Error('The UI tests serve the production build: run npm run assemble first')
+    throw new Error('The UI tests serve the production build: run pnpm run assemble first')
   }
   if (!existsSync(join(SYSML_WORKER, 'syside-worker.cjs'))) {
     throw new Error('The UI tests serve the SysML worker: run ./gradlew :semantifyr-live-frontend:cloneSysmlWorker first')

@@ -311,3 +311,16 @@ export async function decodeCompressedBase64Url(encoded: string): Promise<string
         return null;
     }
 }
+
+export interface LiveHeightMessage {
+    type: "semantifyr-live:height";
+    height: number;
+}
+
+export interface LiveShownMessage {
+    type: "semantifyr-live:shown";
+}
+
+export type LiveEmbedMessage =
+    | LiveHeightMessage
+    | LiveShownMessage;

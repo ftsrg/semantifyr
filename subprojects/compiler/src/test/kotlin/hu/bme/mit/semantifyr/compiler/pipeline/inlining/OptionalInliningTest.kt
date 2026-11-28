@@ -6,6 +6,7 @@
 
 package hu.bme.mit.semantifyr.compiler.pipeline.inlining
 
+import hu.bme.mit.semantifyr.oxsts.lang.tests.utils.TestModels.testModel
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
 
@@ -28,11 +29,12 @@ class OptionalInliningTest : InliningTestBase() {
             leaf + """
                 @VerificationCase
                 class Host {
-                    contains leaf: Leaf[1]
+                    contains leaves: Leaf[0..1]
+                    contains leaf: Leaf[1] subsets leaves
                     redefine tran {
-                        inline leaf?.bump()
+                        inline leaves?.bump()
                     }
-                    prop {
+                    redefine prop {
                         return EF leaf.count == 3
                     }
                 }
@@ -66,7 +68,7 @@ class OptionalInliningTest : InliningTestBase() {
                         assume(count < 1)
                         count := count + 1
                     }
-                    prop {
+                    redefine prop {
                         return EF count == 1
                     }
                 }
@@ -96,9 +98,9 @@ class OptionalInliningTest : InliningTestBase() {
                 class Host {
                     contains leaf: Leaf[0..1]
                     redefine tran {
-                        inline leaf.bump()
+                        inline (leaf as Leaf).bump()
                     }
-                    prop {
+                    redefine prop {
                         return EF true
                     }
                 }
@@ -111,41 +113,35 @@ class OptionalInliningTest : InliningTestBase() {
     }
 
     @Test
-    fun `an inline if on an omitted optional argument takes its nothing branch`() {
-        assertInlinedModel(
+    fun `a call through a holder of several instances is rejected`() {
+        prepare(
             "Host",
-            """
-                package inlining::tests
-                class Marker {
-                }
-                class Recorder {
-                    var value: int := 0
-                    var marked: bool := false
-                    tran store(value: int, marker: Marker[0..1]) {
-                        self.value := value
-                        inline if (marker == nothing) {
-                            marked := false
-                        } else {
-                            marked := true
-                        }
-                    }
-                }
+            leaf + """
                 @VerificationCase
                 class Host {
-                    contains recorder: Recorder[1]
-                    contains marker: Marker[1]
+                    contains leaves: Leaf[0..1]
+                    contains first: Leaf[1] subsets leaves
+                    contains second: Leaf[1] subsets leaves
                     redefine tran {
-                        choice {
-                            inline recorder.store(5)
-                        } or {
-                            inline recorder.store(7, marker)
-                        }
+                        inline leaves?.bump()
                     }
-                    prop {
-                        return EF (recorder.value == 5 && !recorder.marked)
+                    redefine prop {
+                        return EF true
                     }
                 }
             """,
+        ) {
+            assertThatThrownBy { inlineAll(it) }
+                .isInstanceOf(IllegalStateException::class.java)
+                .hasMessageContaining("The holder of the call to 'bump' evaluates to 2 instances")
+        }
+    }
+
+    @Test
+    fun `an inline if on an omitted optional argument takes its nothing branch`() {
+        assertInlinedModel(
+            "Host",
+            testModel(javaClass, "inline_if_on_omitted_argument.semantifyr"),
             """
                 init {
                 }

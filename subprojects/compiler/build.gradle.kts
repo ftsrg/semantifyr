@@ -4,74 +4,21 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import hu.bme.mit.semantifyr.gradle.conventions.oxstsFileExtension
-import hu.bme.mit.semantifyr.gradle.conventions.semantifyrArtifact
-
 plugins {
-    id("hu.bme.mit.semantifyr.gradle.conventions.jvm")
-    id("hu.bme.mit.semantifyr.gradle.conventions.suites")
-    id("hu.bme.mit.semantifyr.gradle.conventions.benchmark")
+    id("hu.bme.mit.semantifyr.suites")
     kotlin("jvm")
     kotlin("plugin.serialization")
 }
 
 dependencies {
-    api(libs.guice)
     api(libs.guice.extensions.assistedinject)
+    api(libs.kotlinx.serialization.core)
 
     api(project(":guice-common"))
     api(project(":oxsts.lang"))
 
     implementation(project(":logging"))
-    implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.serialization.json)
 
-    testFixturesApi(project(":oxsts.lang"))
-    testFixturesApi(testFixtures(project(":oxsts.lang")))
-}
-
-listOf(
-    "test",
-    "integrationTest",
-).forEach {
-    tasks.named(it) {
-        inputs.dir(rootProject.layout.projectDirectory.dir("oxsts-test-models"))
-            .withPropertyName("oxstsTestModels")
-            .withPathSensitivity(PathSensitivity.RELATIVE)
-    }
-}
-
-testing {
-    suites {
-        named<JvmTestSuite>("integrationTest") {
-            dependencies {
-                implementation(libs.kotlinx.coroutines.core)
-            }
-        }
-    }
-}
-
-val benchmarkSysmlCorpus = configurations.dependencyScope("benchmarkSysmlCorpus")
-val benchmarkSysmlCorpusFiles = configurations.resolvable("benchmarkSysmlCorpusFiles") {
-    extendsFrom(benchmarkSysmlCorpus.get())
-    attributes(semantifyrArtifact("compiled-corpus"))
-}
-
-dependencies {
-    benchmarkSysmlCorpus(project(":sysml-wrapper"))
-}
-
-val syncBenchmarkModels = tasks.register<Sync>("syncBenchmarkModels") {
-    from(benchmarkSysmlCorpusFiles) {
-        include("crossroads.$oxstsFileExtension")
-        include("compressedspacecraft.$oxstsFileExtension")
-    }
-    from(rootProject.layout.projectDirectory.dir("subprojects/frontends/sysml/models/libraries/default")) {
-        into("library")
-    }
-    into(layout.buildDirectory.dir("benchmark-models"))
-}
-
-tasks.named("benchmark") {
-    inputs.files(syncBenchmarkModels)
+    testImplementation(testFixtures(project(":oxsts.lang")))
 }

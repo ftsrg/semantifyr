@@ -4,17 +4,13 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import hu.bme.mit.semantifyr.gradle.conventions.corpusModels
-import hu.bme.mit.semantifyr.gradle.conventions.oxstsFileExtension
-import hu.bme.mit.semantifyr.gradle.conventions.readsServedExamples
-import hu.bme.mit.semantifyr.gradle.conventions.semantifyrArtifact
+import hu.bme.mit.semantifyr.gradle.javaRuntimeLibrary
+import hu.bme.mit.semantifyr.gradle.semantifyrArtifact
 
 plugins {
-    id("hu.bme.mit.semantifyr.gradle.conventions.application")
-    id("hu.bme.mit.semantifyr.gradle.conventions.theta")
-    id("hu.bme.mit.semantifyr.gradle.conventions.suites")
+    id("hu.bme.mit.semantifyr.theta")
+    id("hu.bme.mit.semantifyr.suites")
     kotlin("jvm")
-    kotlin("plugin.serialization")
 }
 
 dependencies {
@@ -23,76 +19,79 @@ dependencies {
 
     implementation(project(":logging"))
     implementation(project(":utils"))
-    implementation(libs.kotlinx.coroutines.core)
-    implementation(libs.kotlinx.serialization.json)
 
-    testFixturesImplementation(libs.kotlinx.serialization.json)
+    testImplementation(testFixtures(project(":gamma.lang")))
+    testImplementation(testFixtures(project(":verifier")))
+    testImplementation(libs.kotlinx.serialization.json)
+
+    testFixturesApi(libs.junit.params)
     testFixturesImplementation(project(":logging"))
-    testFixturesApi(project(":gamma.lang"))
-    testFixturesApi(testFixtures(project(":gamma.lang")))
-    testFixturesApi(testFixtures(project(":verifier")))
-    testFixturesApi(project(":portfolios"))
-    testFixturesApi(testFixtures(project(":portfolios")))
+    testFixturesImplementation(project(":portfolios"))
+    testFixturesImplementation(testFixtures(project(":verifier")))
+    testFixturesImplementation(libs.junit.api)
 }
 
-val syncGammaLibrary = tasks.register<Sync>("syncGammaLibrary") {
-    from(layout.projectDirectory.dir("../models/libraries"))
-    into(layout.buildDirectory.dir("libraries"))
+val exampleLogging = configurations.dependencyScope("exampleLogging")
+val exampleLoggingClasspath = configurations.resolvable("exampleLoggingClasspath") {
+    extendsFrom(exampleLogging.get())
+    shouldResolveConsistentlyWith(configurations.runtimeClasspath.get())
+    attributes(javaRuntimeLibrary())
 }
 
-val syncGammaTestModels = tasks.register<Sync>("syncGammaTestModels") {
-    from(layout.projectDirectory.dir("../models/examples"))
-    into(layout.buildDirectory.dir("test-models"))
+dependencies {
+    exampleLogging(libs.slf4j.log4j)
 }
+
+val examplesDirectory = layout.projectDirectory.dir("../models/examples")
+val librariesDirectory = layout.projectDirectory.dir("../models/libraries")
 
 tasks.processResources {
-    from(syncGammaLibrary)
-}
-
-tasks.named<Test>("integrationTest") {
-    readsServedExamples()
+    from(librariesDirectory)
 }
 
 tasks.withType<Test>().configureEach {
-    inputs.files(syncGammaTestModels)
-    inputs.dir(layout.projectDirectory.dir("../models/etc")).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.file(layout.projectDirectory.file("../models/constructs.tsv")).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.files(layout.projectDirectory.dir("../models").asFileTree.matching { include("corpus/**", "semantics/**") }).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.files(
+        layout.projectDirectory.dir("../models").asFileTree.matching {
+            include(
+                "corpus/**",
+                "semantics/**",
+                "smoke/**",
+            )
+        },
+    ).withPathSensitivity(PathSensitivity.RELATIVE)
 }
 
-val compiledExamplesDir = layout.buildDirectory.dir("compiled-examples")
-val examplesSourceDir = layout.projectDirectory.dir("../models/examples")
+listOf(
+    "integrationTest",
+    "nightlyTest",
+).forEach {
+    tasks.named(it) {
+        inputs.dir(examplesDirectory).withPathSensitivity(PathSensitivity.RELATIVE)
+        inputs.dir(layout.projectDirectory.dir("../models/tests")).withPathSensitivity(PathSensitivity.RELATIVE)
+    }
+}
 
-fun gammaExampleTask(name: String) = tasks.register<JavaExec>("compileGammaExample_$name") {
-    val sourceFile = examplesSourceDir.file("$name.gamma")
-    val targetFile = compiledExamplesDir.map { it.file("$name.$oxstsFileExtension") }
+val smokeSourceFile = layout.projectDirectory.file("../models/smoke/smoke.gamma")
+val compiledSmokeFile = layout.buildDirectory.file("compiled-smoke/smoke.semantifyr")
+
+val compileGammaSmoke = tasks.register<JavaExec>("compileGammaSmoke") {
+    val sourceFile = smokeSourceFile
+    val targetFile = compiledSmokeFile
     inputs.file(sourceFile).withPathSensitivity(PathSensitivity.NAME_ONLY)
-    inputs.files(sourceSets["main"].runtimeClasspath).withNormalizer(ClasspathNormalizer::class)
     outputs.file(targetFile)
-    outputs.cacheIf { true }
-    mainClass.set("hu.bme.mit.semantifyr.frontends.gamma.examples.CompileGammaExampleKt")
-    classpath = sourceSets["main"].runtimeClasspath
+    outputs.cacheIf {
+        true
+    }
+    mainClass = "hu.bme.mit.semantifyr.frontends.gamma.examples.CompileGammaExampleKt"
+    classpath = files(sourceSets["main"].runtimeClasspath, exampleLoggingClasspath)
     argumentProviders += CommandLineArgumentProvider {
         listOf(sourceFile.asFile.absolutePath, targetFile.get().asFile.absolutePath)
     }
 }
 
-// a file that imports another holds a model's further cases, which nothing consumes compiled
-val compileGammaExampleTasks = corpusModels(examplesSourceDir).filter { model ->
-    providers.fileContents(examplesSourceDir.file(model.file)).asText.get().lines().none {
-        it.startsWith("import ")
-    }
-}.map {
-    gammaExampleTask(it.name)
-}
-
-val compileGammaExamples = tasks.register("compileGammaExamples") {
-    inputs.files(compileGammaExampleTasks)
-}
-
-configurations.consumable("compiledExamplesElements") {
-    attributes(semantifyrArtifact("compiled-examples"))
-    outgoing.artifact(compiledExamplesDir) {
-        builtBy(compileGammaExamples)
+configurations.consumable("compiledSmokeElements") {
+    attributes(semantifyrArtifact("compiled-smoke"))
+    outgoing.artifact(compiledSmokeFile) {
+        builtBy(compileGammaSmoke)
     }
 }

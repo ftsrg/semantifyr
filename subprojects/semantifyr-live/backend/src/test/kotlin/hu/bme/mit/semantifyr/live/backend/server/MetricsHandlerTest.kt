@@ -77,8 +77,8 @@ class MetricsHandlerTest {
             "semantifyr_live_verifications_queued 0",
             "semantifyr_live_verifications_running 0",
             "semantifyr_live_verifications_limit 4",
-            "semantifyr_live_engine_processes{engine=\"theta\"} 0",
-            "semantifyr_live_engine_memory_resident_bytes{engine=\"spin\"} 0",
+            "semantifyr_live_backend_processes{backend=\"theta\"} 0",
+            "semantifyr_live_backend_memory_resident_bytes{backend=\"spin\"} 0",
         )
     }
 
@@ -121,12 +121,12 @@ class MetricsHandlerTest {
 
     @Test
     @EnabledOnOs(OS.LINUX)
-    fun `the engine gauges count the process tree of each engine child and its resident memory`(@TempDir directory: Path) {
+    fun `the backend gauges count the process tree of each backend child and its resident memory`(@TempDir directory: Path) {
         val injector = injector()
         injector.handler<MetricsHandler>()
         val registry = injector.getInstance(MeterRegistry::class.java)
-        val processes = registry.get("semantifyr.live.engine.processes").tag("engine", "theta").gauge()
-        val resident = registry.get("semantifyr.live.engine.memory.resident").tag("engine", "theta").gauge()
+        val processes = registry.get("semantifyr.live.backend.processes").tag("backend", "theta").gauge()
+        val resident = registry.get("semantifyr.live.backend.memory.resident").tag("backend", "theta").gauge()
         val script = Files.createFile(directory.resolve("theta-xsts-cli"))
         val before = processes.value()
 
@@ -134,7 +134,7 @@ class MetricsHandlerTest {
         try {
             assertThat(processes.value()).isEqualTo(before + 2)
             assertThat(resident.value()).isGreaterThan(0.0)
-            assertThat(registry.get("semantifyr.live.engine.processes").tag("engine", "spin").gauge().value()).isZero()
+            assertThat(registry.get("semantifyr.live.backend.processes").tag("backend", "spin").gauge().value()).isZero()
         } finally {
             process.descendants().forEach {
                 it.destroy()

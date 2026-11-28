@@ -6,6 +6,7 @@
 
 package hu.bme.mit.semantifyr.oxsts.lang.tests.typesystem;
 
+import static hu.bme.mit.semantifyr.oxsts.lang.tests.utils.TestModels.testModel;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.google.inject.Inject;
@@ -110,24 +111,8 @@ public class UnsupportedFeatureTest {
 
     @Test
     void readsThroughRuntimeHoldersPass() {
-        var parsedPackage = parseHelper.parse(WORKERS + """
-            class Team {
-                contains workers: Worker[0..*]
-                contains lead: Worker subsets workers
-                var current: Worker[0..1] := nothing
-                var seen: bool := false
-                redefine tran {
-                    var picked: Worker[0..1] := lead
-                    seen := current.done || picked.done || current.part.done
-                    for (worker in workers) {
-                        seen := worker.done
-                    }
-                }
-                prop {
-                    return EF current.done
-                }
-            }
-            """, CheckMode.ALL);
+        var parsedPackage = parseHelper.parse(
+                WORKERS + testModel(getClass(), "reads_through_runtime_holders.semantifyr"), CheckMode.ALL);
 
         parsedPackage.assertNoResourceErrors();
         parsedPackage.assertNoValidationErrors();
@@ -211,7 +196,7 @@ public class UnsupportedFeatureTest {
             class Team {
                 contains lead: Worker
                 var current: Worker[0..1] := nothing
-                prop {
+                redefine prop {
                     return EF current?.done
                 }
             }
@@ -223,21 +208,20 @@ public class UnsupportedFeatureTest {
     }
 
     @Test
-    void optionalCallThroughVariableIsRejected() {
+    void optionalPropertyCallThroughVariableIsRejected() {
         var parsedPackage = parseHelper.parse(WORKERS + """
             class Team {
                 contains lead: Worker
                 var current: Worker[0..1] := nothing
-                redefine tran {
-                    havoc(current)
-                    inline current?.step()
+                redefine prop {
+                    return EF current?.isDone()
                 }
             }
             """, CheckMode.ALL);
 
         parsedPackage.assertNoResourceErrors();
         parsedPackage.assertHasValidationIssue(OxstsValidator.UNSUPPORTED_FEATURE, "'?.' through variable 'current'");
-        assertOnlyErrorsAreUnsupportedAtLine(parsedPackage, 17);
+        assertOnlyErrorsAreUnsupportedAtLine(parsedPackage, 16);
     }
 
     @Test
@@ -249,12 +233,12 @@ public class UnsupportedFeatureTest {
                 var current: Worker[0..1] := nothing
                 redefine tran {
                     havoc(current)
-                    inline current.step()
+                    inline current?.step()
                     for (worker in workers) {
                         inline worker.step()
                     }
                 }
-                prop { return EF current.isDone() }
+                redefine prop { return EF current.isDone() }
             }
             """, CheckMode.ALL);
 

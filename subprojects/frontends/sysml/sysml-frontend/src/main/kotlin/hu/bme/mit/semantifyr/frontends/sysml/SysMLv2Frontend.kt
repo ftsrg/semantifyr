@@ -60,6 +60,7 @@ class SysMLv2Frontend private constructor(
     private val semantifyrLoader: SemantifyrLoader,
     private val verificationCaseDiscoverer: VerificationCaseDiscoverer,
     private val sysmlConfiguration: SysMLv2FrontendConfig,
+    private val compiler: SysMLv2Compiler,
     private val compiledOxstsPath: Path,
     val transformationDuration: Duration,
 ) {
@@ -111,7 +112,7 @@ class SysMLv2Frontend private constructor(
     private fun writeSysMLTrace(case: VerificationCase, reportPath: Path): Path? {
         val tracePath = reportPath.resolveSibling(SYSML_TRACE_FILE_NAME)
         try {
-            sharedSysMLv2Compiler.trace(
+            compiler.trace(
                 sourcePath = sysmlConfiguration.sourcePath,
                 reportPath = reportPath,
                 nameMapPath = nameMapPath(compiledOxstsPath),
@@ -162,6 +163,7 @@ class SysMLv2Frontend private constructor(
         private var artifacts: ArtifactConfig? = null
         private var outputDirectory: Path? = null
         private var compiledOxstsOverride: Path? = null
+        private var compiler = sharedSysMLv2Compiler
 
         fun source(path: Path): Builder {
             this.sourcePath = path
@@ -232,6 +234,11 @@ class SysMLv2Frontend private constructor(
             return this
         }
 
+        fun compiler(compiler: SysMLv2Compiler): Builder {
+            this.compiler = compiler
+            return this
+        }
+
         fun build(): SysMLv2Frontend {
             val resolvedSource = requireNotNull(sourcePath) {
                 "SysMLv2Frontend.Builder requires .source(...)."
@@ -260,7 +267,7 @@ class SysMLv2Frontend private constructor(
                         .resolve("compiled")
                         .resolve(variant.name.lowercase())
                         .resolve("${resolvedSource.nameWithoutExtension}.${fileExtensionProvider.primaryFileExtension}")
-                    sharedSysMLv2Compiler.compile(
+                    compiler.compile(
                         sourcePath = resolvedSource,
                         outputPath = target,
                     )
@@ -289,6 +296,7 @@ class SysMLv2Frontend private constructor(
                 semantifyrLoader = effectiveLoader,
                 verificationCaseDiscoverer = discoverer,
                 sysmlConfiguration = sysmlConfiguration,
+                compiler = compiler,
                 compiledOxstsPath = compiledOxsts,
                 transformationDuration = transformationDuration,
             )

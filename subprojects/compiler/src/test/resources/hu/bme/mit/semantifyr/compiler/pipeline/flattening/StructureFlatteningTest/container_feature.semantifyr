@@ -1,0 +1,29 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package flattening::tests
+
+class Parent {
+    contains child: Offspring[1] opposite parent
+    var generation: int := 0
+}
+class Offspring {
+    container parent: Parent[1] opposite child
+    tran bumpParent() {
+        assume(parent.generation < 3)
+        parent.generation := parent.generation + 1
+    }
+}
+@VerificationCase
+class Host {
+    contains parent: Parent[1]
+    redefine tran {
+        inline parent.child.bumpParent()
+    }
+    redefine prop {
+        return EF parent.generation == 3
+    }
+}

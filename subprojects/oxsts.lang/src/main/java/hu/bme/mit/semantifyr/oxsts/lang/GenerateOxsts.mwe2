@@ -43,9 +43,14 @@ Workflow {
 		language = StandardLanguage {
 			name = "hu.bme.mit.semantifyr.oxsts.lang.Oxsts"
 			fileExtensions = "semantifyr,sem,oxsts"
-			referencedResource = "platform:/resource/oxsts.lang/model/oxsts.genmodel"
+			referencedResource = "platform:/resource/oxsts.lang/build/model/oxsts.genmodel"
 			
 			fragment = ecore2xtext.Ecore2XtextValueConverterServiceFragment2 auto-inject {}
+			fragment = textmate.TextMateHighlightingFragment {
+				absolutePath = "${rootPath}/oxsts.lang/build/generated/textmate"
+				// the fragment keeps an existing file unless told to override it
+				override = true
+			}
 
             parserGenerator = {
                 removeBacktrackingGuards = false

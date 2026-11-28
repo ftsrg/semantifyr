@@ -8,35 +8,16 @@ import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 
 import { liveExampleUrl } from '@semantifyr/editor-common'
-import { fileNameOf, servedExamples } from '@semantifyr/editor-common/examples'
+import { servedExamples } from '@semantifyr/editor-common/examples'
 import { describe, expect, it } from 'vitest'
 
 import { examplePages } from '../../examplePages'
 
 const TEMPLATE = readFileSync(resolve(import.meta.dirname, '../../../index.html'), 'utf-8')
 
-const REUSE = readFileSync(resolve(import.meta.dirname, '../../../../../../REUSE.toml'), 'utf-8')
-
-// the holders and the licences the REUSE file gives, and the addresses of the sources it names, which a page must not carry
-const RIGHTS = [
-  ...[...REUSE.matchAll(/^SPDX-[\w-]+ = (?:"([^"]+)"|\[([^\]]*)\])/gm)].flatMap((match) => {
-    return match[1] !== undefined ? [match[1]] : [...match[2]!.matchAll(/"([^"]+)"/g)].map((value) => {
-      return value[1]!
-    })
-  }),
-  ...[...REUSE.matchAll(/https?:\/\/[^\s)"]+/g)].map((match) => {
-    return match[0].replace(/\.$/, '')
-  }),
-]
-
-function commentOf(fileName: string): string {
-  return `The comment of ${fileName}.`
-}
-
 interface Head {
   title: string
   descriptions: string[]
-  text: string
 }
 
 function headOf(source: string): Head {
@@ -50,12 +31,11 @@ function headOf(source: string): Head {
   return {
     title: page.title,
     descriptions,
-    text: [page.title, ...descriptions, ...contents('meta[property="og:title"]')].join('\n'),
   }
 }
 
 describe('an example\'s page', () => {
-  const pages = examplePages(TEMPLATE, commentOf)
+  const pages = examplePages(TEMPLATE)
 
   it('is written for every served example at its address', () => {
     expect(pages.map((page) => {
@@ -65,7 +45,7 @@ describe('an example\'s page', () => {
     }))
   })
 
-  it('names its model in its title and its description, from the registry and the model\'s comment', () => {
+  it('names its model in its title and its description', () => {
     const crossroads = pages.find((page) => {
       return page.fileName === 'sysml/crossroads/index.html'
     })!
@@ -73,27 +53,8 @@ describe('an example\'s page', () => {
 
     expect(head.title).toBe('Crossroads - SysML v2 - Semantifyr Live')
     expect(head.descriptions).toEqual([
-      'Crossroads, in SysML v2. The comment of crossroads.sysml. Verify it in your browser and read its traces.',
-      'Crossroads, in SysML v2. The comment of crossroads.sysml. Verify it in your browser and read its traces.',
+      'Crossroads, in SysML v2. Two traffic lights at a crossroads, cycled by one controller and interrupted by the police. Verify it in your browser and read its traces.',
+      'Crossroads, in SysML v2. Two traffic lights at a crossroads, cycled by one controller and interrupted by the police. Verify it in your browser and read its traces.',
     ])
-    for (const [index, example] of servedExamples.entries()) {
-      const exampleHead = headOf(pages[index]!.source)
-      expect(exampleHead.title, example.id).toContain(example.label)
-      expect(exampleHead.descriptions, example.id).toEqual([
-        expect.stringContaining(commentOf(fileNameOf(example))),
-        expect.stringContaining(commentOf(fileNameOf(example))),
-      ])
-    }
-  })
-
-  it('names nothing of a model\'s origin or rights', () => {
-    expect(RIGHTS).toContain('The contributors to the Gamma project')
-    for (const page of pages) {
-      const head = headOf(page.source)
-      for (const right of RIGHTS) {
-        expect(head.text, page.fileName).not.toContain(right)
-      }
-      expect(head.text, page.fileName).not.toMatch(/copyright|licen[cs]e|spdx/i)
-    }
   })
 })

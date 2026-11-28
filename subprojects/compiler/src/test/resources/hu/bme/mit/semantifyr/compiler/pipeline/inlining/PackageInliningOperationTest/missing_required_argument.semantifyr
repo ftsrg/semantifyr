@@ -1,0 +1,27 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package inlining::tests
+
+abstract class Base {
+    abstract tran set()
+}
+class Leaf : Base {
+    var counter: int := 0
+    redefine tran set(value: int) {
+        counter := value
+    }
+}
+@VerificationCase
+class Host {
+    contains leaf: Leaf[1]
+    redefine tran {
+        inline leaf.set()
+    }
+    redefine prop {
+        return EF leaf.counter == 1
+    }
+}

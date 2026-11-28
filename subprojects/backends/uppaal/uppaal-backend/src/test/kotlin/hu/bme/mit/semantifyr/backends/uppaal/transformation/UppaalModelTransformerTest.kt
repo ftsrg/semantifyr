@@ -7,6 +7,7 @@
 package hu.bme.mit.semantifyr.backends.uppaal.transformation
 
 import hu.bme.mit.semantifyr.backend.BackendUnsupportedException
+import hu.bme.mit.semantifyr.backend.testModel
 import hu.bme.mit.semantifyr.backends.uppaal.ir.UppaalEdge
 import hu.bme.mit.semantifyr.backends.uppaal.ir.UppaalLocation
 import hu.bme.mit.semantifyr.backends.uppaal.ir.UppaalLocationKind
@@ -37,8 +38,12 @@ class UppaalModelTransformerTest : UppaalTransformationTestBase() {
     private val startToRunning = UppaalEdge("start", "running")
 
     private suspend fun nta(body: String): UppaalNta {
+        return ntaOf("inlined oxsts of semantifyr::Anything\n${body.trimIndent()}")
+    }
+
+    private suspend fun ntaOf(model: String): UppaalNta {
         return withTransformer {
-            it.buildNta(parse("inlined oxsts of semantifyr::Anything\n${body.trimIndent()}", colors, paints))
+            it.buildNta(parse(model, colors, paints))
         }
     }
 
@@ -137,31 +142,7 @@ class UppaalModelTransformerTest : UppaalTransformationTestBase() {
 
     @Test
     suspend fun `an integer is declared with its range when the analysis bounds it within 32 bits and with the 31-bit range otherwise`() {
-        val declarations = nta(
-            """
-                var bounded : int := 0
-                var large : int := 0
-                var huge : int := 1
-                var unbounded : int := 0
-                init {
-                }
-                tran {
-                    if (bounded < 3) {
-                        bounded := bounded + 1
-                    }
-                    if (large < 100000) {
-                        large := large + 25000
-                    }
-                    if (huge < 100000) {
-                        huge := huge * 100000
-                    }
-                    unbounded := unbounded + 1
-                }
-                prop {
-                    AG bounded <= 3
-                }
-            """,
-        ).globalDeclarations
+        val declarations = ntaOf(testModel("integer_ranges.semantifyr")).globalDeclarations
 
         assertThat(declarations.variables).containsExactly(
             UppaalVariableDecl("int[0,3]", "bounded", "0"),
@@ -423,29 +404,7 @@ class UppaalModelTransformerTest : UppaalTransformationTestBase() {
 
     @Test
     suspend fun `operators render in Uppaal syntax`() {
-        val edges = edges(
-            """
-                var counter : int := 0
-                var left : bool := false
-                var right : bool := true
-                init {
-                }
-                tran {
-                    choice {
-                        counter := ((counter + 1) - (2 * counter)) / 3
-                    } or {
-                        left := (left && right) || !(left ^^ right)
-                    } or {
-                        assume(counter < 1 && counter <= 2 && counter > -3 && counter >= -4 && counter == 0 && counter != 5)
-                    } or {
-                        counter := if counter < 3 then counter + 1 else 0
-                    }
-                }
-                prop {
-                    AG true
-                }
-            """,
-        )
+        val edges = ntaOf(testModel("operators.semantifyr")).templates.single().edges
 
         assertThat(edges).containsExactly(
             startToRunning,
@@ -487,39 +446,7 @@ class UppaalModelTransformerTest : UppaalTransformationTestBase() {
 
     @Test
     suspend fun `only the running location lets time pass between whole steps`() {
-        val template = nta(
-            """
-                var counter : int := 0
-                var flag : bool := false
-                init {
-                    choice {
-                        counter := 1
-                    } or {
-                        havoc(flag)
-                    }
-                } or {
-                    counter := 2
-                }
-                tran {
-                    assume(counter < 5)
-                    if (flag) {
-                        choice {
-                            counter := counter + 1
-                        } or {
-                            var delta : int := 1
-                            counter := counter - delta
-                        }
-                    } else {
-                        havoc(counter)
-                    }
-                } or {
-                    flag := !flag
-                }
-                prop {
-                    AG counter < 5
-                }
-            """,
-        ).templates.single()
+        val template = ntaOf(testModel("running_location.semantifyr")).templates.single()
 
         val stable = template.locations.filter {
             it.kind != UppaalLocationKind.Committed

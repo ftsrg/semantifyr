@@ -6,8 +6,6 @@
 
 # Change Log
 
-All notable changes to the Semantifyr VS Code extension are documented in this file.
-
 ## [0.1.0]
 
-The first release: editing and verifying Semantifyr and Gamma models, the witness and the trace of a case beside the model, witness validation, and the compilation of a Gamma model to a Semantifyr model.
+The initial release.

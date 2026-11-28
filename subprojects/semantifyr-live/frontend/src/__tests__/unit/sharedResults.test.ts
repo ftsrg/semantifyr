@@ -6,7 +6,7 @@
 
 import { describe, expect, it } from 'vitest'
 
-import type { VerificationCaseState, VerificationState } from '../../lib/verification/engine'
+import type { VerificationCaseState, VerificationState } from '../../lib/verification/state'
 import { caseRowOf } from '../../lib/workspace/caseRows'
 import {
   compareWithShared,

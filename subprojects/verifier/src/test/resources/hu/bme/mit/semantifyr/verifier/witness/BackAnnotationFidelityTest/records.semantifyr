@@ -1,0 +1,73 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package semantifyr::verification::report::records
+
+record Point {
+    var x: int := 0
+    var y: int := 0
+}
+
+record Reading {
+    var value: int := 0
+    var valid: bool := false
+}
+
+class Robot {
+    var position: Point := Point { x = 0 }
+
+    tran step() {
+        assume(position.x < 3)
+        position.x := position.x + 1
+    }
+}
+
+@VerificationCase
+class ContainedRecordReach {
+    contains robot: Robot
+
+    redefine tran {
+        inline robot.step()
+    }
+
+    redefine prop {
+        return EF robot.position.x == 3
+    }
+}
+
+class ReadingStore {
+    refers capacity: int
+    var readings: Reading[capacity] := [Reading { value = 0 }, ...]
+
+    tran bump(index: int) {
+        inline if (capacity > 0) {
+            readings[index].value := readings[index].value + 1
+            readings[index].valid := true
+        }
+    }
+}
+
+@VerificationCase
+class RecordArrayRuntimeIndexReach {
+    contains store: ReadingStore {
+        redefine refers capacity: int = 3
+    }
+    contains none: ReadingStore {
+        redefine refers capacity: int = 0
+    }
+    var index: int := 0
+
+    redefine tran {
+        havoc(index)
+        assume(0 <= index && index < 3)
+        inline store.bump(index)
+        inline none.bump(index)
+    }
+
+    redefine prop {
+        return EF (store.readings[2].value == 2 && store.readings[2].valid && !store.readings[0].valid)
+    }
+}

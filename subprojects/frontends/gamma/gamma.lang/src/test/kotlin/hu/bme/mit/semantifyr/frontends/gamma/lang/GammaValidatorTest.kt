@@ -337,4 +337,130 @@ class GammaValidatorTest {
 
         validationTestHelper.assertNoIssue(model, GammaPackage.Literals.CHANNEL, GammaValidator.PORT_IN_CHANNEL_AND_BINDING)
     }
+
+    private fun constrained(component: String): GammaRoot {
+        return parseHelper.parse(
+            """
+                package test
+                statechart Machine {
+                    region Main {
+                        initial Start
+                        state Idle
+                    }
+                    transition from Start to Idle
+                }
+                $component
+            """.trimIndent(),
+        )
+    }
+
+    @Test
+    fun `a statechart, a synchronous and a cascade composite take a scheduling constraint`() {
+        val model = constrained(
+            """
+                statechart Constrained {
+                    scheduling-constraint {
+                        minimum-orchestrating-period : 0 ms
+                        maximum-orchestrating-period : 1 s
+                    }
+                }
+                sync System {
+                    component machine : Machine
+                    scheduling-constraint {
+                        minimum-orchestrating-period : 1 s
+                        maximum-orchestrating-period : 1000 ms
+                    }
+                }
+                cascade Chain {
+                    component machine : Machine
+                    scheduling-constraint {
+                        minimum-orchestrating-period : 1 s
+                        maximum-orchestrating-period : 2 s
+                    }
+                }
+            """,
+        )
+
+        validationTestHelper.assertNoErrors(model)
+    }
+
+    @Test
+    fun `a scheduling constraint's maximum period is not below its minimum`() {
+        val model = constrained(
+            """
+                sync System {
+                    component machine : Machine
+                    scheduling-constraint {
+                        minimum-orchestrating-period : 1 s
+                        maximum-orchestrating-period : 999 ms
+                    }
+                }
+            """,
+        )
+
+        validationTestHelper.assertError(model, GammaPackage.Literals.SCHEDULING_CONSTRAINT, GammaValidator.MAXIMUM_PERIOD_BELOW_MINIMUM)
+    }
+
+    @Test
+    fun `a period is not negative`() {
+        val model = constrained(
+            """
+                sync System {
+                    component machine : Machine
+                    scheduling-constraint {
+                        minimum-orchestrating-period : - 1 s
+                        maximum-orchestrating-period : 1 s
+                    }
+                }
+            """,
+        )
+
+        validationTestHelper.assertError(model, GammaPackage.Literals.SCHEDULING_CONSTRAINT, GammaValidator.NEGATIVE_TIME)
+    }
+
+    @Test
+    fun `a component holds one scheduling constraint`() {
+        val model = constrained(
+            """
+                sync System {
+                    component machine : Machine
+                    scheduling-constraint {
+                        minimum-orchestrating-period : 1 s
+                        maximum-orchestrating-period : 1 s
+                    }
+                    scheduling-constraint {
+                        minimum-orchestrating-period : 2 s
+                        maximum-orchestrating-period : 2 s
+                    }
+                }
+            """,
+        )
+
+        validationTestHelper.assertError(model, GammaPackage.Literals.SCHEDULING_CONSTRAINT, GammaValidator.SEVERAL_SCHEDULING_CONSTRAINTS)
+    }
+
+    @Test
+    fun `an asynchronous component takes no scheduling constraint`() {
+        val model = constrained(
+            """
+                @Asynchronous
+                statechart Receiver {
+                    scheduling-constraint {
+                        minimum-orchestrating-period : 1 s
+                        maximum-orchestrating-period : 1 s
+                    }
+                }
+                adapter Buffered of component machine : Machine {
+                    when any / run
+                    scheduling-constraint {
+                        minimum-orchestrating-period : 1 s
+                        maximum-orchestrating-period : 1 s
+                    }
+                }
+            """,
+        )
+
+        validationTestHelper.assertError(model, GammaPackage.Literals.SCHEDULING_CONSTRAINT, GammaValidator.ASYNCHRONOUS_SCHEDULING_CONSTRAINT, "'Receiver' is an asynchronous component")
+        validationTestHelper.assertError(model, GammaPackage.Literals.SCHEDULING_CONSTRAINT, GammaValidator.ASYNCHRONOUS_SCHEDULING_CONSTRAINT, "'Buffered' is an asynchronous component")
+    }
 }

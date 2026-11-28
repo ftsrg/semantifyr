@@ -69,8 +69,6 @@ import org.eclipse.xtext.Keyword;
 import org.eclipse.xtext.ide.editor.quickfix.DiagnosticResolution;
 import org.eclipse.xtext.ide.editor.quickfix.DiagnosticResolutionAcceptor;
 import org.eclipse.xtext.ide.editor.quickfix.IQuickFixProvider;
-import org.eclipse.xtext.ide.editor.quickfix.ISemanticModification;
-import org.eclipse.xtext.ide.editor.quickfix.ITextModification;
 import org.eclipse.xtext.ide.server.Document;
 import org.eclipse.xtext.ide.server.codeActions.ICodeActionService2.Options;
 import org.eclipse.xtext.naming.IQualifiedNameConverter;
@@ -163,7 +161,7 @@ public class OxstsQuickFixProvider implements IQuickFixProvider {
     }
 
     private void removeDeclaration(IssueSite site) {
-        site.acceptor().accept("Remove", (ISemanticModification) (diagnostic, object) -> EcoreUtil2::remove);
+        site.acceptor().accept("Remove", (_, _) -> EcoreUtil2::remove);
     }
 
     private void addRedefine(IssueSite site) {
@@ -191,16 +189,12 @@ public class OxstsQuickFixProvider implements IQuickFixProvider {
         }
         var containerDomain = EcoreUtil2.getContainerOfType(declaration.eContainer(), DomainDeclaration.class);
         var candidates = domainMemberCollectionProvider.getParentCollection(containerDomain).getDeclarations().stream()
-                .filter(candidate -> {
-                    return EcoreUtil2.isAssignableFrom(declaration.eClass(), candidate.eClass());
-                })
+                .filter(candidate -> EcoreUtil2.isAssignableFrom(declaration.eClass(), candidate.eClass()))
                 .map(NamingUtil::getName)
                 .filter(Objects::nonNull)
                 .toList();
         for (var match : nearMatches(declaration.getName(), candidates)) {
-            acceptModelChange(site, "Change to " + match, declaration, (redefining, resourceSet) -> {
-                redefining.setName(match);
-            });
+            acceptModelChange(site, "Change to " + match, declaration, (redefining, _) -> redefining.setName(match));
         }
     }
 
@@ -230,9 +224,11 @@ public class OxstsQuickFixProvider implements IQuickFixProvider {
         var written = NodeModelUtils.getTokenText(node);
         for (var match : nearMatches(written, List.copyOf(targets.keySet()))) {
             var targetUri = targets.get(match);
-            acceptModelChange(site, "Change to " + match, referencingElement, (referencing, resourceSet) -> {
-                referencing.eSet(reference, resourceSet.getEObject(targetUri, true));
-            });
+            acceptModelChange(
+                    site,
+                    "Change to " + match,
+                    referencingElement,
+                    (referencing, resourceSet) -> referencing.eSet(reference, resourceSet.getEObject(targetUri, true)));
         }
     }
 
@@ -264,9 +260,8 @@ public class OxstsQuickFixProvider implements IQuickFixProvider {
         var memberNames = issueData(site.diagnostic());
         var members = domainMemberCollectionProvider.getMemberCollection(classDeclaration).getDeclarations().stream()
                 .filter(OxstsUtils::isDeclarationAbstract)
-                .filter(member -> {
-                    return member.eContainer() != classDeclaration && memberNames.contains(NamingUtil.getName(member));
-                })
+                .filter(member ->
+                        member.eContainer() != classDeclaration && memberNames.contains(NamingUtil.getName(member)))
                 .toList();
         if (members.isEmpty()) {
             return;
@@ -289,9 +284,12 @@ public class OxstsQuickFixProvider implements IQuickFixProvider {
         if (value == null) {
             return;
         }
-        acceptModelChange(site, "Initialize with " + value, variable, (initialized, resourceSet) -> {
-            initialized.setExpression(defaultExpressionOrNull(initialized.getTypeSpecification()));
-        });
+        acceptModelChange(
+                site,
+                "Initialize with " + value,
+                variable,
+                (initialized, _) ->
+                        initialized.setExpression(defaultExpressionOrNull(initialized.getTypeSpecification())));
     }
 
     private void addMissingArguments(IssueSite site) {
@@ -305,9 +303,7 @@ public class OxstsQuickFixProvider implements IQuickFixProvider {
             return;
         }
         var missingParameters = parametricDeclaration.getParameters().stream()
-                .filter(parameter -> {
-                    return missingNames.contains(parameter.getName());
-                })
+                .filter(parameter -> missingNames.contains(parameter.getName()))
                 .toList();
         acceptModelChange(site, "Add missing arguments", call, (completed, resourceSet) -> {
             for (var missingParameter : missingParameters) {
@@ -321,32 +317,28 @@ public class OxstsQuickFixProvider implements IQuickFixProvider {
     }
 
     private void makeInline(IssueSite site) {
-        site.acceptor().accept("Make inline", (ISemanticModification) (diagnostic, object) -> {
-            return operation -> {
-                if (operation instanceof IfOperation ifOperation) {
-                    var inlineIfOperation = OxstsFactory.eINSTANCE.createInlineIfOperation();
-                    inlineIfOperation.setGuard(ifOperation.getGuard());
-                    inlineIfOperation.setBody(ifOperation.getBody());
-                    inlineIfOperation.setElse(ifOperation.getElse());
-                    EcoreUtil2.replace(ifOperation, inlineIfOperation);
-                } else if (operation instanceof ForOperation forOperation) {
-                    var inlineSeqFor = OxstsFactory.eINSTANCE.createInlineSeqFor();
-                    inlineSeqFor.setLoopVariable(forOperation.getLoopVariable());
-                    inlineSeqFor.setRangeExpression(forOperation.getRangeExpression());
-                    inlineSeqFor.setBody(forOperation.getBody());
-                    EcoreUtil2.replace(forOperation, inlineSeqFor);
-                }
-            };
+        site.acceptor().accept("Make inline", (_, _) -> operation -> {
+            if (operation instanceof IfOperation ifOperation) {
+                var inlineIfOperation = OxstsFactory.eINSTANCE.createInlineIfOperation();
+                inlineIfOperation.setGuard(ifOperation.getGuard());
+                inlineIfOperation.setBody(ifOperation.getBody());
+                inlineIfOperation.setElse(ifOperation.getElse());
+                EcoreUtil2.replace(ifOperation, inlineIfOperation);
+            } else if (operation instanceof ForOperation forOperation) {
+                var inlineSeqFor = OxstsFactory.eINSTANCE.createInlineSeqFor();
+                inlineSeqFor.setLoopVariable(forOperation.getLoopVariable());
+                inlineSeqFor.setRangeExpression(forOperation.getRangeExpression());
+                inlineSeqFor.setBody(forOperation.getBody());
+                EcoreUtil2.replace(forOperation, inlineSeqFor);
+            }
         });
     }
 
     private void inlineAsConstant(IssueSite site) {
-        site.acceptor().accept("Inline as constant", (ISemanticModification) (diagnostic, object) -> {
+        site.acceptor().accept("Inline as constant", (diagnostic, object) -> {
             var expression = hintedExpression(diagnostic, object);
             var literal = literalOf(constantExpressionEvaluatorProvider.evaluate(expression));
-            return element -> {
-                EcoreUtil2.replace(expression, literal);
-            };
+            return _ -> EcoreUtil2.replace(expression, literal);
         });
     }
 
@@ -409,8 +401,8 @@ public class OxstsQuickFixProvider implements IQuickFixProvider {
                 }
                 yield literal;
             }
-            case NothingEvaluation nothing -> factory.createLiteralNothing();
-            case InfinityEvaluation infinity -> factory.createLiteralInfinity();
+            case NothingEvaluation _ -> factory.createLiteralNothing();
+            case InfinityEvaluation _ -> factory.createLiteralInfinity();
             default -> throw new IllegalStateException("No literal for " + value);
         };
     }
@@ -492,7 +484,7 @@ public class OxstsQuickFixProvider implements IQuickFixProvider {
     }
 
     private <T extends EObject> void acceptModelChange(IssueSite site, String label, T target, ModelChange<T> change) {
-        site.acceptor().accept(label, (ISemanticModification) (diagnostic, object) -> context -> {
+        site.acceptor().accept(label, (_, _) -> context -> {
             var resourceSet = context.eResource().getResourceSet();
             change.apply(resolve(resourceSet, target), resourceSet);
         });
@@ -608,20 +600,16 @@ public class OxstsQuickFixProvider implements IQuickFixProvider {
 
     private ILeafNode firstLeafAfterAnnotations(Declaration declaration) {
         return visibleLeaves(declaration).stream()
-                .filter(leaf -> {
-                    return EcoreUtil2.getContainerOfType(leaf.getSemanticElement(), Annotation.class) == null;
-                })
+                .filter(leaf -> EcoreUtil2.getContainerOfType(leaf.getSemanticElement(), Annotation.class) == null)
                 .findFirst()
                 .orElseThrow();
     }
 
     private List<ILeafNode> keywordLeaves(EObject element, String keyword) {
         return visibleLeaves(element).stream()
-                .filter(leaf -> {
-                    return leaf.getGrammarElement() instanceof Keyword grammarKeyword
-                            && keyword.equals(grammarKeyword.getValue())
-                            && leaf.getSemanticElement() == element;
-                })
+                .filter(leaf -> leaf.getGrammarElement() instanceof Keyword grammarKeyword
+                        && keyword.equals(grammarKeyword.getValue())
+                        && leaf.getSemanticElement() == element)
                 .toList();
     }
 
@@ -660,7 +648,7 @@ public class OxstsQuickFixProvider implements IQuickFixProvider {
         void accept(String label, int offset, int length, String replacement) {
             var range = new Range(document.getPosition(offset), document.getPosition(offset + length));
             var edits = List.of(new TextEdit(range, replacement));
-            acceptor.accept(label, (ITextModification) (resolvedDiagnostic, resolvedObject, resolvedDocument) -> edits);
+            acceptor.accept(label, (_, _, _) -> edits);
         }
     }
 }

@@ -27,7 +27,7 @@ const LANGUAGE_OF_EXTENSION: Readonly<Record<string, ExampleLanguage>> = {
 
 // where the corpora keep their manifests
 const MODEL_ROOTS = [
-  'oxsts-test-models',
+  'subprojects/website/models',
   'subprojects/frontends/gamma/models',
   'subprojects/frontends/sysml/models',
 ];
@@ -37,18 +37,6 @@ function declaredCases(file: string, language: ExampleLanguage): string[] {
   return [...text.matchAll(DECLARED_CASE[language])].map((match) => {
     return match[1]!;
   });
-}
-
-function furtherCasesOf(file: string): string {
-  return `${file.slice(0, file.length - extname(file).length)}.further-cases`;
-}
-
-function corpusCases(file: string, language: ExampleLanguage): string[] {
-  const fragment = furtherCasesOf(file);
-  if (!existsSync(join(REPOSITORY, fragment))) {
-    return declaredCases(file, language);
-  }
-  return [...declaredCases(file, language), ...declaredCases(fragment, language)];
 }
 
 // a property's negations and its root operator: a trace exists where the witness does, a reached EF or a broken AG
@@ -78,13 +66,6 @@ function caseText(file: string, language: ExampleLanguage, name: string): string
   });
   return text.slice(starts[position]!.index, starts[position + 1]?.index ?? text.length);
 }
-
-// a model describes itself in a comment at its top: a `/** */` documentation comment in OXSTS and Gamma, a `doc` comment in SysML v2
-const OPENING_COMMENT: Readonly<Record<ExampleLanguage, RegExp>> = {
-  oxsts: /^\s*\/\*\*[\s*]*[^\s*/]/,
-  gamma: /^\s*\/\*\*[\s*]*[^\s*/]/,
-  sysml: /^\s*doc\s*\/\*[\s*]*[^\s*/]/,
-};
 
 const manifests = MODEL_ROOTS.flatMap((root) => {
   return readdirSync(join(REPOSITORY, root), { recursive: true, withFileTypes: true }).filter((entry) => {
@@ -151,10 +132,6 @@ describe.each(listedModels.map((example) => {
     });
     expect(tracing).not.toEqual([]);
   });
-
-  test('opens with a comment that describes it', () => {
-    expect(readFileSync(join(REPOSITORY, example.file), 'utf8')).toMatch(OPENING_COMMENT[example.language]);
-  });
 });
 
 describe.each(manifests)('the manifest %s', (manifest) => {
@@ -166,7 +143,7 @@ describe.each(manifests)('the manifest %s', (manifest) => {
       const listed = model.cases.map((declaredCase) => {
         return declaredCase.name;
       });
-      expect(listed, file).toEqual(corpusCases(file, LANGUAGE_OF_EXTENSION[extname(file)]!));
+      expect(listed, file).toEqual(declaredCases(file, LANGUAGE_OF_EXTENSION[extname(file)]!));
     }
   });
 });

@@ -6,6 +6,7 @@
 
 import { describe, expect } from 'vitest'
 
+import { FLAVORS } from './fake/defaults'
 import { casesListed, results, test } from './harness'
 
 const TERMINATED = 4000
@@ -20,8 +21,8 @@ describe('a server that does not answer at page load', () => {
   ] as const) {
     test(`shows the model of ${address} and retries until it answers`, async ({ ui }) => {
       let reachable = false
-      ui.backend.rest('GET /api/flavors', (_request, recorded) => {
-        return reachable ? recorded() : 'unreachable'
+      ui.backend.rest('GET /api/flavors', () => {
+        return reachable ? { status: 200, body: FLAVORS } : 'unreachable'
       })
       const page = await ui.open(address)
 

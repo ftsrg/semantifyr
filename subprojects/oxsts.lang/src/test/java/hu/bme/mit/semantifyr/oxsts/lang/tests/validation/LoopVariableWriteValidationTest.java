@@ -6,6 +6,7 @@
 
 package hu.bme.mit.semantifyr.oxsts.lang.tests.validation;
 
+import static hu.bme.mit.semantifyr.oxsts.lang.tests.utils.TestModels.testModel;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.google.inject.Inject;
@@ -103,25 +104,8 @@ public class LoopVariableWriteValidationTest {
 
     @Test
     void writingAVariableThroughALoopVariableIsAccepted() {
-        var parsedPackage = parseHelper.parse("""
-            package test
-
-            class Worker {
-                var done: bool := false
-            }
-
-            class Factory {
-                contains workers: Worker[2]
-                var count: int := 0
-
-                redefine tran {
-                    inline for (worker in workers) {
-                        worker.done := true
-                        count := count + 1
-                    }
-                }
-            }
-            """, CheckMode.ALL);
+        var parsedPackage =
+                parseHelper.parse(testModel(getClass(), "write_through_loop_variable.semantifyr"), CheckMode.ALL);
 
         parsedPackage.assertNoResourceErrors();
         parsedPackage.assertNoValidationErrors();

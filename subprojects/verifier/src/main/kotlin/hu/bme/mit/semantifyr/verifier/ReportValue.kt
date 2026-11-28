@@ -81,7 +81,6 @@ sealed interface ReportValue {
 }
 
 object ReportValueSerializer : KSerializer<ReportValue> {
-    @OptIn(ExperimentalSerializationApi::class)
     override val descriptor = SerialDescriptor("hu.bme.mit.semantifyr.ReportValue", JsonElement.serializer().descriptor)
 
     private val arraySerializer = ListSerializer(this)

@@ -6,6 +6,7 @@
 
 package hu.bme.mit.semantifyr.compiler.pipeline.optimization.passes
 
+import hu.bme.mit.semantifyr.oxsts.lang.tests.utils.TestModels.testModel
 import org.junit.jupiter.api.Test
 
 class VariableLivenessPassTest : PassTestBase() {
@@ -225,42 +226,8 @@ class VariableLivenessPassTest : PassTestBase() {
 
     @Test
     fun `a local's initializer is not moved past a write of its source on one branch`() = assertPassTransforms(
-        source = """
-            inlined oxsts of semantifyr::Anything
-            var source: int := 0
-            var seen: int := 0
-            init {
-            }
-            tran {
-                var snapshot: int := source
-                choice {
-                    source := 1
-                } or {
-                }
-                seen := snapshot
-            }
-            prop {
-                AG (seen != source)
-            }
-        """,
-        expectedSource = """
-            inlined oxsts of semantifyr::Anything
-            var source: int := 0
-            var seen: int := 0
-            init {
-            }
-            tran {
-                var snapshot: int := source
-                choice {
-                    source := 1
-                } or {
-                }
-                seen := snapshot
-            }
-            prop {
-                AG (seen != source)
-            }
-        """,
+        source = testModel(javaClass, "initializer_not_moved.semantifyr"),
+        expectedSource = testModel(javaClass, "initializer_not_moved_expected.semantifyr"),
     ) {
         it.getInstance(VariableLivenessPass::class.java)
     }

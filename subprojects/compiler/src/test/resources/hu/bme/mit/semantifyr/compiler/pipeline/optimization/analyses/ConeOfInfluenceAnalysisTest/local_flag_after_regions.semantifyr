@@ -1,0 +1,27 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+inlined oxsts of semantifyr::Anything
+var activeState: int := -1
+init {
+    activeState := 0
+}
+tran {
+    var anyRegionExecuted: bool := false
+    choice {
+        assume(activeState == 0)
+        activeState := 25
+        anyRegionExecuted := true
+    } or {
+        assume(activeState == 25)
+        activeState := 0
+        anyRegionExecuted := true
+    }
+    assume(anyRegionExecuted)
+}
+prop {
+    AG (activeState != 25)
+}

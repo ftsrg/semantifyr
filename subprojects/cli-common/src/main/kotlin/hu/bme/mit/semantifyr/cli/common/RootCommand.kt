@@ -57,7 +57,10 @@ abstract class RootCommand(
     }
 
     override fun helpEpilog(context: Context): String {
-        return "Documentation: $DOCUMENTATION_URL"
+        val codes = ExitCode.entries.joinToString("\u0085") {
+            "  ${it.code}  ${it.meaning}"
+        }
+        return "Exit codes: verify runs every case and exits with the highest code of its cases.\u0085$codes\u0085\u0085Documentation: $DOCUMENTATION_URL"
     }
 
     // the logging configuration is loaded before the arguments are parsed

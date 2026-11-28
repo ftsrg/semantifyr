@@ -29,7 +29,6 @@ const INFO: InfoResponse = {
   startedAt: '2026-01-01T00:00:00Z',
   version: '1.0',
   commit: 'abc',
-  buildTime: 'now',
   activeSessions: 1,
   maxSessions: 64,
 }

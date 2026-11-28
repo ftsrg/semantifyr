@@ -1,0 +1,22 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+class Team {
+    contains workers: Worker[0..*]
+    contains lead: Worker subsets workers
+    var current: Worker[0..1] := nothing
+    var seen: bool := false
+    redefine tran {
+        var picked: Worker[0..1] := lead
+        seen := current.done || picked.done || current.part.done
+        for (worker in workers) {
+            seen := worker.done
+        }
+    }
+    redefine prop {
+        return EF current.done
+    }
+}

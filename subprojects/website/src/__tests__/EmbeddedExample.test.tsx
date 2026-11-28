@@ -12,8 +12,6 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { EmbeddedExample, UNANSWERED_AFTER_MILLISECONDS } from '../components/LiveEmbed/EmbeddedExample';
 
-// Goal: an embedded example holds no frame until pressed, opens in place once live shows the model, and closes back to its control
-
 vi.mock('@docusaurus/theme-common', () => {
   return {
     useColorMode: () => {
@@ -44,7 +42,7 @@ function example(view: 'embed' | 'edit-only' = 'edit-only'): void {
 
 async function frame(): Promise<HTMLIFrameElement> {
   const found = await screen.findByTitle<HTMLIFrameElement>('Semantifyr Live');
-  // the frame's message listener is registered by a passive effect, which may still be pending
+  // flushes the effect that registers the frame's message listener
   await act(async () => {});
   return found;
 }

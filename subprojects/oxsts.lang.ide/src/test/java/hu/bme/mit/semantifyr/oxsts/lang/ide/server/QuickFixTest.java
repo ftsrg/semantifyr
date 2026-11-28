@@ -7,6 +7,7 @@
 package hu.bme.mit.semantifyr.oxsts.lang.ide.server;
 
 import static hu.bme.mit.semantifyr.oxsts.lang.ide.InlineModels.TRAFFIC_LIGHT;
+import static hu.bme.mit.semantifyr.oxsts.lang.tests.utils.TestModels.testModel;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import hu.bme.mit.semantifyr.oxsts.lang.ide.MarkedText;
@@ -108,49 +109,10 @@ class QuickFixTest extends OxstsLanguageServerTest {
 
     @Test
     void castAnArgumentToTheNarrowerParameterType() throws Exception {
-        var fixed = applyQuickFix("""
-                package example::holders
+        var fixed = applyQuickFix(
+                MarkedText.markEvery(testModel(getClass(), "cast_to_derived.semantifyr"), "base)"), "Cast to Derived");
 
-                class Base {
-                }
-
-                class Derived : Base {
-                }
-
-                class Holder {
-                    contains base: Base
-
-                    prop needsDerived(value: Derived): bool {
-                        return true
-                    }
-
-                    prop {
-                        return needsDerived(<|>base)
-                    }
-                }
-                """, "Cast to Derived");
-
-        assertThat(fixed).isEqualTo("""
-                package example::holders
-
-                class Base {
-                }
-
-                class Derived : Base {
-                }
-
-                class Holder {
-                    contains base: Base
-
-                    prop needsDerived(value: Derived): bool {
-                        return true
-                    }
-
-                    prop {
-                        return needsDerived(base as Derived)
-                    }
-                }
-                """);
+        assertThat(fixed).isEqualTo(testModel(getClass(), "cast_to_derived_expected.semantifyr"));
     }
 
     @Test

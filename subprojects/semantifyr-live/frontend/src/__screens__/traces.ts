@@ -7,7 +7,7 @@
 import type { Fraction, ReportCall, ReportState, ReportTrace } from '@semantifyr/editor-common'
 
 import { findExample, liveFlavors } from '../examples'
-import type { VerificationCaseState } from '../lib/verification/engine'
+import type { VerificationCaseState } from '../lib/verification/state'
 import { servedFlavors } from '../__tests__/fixtures/flavors'
 import { reportOf } from '../__tests__/fixtures/reports'
 import { seedLive, type Seed, type Seeded } from './seededLive'

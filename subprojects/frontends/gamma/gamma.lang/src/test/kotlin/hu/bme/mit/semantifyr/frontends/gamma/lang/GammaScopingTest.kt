@@ -112,37 +112,7 @@ class GammaScopingTest {
 
     @Test
     fun `the atoms of a case resolve in the scope of its component`() {
-        val (model) = parseAll(
-            """
-                package test
-                interface Control {
-                    in event start
-                    out event started
-                }
-                statechart Machine [
-                    port control : provides Control
-                ] {
-                    var count : integer
-                    region Main {
-                        initial Start
-                        state Idle
-                    }
-                    transition from Start to Idle
-                }
-                sync System [
-                    port control : provides Control
-                ] {
-                    component machine : Machine
-                    bind control -> machine.control
-                }
-                verification case OnMachine of Machine {
-                    EF (state Main.Idle and variable count = 0 and raise control.started)
-                }
-                verification case OnSystem of System {
-                    EF (state machine.Main.Idle and variable machine.count = 0 and raise machine.control.started and raise control.started)
-                }
-            """,
-        )
+        val (model) = parseAll(checkNotNull(javaClass.getResource("GammaScopingTest/CaseAtoms.gamma")).readText())
 
         validationTestHelper.assertNoErrors(model)
     }

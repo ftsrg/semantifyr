@@ -23,10 +23,14 @@ dependencyResolutionManagement {
                     patternLayout {
                         artifact("v[revision]/[artifact].[ext]")
                     }
-                    metadataSources { artifact() }
+                    metadataSources {
+                        artifact()
+                    }
                 }
             }
-            filter { includeGroup("hu.bme.mit.ftsrg.theta") }
+            filter {
+                includeGroup("hu.bme.mit.ftsrg.theta")
+            }
         }
         exclusiveContent {
             forRepository {
@@ -36,10 +40,14 @@ dependencyResolutionManagement {
                     patternLayout {
                         artifact("v[revision]/lib/[artifact].[ext]")
                     }
-                    metadataSources { artifact() }
+                    metadataSources {
+                        artifact()
+                    }
                 }
             }
-            filter { includeGroup("hu.bme.mit.ftsrg.theta.lib") }
+            filter {
+                includeGroup("hu.bme.mit.ftsrg.theta.lib")
+            }
         }
         exclusiveContent {
             forRepository {
@@ -49,10 +57,14 @@ dependencyResolutionManagement {
                     patternLayout {
                         artifact("v[revision]/[artifact](-v[revision]-[classifier]).[ext]")
                     }
-                    metadataSources { artifact() }
+                    metadataSources {
+                        artifact()
+                    }
                 }
             }
-            filter { includeModule("org.nodejs", "node") }
+            filter {
+                includeModule("org.nodejs", "node")
+            }
         }
         mavenCentral()
     }
@@ -73,7 +85,9 @@ include(
     "cli-common",
     "corpus-check",
     "semantifyr-cli",
+    "branding",
     "semantifyr-editor-common",
+    "metamodel-builder",
     "oxsts.model",
     "oxsts.lang",
     "oxsts.lang.ide",
@@ -82,17 +96,15 @@ include(
     "website",
 )
 
-rootProject.children.forEach { project ->
-    project.projectDir = file("subprojects/${project.name}")
+rootProject.children.forEach {
+    it.projectDir = file("subprojects/${it.name}")
 }
 
 fun includeDirectory(directoryPath: String, namePrefix: String = "") {
     val directory = file(directoryPath)
-    val projects = directory.listFiles()?.filter {
-        it.isDirectory
-    }?.filter {
+    val projects = directory.listFiles().filter {
         it.resolve("build.gradle.kts").isFile
-    } ?: emptyList()
+    }
 
     for (subProject in projects) {
         val name = "$namePrefix${subProject.name}"

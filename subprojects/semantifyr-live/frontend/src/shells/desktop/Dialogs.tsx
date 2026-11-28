@@ -165,7 +165,6 @@ function DeveloperBody(): React.JSX.Element {
       <Row label="Language" value={language?.presentation.name ?? '-'} />
       <Row label="Version" value={__VERSION__} mono />
       <Row label="Commit" value={__GIT_COMMIT__} mono />
-      <Row label="Built" value={__BUILD_TIME__} />
       <Row label="Page uptime" value={formatDuration(Math.floor((now - PAGE_START) / 1000))} />
       <span className="section-label">{DEVELOPER.server}</span>
       {backend
@@ -173,7 +172,6 @@ function DeveloperBody(): React.JSX.Element {
           <>
             <Row label="Version" value={backend.version} mono />
             <Row label="Commit" value={backend.commit} mono />
-            <Row label="Built" value={backend.buildTime} />
             <Row label="Uptime" value={formatIsoDuration(backend.uptime)} />
             <Row label="Sessions" value={`${backend.activeSessions} / ${backend.maxSessions}`} />
           </>

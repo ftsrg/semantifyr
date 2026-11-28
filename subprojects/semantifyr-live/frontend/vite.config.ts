@@ -4,8 +4,6 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import { execSync } from 'node:child_process';
-import { existsSync, readFileSync } from 'node:fs';
 import type { Plugin, Rollup } from 'vite';
 import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
@@ -13,28 +11,8 @@ import { VitePWA } from 'vite-plugin-pwa';
 import { examplePages, withHead } from './src/examplePages.ts';
 import { LIVE_URL, PAGE_DESCRIPTION, PRODUCT_NAME, SHORT_NAME } from './src/texts.ts';
 
-function getVersion(): string {
-  const properties = readFileSync(new URL('../../../gradle.properties', import.meta.url), 'utf-8');
-  return /^version=(.+)$/m.exec(properties)?.[1]?.trim() ?? 'unknown';
-}
-
-function getGitCommit(): string {
-  try {
-    return execSync('git rev-parse --short HEAD', { encoding: 'utf-8' }).trim();
-  } catch {
-    return 'unknown';
-  }
-}
-
 const backendProxyTarget = process.env.VITE_BACKEND_PROXY_TARGET ?? 'http://localhost:18080';
 
-// a model without a comment has no description file
-function commentOf(fileName: string): string | null {
-  const file = new URL(`./src/snippets/imported/descriptions/${fileName}.description`, import.meta.url);
-  return existsSync(file) ? readFileSync(file, 'utf-8').trim() : null;
-}
-
-// one image serves staging and production, so the build knows no address of its own and the card is production's
 const CARD = `${LIVE_URL}/social-card.png`;
 
 function liveTexts(): Plugin {
@@ -52,7 +30,7 @@ function liveTexts(): Plugin {
       const index = bundle['index.html'] as Rollup.OutputAsset;
       const template = String(index.source);
       index.source = withHead(template, PRODUCT_NAME, PAGE_DESCRIPTION);
-      for (const page of examplePages(template, commentOf)) {
+      for (const page of examplePages(template)) {
         this.emitFile({
           type: 'asset',
           fileName: page.fileName,
@@ -64,13 +42,9 @@ function liveTexts(): Plugin {
 }
 
 export default defineConfig({
-  // out of node_modules, which Gradle fingerprints as the install's output: a run's results would make the next run stale
-  cacheDir: 'build/vite/app',
   define: {
-    __VERSION__: JSON.stringify(getVersion()),
-    __BUILD_TIME__: JSON.stringify(new Date().toISOString()),
-    __GIT_COMMIT__: JSON.stringify(getGitCommit()),
-    __BACKEND_URL__: JSON.stringify(backendProxyTarget),
+    __VERSION__: JSON.stringify(process.env.SEMANTIFYR_VERSION ?? 'unknown'),
+    __GIT_COMMIT__: JSON.stringify(process.env.SEMANTIFYR_COMMIT ?? 'unknown'),
   },
   plugins: [
     react(),
@@ -90,10 +64,10 @@ export default defineConfig({
         theme_color: '#1e1e1e',
         background_color: '#1e1e1e',
         icons: [
-          { src: 'pwa-192.png', sizes: '192x192', type: 'image/png' },
-          { src: 'pwa-512.png', sizes: '512x512', type: 'image/png' },
-          { src: 'pwa-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
-          { src: 'pwa.svg', sizes: 'any', type: 'image/svg+xml' },
+          { src: 'logo-192.png', sizes: '192x192', type: 'image/png' },
+          { src: 'logo-512.png', sizes: '512x512', type: 'image/png' },
+          { src: 'logo-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+          { src: 'logo.svg', sizes: 'any', type: 'image/svg+xml' },
         ],
       },
       workbox: {
@@ -133,6 +107,7 @@ export default defineConfig({
       '/sysml-worker': { target: backendProxyTarget, changeOrigin: true },
     },
   },
+  publicDir: 'build/imported/public',
   build: {
     outDir: 'dist',
     sourcemap: false,

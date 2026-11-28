@@ -1,0 +1,29 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+witness of semantifyr::verification::simple::Incrementing
+
+var step: int := 0
+
+contains root: semantifyr::verification::simple::Incrementing
+
+init {
+    assume(step == 0)
+    inline root.init()
+    assume(root.x == 1)
+    step := 1
+}
+
+tran {
+    assume(step == 1)
+    inline root.main()
+    assume(root.x == 2)
+    step := 2
+}
+
+prop {
+    root.prop()
+}

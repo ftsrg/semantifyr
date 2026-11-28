@@ -6,5 +6,7 @@
 /node_modules/
 /dist/
 /bin/
+/syntaxes/
 /out/
 /icons/
+/LICENSE

@@ -34,7 +34,7 @@ describe('the language switch', () => {
     await page.getByRole('menuitem', { name: /SysML v2's semantics/ }).click()
 
     await casesListed(page)
-    expect((await ui.backend.openSession()).flavorId).toBe('oxsts-with-sysmlv2-library')
+    expect((await ui.backend.openSession()).flavorId).toBe('oxsts-with-sysml-library')
   })
 })
 
@@ -44,9 +44,9 @@ describe('initialization', () => {
     const discovered = new Promise<void>((resolve) => {
       release = resolve
     })
-    ui.backend.answer('discover', async (_request, recorded) => {
+    ui.backend.answer('discover', async (_request, stated) => {
       await discovered
-      return recorded()
+      return stated()
     })
     const page = await ui.open('/gamma/level-crossing')
     const steps = page.locator('.results .initialization-step')
@@ -123,11 +123,11 @@ describe('a switch', () => {
     const discovered = new Promise<void>((resolve) => {
       release = resolve
     })
-    ui.backend.answer('discover', async (request, recorded) => {
+    ui.backend.answer('discover', async (request, stated) => {
       if (request.session.flavorId === 'oxsts') {
         await discovered
       }
-      return recorded()
+      return stated()
     })
     const page = await ui.open('/language/modeling-and-verification', { height: 5800 })
     await expect.poll(async () => {

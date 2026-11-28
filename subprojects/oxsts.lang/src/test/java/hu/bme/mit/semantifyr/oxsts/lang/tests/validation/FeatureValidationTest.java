@@ -171,6 +171,24 @@ public class FeatureValidationTest {
     }
 
     @Test
+    void subsettingAnAbstractFeatureThatASubclassRedefinesPasses() {
+        var parsedPackage = parseHelper.parse("""
+            package test
+            class Item { }
+            abstract class Container {
+                features payload: Item[0..*]
+                contains first: Item subsets payload
+            }
+            class Box : Container {
+                redefine features payload: Item[0..*]
+            }
+            """, CheckMode.ALL);
+
+        parsedPackage.assertNoResourceErrors();
+        parsedPackage.assertNoValidationIssues();
+    }
+
+    @Test
     void subsettingAnInheritedAbstractFeaturePasses() {
         var parsedPackage = parseHelper.parse("""
             package test

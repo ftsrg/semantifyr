@@ -10,7 +10,7 @@ import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.backends.spin.verification.SpinBackend
 import hu.bme.mit.semantifyr.backends.spin.verification.SpinConfig
 import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup
-import hu.bme.mit.semantifyr.verifier.EngineVerdictPortfolio
+import hu.bme.mit.semantifyr.verifier.BackendVerdictPortfolio
 import hu.bme.mit.semantifyr.verifier.SemantifyrVerifierTestHelper
 import hu.bme.mit.semantifyr.verifier.VerificationCase
 import hu.bme.mit.semantifyr.verifier.assumeBackendAvailable
@@ -36,7 +36,7 @@ class SpinSemanticConformanceTest {
         private val context by lazy {
             helper.semantifyrLoader
                 .startContext()
-                .loadModels(Path("build/test-models/semantic"))
+                .loadModels(Path("../../../../oxsts-test-models/semantic"))
                 .buildAndResolve()
         }
 
@@ -101,7 +101,7 @@ class SpinSemanticConformanceTest {
         helper.checkTestModel(
             context,
             verificationCase,
-            verificationPortfolio = EngineVerdictPortfolio(SpinBackend(), SpinConfig.SafeDfs),
+            verificationPortfolio = BackendVerdictPortfolio(SpinBackend(), SpinConfig.SafeDfs),
             outputDirectory = SemantifyrVerifierTestHelper.testArtifactRoot(SpinSemanticConformanceTest::class.java),
         )
     }

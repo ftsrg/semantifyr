@@ -1,0 +1,34 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package test
+
+class Timer {
+    var elapsed: clock := 0
+    var other: clock := 0
+    var flag: bool := false
+
+    redefine init {
+        if (elapsed < 1) {
+            flag := true
+        }
+    }
+
+    redefine tran {
+        choice {
+            elapsed := 0
+        } or {
+            elapsed := 0
+            other := 0
+        }
+        if (elapsed < 1) {
+            flag := true
+        }
+        if (other < 1) {
+            flag := false
+        }
+    }
+}

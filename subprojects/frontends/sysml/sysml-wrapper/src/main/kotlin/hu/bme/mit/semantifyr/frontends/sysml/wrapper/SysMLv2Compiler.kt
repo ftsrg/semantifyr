@@ -21,7 +21,7 @@ import kotlin.io.path.extension
 import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.nameWithoutExtension
 
-// the translation writes its name map beside the OXSTS, which the trace generator reads
+// the transformation writes its name map beside the OXSTS, which the trace generator reads
 fun nameMapPath(oxstsPath: Path): Path {
     return oxstsPath.resolveSibling("${oxstsPath.nameWithoutExtension}.names.json")
 }

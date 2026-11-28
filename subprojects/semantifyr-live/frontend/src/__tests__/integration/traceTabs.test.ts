@@ -6,7 +6,7 @@
 
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { VerificationCaseResult, VerificationCaseSpecification } from '@semantifyr/editor-common'
-import type { LspClient } from '../../lib/verification/engine'
+import type { LspClient } from '../../lib/verification/runs'
 import { followTraceTabs } from '../../trace/traceTabs'
 import { traceTabOf } from '../../trace/TextView'
 import { createTestLive, type TestLive } from '../helpers/live'

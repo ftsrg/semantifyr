@@ -1,0 +1,11 @@
+{
+    "models": [
+        {
+            "file": "level-crossing.semantifyr",
+            "cases": [
+                { "name": "BarrierDownWhileTrainInCrossing", "verdict": "Failed" },
+                { "name": "TwoTrainsCanBeInTheCrossing", "verdict": "Passed" }
+            ]
+        }
+    ]
+}

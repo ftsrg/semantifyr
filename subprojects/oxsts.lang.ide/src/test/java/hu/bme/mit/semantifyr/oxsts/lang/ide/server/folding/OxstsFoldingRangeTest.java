@@ -8,8 +8,8 @@ package hu.bme.mit.semantifyr.oxsts.lang.ide.server.folding;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import hu.bme.mit.semantifyr.oxsts.lang.ide.InlineModels;
 import hu.bme.mit.semantifyr.oxsts.lang.ide.OxstsLanguageServerTest;
-import hu.bme.mit.semantifyr.oxsts.lang.ide.TestModels;
 import java.util.List;
 import org.eclipse.lsp4j.FoldingRange;
 import org.eclipse.lsp4j.FoldingRangeKind;
@@ -23,7 +23,19 @@ class OxstsFoldingRangeTest extends OxstsLanguageServerTest {
 
     @Test
     void everyBlockFoldsOnceAndKeepsItsClosingBraceVisible() throws Exception {
-        var document = openModel(TestModels.TRAFFIC_LIGHTS);
+        var document = openModel(InlineModels.trafficLightWith("""
+                class Blinker {
+                    contains light: TrafficLight[1]
+
+                    redefine tran {
+                        choice {
+                            inline light.setColor(LightColor::Red)
+                        } or {
+                            inline light.setColor(LightColor::Green)
+                        }
+                    }
+                }
+                """));
 
         var lines = foldingRanges(document).stream()
                 .map(range -> new Lines(range.getStartLine(), range.getEndLine()))
@@ -32,13 +44,12 @@ class OxstsFoldingRangeTest extends OxstsLanguageServerTest {
         assertThat(lines).doesNotHaveDuplicates();
         assertThat(lines)
                 .contains(
-                        new Lines(8, 35),
-                        new Lines(16, 17),
-                        new Lines(20, 30),
-                        new Lines(21, 29),
-                        new Lines(21, 23),
-                        new Lines(24, 26),
-                        new Lines(27, 29));
+                        new Lines(17, 37),
+                        new Lines(23, 24),
+                        new Lines(68, 73),
+                        new Lines(69, 72),
+                        new Lines(69, 70),
+                        new Lines(71, 72));
     }
 
     @Test

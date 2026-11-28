@@ -6,6 +6,7 @@
 
 package hu.bme.mit.semantifyr.compiler.pipeline.inlining
 
+import hu.bme.mit.semantifyr.oxsts.lang.tests.utils.TestModels.testModel
 import org.junit.jupiter.api.Test
 
 class VariableDispatchInliningTest : InliningTestBase() {
@@ -24,25 +25,7 @@ class VariableDispatchInliningTest : InliningTestBase() {
     fun `a call through a feature-typed variable chooses among the instances of the feature`() {
         assertInlinedModel(
             "Host",
-            worker + """
-                @VerificationCase
-                class Host {
-                    contains workers: Worker[0..*]
-                    contains first: Worker[1] subsets workers
-                    contains second: Worker[1] subsets workers
-                    contains spare: Worker[1]
-                    var current: workers[0..1] := nothing
-                    redefine init {
-                        current := first
-                    }
-                    redefine tran {
-                        inline current.step()
-                    }
-                    prop {
-                        return EF first.done
-                    }
-                }
-            """,
+            worker + testModel(javaClass, "feature_typed_variable.semantifyr"),
             """
                 init {
                     root.current := root.first
@@ -55,6 +38,8 @@ class VariableDispatchInliningTest : InliningTestBase() {
                     } or {
                         assume(root.current == root.second)
                         root.second.done := true
+                    } or {
+                        assume(root.current == nothing)
                     }
                 }
 
@@ -69,34 +54,7 @@ class VariableDispatchInliningTest : InliningTestBase() {
     fun `a call through a class-typed variable chooses among the instances of the class`() {
         assertInlinedModel(
             "Host",
-            worker + """
-                class Other {
-                    var done: bool := false
-                    tran step() {
-                        done := true
-                    }
-                }
-                @VerificationCase
-                class Host {
-                    contains first: Worker[1]
-                    contains second: Worker[1]
-                    contains other: Other[1]
-                    var current: Worker[0..1] := nothing
-                    redefine init {
-                        choice {
-                            current := first
-                        } or {
-                            current := second
-                        }
-                    }
-                    redefine tran {
-                        inline current.step()
-                    }
-                    prop {
-                        return AG (current == nothing || current == first || current == second)
-                    }
-                }
-            """,
+            worker + testModel(javaClass, "class_typed_variable.semantifyr"),
             """
                 init {
                     choice {
@@ -113,6 +71,8 @@ class VariableDispatchInliningTest : InliningTestBase() {
                     } or {
                         assume(root.current == root.second)
                         root.second.done := true
+                    } or {
+                        assume(root.current == nothing)
                     }
                 }
 
@@ -127,27 +87,7 @@ class VariableDispatchInliningTest : InliningTestBase() {
     fun `a variable passed as an argument dispatches inside the callee`() {
         assertInlinedModel(
             "Host",
-            worker + """
-                @VerificationCase
-                class Host {
-                    contains workers: Worker[0..*]
-                    contains first: Worker[1] subsets workers
-                    contains second: Worker[1] subsets workers
-                    var current: workers[0..1] := nothing
-                    tran run(worker: Worker[0..1]) {
-                        inline worker.step()
-                    }
-                    redefine init {
-                        current := first
-                    }
-                    redefine tran {
-                        inline run(current)
-                    }
-                    prop {
-                        return EF first.done
-                    }
-                }
-            """,
+            worker + testModel(javaClass, "variable_argument.semantifyr"),
             $$$$"""
                 init {
                     root.current := root.first
@@ -161,6 +101,8 @@ class VariableDispatchInliningTest : InliningTestBase() {
                     } or {
                         assume('worker$$$local0' == root.second)
                         root.second.done := true
+                    } or {
+                        assume('worker$$$local0' == nothing)
                     }
                 }
 

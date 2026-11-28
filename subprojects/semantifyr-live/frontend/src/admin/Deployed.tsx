@@ -61,14 +61,12 @@ export function Deployed({ store }: { store: AdminStore }): React.JSX.Element | 
           <dl>
             <Fact label="Version" value={info.version} mono />
             <Fact label="Commit" value={info.commit} mono />
-            <Fact label="Built" value={info.buildTime} />
           </dl>
         </Group>
         <Group title="Frontend">
           <dl>
             <Fact label="Version" value={__VERSION__} mono />
             <Fact label="Commit" value={__GIT_COMMIT__} mono />
-            <Fact label="Built" value={__BUILD_TIME__} />
           </dl>
         </Group>
         <Group title="Limits">
@@ -81,15 +79,15 @@ export function Deployed({ store }: { store: AdminStore }): React.JSX.Element | 
         <Group title="Portfolios">
           <ul className="admin-rows">
             {portfolios.map((portfolio) => {
-              const engines = config.portfolios.find((candidate) => {
+              const backends = config.portfolios.find((candidate) => {
                 return candidate.id === portfolio.id
-              })?.engines ?? []
+              })?.backends ?? []
               return (
                 <li key={portfolio.id} className={`admin-row${portfolio.available ? '' : ' is-unavailable'}`}>
                   <span className="admin-row-name" title={portfolio.id}>{portfolio.displayName}</span>
-                  <span className="admin-engines">
-                    {engines.map((engine) => {
-                      return <span key={engine} className="tag">{engine}</span>
+                  <span className="admin-backends">
+                    {backends.map((backend) => {
+                      return <span key={backend} className="tag">{backend}</span>
                     })}
                   </span>
                   <span className="admin-row-meta">{portfolio.available ? '' : 'unavailable'}</span>

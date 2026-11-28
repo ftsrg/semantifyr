@@ -22,7 +22,6 @@ data class InfoResponse(
     val startedAt: Instant,
     val version: String,
     val commit: String,
-    val buildTime: String,
     val activeSessions: Int,
     val maxSessions: Int,
 )
@@ -176,5 +175,5 @@ data class AdminVerificationConfigResponse(
 @Serializable
 data class AdminPortfolioResponse(
     val id: String,
-    val engines: List<String>,
+    val backends: List<String>,
 )

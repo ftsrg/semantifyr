@@ -1,0 +1,36 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+inlined oxsts of semantifyr::Anything
+var counter: int := 0
+var flag: bool := false
+init {
+    choice {
+        counter := 1
+    } or {
+        havoc(flag)
+    }
+} or {
+    counter := 2
+}
+tran {
+    assume(counter < 5)
+    if (flag) {
+        choice {
+            counter := counter + 1
+        } or {
+            var delta: int := 1
+            counter := counter - delta
+        }
+    } else {
+        havoc(counter)
+    }
+} or {
+    flag := !flag
+}
+prop {
+    AG counter < 5
+}

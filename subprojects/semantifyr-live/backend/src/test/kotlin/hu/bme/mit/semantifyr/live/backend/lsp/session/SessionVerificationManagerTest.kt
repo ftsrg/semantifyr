@@ -265,7 +265,7 @@ class SessionVerificationManagerTest {
         assertThat(phaseMilliseconds("instantiation")).isEqualTo(2.0)
         assertThat(phaseMilliseconds("flattening")).isEqualTo(4.0)
         assertThat(phaseMilliseconds("preparation")).isEqualTo(20.0)
-        assertThat(phaseMilliseconds("engine")).isEqualTo(50.0)
+        assertThat(phaseMilliseconds("backend")).isEqualTo(50.0)
         assertThat(phaseMilliseconds("back_annotation")).isEqualTo(20.0)
     }
 

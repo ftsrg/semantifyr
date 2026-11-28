@@ -11,6 +11,6 @@ import { baseConfig } from '../../eslint.config.base.js';
 
 export default baseConfig({
   tsconfigRootDir: path.dirname(fileURLToPath(import.meta.url)),
-  ignores: ['.docusaurus/', 'static-imported-branding/', 'babel.config.cts'],
+  ignores: ['.docusaurus/'],
   react: true,
 });

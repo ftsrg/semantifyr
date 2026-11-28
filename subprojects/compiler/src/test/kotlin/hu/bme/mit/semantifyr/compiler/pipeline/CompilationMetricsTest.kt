@@ -19,15 +19,13 @@ import hu.bme.mit.semantifyr.compiler.pipeline.optimization.analyses.ConeOfInflu
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.analyses.ConstantValueAnalysis
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.analyses.LivenessAnalysis
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.analyses.ReachingDefinitionsAnalysis
-import hu.bme.mit.semantifyr.compiler.reader.SemantifyrLoader
 import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration
-import hu.bme.mit.semantifyr.oxsts.model.oxsts.OxstsModelPackage
+import hu.bme.mit.semantifyr.oxsts.lang.tests.utils.OxstsPackageParseHelper
+import hu.bme.mit.semantifyr.oxsts.lang.tests.utils.TestModels.testModel
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Path
-import kotlin.io.path.Path
 import kotlin.time.Duration
 
 @InjectWithOxsts
@@ -37,25 +35,25 @@ class CompilationMetricsTest {
     private lateinit var injector: Injector
 
     @Inject
-    private lateinit var loader: SemantifyrLoader
+    private lateinit var parseHelper: OxstsPackageParseHelper
 
     @TempDir
     lateinit var temporaryDirectory: Path
 
     @Test
-    fun `model sizes count the smoke case at every level`() {
-        val metrics = compileSmokeCase(OptimizationConfig.ALL)
+    fun `model sizes count the model at every level`() {
+        val metrics = compileModel()
 
-        assertThat(metrics.inputSize).isEqualTo(ModelSize(variables = 1, operations = 4, expressions = 13))
-        assertThat(metrics.inlinedSize.variables).isEqualTo(1)
-        assertThat(metrics.flattenedSize.variables).isEqualTo(1)
+        assertThat(metrics.inputSize).isEqualTo(ModelSize(variables = 1, operations = 7, expressions = 24))
+        assertThat(metrics.inlinedSize.variables).isEqualTo(2)
+        assertThat(metrics.flattenedSize.variables).isEqualTo(2)
         assertThat(metrics.inlinedSize.operations).isPositive
         assertThat(metrics.flattenedSize.expressions).isPositive
     }
 
     @Test
     fun `every phase is timed and unfolding is their sum`() {
-        val metrics = compileSmokeCase(OptimizationConfig.ALL)
+        val metrics = compileModel()
 
         assertThat(listOf(metrics.createDuration, metrics.instantiationDuration, metrics.inliningDuration, metrics.flatteningDuration))
             .allMatch { it.isPositive() }
@@ -67,7 +65,7 @@ class CompilationMetricsTest {
 
     @Test
     fun `the inliner's own steps frame its optimizer's passes and every flattened pass runs alike`() {
-        val metrics = compileSmokeCase(OptimizationConfig.ALL)
+        val metrics = compileModel()
 
         val inliningPasses = metrics.inliningOptimization.passes.map {
             it.name
@@ -96,20 +94,17 @@ class CompilationMetricsTest {
 
     @Test
     fun `counters and firings are deterministic`() {
-        val first = compileSmokeCase(OptimizationConfig.ALL).withoutDurations()
-        val second = compileSmokeCase(OptimizationConfig.ALL).withoutDurations()
+        val first = compileModel().withoutDurations()
+        val second = compileModel().withoutDurations()
 
         assertThat(second).isEqualTo(first)
     }
 
-    private fun compileSmokeCase(optimization: OptimizationConfig): CompilationMetrics {
-        val context = loader.loadStandaloneModel(Path("../../oxsts-test-models/smoke/smoke.semantifyr"))
-        val classDeclaration = context.modelResources.asSequence().flatMap {
-            it.contents
-        }.filterIsInstance<OxstsModelPackage>().flatMap {
-            it.declarations
-        }.filterIsInstance<ClassDeclaration>().single()
-        val compiler = SemantifyrCompiler(injector, ArtifactConfig.NONE, optimization)
+    private fun compileModel(): CompilationMetrics {
+        val parsed = parseHelper.parse(MODEL)
+        parsed.assertNoResourceErrors()
+        val classDeclaration = parsed.classByName("Host").eObject()
+        val compiler = SemantifyrCompiler(injector, ArtifactConfig.NONE, OptimizationConfig.ALL)
         return compiler.compile(classDeclaration, temporaryDirectory).compilationMetrics
     }
 
@@ -134,5 +129,10 @@ class CompilationMetricsTest {
                 it.copy(duration = Duration.ZERO)
             },
         )
+    }
+
+    companion object {
+        // two instances of one class, so that the inlined and the flattened model count a variable per instance
+        private val MODEL = testModel(CompilationMetricsTest::class.java, "model.semantifyr")
     }
 }

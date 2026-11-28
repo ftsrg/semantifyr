@@ -12,6 +12,28 @@ import org.junit.jupiter.api.Test
 class TemporalOperatorInliningTest : InliningTestBase() {
 
     @Test
+    fun `a property without a temporal operator at its root fails compilation`() {
+        prepare(
+            "Host",
+            """
+                package inlining::tests
+                @VerificationCase
+                class Host {
+                    var counter: int := 0
+                    redefine prop {
+                        return counter == 0
+                    }
+                }
+            """,
+        ) {
+            assertThatThrownBy {
+                inlineAll(it)
+            }.isInstanceOf(IllegalStateException::class.java)
+                .hasMessageContaining("Property body must have a temporal operator (`AG` or `EF`) at the top level.")
+        }
+    }
+
+    @Test
     fun `a temporal operator below the root of the property fails compilation`() {
         prepare(
             "Host",
@@ -20,7 +42,7 @@ class TemporalOperatorInliningTest : InliningTestBase() {
                 @VerificationCase
                 class Host {
                     var counter: int := 0
-                    prop {
+                    redefine prop {
                         return AG (EF counter == 0)
                     }
                 }
@@ -42,7 +64,7 @@ class TemporalOperatorInliningTest : InliningTestBase() {
                 @VerificationCase
                 class Host {
                     var flag: bool := false
-                    prop {
+                    redefine prop {
                         return !(AG flag)
                     }
                 }
@@ -70,7 +92,7 @@ class TemporalOperatorInliningTest : InliningTestBase() {
                 @VerificationCase
                 class Host {
                     var flag: bool := false
-                    prop {
+                    redefine prop {
                         return !(EF flag)
                     }
                 }

@@ -13,16 +13,15 @@ import org.junit.jupiter.api.Test
 class DistributionTest : DistributionTestBase("semantifyr-sysml") {
 
     @Test
-    fun `the bundled smoke model is verified with the bundled Theta and its trace written`() {
+    fun `the smoke model is verified and its trace written`() {
         assumeNodeOnPath()
 
         val run = run(
-            "verify", "--json", "--theta-executor", "shell", "--portfolio", "theta-bounded-bmc", "-d", "artifacts",
-            "--case-name", "semantifyr::sysml::model::LampLitOnlyWhileSwitchOnViolated",
-            home.resolve("models/smoke/room.sysml").toString(),
+            "verify", "--json", "--theta-executor", "shell", "--portfolio", "theta-bounded-bmc", "-d", "artifacts", "--case-name", "semantifyr::sysml::model::SwitchOnReachable",
+            smokeModel.toAbsolutePath().toString(),
         )
 
-        assertThat(run.exitCode).describedAs(run.stderr).isEqualTo(5)
+        assertThat(run.exitCode).describedAs(run.stderr).isZero()
         assertThat(reportOf(run).resolveSibling("trace.sysml")).exists()
     }
 

@@ -23,12 +23,9 @@ import org.junit.jupiter.api.Test;
 
 class TypeHierarchyTest extends OxstsLanguageServerTest {
 
-    // Markers: the Lamp class, then its toggle transition.
     private static final MarkedText LAMPS_LIBRARY =
             MarkedText.of(MarkedText.markEvery(InlineModels.LAMP_LIBRARY, "Lamp {", "toggle("));
 
-    // Markers: the DimmableLamp class, the Lamp reference, DimmableLamp's toggle, the SmartLamp class, SmartLamp's
-    // toggle.
     private static final MarkedText GARAGE = MarkedText.of("""
             package example::garage
 

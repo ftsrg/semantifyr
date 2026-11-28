@@ -9,6 +9,7 @@ package hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns.expression
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationPattern
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.Worklist
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.copy
+import hu.bme.mit.semantifyr.compiler.pipeline.utils.mayHaveNoValue
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.IfThenElse
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralBoolean
 import org.eclipse.emf.ecore.EObject
@@ -23,12 +24,12 @@ class IfThenElseConstantGuardPattern : OptimizationPattern {
             return false
         }
         val guard = element.guard as? LiteralBoolean ?: return false
-        val replacement = if (guard.isValue) {
-            element.then
+        val (replacement, erased) = if (guard.isValue) {
+            element.then to element.`else`
         } else {
-            element.`else`
+            element.`else` to element.then
         }
-        if (replacement == null) {
+        if (replacement == null || erased.mayHaveNoValue()) {
             return false
         }
         val parent = element.eContainer() ?: return false
@@ -48,7 +49,7 @@ class IfThenElseIdenticalBranchesPattern : OptimizationPattern {
         }
         val thenBranch = element.then ?: return false
         val elseBranch = element.`else` ?: return false
-        if (!EcoreUtil.equals(thenBranch, elseBranch)) {
+        if (!EcoreUtil.equals(thenBranch, elseBranch) || element.guard.mayHaveNoValue()) {
             return false
         }
         val parent = element.eContainer() ?: return false

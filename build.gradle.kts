@@ -4,85 +4,24 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
+import hu.bme.mit.semantifyr.gradle.semantifyrArtifact
+
 plugins {
     alias(libs.plugins.kotlin.jvm) apply false
     alias(libs.plugins.kotlin.serialization) apply false
     alias(libs.plugins.sonarqube)
-    alias(libs.plugins.dokka)
     `jacoco-report-aggregation`
+    id("hu.bme.mit.semantifyr.nodejs")
 }
-
-val javadocModules = listOf(
-    "oxsts.lang",
-    "oxsts.model",
-)
-
-val undocumentedModules = listOf(
-    "corpus-check",
-)
-
-// build-logic's semantifyrArtifact, which the root project does not load
-fun semantifyrArtifact(kind: String): Action<AttributeContainer> {
-    return Action {
-        attribute(Category.CATEGORY_ATTRIBUTE, objects.named(Category.LIBRARY))
-        attribute(Attribute.of("hu.bme.mit.semantifyr.artifact", String::class.java), kind)
-    }
-}
-
-val javadoc = configurations.dependencyScope("javadoc")
-val javadocFiles = configurations.resolvable("javadocFiles") {
-    extendsFrom(javadoc.get())
-    attributes(semantifyrArtifact("javadoc"))
-}
-
-val apiDocsDirectory = layout.buildDirectory.dir("api")
 
 dependencies {
-    subprojects.forEach { subproject ->
-        subproject.plugins.withId("hu.bme.mit.semantifyr.gradle.conventions.jvm") {
-            jacocoAggregation(project(subproject.path))
-        }
-        subproject.plugins.withId("org.jetbrains.kotlin.jvm") {
-            if (subproject.name !in javadocModules && subproject.name !in undocumentedModules) {
-                dokka(project(subproject.path))
-            }
-        }
-    }
-    javadocModules.forEach {
-        javadoc(project(":$it"))
-    }
-}
-
-dokka {
-    moduleName = "Semantifyr"
-}
-
-val apiDocs = tasks.register<Sync>("apiDocs") {
-    group = "documentation"
-
-    from(tasks.named("dokkaGeneratePublicationHtml")) {
-        into("kotlin")
-    }
-    from(javadocFiles) {
-        into("java")
-    }
-    into(apiDocsDirectory)
-
-    val links = listOf("kotlin" to "Kotlin modules") + javadocModules.map { "java/$it" to it }
-    val items = links.joinToString("\n") { (path, label) -> "<li><a href=\"$path/index.html\">$label</a></li>" }
-    val index = "<!doctype html>\n<html lang=\"en\">\n<meta charset=\"utf-8\">\n<title>Semantifyr API</title>\n<h1>Semantifyr API</h1>\n<ul>\n$items\n</ul>\n"
-    val indexFile = apiDocsDirectory.map { it.file("index.html").asFile }
-    inputs.property("index", index)
-    doLast {
-        indexFile.get().writeText(index)
-    }
-}
-
-configurations.consumable("apiDocsElements") {
-    attributes(semantifyrArtifact("api-docs"))
-    outgoing.artifact(apiDocsDirectory) {
-        builtBy(apiDocs)
-    }
+    jacocoAggregation(project(":benchmark"))
+    jacocoAggregation(project(":corpus-check"))
+    jacocoAggregation(project(":gamma-cli"))
+    jacocoAggregation(project(":semantifyr-cli"))
+    jacocoAggregation(project(":semantifyr-live-backend"))
+    jacocoAggregation(project(":sysml-cli"))
+    jacocoAggregation(project(":website"))
 }
 
 val suiteReportTasks = listOf(
@@ -99,47 +38,72 @@ val suiteReportTasks = listOf(
     }
 }
 
-val coverageReport = tasks.register<JacocoReport>("coverageReport") {
-    group = "verification"
-
-    suiteReportTasks.forEach { reportTask ->
-        executionData.from(
-            reportTask.map {
-                it.executionData
-            },
-        )
-        sourceDirectories.from(
-            reportTask.map {
-                it.sourceDirectories
-            },
-        )
-        classDirectories.from(
-            reportTask.map {
-                it.classDirectories
-            },
-        )
-    }
-
-    reports {
-        xml.required = true
-    }
-}
-
 tasks.named("sonar") {
-    dependsOn(coverageReport)
+    dependsOn(suiteReportTasks)
 }
-
-val generatedSourceExclusions = "**/src-gen/**,**/generated/**,**/xtext-gen/**,**/emf-gen/**"
 
 sonar {
     properties {
-        property("sonar.coverage.jacoco.xmlReportPaths", coverageReport.get().reports.xml.outputLocation.get().asFile)
-        property("sonar.coverage.exclusions", generatedSourceExclusions)
-        property("sonar.exclusions", generatedSourceExclusions)
+        property(
+            "sonar.coverage.jacoco.xmlReportPaths",
+            suiteReportTasks.map {
+                it.get().reports.xml.outputLocation.get().asFile
+            },
+        )
+        property("sonar.coverage.exclusions", "subprojects/metamodel-builder/**")
+        property(
+            "sonar.exclusions",
+            listOf(
+                "**/generated/**",
+                "**/xtext-gen/**",
+                "**/emf-gen/**",
+            ),
+        )
         property("sonar.projectKey", "ftsrg_semantifyr")
         property("sonar.organization", "ftsrg-github")
         property("sonar.projectName", "Semantifyr")
-        property("sonar.host.url", "https://sonarcloud.io")
-        property("sonar.sourceEncoding", "UTF-8")
+    }
+}
+
+val workspaceManifests = providers.fileContents(layout.projectDirectory.file("pnpm-workspace.yaml")).asText.map { workspace ->
+    Regex("""^\s*-\s*(\S+)\s*$""", RegexOption.MULTILINE).findAll(workspace).map {
+        "${it.groupValues[1]}/package.json"
+    }.toList()
+}
+
+tasks.pnpmInstall {
+    inputs.file(layout.projectDirectory.file("pnpm-workspace.yaml")).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.files(workspaceManifests).withPathSensitivity(PathSensitivity.RELATIVE)
+}
+
+configurations.consumable("pnpmWorkspaceElements") {
+    attributes(semantifyrArtifact("pnpm-workspace"))
+    outgoing.artifact(layout.projectDirectory.file("node_modules/.modules.yaml")) {
+        builtBy(tasks.pnpmInstall)
+    }
+}
+
+spotless {
+    kotlin {
+        target(
+            fileTree("build-logic/src") {
+                include("**/*.kt")
+            },
+        )
+        ktlint(libs.versions.ktlint.get())
+    }
+
+    kotlinGradle {
+        target(
+            fileTree(".") {
+                include("*.gradle.kts")
+            },
+            fileTree("build-logic") {
+                include("*.gradle.kts")
+            },
+            fileTree("build-logic/src") {
+                include("**/*.gradle.kts")
+            },
+        )
     }
 }

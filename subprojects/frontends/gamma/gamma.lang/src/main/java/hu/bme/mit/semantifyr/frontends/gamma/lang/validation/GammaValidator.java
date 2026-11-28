@@ -46,6 +46,10 @@ public class GammaValidator extends AbstractGammaValidator {
     public static final String EQUAL_QUEUE_PRIORITIES = "Gamma.EQUAL_QUEUE_PRIORITIES";
     public static final String INVALID_COMPONENT_KIND = "Gamma.INVALID_COMPONENT_KIND";
     public static final String PORT_IN_CHANNEL_AND_BINDING = "Gamma.PORT_IN_CHANNEL_AND_BINDING";
+    public static final String NEGATIVE_TIME = "Gamma.NEGATIVE_TIME";
+    public static final String MAXIMUM_PERIOD_BELOW_MINIMUM = "Gamma.MAXIMUM_PERIOD_BELOW_MINIMUM";
+    public static final String SEVERAL_SCHEDULING_CONSTRAINTS = "Gamma.SEVERAL_SCHEDULING_CONSTRAINTS";
+    public static final String ASYNCHRONOUS_SCHEDULING_CONSTRAINT = "Gamma.ASYNCHRONOUS_SCHEDULING_CONSTRAINT";
 
     private static final String TRACE_FILE_EXTENSION = "get";
 
@@ -332,6 +336,57 @@ public class GammaValidator extends AbstractGammaValidator {
                     GammaPackage.Literals.SET_TIMEOUT_ACTION__VALUE,
                     NON_POSITIVE_TIME);
         }
+    }
+
+    @Check
+    public void checkSchedulingConstraints(ComponentDeclaration component) {
+        var constraints = component.getSchedulingConstraints();
+        if (GammaUtils.isAsynchronous(component)) {
+            for (var constraint : constraints) {
+                error(
+                        "'" + component.getName()
+                                + "' is an asynchronous component, which takes no scheduling constraint",
+                        constraint,
+                        null,
+                        ASYNCHRONOUS_SCHEDULING_CONSTRAINT);
+            }
+            return;
+        }
+        for (var constraint : constraints.stream().skip(1).toList()) {
+            error(
+                    "'" + component.getName() + "' has more than one scheduling constraint",
+                    constraint,
+                    null,
+                    SEVERAL_SCHEDULING_CONSTRAINTS);
+        }
+    }
+
+    @Check
+    public void checkPeriods(SchedulingConstraint constraint) {
+        var minimum = checkNotNegative(constraint, GammaPackage.Literals.SCHEDULING_CONSTRAINT__MINIMUM_PERIOD);
+        var maximum = checkNotNegative(constraint, GammaPackage.Literals.SCHEDULING_CONSTRAINT__MAXIMUM_PERIOD);
+        if (minimum != null && maximum != null && maximum < minimum) {
+            error(
+                    "The maximum orchestrating period is below the minimum",
+                    constraint,
+                    GammaPackage.Literals.SCHEDULING_CONSTRAINT__MAXIMUM_PERIOD,
+                    MAXIMUM_PERIOD_BELOW_MINIMUM);
+        }
+    }
+
+    private Long checkNotNegative(SchedulingConstraint constraint, EReference feature) {
+        if (!(constraint.eGet(feature) instanceof TimeSpecification period)) {
+            return null;
+        }
+        var milliseconds = GammaUtils.evaluateMilliseconds(period);
+        if (milliseconds != null && milliseconds < 0) {
+            error(
+                    "A period must not be negative, it is " + GammaUtils.evaluateInteger(period.getValue()),
+                    constraint,
+                    feature,
+                    NEGATIVE_TIME);
+        }
+        return milliseconds;
     }
 
     @Check

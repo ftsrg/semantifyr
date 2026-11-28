@@ -1,0 +1,23 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+inlined oxsts of semantifyr::Anything
+var observed: int := 0
+var guard: int := 0
+init {
+}
+tran {
+    choice {
+        assume(guard == 0)
+        observed := 1
+    } or {
+        assume(guard != 0)
+        observed := 2
+    }
+}
+prop {
+    AG (observed == 1)
+}

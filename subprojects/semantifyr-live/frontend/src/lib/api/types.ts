@@ -15,7 +15,6 @@ export interface InfoResponse {
   startedAt: string
   version: string
   commit: string
-  buildTime: string
   activeSessions: number
   maxSessions: number
 }
@@ -90,7 +89,7 @@ export interface AdminWhoamiResponse {
 
 export interface AdminPortfolioResponse {
   id: string
-  engines: string[]
+  backends: string[]
 }
 
 export interface AdminConfigResponse {

@@ -7,6 +7,7 @@
 package hu.bme.mit.semantifyr.backends.nuxmv.transformation
 
 import hu.bme.mit.semantifyr.backend.BackendUnsupportedException
+import hu.bme.mit.semantifyr.backend.testModel
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -22,8 +23,12 @@ class NuxmvModelTransformerTest : NuxmvTransformationTestBase() {
     """
 
     private suspend fun transform(body: String): NuxmvArtifacts {
+        return artifactsOf("inlined oxsts of semantifyr::Anything\n${body.trimIndent()}")
+    }
+
+    private suspend fun artifactsOf(model: String): NuxmvArtifacts {
         return withTransformer {
-            it.transform(parse("inlined oxsts of semantifyr::Anything\n${body.trimIndent()}", colors))
+            it.transform(parse(model, colors))
         }
     }
 
@@ -456,34 +461,7 @@ class NuxmvModelTransformerTest : NuxmvTransformationTestBase() {
 
     @Test
     suspend fun `choices in several transition branches get distinct input variables`() {
-        val smv = transform(
-            """
-                var counter : int := 0
-                var step : int := 0
-                init {
-                }
-                tran {
-                    assume(step == 0)
-                    choice {
-                        counter := 1
-                    } or {
-                        counter := 2
-                    }
-                    step := 1
-                } or {
-                    assume(step == 1)
-                    choice {
-                        counter := 3
-                    } or {
-                        counter := 4
-                    }
-                    step := 2
-                }
-                prop {
-                    AG true
-                }
-            """,
-        ).smv
+        val smv = artifactsOf(testModel("choices_in_several_branches.semantifyr")).smv
 
         assertThat(declaredNames(smv)).doesNotHaveDuplicates()
         assertThat(
@@ -495,29 +473,7 @@ class NuxmvModelTransformerTest : NuxmvTransformationTestBase() {
 
     @Test
     suspend fun `several init branches get distinct seeds and frozen variables`() {
-        val smv = transform(
-            """
-                var counter : int := 0
-                init {
-                    choice {
-                        counter := 1
-                    } or {
-                        counter := 2
-                    }
-                } or {
-                    choice {
-                        counter := 3
-                    } or {
-                        counter := 4
-                    }
-                }
-                tran {
-                }
-                prop {
-                    AG true
-                }
-            """,
-        ).smv
+        val smv = artifactsOf(testModel("several_init_branches.semantifyr")).smv
 
         assertThat(declaredNames(smv)).doesNotHaveDuplicates()
         assertThat(

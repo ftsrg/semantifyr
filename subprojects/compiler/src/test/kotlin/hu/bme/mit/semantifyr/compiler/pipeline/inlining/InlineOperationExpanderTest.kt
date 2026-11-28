@@ -7,6 +7,7 @@
 package hu.bme.mit.semantifyr.compiler.pipeline.inlining
 
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.eAllOfType
+import hu.bme.mit.semantifyr.oxsts.lang.tests.utils.TestModels.testModel
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlineOperation
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.eclipse.xtext.EcoreUtil2
@@ -114,115 +115,20 @@ class InlineOperationExpanderTest : InliningTestBase() {
 
     @Test
     fun `inline seq for over an integer range unrolls into sequential steps`() = assertFirstExpansion(
-        input = """
-            inlined oxsts of semantifyr::Anything
-            var total: int := 0
-            init {
-            }
-            tran {
-                inline for (index in 1..3) {
-                    total := total + index
-                }
-            }
-            prop {
-                AG true
-            }
-        """,
-        expected = """
-            inlined oxsts of semantifyr::Anything
-            var total: int := 0
-            init {
-            }
-            tran {
-                {
-                    {
-                        total := total + 1
-                    }
-                    {
-                        total := total + 2
-                    }
-                    {
-                        total := total + 3
-                    }
-                }
-            }
-            prop {
-                AG true
-            }
-        """,
+        input = testModel(javaClass, "seq_for_over_range.semantifyr"),
+        expected = testModel(javaClass, "seq_for_over_range_expected.semantifyr"),
     )
 
     @Test
     fun `inline choice for over an integer range produces a choice over each value`() = assertFirstExpansion(
-        input = """
-            inlined oxsts of semantifyr::Anything
-            var chosen: int := 0
-            init {
-            }
-            tran {
-                inline for choice (index in 1..3) {
-                    chosen := index
-                }
-            }
-            prop {
-                AG true
-            }
-        """,
-        expected = """
-            inlined oxsts of semantifyr::Anything
-            var chosen: int := 0
-            init {
-            }
-            tran {
-                choice {
-                    chosen := 1
-                } or {
-                    chosen := 2
-                } or {
-                    chosen := 3
-                }
-            }
-            prop {
-                AG true
-            }
-        """,
+        input = testModel(javaClass, "choice_for_over_range.semantifyr"),
+        expected = testModel(javaClass, "choice_for_over_range_expected.semantifyr"),
     )
 
     @Test
     fun `inline seq for over an exclusive range stops before the upper bound`() = assertFirstExpansion(
-        input = """
-            inlined oxsts of semantifyr::Anything
-            var total: int := 0
-            init {
-            }
-            tran {
-                inline for (index in 1..<3) {
-                    total := total + index
-                }
-            }
-            prop {
-                AG true
-            }
-        """,
-        expected = """
-            inlined oxsts of semantifyr::Anything
-            var total: int := 0
-            init {
-            }
-            tran {
-                {
-                    {
-                        total := total + 1
-                    }
-                    {
-                        total := total + 2
-                    }
-                }
-            }
-            prop {
-                AG true
-            }
-        """,
+        input = testModel(javaClass, "seq_for_over_exclusive_range.semantifyr"),
+        expected = testModel(javaClass, "seq_for_over_exclusive_range_expected.semantifyr"),
     )
 
     @Test
@@ -326,42 +232,8 @@ class InlineOperationExpanderTest : InliningTestBase() {
 
     @Test
     fun `inline seq for over a negative integer range unrolls in ascending order`() = assertFirstExpansion(
-        input = """
-            inlined oxsts of semantifyr::Anything
-            var total: int := 0
-            init {
-            }
-            tran {
-                inline for (index in -2..0) {
-                    total := total + index
-                }
-            }
-            prop {
-                AG true
-            }
-        """,
-        expected = """
-            inlined oxsts of semantifyr::Anything
-            var total: int := 0
-            init {
-            }
-            tran {
-                {
-                    {
-                        total := total + -2
-                    }
-                    {
-                        total := total + -1
-                    }
-                    {
-                        total := total + 0
-                    }
-                }
-            }
-            prop {
-                AG true
-            }
-        """,
+        input = testModel(javaClass, "seq_for_over_negative_range.semantifyr"),
+        expected = testModel(javaClass, "seq_for_over_negative_range_expected.semantifyr"),
     )
 
     @Test
@@ -400,82 +272,14 @@ class InlineOperationExpanderTest : InliningTestBase() {
 
     @Test
     fun `inline seq for over a range from minus one unrolls every value`() = assertFirstExpansion(
-        input = """
-            inlined oxsts of semantifyr::Anything
-            var total: int := 0
-            init {
-            }
-            tran {
-                inline for (index in -1..1) {
-                    total := total + index
-                }
-            }
-            prop {
-                AG true
-            }
-        """,
-        expected = """
-            inlined oxsts of semantifyr::Anything
-            var total: int := 0
-            init {
-            }
-            tran {
-                {
-                    {
-                        total := total + -1
-                    }
-                    {
-                        total := total + 0
-                    }
-                    {
-                        total := total + 1
-                    }
-                }
-            }
-            prop {
-                AG true
-            }
-        """,
+        input = testModel(javaClass, "seq_for_from_minus_one.semantifyr"),
+        expected = testModel(javaClass, "seq_for_from_minus_one_expected.semantifyr"),
     )
 
     @Test
     fun `inline seq for over a range of negative values ending at minus one unrolls every value`() = assertFirstExpansion(
-        input = """
-            inlined oxsts of semantifyr::Anything
-            var total: int := 0
-            init {
-            }
-            tran {
-                inline for (index in -3..-1) {
-                    total := total + index
-                }
-            }
-            prop {
-                AG true
-            }
-        """,
-        expected = """
-            inlined oxsts of semantifyr::Anything
-            var total: int := 0
-            init {
-            }
-            tran {
-                {
-                    {
-                        total := total + -3
-                    }
-                    {
-                        total := total + -2
-                    }
-                    {
-                        total := total + -1
-                    }
-                }
-            }
-            prop {
-                AG true
-            }
-        """,
+        input = testModel(javaClass, "seq_for_to_minus_one.semantifyr"),
+        expected = testModel(javaClass, "seq_for_to_minus_one_expected.semantifyr"),
     )
 
     @Test

@@ -61,6 +61,10 @@ class GammaGrammarTest {
         return (parse(text) as GammaModelPackage).components.single() as StatechartDeclaration
     }
 
+    private fun model(name: String): String {
+        return checkNotNull(javaClass.getResource("GammaGrammarTest/$name")).readText()
+    }
+
     @Test
     fun `an unannotated statechart takes Gamma's default of every variation point`() {
         val statechart = statechart(
@@ -188,28 +192,7 @@ class GammaGrammarTest {
 
     @Test
     fun `interfaces, events, records and cascades take Gamma's syntax`() {
-        val gammaPackage = parse(
-            """
-                package test
-                type Point : record {
-                    x : integer,
-                    y : integer
-                }
-                interface Base {
-                    in persistent event moved(point : Point)
-                }
-                interface Extended extends Base {
-                    inout event ping
-                }
-                cascade System [
-                    port base : provides Base
-                ] {
-                    component first : System
-                    component second : System
-                    execute second, first
-                }
-            """,
-        ) as GammaModelPackage
+        val gammaPackage = parse(model("InterfacesEventsRecordsAndCascades.gamma")) as GammaModelPackage
 
         assertThat(gammaPackage.typeDeclarations.single().type).isInstanceOf(RecordType::class.java)
         val moved = gammaPackage.interfaces.first().events.single()
@@ -227,39 +210,7 @@ class GammaGrammarTest {
 
     @Test
     fun `a trace file holds imports, a header naming a case and steps`() {
-        val trace = parse(
-            """
-                import test::model
-
-                trace Checked of Case
-
-                step {
-                    act {
-                        reset
-                    }
-                    assert {
-                    }
-                }
-                step {
-                    act {
-                        raise control.start
-                        elapse 1000
-                        schedule component
-                    }
-                    assert {
-                        state machine->inner.Main.Idle;
-                        state Main.Idle;
-                        variable count = 1;
-                        variable machine.count = 1;
-                        transition machine from Idle to Busy when control.start;
-                        transition from Idle to Busy;
-                        transition First;
-                        raise control.done;
-                        raise machine->inner.control.done;
-                    }
-                }
-            """,
-        ) as ExecutionTrace
+        val trace = parse(model("Trace.get")) as ExecutionTrace
 
         assertThat(trace.steps).hasSize(2)
         assertThat(trace.steps.last().acts).hasSize(3)
@@ -324,45 +275,7 @@ class GammaGrammarTest {
 
     @Test
     fun `adapters, queues, clocks and asynchronous composites take Gamma's syntax`() {
-        val gammaPackage = parse(
-            """
-                package test
-                interface Signals {
-                    in event first(value : integer)
-                    in event second
-                }
-                @Asynchronous
-                statechart Sender capacity (2) [
-                    port signals : provides Signals
-                ] {
-                }
-                statechart Receiver [
-                    port signals : provides Signals
-                ] {
-                }
-                adapter Buffered of component receiver : Receiver [
-                    port control : provides Signals
-                ] {
-                    clock ticker (rate = 3 ms)
-                    when ticker / run
-                    when signals.second / reset-other-queues
-                    queue high (priority = 2, capacity = 1) {
-                        ticker, signals.second
-                    }
-                    queue low (priority = 1, capacity = 2, discard = oldest) {
-                        signals.first, control.any -> signals.any
-                    }
-                }
-                async System {
-                    component sender : Sender
-                    component buffered : Buffered
-                }
-                scheduled-async Scheduled {
-                    component buffered : Buffered
-                    execute buffered, buffered
-                }
-            """,
-        ) as GammaModelPackage
+        val gammaPackage = parse(model("AdaptersQueuesAndClocks.gamma")) as GammaModelPackage
 
         val sender = gammaPackage.components[0] as StatechartDeclaration
         assertThat(sender.isAsynchronous).isTrue
@@ -392,6 +305,39 @@ class GammaGrammarTest {
         assertThat(adapter.messageQueues[0].eventPassings[0].source).isInstanceOf(ClockTickReference::class.java)
         assertThat(gammaPackage.components[3]).isInstanceOf(AsynchronousCompositeComponentDeclaration::class.java)
         assertThat((gammaPackage.components[4] as ScheduledAsynchronousCompositeComponentDeclaration).executionList).hasSize(2)
+    }
+
+    @Test
+    fun `a statechart, a synchronous and a cascade composite hold a scheduling constraint in Gamma's words`() {
+        val gammaPackage = parse(model("SchedulingConstraints.gamma")) as GammaModelPackage
+
+        assertThat(
+            gammaPackage.components.map { component ->
+                component.schedulingConstraints.single().let {
+                    listOf(it.minimumPeriod.unit, it.maximumPeriod.unit)
+                }
+            },
+        ).containsExactly(
+            listOf(TimeUnit.MILLISECOND, TimeUnit.SECOND),
+            listOf(TimeUnit.SECOND, TimeUnit.SECOND),
+            listOf(TimeUnit.SECOND, TimeUnit.MILLISECOND),
+        )
+    }
+
+    @Test
+    fun `a scheduling constraint without its maximum does not parse`() {
+        val root = parseHelper.parse(
+            """
+                package test
+                statechart Machine {
+                    scheduling-constraint {
+                        minimum-orchestrating-period : 1 s
+                    }
+                }
+            """.trimIndent(),
+        )
+
+        assertThat(root.eResource().errors).isNotEmpty
     }
 
     @Test

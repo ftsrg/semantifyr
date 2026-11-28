@@ -16,10 +16,10 @@ private const val CAPTURE_TOOL_OUTPUT_VARIABLE = "SEMANTIFYR_CAPTURE_TOOL_OUTPUT
 private const val WORKING_DIRECTORY_PLACEHOLDER = "<working-directory>"
 
 class CapturedToolOutput(
-    engine: String,
+    backend: String,
     private val case: String,
 ) {
-    private val resourceDirectory = "captured/$engine/$case"
+    private val resourceDirectory = "captured/$backend/$case"
 
     private val isCapturing = System.getenv(CAPTURE_TOOL_OUTPUT_VARIABLE) != null
 

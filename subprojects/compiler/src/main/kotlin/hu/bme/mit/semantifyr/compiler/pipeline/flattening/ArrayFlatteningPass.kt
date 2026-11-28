@@ -11,6 +11,7 @@ import hu.bme.mit.semantifyr.compiler.pipeline.expression.CompileTimeExpressionE
 import hu.bme.mit.semantifyr.compiler.pipeline.inlining.LocalVariableManager
 import hu.bme.mit.semantifyr.compiler.pipeline.instantiation.InstanceTree
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
+import hu.bme.mit.semantifyr.compiler.pipeline.utils.assumeBeforeEvaluation
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.copy
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.eAllOfType
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.sourceError
@@ -453,12 +454,30 @@ class ArrayFlatteningPass @Inject constructor(
         indexing: IndexingSuffixExpression,
         slotVariables: List<VariableDeclaration>,
     ) {
+        val index = indexing.index ?: sourceError(indexing, "Array indexing has no index expression.")
+        indexing.assumeBeforeEvaluation(indexWithin(index, slotVariables.size))
         val parent = indexing.eContainer()
         if (parent is AssignmentOperation && parent.reference === indexing) {
             rewriteRuntimeIndexWrite(parent, indexing, slotVariables)
         } else {
             rewriteRuntimeIndexRead(indexing, slotVariables)
         }
+    }
+
+    private fun indexWithin(index: Expression, slotCount: Int): Expression {
+        return OxstsFactory.createBooleanOperator(
+            BooleanOp.AND,
+            OxstsFactory.createComparisonOperator().also {
+                it.op = ComparisonOp.GREATER_EQ
+                it.left = index.copy()
+                it.right = OxstsFactory.createLiteralInteger(0)
+            },
+            OxstsFactory.createComparisonOperator().also {
+                it.op = ComparisonOp.LESS
+                it.left = index.copy()
+                it.right = OxstsFactory.createLiteralInteger(slotCount)
+            },
+        )
     }
 
     private fun rewriteRuntimeIndexRead(

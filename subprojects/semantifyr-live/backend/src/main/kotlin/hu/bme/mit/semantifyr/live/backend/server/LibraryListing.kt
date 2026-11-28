@@ -22,7 +22,6 @@ private val SYSML_EXTENSIONS = listOf(
     ".kerml",
 )
 
-// the directory the SysML worker loads its standard library from, under the web root
 private val SYSML_LIBRARY_DIRECTORY = Path.of("sysml-worker", "library")
 
 @Singleton

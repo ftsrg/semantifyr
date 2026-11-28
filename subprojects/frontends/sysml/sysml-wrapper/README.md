@@ -4,4 +4,8 @@
   SPDX-License-Identifier: EPL-2.0
 -->
 
-Please do not modify the contents of the 'sysml-2ls' directory directly! Instead, clone it separately, then publish a PR with your changes.
+# SysML v2 wrapper
+
+This module clones [sysml-2ls](https://github.com/arminzavada/sysml-2ls) into `sysml-2ls` at the `sysmlCommit` of [build.gradle.kts](build.gradle.kts) and builds the SysML v2 command line and language server from it.
+
+Do not edit `sysml-2ls` here: change it in its own repository, then bump `sysmlCommit`.

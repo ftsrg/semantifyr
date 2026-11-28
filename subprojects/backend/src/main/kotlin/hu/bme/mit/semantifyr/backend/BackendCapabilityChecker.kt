@@ -22,7 +22,7 @@ abstract class BackendCapabilityChecker {
         val constructs = mutableListOf<UnsupportedConstruct>()
         val contents = inlinedOxsts.eAllContents()
         for (element in contents) {
-            // no annotation argument reaches an engine model
+            // no annotation argument reaches a backend model
             if (element is Annotation) {
                 contents.prune()
                 continue

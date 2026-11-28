@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-/* lies over the block's corner and fades the first line out under it, so no text shows between the controls */
+/* fades the first line out under the controls, so no text shows between them */
 .row {
   position: absolute;
   top: 0;
@@ -18,7 +18,7 @@
   border-radius: 0 var(--ifm-code-border-radius) 0 0;
 }
 
-/* the original group places itself in the block's corner; here it follows the controls, and its buttons are always shown */
+/* the original group sits in the block's corner and shows its buttons on hover only */
 .row .group {
   position: static;
 }

@@ -6,6 +6,7 @@
 
 package hu.bme.mit.semantifyr.oxsts.lang.tests.validation;
 
+import static hu.bme.mit.semantifyr.oxsts.lang.tests.utils.TestModels.testModel;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.google.inject.Inject;
@@ -176,25 +177,7 @@ public class InlineHintValidationTest {
 
     @Test
     void inlineIfAndInlineForAreNotHinted() {
-        var issues = inlineHints(WORKER + """
-
-                class Factory {
-                    contains workers: Worker[2]
-                    var count: int := 0
-
-                    redefine tran {
-                        inline if (1 < 2) {
-                            count := 1
-                        }
-                        inline for (worker in workers) {
-                            inline worker.step()
-                        }
-                        inline for choice (index in 0..2) {
-                            count := index
-                        }
-                    }
-                }
-                """);
+        var issues = inlineHints(WORKER + testModel(getClass(), "inline_if_and_inline_for.semantifyr"));
 
         assertThat(issues).isEmpty();
     }

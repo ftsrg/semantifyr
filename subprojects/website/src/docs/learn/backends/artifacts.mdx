@@ -1,0 +1,39 @@
+---
+title: Artifacts
+sidebar_position: 2
+description: What a verification writes for each case and where, and what the CLI keeps in other folders.
+---
+
+# Artifacts
+
+A verification writes the artifacts of each case into a directory of its own: what the compiler made of the model, what each backend was given and printed, and the report, which holds the verdict and, for a verdict with a trace, the run the backend found, with the witness model derived from it. The CLI writes the case directories into `--artifact-directory`, the VS Code extension where `semantifyr.artifacts.location` says, and Live into the working folder of the session, which it deletes when the session ends ([Privacy](../start/live/privacy.md)).
+
+## The case directory
+
+A case directory is named after the model file without its extension and the qualified name of the case, joined by `.`, with `::` written as `.` and every character other than a letter, a digit, `.`, `_` and `-` as `_`. A long name is shortened and ends in a hash. A verification empties the directory before it writes. The case `semantifyr::verification::smoke::CounterReachesThree` of `smoke.semantifyr` is in `smoke.semantifyr.verification.smoke.CounterReachesThree`.
+
+`--artifacts` chooses which of the compiler's artifacts, those with a name in parentheses below, are written: `none`, `all`, the default, which is every one but `compilation-step`, or `debug`, every one; `--enable-artifact` and `--disable-artifact` add and remove one by that name. The VS Code extension's `semantifyr.artifacts.preset` setting chooses the same. The report, the backends' files and the witness model are written under every preset.
+
+- `report.json`, for every case that compiles or whose compilation runs out of time: the verdict, the backend that answered, the times and sizes of the run and, for a verdict with a trace, the trace.
+- `pipeline/instantiated.semantifyr` (`instantiated-model`), `pipeline/inlined.semantifyr` (`inlined-model`) and `pipeline/flattened.semantifyr` (`flattened-model`): the model after each [phase of the compilation](../language/compilation/index.mdx), each an [inlined model](../language/reference/library-and-output/inlined-models.md).
+- `mapping.json` (`mapping`): the number that stands for each instance in the flattened model, the instance named by its path from the root instance.
+- `pipeline/steps/` (`compilation-step`): the model after every pass of the compiler, numbered in the order they ran and named after the pass, such as `000000_expressioncallinlining.semantifyr`.
+- The files of each backend run: the model the backend was given (`inlined.xsts` for Theta, `model.smv` for nuXmv, `model.pml` for Spin, `model.xml` and `model.q` for Uppaal) and what the backend printed. A portfolio that runs several backend configurations gives each a subdirectory of its own, and a portfolio in [stages](../backends/portfolios-and-verdicts.mdx#how-smart-runs) puts them under a directory per stage, `first/theta-bmc` for one, so a configuration run in two stages keeps the files of both runs.
+- `witness.semantifyr`, for a verdict with a trace: the [witness](../language/reference/library-and-output/inlined-models.md#witnesses), derived from the report. `semantifyr-sysml` writes `trace.sysml` beside it ([SysML v2 traces](../frontends/sysml-v2/traces.mdx)), `semantifyr-gamma` `trace.get` ([Gamma traces](../frontends/gamma/traces.mdx)).
+- `validation/`: the case directory of the last [witness validation](../backends/portfolios-and-verdicts.mdx#validation), with the same files, its `report.json` the validation's own.
+
+`semantifyr-sysml` writes the transformed model into `compiled/default/<model>.semantifyr` at the top of the artifact directory, and the case directories next to `compiled/`. `semantifyr-gamma` gives every case a directory named after its Gamma qualified name, holding the compiled model, `model.semantifyr`, one package of the Semantifyr Language per imported Gamma package under `imports/`, and the case directory under `verification/`.
+
+## Folders
+
+Besides the artifact directory, the CLI writes under `~/.semantifyr` in the user's home directory and in the system's temporary directory.
+
+Under `~/.semantifyr` it unpacks what it carries, each into a folder named by a digest of its contents; the folders of older versions stay until they are deleted by hand.
+
+- `builtin/<digest>/`: the standard library, `standard.semantifyr`, unpacked by every CLI.
+- `gamma/default/<digest>/`: the Gamma semantic library, unpacked by `semantifyr-gamma`.
+- `sysmlv2/default/<digest>/`: the SysML v2 semantic library, unpacked by `semantifyr-sysml verify`.
+- `sysml-cli/<digest>/`: the SysML v2 frontend with the SysML v2 standard library, unpacked by `semantifyr-sysml`.
+- `sysml-cache/<frontend digest>/`: the transformations of `semantifyr-sysml`, a Semantifyr model and its name map for each model, named after the model file and a digest of every `.sysml` and `.kerml` file in the model's directory and below it, so a model is transformed again only when one of those files or the frontend changes.
+
+In the temporary directory, `verify` and `compile` without `--artifact-directory` write the artifacts into a new `semantifyr-<number>` directory, which they leave in place; `metrics` compiles in a `semantifyr-metrics-<number>` directory, which it deletes when it ends.

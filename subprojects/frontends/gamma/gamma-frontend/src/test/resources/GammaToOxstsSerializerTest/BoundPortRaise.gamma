@@ -1,0 +1,27 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package test
+
+interface Control {
+    out event done
+}
+
+statechart Machine [
+    port control : provides Control
+] {
+}
+
+sync System [
+    port output : provides Control
+] {
+    component machine : Machine
+    bind output -> machine.control
+}
+
+verification case Raised of System {
+    EF raise output.done
+}

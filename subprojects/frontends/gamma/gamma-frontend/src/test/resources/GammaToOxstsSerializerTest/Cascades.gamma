@@ -1,0 +1,35 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package test
+
+interface Control {
+    in event start
+}
+
+statechart Worker [
+    port control : provides Control
+] {
+    region Main {
+        initial MainInitial
+        state Idle
+    }
+    transition from MainInitial to Idle
+}
+
+cascade Repeated [
+    port control : provides Control
+] {
+    component first : Worker
+    component second : Worker
+    bind control -> first.control
+    execute first, second, first
+}
+
+cascade Declared {
+    component first : Worker
+    component second : Worker
+}

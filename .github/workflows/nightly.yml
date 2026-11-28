@@ -10,29 +10,26 @@ on:
 permissions: {}
 jobs:
   nightly:
-    name: Nightly
+    name: Nightly Tests
     runs-on: ubuntu-latest
     timeout-minutes: 240
-    permissions: {}
+    permissions:
+      contents: read
     concurrency:
       group: nightly
       cancel-in-progress: false
     environment: nightly-fured
     steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Configure SSH
-        env:
-          NIGHTLY_SSH_KEY: ${{ secrets.NIGHTLY_SSH_KEY }}
-          NIGHTLY_KNOWN_HOSTS: ${{ secrets.NIGHTLY_KNOWN_HOSTS }}
-          NIGHTLY_HOST: ${{ vars.NIGHTLY_HOST }}
-          NIGHTLY_PORT: ${{ vars.NIGHTLY_PORT }}
-          NIGHTLY_USER: ${{ vars.NIGHTLY_USER }}
-        run: |
-          install -d -m 700 ~/.ssh
-          printf '%s\n' "$NIGHTLY_SSH_KEY" > ~/.ssh/nightly
-          chmod 600 ~/.ssh/nightly
-          printf '%s\n' "$NIGHTLY_KNOWN_HOSTS" > ~/.ssh/known_hosts
-          printf 'Host fured\n  HostName %s\n  Port %s\n  User %s\n  IdentityFile ~/.ssh/nightly\n  ServerAliveInterval 60\n' \
-            "$NIGHTLY_HOST" "$NIGHTLY_PORT" "$NIGHTLY_USER" > ~/.ssh/config
+        uses: ./.github/actions/ssh
+        with:
+          key: ${{ secrets.NIGHTLY_SSH_KEY }}
+          known-hosts: ${{ secrets.NIGHTLY_KNOWN_HOSTS }}
+          host: ${{ vars.NIGHTLY_HOST }}
+          port: ${{ vars.NIGHTLY_PORT }}
+          user: ${{ vars.NIGHTLY_USER }}
       - name: Run the nightly on fured
         run: ssh fured run "$GITHUB_SHA"
       - name: Fetch the test results
@@ -40,7 +37,7 @@ jobs:
         run: ssh fured results "$GITHUB_SHA" > nightly-test-results.tar.gz
       - name: Upload the test results
         if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: nightly-test-results
           path: nightly-test-results.tar.gz

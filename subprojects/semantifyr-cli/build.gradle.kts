@@ -4,19 +4,21 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
+import hu.bme.mit.semantifyr.gradle.readsTestModels
+
 plugins {
-    id("hu.bme.mit.semantifyr.gradle.conventions.cli")
+    id("hu.bme.mit.semantifyr.distribution-test")
     kotlin("jvm")
 }
 
 dependencies {
-    implementation(project(":cli-common"))
     implementation(project(":logging"))
-
-    implementation(libs.kotlinx.serialization.json)
+    implementation(project(":portfolios"))
 
     testImplementation(testFixtures(project(":cli-common")))
+    testImplementation(libs.log4j.api)
     testImplementation(libs.log4j.core)
+    testImplementation(libs.mordant.core)
 }
 
 application {
@@ -24,18 +26,10 @@ application {
     applicationName = "semantifyr"
 }
 
-val rootDirectory = isolated.rootProject.projectDirectory
-
-tasks.withType<Test>().configureEach {
-    inputs.dir(rootDirectory.dir("oxsts-test-models"))
-        .withPropertyName("oxstsTestModels")
-        .withPathSensitivity(PathSensitivity.RELATIVE)
+tasks.named<Test>("test") {
+    readsTestModels()
 }
 
-distributions.main {
-    contents {
-        from(rootDirectory.dir("oxsts-test-models/smoke")) {
-            into("models/smoke")
-        }
-    }
+tasks.named("endToEndTest") {
+    inputs.file(isolated.rootProject.projectDirectory.file("oxsts-test-models/smoke/smoke.semantifyr")).withPathSensitivity(PathSensitivity.RELATIVE)
 }

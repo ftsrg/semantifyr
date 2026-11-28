@@ -1,0 +1,28 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package inlining::tests::instance_cast
+
+class Base {
+}
+class Child : Base {
+}
+@VerificationCase
+class Case {
+    contains children: Base[0..*]
+    contains child: Child[1] subsets children
+    var reference: children[0..1] := nothing
+    redefine init {
+        reference := child
+    }
+    redefine tran {
+        var narrowed: Child[0..1] := nothing
+        narrowed := reference as Child
+    }
+    redefine prop {
+        return AG (reference == nothing || (reference as Child) == child)
+    }
+}

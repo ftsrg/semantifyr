@@ -1,0 +1,24 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+inlined oxsts of semantifyr::Anything
+var counter: int := 0
+var observed: int := 0
+init {
+}
+tran {
+    choice {
+        counter := counter + 1
+    } or {
+        if (counter <= 5) {
+            assume(false)
+        }
+        observed := 1
+    }
+}
+prop {
+    AG (observed == 0)
+}

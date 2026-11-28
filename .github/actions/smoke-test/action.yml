@@ -1,0 +1,34 @@
+# SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+#
+# SPDX-License-Identifier: EPL-2.0
+
+name: smoke-test
+description: Smoke tests a live instance.
+inputs:
+  url:
+    description: The address of the instance.
+    required: true
+runs:
+  using: composite
+  steps:
+    - name: Set up pnpm
+      uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
+    - name: Set up Node
+      uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+      with:
+        node-version-file: .nvmrc
+        cache: pnpm
+        cache-dependency-path: pnpm-lock.yaml
+    - name: Install dependencies
+      shell: sh
+      run: pnpm install --frozen-lockfile --ignore-scripts
+    - name: Wait for the hostname
+      shell: sh
+      env:
+        SEMANTIFYR_LIVE_URL: ${{ inputs.url }}
+      run: curl -fsS -o /dev/null --max-time 10 --retry 20 --retry-delay 5 --retry-max-time 120 --retry-all-errors "$SEMANTIFYR_LIVE_URL/api/health"
+    - name: Smoke test
+      shell: sh
+      env:
+        SEMANTIFYR_LIVE_URL: ${{ inputs.url }}
+      run: pnpm --filter @ftsrg/semantifyr-live-frontend run smoke

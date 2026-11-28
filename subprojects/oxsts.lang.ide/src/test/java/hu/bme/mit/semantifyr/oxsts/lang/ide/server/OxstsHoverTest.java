@@ -164,6 +164,6 @@ class OxstsHoverTest extends OxstsLanguageServerTest {
 
                 Redefines `tran` in `Anything`.
 
-                The base main transition.""");
+                The main transition every class inherits, which defines the steps of the system.""");
     }
 }

@@ -36,7 +36,7 @@ class NuxmvWitnessReparseTest {
     @Test
     suspend fun `a witness with a half delay reparses and re-verifies on nuXmv`() {
         helper.checkWitnessReparses(
-            modelPath = Path("build/test-models/semantic/clocks.semantifyr"),
+            modelPath = Path("../../../../oxsts-test-models/semantic/clocks.semantifyr"),
             qualifiedName = "semantifyr::verification::lang::clocks::ClockStrictTestDenseReach",
             verificationPortfolio = portfolio,
             outputDirectory = outputDirectory,

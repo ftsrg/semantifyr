@@ -1,0 +1,22 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+@VerificationCase
+class Host {
+    contains one: Store {
+        redefine refers capacity: int = 1
+    }
+    contains three: Store {
+        redefine refers capacity: int = 3
+    }
+    redefine tran {
+        inline one.put(1)
+        inline three.put(2)
+    }
+    redefine prop {
+        return AG one.slots[0] != 5
+    }
+}

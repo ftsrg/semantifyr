@@ -1,0 +1,35 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package semantifyr::verification::report::run_time_argument
+
+class Port {
+    var item: int := 0
+
+    @Trace
+    tran send(value: int) {
+        item := value
+    }
+}
+
+@VerificationCase
+class RunTimeArgumentReach {
+    contains port: Port
+    var count: int := 0
+
+    redefine tran {
+        choice {
+            count := 1
+        } or {
+            count := 2
+        }
+        inline port.send(count)
+    }
+
+    redefine prop {
+        return EF (port.item == 2)
+    }
+}

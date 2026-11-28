@@ -63,7 +63,7 @@ class ReferenceArrayFlatteningTest : FlatteningTestBase() {
                         queue[index] := second
                         inline queue[index].finish()
                     }
-                    prop {
+                    redefine prop {
                         return EF queue[0] == second
                     }
                 }
@@ -89,7 +89,7 @@ class ReferenceArrayFlatteningTest : FlatteningTestBase() {
                         havoc(picks)
                         picks[1] := picks[0]
                     }
-                    prop {
+                    redefine prop {
                         return AG picks[1] != other
                     }
                 }
@@ -112,7 +112,7 @@ class ReferenceArrayFlatteningTest : FlatteningTestBase() {
                     redefine tran {
                         queue := [queue[1], queue[0]]
                     }
-                    prop {
+                    redefine prop {
                         return AG queue[0] != queue[1]
                     }
                 }

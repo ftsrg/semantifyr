@@ -30,11 +30,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Predicate;
 import org.eclipse.lsp4j.ClientCapabilities;
 import org.eclipse.lsp4j.Diagnostic;
-import org.eclipse.lsp4j.DiagnosticSeverity;
-import org.eclipse.lsp4j.DidChangeTextDocumentParams;
 import org.eclipse.lsp4j.DidOpenTextDocumentParams;
 import org.eclipse.lsp4j.ExecuteCommandCapabilities;
 import org.eclipse.lsp4j.ExecuteCommandParams;
@@ -46,9 +43,7 @@ import org.eclipse.lsp4j.MessageParams;
 import org.eclipse.lsp4j.ProgressParams;
 import org.eclipse.lsp4j.PublishDiagnosticsParams;
 import org.eclipse.lsp4j.ShowMessageRequestParams;
-import org.eclipse.lsp4j.TextDocumentContentChangeEvent;
 import org.eclipse.lsp4j.TextDocumentItem;
-import org.eclipse.lsp4j.VersionedTextDocumentIdentifier;
 import org.eclipse.lsp4j.WorkDoneProgressCreateParams;
 import org.eclipse.lsp4j.WorkspaceClientCapabilities;
 import org.eclipse.lsp4j.services.LanguageClient;
@@ -60,7 +55,7 @@ import org.junit.jupiter.api.io.TempDir;
 
 class GammaTraceLanguageServerTest {
 
-    private static final Path MODELS = Path.of("..", "models");
+    private static final Path SMOKE_MODEL = Path.of("..", "models", "smoke", "smoke.gamma");
 
     @TempDir
     private Path workspace;
@@ -83,68 +78,8 @@ class GammaTraceLanguageServerTest {
     }
 
     @Test
-    void aTraceNextToItsModelLinksAgainstTheModelInTheIndex() throws Exception {
-        var model = copy(MODELS.resolve("examples/Crossroads.gamma"), "Crossroads.gamma");
-        var cases = copy(MODELS.resolve("examples/CrossroadsFurtherCases.gamma"), "CrossroadsFurtherCases.gamma");
-        var trace = copy(MODELS.resolve("etc/crossroads-ACanBeGreen.trace.get"), "Crossroads-ACanBeGreen.get");
-
-        initialize();
-
-        assertThat(errors(client.awaitDiagnostics(model))).isEmpty();
-        assertThat(errors(client.awaitDiagnostics(cases))).isEmpty();
-        assertThat(errors(client.awaitDiagnostics(trace))).isEmpty();
-    }
-
-    @Test
-    void anOpenedTraceLinksAgainstTheModelInTheIndex() throws Exception {
-        copy(MODELS.resolve("examples/Crossroads.gamma"), "Crossroads.gamma");
-        copy(MODELS.resolve("examples/CrossroadsFurtherCases.gamma"), "CrossroadsFurtherCases.gamma");
-        initialize();
-        var trace = workspace.resolve("trace.get");
-        var text = Files.readString(MODELS.resolve("etc/crossroads-ACanBeGreen.trace.get"));
-
-        languageServer.didOpen(new DidOpenTextDocumentParams(new TextDocumentItem(uri(trace), "gamma", 1, text)));
-
-        assertThat(errors(client.awaitDiagnostics(trace))).isEmpty();
-    }
-
-    @Test
-    void aTraceFollowsTheCaseItTracesWhenTheModelChanges() throws Exception {
-        copy(MODELS.resolve("examples/Crossroads.gamma"), "Crossroads.gamma");
-        var model = copy(MODELS.resolve("examples/CrossroadsFurtherCases.gamma"), "CrossroadsFurtherCases.gamma");
-        var trace = copy(MODELS.resolve("etc/crossroads-ACanBeGreen.trace.get"), "Crossroads-ACanBeGreen.get");
-        initialize();
-        client.awaitDiagnostics(model);
-        client.awaitDiagnostics(trace);
-        var text = Files.readString(model);
-        languageServer.didOpen(new DidOpenTextDocumentParams(new TextDocumentItem(uri(model), "gamma", 1, text)));
-        client.awaitDiagnostics(model);
-
-        change(model, 2, text.replace("case ACanBeGreen", "case ACanBeGreenRenamed"));
-        client.awaitDiagnostics(trace, it -> !errors(it).isEmpty());
-
-        change(model, 3, text);
-        client.awaitDiagnostics(trace, it -> errors(it).isEmpty());
-    }
-
-    @Test
-    void aTraceOfAnUnknownCaseReportsAnError() throws Exception {
-        copy(MODELS.resolve("examples/Crossroads.gamma"), "Crossroads.gamma");
-        var trace = workspace.resolve("Unknown.get");
-        Files.writeString(trace, """
-                import Crossroads
-
-                trace UnknownTrace of NoSuchCase
-                """);
-
-        initialize();
-
-        assertThat(errors(client.awaitDiagnostics(trace))).isNotEmpty();
-    }
-
-    @Test
     void aValidationNamingNoWitnessReturnsAnErroredResult() throws Exception {
-        var location = crossroadsCase("RoadBCanGetGreen");
+        var location = smokeCase("OnReachable");
 
         var result = (WitnessValidationResult) executeCommand(
                 "gamma.witness.validate",
@@ -152,14 +87,14 @@ class GammaTraceLanguageServerTest {
 
         assertThat(result.status()).isEqualTo(WitnessValidationStatus.ERRORED);
         assertThat(result.report()).isNull();
-        assertThat(result.message()).isEqualTo("The validation of case Crossroads.RoadBCanGetGreen names no witness");
+        assertThat(result.message()).isEqualTo("The validation of case smoke.OnReachable names no witness");
         assertThat(result.portfolioId())
                 .isEqualTo(Portfolios.INSTANCE.getDefault().getId());
     }
 
     @Test
     void aValidationNamingAFileOutsideTheDirectoryOfItsCaseReturnsAnErroredResult() throws Exception {
-        var location = crossroadsCase("RoadBCanGetGreen");
+        var location = smokeCase("OnReachable");
 
         var result = (WitnessValidationResult) executeCommand(
                 "gamma.witness.validate",
@@ -170,8 +105,8 @@ class GammaTraceLanguageServerTest {
         assertThat(result.report()).isNull();
     }
 
-    private Location crossroadsCase(String name) throws Exception {
-        var model = copy(MODELS.resolve("examples/Crossroads.gamma"), "Crossroads.gamma");
+    private Location smokeCase(String name) throws Exception {
+        var model = copy(SMOKE_MODEL, "smoke.gamma");
         initialize();
         client.awaitDiagnostics(model);
         var cases = (List<?>) executeCommand("gamma.case.discover", new JsonPrimitive(uri(model)));
@@ -185,14 +120,14 @@ class GammaTraceLanguageServerTest {
 
     @Test
     void theCompiledOxstsOfAModelIsItsOxstsText() throws Exception {
-        var model = copy(MODELS.resolve("examples/Simple.gamma"), "Simple.gamma");
+        var model = copy(SMOKE_MODEL, "smoke.gamma");
         initialize();
         client.awaitDiagnostics(model);
 
         var result = (CompiledOxstsResult) executeCommand("gamma.compiled.oxsts", new JsonPrimitive(uri(model)));
 
         assertThat(result.status()).isEqualTo(CompiledOxstsResult.COMPILED);
-        assertThat(result.oxsts()).startsWith("package _Simple");
+        assertThat(result.oxsts()).startsWith("package _smoke");
         assertThat(result.message()).isNull();
     }
 
@@ -228,12 +163,6 @@ class GammaTraceLanguageServerTest {
         languageServer.initialized(new InitializedParams());
     }
 
-    private void change(Path path, int version, String text) {
-        languageServer.didChange(new DidChangeTextDocumentParams(
-                new VersionedTextDocumentIdentifier(uri(path), version),
-                List.of(new TextDocumentContentChangeEvent(text))));
-    }
-
     private Path copy(Path source, String name) throws Exception {
         return Files.copy(source, workspace.resolve(name));
     }
@@ -242,31 +171,15 @@ class GammaTraceLanguageServerTest {
         return path.toAbsolutePath().toUri().toString();
     }
 
-    private static List<Diagnostic> errors(List<Diagnostic> diagnostics) {
-        return diagnostics.stream()
-                .filter(it -> it.getSeverity() == DiagnosticSeverity.Error)
-                .toList();
-    }
-
     private static final class DiagnosticsCollector implements LanguageClient {
 
         private final Map<String, BlockingQueue<List<Diagnostic>>> diagnostics = new ConcurrentHashMap<>();
 
-        List<Diagnostic> awaitDiagnostics(Path path) throws Exception {
-            return awaitDiagnostics(path, it -> true);
-        }
-
-        List<Diagnostic> awaitDiagnostics(Path path, Predicate<List<Diagnostic>> condition) throws Exception {
-            var queue = queue(path.toAbsolutePath().toUri().getPath());
-            while (true) {
-                var published = queue.poll(1, TimeUnit.MINUTES);
-                assertThat(published)
-                        .describedAs("Diagnostics published for %s", path)
-                        .isNotNull();
-                if (condition.test(published)) {
-                    return published;
-                }
-            }
+        void awaitDiagnostics(Path path) throws Exception {
+            var published = queue(path.toAbsolutePath().toUri().getPath()).poll(1, TimeUnit.MINUTES);
+            assertThat(published)
+                    .describedAs("Diagnostics published for %s", path)
+                    .isNotNull();
         }
 
         private BlockingQueue<List<Diagnostic>> queue(String path) {

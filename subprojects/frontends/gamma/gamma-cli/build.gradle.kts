@@ -5,16 +5,17 @@
  */
 
 plugins {
-    id("hu.bme.mit.semantifyr.gradle.conventions.cli")
+    id("hu.bme.mit.semantifyr.distribution-test")
     kotlin("jvm")
 }
 
 dependencies {
-    implementation(project(":cli-common"))
     implementation(project(":gamma-frontend"))
     implementation(project(":logging"))
+    implementation(project(":portfolios"))
 
     testImplementation(testFixtures(project(":cli-common")))
+    testImplementation(libs.mordant.core)
 }
 
 application {
@@ -27,14 +28,14 @@ distributions.main {
         from(layout.projectDirectory.dir("../models/libraries/default")) {
             into("libraries/gamma")
         }
-        from(layout.projectDirectory.file("../models/examples/Simple.gamma")) {
-            into("models/smoke")
-        }
     }
 }
 
-tasks.named("test") {
-    inputs.dir(layout.projectDirectory.dir("../models/examples"))
-        .withPropertyName("gammaExamples")
-        .withPathSensitivity(PathSensitivity.RELATIVE)
+listOf(
+    "test",
+    "endToEndTest",
+).forEach {
+    tasks.named(it) {
+        inputs.file(layout.projectDirectory.file("../models/smoke/smoke.gamma")).withPathSensitivity(PathSensitivity.RELATIVE)
+    }
 }

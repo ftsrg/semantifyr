@@ -18,7 +18,7 @@ class InclusiveRangeReach {
         }
     }
 
-    prop {
+    redefine prop {
         return EF x == 3
     }
 }
@@ -35,7 +35,7 @@ class InclusiveRangeBound {
         }
     }
 
-    prop {
+    redefine prop {
         return AG x <= 3
     }
 }
@@ -52,7 +52,7 @@ class ExclusiveRangeReach {
         }
     }
 
-    prop {
+    redefine prop {
         return EF x == 3
     }
 }
@@ -69,7 +69,7 @@ class ExclusiveRangeBound {
         }
     }
 
-    prop {
+    redefine prop {
         return AG x <= 3
     }
 }
@@ -86,7 +86,7 @@ class UnreadLoopVariableReach {
         }
     }
 
-    prop {
+    redefine prop {
         return EF x == 3
     }
 }
@@ -103,7 +103,7 @@ class UnreadLoopVariableBound {
         }
     }
 
-    prop {
+    redefine prop {
         return AG x <= 3
     }
 }
@@ -120,7 +120,7 @@ class InclusiveRangeViolated {
         }
     }
 
-    prop {
+    redefine prop {
         return AG x <= 2
     }
 }
@@ -136,7 +136,7 @@ class EmptyExclusiveRangeBound {
         }
     }
 
-    prop {
+    redefine prop {
         return AG x == 0
     }
 }
@@ -152,7 +152,7 @@ class EmptyExclusiveRangeUnreachable {
         }
     }
 
-    prop {
+    redefine prop {
         return EF x == 1
     }
 }

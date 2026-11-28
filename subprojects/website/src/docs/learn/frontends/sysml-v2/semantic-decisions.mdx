@@ -1,0 +1,329 @@
+---
+title: SysML v2 Semantic Decisions
+sidebar_label: Semantic Decisions
+sidebar_position: 4
+description: The meaning Semantifyr gives a supported SysML v2 model, each decision against the clause of SysML v2 or KerML it answers, with its kind and the other interpretation.
+---
+
+# SysML v2 Semantic Decisions
+
+The SysML v2 semantic library is an abstraction of SysML v2 and KerML at the level of states: parts and the regions of a parallel state run concurrently, actions are atomic and instantaneous, expressions are instant and side-effect free, and items are signals. Where SysML v2 and KerML decide, the library follows them, except in the decisions below marked as deviations and in its `fifo` variant.
+
+Each decision states what the standard says, citing its clause, what Semantifyr does, the other interpretation the text admits where it admits one, and its kind:
+
+- abstraction: Semantifyr keeps part of what the standard allows, which narrows the runs a verdict covers;
+- deviation: Semantifyr means something other than the standard, deliberately;
+- extension: the standard has no such construct;
+- convention: a model has to keep it, and nothing checks it.
+
+Where the standard fixes the meaning and Semantifyr follows, the opening of a section says so, with the clause. What the frontend supports is on [Language Support](language-support.mdx).
+
+## The Step and Composition
+
+A verification case runs the verified part in steps, each after a wait in which [time](#time-model) passes. In each step the environment may put an item on every port of the verified part, every part and every region of a parallel state with an enabled transition fires one, and the flows move the items sent in the step to their receiving ports. A reaction takes no time. Initialization builds the part tree, sets the initial values of the attributes and enters every exhibited state; no transition fires and no input arrives during it.
+
+### Lock-Step Composition {#lock-step}
+
+- **Standard**: open. Parts are concurrent occurrences (SysML 7.9.1, 7.11.1), and nothing fixes when each of them reacts.
+- **Semantifyr**: every part reacts once in every step, the sub-parts of a part in textual order.
+- **Other interpretation**: interleaving, one part reacting in a step.
+- **Kind**: abstraction, in the library.
+
+### Maximal Progress {#maximal-progress}
+
+- **Standard**: constrained. A transition is triggered when its source is performing, its guard holds and its accepter can accept (SysML 7.18.3); KerML 9.2.11 forces an acceptance but not its time.
+- **Semantifyr**: a part or a region with an enabled transition fires one in the step. A region may leave an enabled item transition only to another region that consumes the item in the same step.
+- **Other interpretation**: an enabled transition may fire in a later step.
+- **Kind**: abstraction, in the library.
+
+### Order Within the Step {#step-order}
+
+- **Standard**: open.
+- **Semantifyr**: a part's sub-parts react first, in textual order, then its exhibited state, then its flows move the items sent in the step.
+- **Other interpretation**: any other order. It shows in a verdict only through a port a part binds to a sub-part's port, where the sub-part takes the item first.
+- **Kind**: abstraction, in the library.
+
+### Closed Subject {#closed-subject}
+
+- **Standard**: open. A verification case's subject is an input parameter (SysML 7.24.1), and nothing describes its environment.
+- **Semantifyr**: in every step the environment may put any item, or none, on every port of the verified part, whatever items the port declares.
+- **Other interpretation**: the environment puts only the `in` items a port declares.
+- **Kind**: abstraction, in the library.
+
+### Part Tree {#part-tree}
+
+- **Standard**: constrained. Occurrences are created and destroyed (SysML 7.9.1), and every feature has a multiplicity (KerML 7.4.12).
+- **Semantifyr**: the part tree is fixed and finite, built at initialization and alive for the whole run. A usage with multiplicity `[0]` is absent, and a literal `[n]` on a part or a port is n instances. The frontend does not read `individual`, `snapshot` or `timeslice` on a part usage and transforms such a part as any other.
+- **Other interpretation**: parts created and destroyed during the run.
+- **Kind**: abstraction, in the frontend and the library.
+
+## Exhibited States
+
+### Start of the Exhibited State {#exhibited-start}
+
+- **Standard**: constrained. The performance of an exhibited state lies within the part's lifetime (SysML 7.18.1, 8.4.14.4), and its start is not fixed; `entry then middle` puts the entry action before the substates (KerML 9.2.11).
+- **Semantifyr**: a part performs its exhibited state from its initialization: the entry action, then the initial descent.
+- **Other interpretation**: the performance starts later.
+- **Kind**: abstraction, in the library.
+
+### A Part's Plain State {#plain-state}
+
+- **Standard**: fixed. A part performs only its exhibited states (SysML 7.18.1).
+- **Semantifyr**: a part's plain `state` is performed as its exhibited state, as an owned, a referenced (`exhibit s;`) and a definition-typed exhibit state are.
+- **Other interpretation**: the standard's, a plain state not performed.
+- **Kind**: deviation, in the frontend.
+
+### The Exhibited State Reaching `done` {#exhibited-done}
+
+- **Standard**: constrained. A transition to `done` makes its source the final state, and the containing state need not end at once (SysML 7.18.3); the exit action runs at the end (KerML 9.2.11).
+- **Semantifyr**: reaching `done` ends the performance at once: the exit action runs and the part is idle.
+- **Other interpretation**: the performance goes on after `done`.
+- **Kind**: abstraction, in the library.
+
+### A Nested State Reaching `done` {#nested-done}
+
+- **Standard**: constrained, by the same clause; a non-parallel state has exactly one active substate after its entry (SysML 7.18.1).
+- **Semantifyr**: a state other than the exhibited one that reaches its `done` stays active with no active substate, and nothing completes.
+- **Other interpretation**: the state completes and ends.
+- **Kind**: abstraction, in the library.
+
+## States, Transitions and Regions
+
+Where the standard fixes the order of a firing, Semantifyr follows it. The source's exit action runs before the effect (SysML 7.18.3, 8.4.14.3), and the effect before the target's entry action (SysML 7.18.3). A transition leaves and enters the states below the closest common owning state of its source and target, whichever state declares it (SysML 7.18.1, 7.18.3, KerML 9.2.11), the exit actions bottom-up and the entry actions top-down (KerML 9.2.11). A transition from a state to itself exits it, runs the effect, and enters it again, restarting its timers (SysML 7.18.3). A non-parallel state has one active substate (SysML 8.4.14.2), and a region's entry and exit actions run when the region is activated and left (SysML 7.18.1, 7.18.2); a parallel state that is not active runs no exit action when its parent is left (SysML 7.18.1).
+
+The initial transitions of a state are its transitions from `start` or from its entry action: one whose `first` names either, and every transition without `first` between the entry action and the next state usage, as in `entry; if c then A; if not c then B;`, of which the initial descent takes one whose guard holds (SysML 7.18.2, 7.18.3). The first of them alone is not read as initial, with the next leaving the state. A transition without `first` has as its source the closest state usage or entry action of its state before it, every other member in between skipped (SysML 7.18.3), and not the state whose body holds it.
+
+### Entry Actions and Observation {#entry-observation}
+
+- **Standard**: constrained. An entry action starts when its state is activated (SysML 7.18.1), and run to completion keeps transitions out of it (KerML 9.2.11); when a property is observed is not stated.
+- **Semantifyr**: an entry action completes inside the step that activates its state, and a property reads only the states between steps.
+- **Other interpretation**: the states inside a step are observed, so a state is active while its entry action runs.
+- **Kind**: abstraction, in the library.
+
+### Ancestors Around the Effect {#ancestor-exits}
+
+- **Standard**: open. SysML 7.18.3 orders only the source's exit action before the effect and the target's entry action after it.
+- **Semantifyr**: every exit action up to the closest common owning state runs before the effect, every entry action after it.
+- **Other interpretation**: the effect before the exit action of an ancestor of the source, or after the entry action of an ancestor of the target.
+- **Kind**: abstraction, in the library.
+
+### Priority Between Nesting Levels {#nesting-priority}
+
+- **Standard**: open. Neither SysML v2 nor KerML orders transitions declared at different nesting levels.
+- **Semantifyr**: a transition declared in a substate fires before one declared in an enclosing state, which fires only when nothing below it is enabled; the `topdown` variant reverses this.
+- **Other interpretation**: the enclosing state's transition first, as in the `topdown` variant.
+- **Kind**: abstraction, in the library.
+
+### Choice Among Enabled Transitions {#transition-choice}
+
+- **Standard**: open. A state performance accepts at most one transfer, and the transfers are ordered, not the transitions (KerML 9.2.11).
+- **Semantifyr**: among the enabled transitions of one state the choice is nondeterministic.
+- **Other interpretation**: the first declared transition fires.
+- **Kind**: abstraction, in the library.
+
+### Guards {#guard}
+
+- **Standard**: constrained. A guard is evaluated while the source is performing (SysML 7.18.3), after the acceptable transfers and before the exit (KerML 9.2.11).
+- **Semantifyr**: a firing is atomic within the step: the trigger and the guard are read on the values as they stand in the step, the writes of earlier regions included, then the exits, the effect, the entries and the initial descent run at zero duration.
+- **Other interpretation**: a firing that takes time, so that a transition is observed in progress.
+- **Kind**: abstraction, in the library.
+
+### Transitions Without a Trigger {#untriggered-transitions}
+
+- **Standard**: constrained. A transition without an accepter is triggered while its source is performing and its guard holds (SysML 7.18.3), and not during the entry action (KerML 9.2.11).
+- **Semantifyr**: such a transition is enabled whenever its source is active, from the step after the source's entry; a part or a region fires one transition per step, so a chain of them takes a step each.
+- **Other interpretation**: a chain of untriggered transitions runs to its end in one step.
+- **Kind**: abstraction, in the library.
+
+### Every Initial Guard Closed {#initial-blocking}
+
+- **Standard**: constrained. A non-parallel state has exactly one active substate after its entry (SysML 7.18.1).
+- **Semantifyr**: when the guard of every initial transition is closed at run time, the step or the initialization that enters the state has no successor and the run ends there; at initialization this makes every verdict vacuous. A model keeps an initial guard open.
+- **Other interpretation**: the state is entered with no active substate.
+- **Kind**: convention, in the library.
+
+### Regions in One Step {#region-step}
+
+- **Standard**: open. The substates of a parallel state are performed concurrently (SysML 7.18.1, 7.18.2).
+- **Semantifyr**: every region of a parallel state reacts in the same step with at most one transition. The regions of one part read and write the part's attributes in textual order, each seeing the writes of the previous one, and two regions assigning one attribute draw a warning.
+- **Other interpretation**: the regions in another order, or each reading the values the step started with.
+- **Kind**: abstraction, in the library.
+
+### Leaving a Parallel State From a Region {#parallel-exit}
+
+- **Standard**: fixed that every region is left and the parallel state's exit action runs after them (SysML 7.18.1, KerML 9.2.11); open in the order among the regions.
+- **Semantifyr**: the exit actions of the source's states run bottom-up, then each sibling region is left with its exit action, then the parallel state's exit action runs.
+- **Other interpretation**: the sibling regions left before the source's region.
+- **Kind**: abstraction, for the order among the regions, in the library.
+
+### Entering a State Inside One Region {#region-entry}
+
+- **Standard**: constrained. A parallel state performs all its substates concurrently (SysML 7.18.1); the order is open, and nothing says whether the target region's initial succession runs.
+- **Semantifyr**: the parallel state's entry action runs first, then each sibling region's entry action and initial descent, then the target's region down to the target, skipping that region's initial transition.
+- **Other interpretation**: the target's region entered first.
+- **Kind**: abstraction, in the library.
+
+## Actions
+
+### Order Inside a Composite Action {#action-order}
+
+- **Standard**: open for subactions without successions (SysML 7.17.1); an assignment's value is evaluated at the time of the assignment (SysML 7.17.9).
+- **Semantifyr**: actions are atomic and instantaneous and complete inside the step that starts them; the children of a composite action run one after another, in an order consistent with its successions and in textual order where they set none.
+- **Other interpretation**: the children without successions in another order.
+- **Kind**: abstraction, in the frontend and the library.
+
+## Items, Ports and Flows
+
+A send puts its item on the outgoing slot of the port its `via` names (SysML 7.17.7), and a binding of a part's own port to a sub-part's port makes the two one port (SysML 8.4.9.3, KerML 8.4.4.6.2).
+
+### Items Are Signals {#item-signals}
+
+- **Standard**: constrained. A send transfers payload values (SysML 8.4.13.5).
+- **Semantifyr**: every item of one item definition is the same value, with no payload and no identity across hops.
+- **Other interpretation**: items with payloads and identities of their own.
+- **Kind**: abstraction, in the frontend and the library.
+
+### Flow Delivery {#flow-delivery}
+
+- **Standard**: fixed. A send through a port is targeted across interfaces and not across other connections (SysML 7.14.2, 7.17.7, 8.4.8.1); a flow produces a flow transfer, which no accept action accepts (KerML 9.2.7, SysML 8.4.12.2, 8.4.13.6).
+- **Semantifyr**: a flow from a sub-part's port to a sub-part's port moves the item sent through its source port to its target port at the end of the step, where an accept via the target port takes it. A `succession flow` is transformed as such a flow, its succession not read.
+- **Other interpretation**: the standard's, under which a flow delivers no sent item and an interface does.
+- **Kind**: abstraction, in the library.
+
+### Fan-Out and Fan-In {#fan-out-fan-in}
+
+- **Standard**: constrained. A flow transfer moves its payload by default (`isMove`, KerML 9.2.7).
+- **Semantifyr**: two flows from one port both copy the item; of two flows into one port, the last in textual order wins.
+- **Other interpretation**: the item moves along one flow only.
+- **Kind**: abstraction, in the library.
+
+### Delivery Delay {#delivery-delay}
+
+- **Standard**: constrained. Whether a transfer takes time is open (`isInstant`, KerML 9.2.7).
+- **Semantifyr**: an item sent in a step is accepted in the next step. The flows run once at the end of initialization, so the items sent by entry actions during it arrive in the first step; an item from the environment arrives in the step it is put.
+- **Other interpretation**: delivery in the same step.
+- **Kind**: abstraction, in the library.
+
+### One Slot per Direction {#one-slot}
+
+- **Standard**: constrained. Transfers are accepted earliest first (KerML 9.2.11), and their arrival order is open.
+- **Semantifyr**: a port has one incoming and one outgoing slot, and the last write of the step wins: the last send on the sending port, the last flow in textual order on the receiving one.
+- **Other interpretation**: each send its own transfer, the earliest accepted.
+- **Kind**: abstraction, in the library.
+
+### The Dropped Item {#item-drop}
+
+- **Standard**: constrained. KerML's state performances never fix which arrived transfers are acceptable (KerML 9.2.11), while the SysML prose reads a transition as triggered whenever its accept action can accept an incoming transfer (SysML 7.18.3, 8.4.13.6).
+- **Semantifyr**: the receiving port holds an item for its arrival step only, and an item not accepted in that step is dropped.
+- **Other interpretation**: the item stays acceptable for the rest of the source state's performance, or is queued, as in the `fifo` variant.
+- **Kind**: abstraction, in the library.
+
+### One Acceptance per Part per Step {#one-acceptance}
+
+- **Standard**: constrained. A transfer is accepted at most once in its dispatch scope (`isDispatch`, true for performances, KerML 9.2.11).
+- **Semantifyr**: an item fires at most one transition per part per step. The regions of a parallel state compete for it nondeterministically, and a step never blocks because another region consumed the item.
+- **Other interpretation**: every region takes the item.
+- **Kind**: abstraction, in the library.
+
+### Untyped Ports and Flows {#port-typing}
+
+- **Standard**: fixed. Port features are directed, conjugation reverses them, and transfers run from `out` features to matching `in` features (SysML 7.12.1, 7.12.3, 8.4.8.1); a `flow of X` carries `X` and its specializations.
+- **Semantifyr**: a port has one incoming and one outgoing slot, its `in` and `out` item usages merged. A port's item types, its conjugation and a flow's item type are not read, so an item of another type crosses a `flow of X`, a port admits an item its definition does not declare, and a send against a conjugated port's direction is admitted.
+- **Other interpretation**: the standard's typed ports and flows, which exclude these runs.
+- **Kind**: abstraction for the merged slots, deviation for the item types and the conjugation, in the library.
+
+### Item Specialization {#item-specialization}
+
+- **Standard**: fixed. An accept takes a transfer whose values conform to its accepted item (SysML 8.4.13.6).
+- **Semantifyr**: an accept matches the exact item definition, so an accept of a supertype drops an item of a subtype; an item definition specializing another with `:>` draws a warning.
+- **Other interpretation**: the standard's, an accept of a supertype taking its subtypes.
+- **Kind**: deviation, in the library.
+
+## Time
+
+### The Time Model {#time-model}
+
+- **Standard**: constrained. Clocks run on a real `currentTime` (KerML 9.2.12), and `after` is relative to the local clock (SysML 7.17.8).
+- **Semantifyr**: time passes before every step, any amount, zero and fractions included, as in the [Semantifyr Language](../../language/reference/classes-and-behaviour/time.md), and a [trace](traces.mdx) shows it as the dwell before the step; a reaction takes no time. A duration `d` is a count of ticks, the largest duration in seconds, minutes, hours or days that divides every `after` duration of the model, one second when it has none.
+- **Kind**: abstraction, in the frontend and the library.
+
+### Start of an `after` Timer {#timer-start}
+
+- **Standard**: constrained. `d` is added to the time at which the time trigger is evaluated (SysML 7.17.8, KerML 9.2.14), and when a transition's trigger is evaluated is not stated.
+- **Semantifyr**: the accept action's clock starts when its source state is entered and starts again on every entry.
+- **Kind**: abstraction, in the library.
+
+### Deadlines {#deadline}
+
+- **Standard**: fixed. A `TimeSignal` is sent when its clock reaches the signal time (KerML 9.2.14, SysML 7.17.8).
+- **Semantifyr**: no step waits past `d` while the signal is unsent; the signal may be sent in any step that waits zero at the instant `d`, and it enables the transition from that step on, so two deadlines due at the same instant may fire in different steps, the later with no dwell before it.
+- **Other interpretation**: the standard's, both signals sent in the same step.
+- **Kind**: deviation, in the library.
+
+### `accept when` {#accept-when}
+
+- **Standard**: constrained. A change signal is sent when the condition turns from false to true, or at once when it holds at its first evaluation, and stays acceptable until the source state is left (SysML 7.17.8).
+- **Semantifyr**: `accept when c` is enabled in every step `c` holds, so the library fires only where a signal is pending and drops the runs that fire after `c` has turned false again.
+- **Other interpretation**: the standard's change signal, which admits those runs.
+- **Kind**: abstraction, in the library.
+
+## Attributes and Expressions
+
+An expression is a pure, instantaneous evaluation on the part's state in the step. An Integer is unbounded, as KerML's is (KerML 9.3.2). An attribute bound with `=` or `default` is derived and never assigned, and `:=` and `default :=` give its initial value (KerML 8.4.4.11, SysML 7.13.4), where `default` alone could also be read as an initial value. An attribute nothing binds starts at any value, and an attribute changes only by the assignments of a step (SysML 7.7.1), where the standard would also admit a value nothing binds changing at any time.
+
+### Integer Division {#integer-division}
+
+- **Standard**: fixed. The division of two integers returns a rational (KerML `IntegerFunctions`).
+- **Semantifyr**: the division of two integers is an integer.
+- **Other interpretation**: the standard's rational.
+- **Kind**: deviation, in the library.
+
+## Verification
+
+A requirement holds when its required constraint holds whenever its assumed ones do (SysML 7.21.1), and a verification case checks the requirement its objective verifies, or the objective's own `require constraint` when it verifies none (SysML 7.24.1).
+
+### Temporal Operators {#temporal-operators}
+
+- **Standard**: SysML v2 has no temporal operators.
+- **Semantifyr**: `mustAlways(c)` holds when `c` holds in every reachable state between steps; `eventually(c)` passes when one run reaches `c`, under some choice of the environment.
+- **Other interpretation**: `eventually` as inevitability, `c` reached on every run.
+- **Kind**: extension, in the frontend and the library.
+
+### A Constraint Without a Temporal Operator {#untemporal-constraint}
+
+- **Standard**: open for a required constraint; an asserted constraint holds at all times by default (SysML 7.20.3).
+- **Semantifyr**: a constraint without a temporal operator is read as `mustAlways`.
+- **Other interpretation**: the constraint evaluated at the start only.
+- **Kind**: extension, in the frontend.
+
+### `isStateActive` {#is-state-active}
+
+- **Standard**: SysML v2 has no such function; an exhibited state's values reference the state's occurrences while the part is in that state (SysML 7.18.1).
+- **Semantifyr**: `isStateActive(s)` holds between steps when `s` is its parent's active state, a region of an active parallel state, or an exhibited state being performed.
+- **Kind**: extension, in the library.
+
+## Library Variants
+
+- `default`, the library of record.
+- `topdown`: a transition declared in an enclosing state fires before one declared in a substate; everything else is as in `default`.
+- `fifo`: the item queue below; everything else is as in `default`.
+
+The frontend selects a variant for a whole model; the `semantifyr-sysml` command line verifies with `default`.
+
+### Queued Items {#fifo-queue}
+
+- **Standard**: constrained. Under the defaults `isTriggerDuring` and `isDispatch` a transfer is acceptable only during the source performance it arrived in, and accepting a later one discards the older ones (KerML 9.2.11); a model admits a queue only when it sets them false.
+- **Semantifyr**: in the `fifo` variant every port queues its arrived items in arrival order across steps and state changes, up to two items per port, and only the oldest is acceptable, so an item no transition takes holds back those behind it; an item arriving at a full port is dropped and the port keeps two.
+- **Other interpretation**: the standard's dispatch, which discards the older items when a later one is accepted.
+- **Kind**: deviation, in the `fifo` variant of the library.
+
+## What a Verdict Covers
+
+An abstraction narrows the runs a verdict covers, and a deviation changes them:
+
+- A passed `mustAlways` or a failed `eventually` holds over the runs the library keeps; a run the standard admits outside them may break it.
+- A passed `eventually` or a failed `mustAlways` rests on one run, which the standard admits too, unless a deviation is involved.
+
+The deviations are [a part's plain state](#plain-state), [the item types and the conjugation of ports and flows](#port-typing), [item specialization](#item-specialization), [deadlines](#deadline), [integer division](#integer-division), and the [`fifo` variant](#fifo-queue).
+
+For example, `mustAlways(not isStateActive(S) or entered)`, where the entry action of `S` sets `entered`, passes because [the entry action completes in the step that activates `S`](#entry-observation); the standard has `S` active while its entry action runs, and that run breaks the invariant.

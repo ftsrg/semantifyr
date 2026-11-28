@@ -42,7 +42,9 @@
             "file": "Clocks.gamma",
             "cases": [
                 { "name": "AQueuedMessageIsSeenAtTheClockRun", "verdict": "Passed", "tier": "Integration" },
-                { "name": "AClockTheQueueDoesNotStoreRunsTheComponentUnreachable", "verdict": "Failed", "tier": "Integration" }
+                { "name": "AClockTheQueueDoesNotStoreRunsTheComponentUnreachable", "verdict": "Failed", "tier": "Integration" },
+                { "name": "AStepAtATicksInstantMayComeBeforeIt", "verdict": "Passed", "tier": "Integration" },
+                { "name": "AStepPastATicksInstantBeforeItUnreachable", "verdict": "Failed", "tier": "Integration" }
             ]
         },
         {
@@ -221,6 +223,16 @@
             ]
         },
         {
+            "file": "SchedulingConstraints.gamma",
+            "cases": [
+                { "name": "AFixedPeriodBringsTheThirdStepAfterTheTimeout", "verdict": "Passed", "tier": "Integration" },
+                { "name": "AFixedPeriodBringingTheSecondStepAfterTheTimeoutUnreachable", "verdict": "Failed", "tier": "Integration" },
+                { "name": "APeriodRangeBringsTheFirstStepBeforeTheTimeout", "verdict": "Passed", "tier": "Integration" },
+                { "name": "APeriodRangeLetsTheSecondStepComeAfterTheTimeout", "verdict": "Passed", "tier": "Integration" },
+                { "name": "APeriodRangeBringingTheThirdStepBeforeTheTimeoutUnreachable", "verdict": "Failed", "tier": "Integration" }
+            ]
+        },
+        {
             "file": "SeveralQueues.gamma",
             "cases": [
                 { "name": "AnOutputReachingTwoQueuesIsServedFromBoth", "verdict": "Passed", "tier": "Integration" },
@@ -245,7 +257,13 @@
                 { "name": "OneStepPassesTheValuesOfBothTimeouts", "verdict": "Passed", "tier": "Integration" },
                 { "name": "TimeoutUpBeforeItsValueUnreachable", "verdict": "Failed", "tier": "Integration" },
                 { "name": "TimeoutStaysUpOnceUp", "verdict": "Passed", "tier": "Integration" },
-                { "name": "TimeoutResetOnceItFiredUnreachable", "verdict": "Failed", "tier": "Integration" }
+                { "name": "TimeoutResetOnceItFiredUnreachable", "verdict": "Failed", "tier": "Integration" },
+                { "name": "ATimeoutBelowItsValueStays", "verdict": "Passed", "tier": "Integration" },
+                { "name": "ATimeoutExpiringBelowItsValueUnreachable", "verdict": "Failed", "tier": "Integration" },
+                { "name": "ATimeoutAtItsValueMayExpire", "verdict": "Passed", "tier": "Integration" },
+                { "name": "ATimeoutAtItsValueAlwaysExpiringViolated", "verdict": "Failed", "tier": "Integration" },
+                { "name": "ATimeoutAboveItsValueHasExpired", "verdict": "Passed", "tier": "Integration" },
+                { "name": "ATimeoutStayingAboveItsValueUnreachable", "verdict": "Failed", "tier": "Integration" }
             ]
         },
         {

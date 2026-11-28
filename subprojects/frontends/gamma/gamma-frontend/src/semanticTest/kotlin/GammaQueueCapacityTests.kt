@@ -24,7 +24,7 @@ class GammaQueueCapacityTests {
         private val discoverer = injector.getInstance(VerificationCaseDiscoverer::class.java)
         private val verifierTestHelper = injector.getInstance(SemantifyrVerifierTestHelper::class.java)
         private val artifactRoot = GammaFrontendTestHelper.testArtifactRoot(GammaQueueCapacityTests::class.java)
-        private val fixture = Path("..", "models", "etc", "queue_capacity.semantifyr")
+        private val fixture = Path("src", "semanticTest", "resources", "GammaQueueCapacityTests", "queue_capacity.semantifyr")
     }
 
     @ParameterizedTest

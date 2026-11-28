@@ -11,19 +11,18 @@ import gammaGrammar from '@grammars/gamma.tmLanguage.json';
 import oxstsGrammar from '@grammars/oxsts.tmLanguage.json';
 import sysmlGrammar from '@grammars/sysml.tmLanguage.json';
 
-export interface TokenStyle {
+interface TokenStyle {
   color: string;
   fontStyle?: string;
 }
 
-export interface Token {
+interface Token {
   text: string;
   style: TokenStyle;
 }
 
 const THEME = 'semantifyr-tokens';
 
-// the grammars live's editor loads, by the language of a code block
 const highlighter = createHighlighterCoreSync({
   langs: [
     { ...oxstsGrammar, name: 'oxsts' },
@@ -43,7 +42,6 @@ const highlighter = createHighlighterCoreSync({
   engine: createJavaScriptRegexEngine(),
 });
 
-// the lines of a code block in the language's tokens, or null for a language live has no grammar for
 export function highlight(code: string, language: string): Token[][] | null {
   if (!highlighter.getLoadedLanguages().includes(language)) {
     return null;

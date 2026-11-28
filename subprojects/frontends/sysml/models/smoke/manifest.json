@@ -1,0 +1,10 @@
+{
+    "models": [
+        {
+            "file": "smoke.sysml",
+            "cases": [
+                { "name": "SwitchOnReachable", "verdict": "Passed", "tier": "Integration" }
+            ]
+        }
+    ]
+}

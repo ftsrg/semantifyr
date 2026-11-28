@@ -10,6 +10,7 @@ import hu.bme.mit.semantifyr.compiler.pipeline.context.FlattenedCompilationConte
 import hu.bme.mit.semantifyr.compiler.pipeline.flattening.FlatteningTestBase
 import hu.bme.mit.semantifyr.compiler.pipeline.inlining.TransitionTracerNames
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.eAllOfType
+import hu.bme.mit.semantifyr.oxsts.lang.tests.utils.TestModels.testModel
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssignmentOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ElementReference
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralBoolean
@@ -76,81 +77,7 @@ class ObservedCallConeTest : FlatteningTestBase() {
     }
 
     companion object {
-        private val MODEL = """
-            package optimization::tests::observed_call_cone
-
-            class Lamp {
-                var on: bool := false
-
-                @Trace
-                tran toggle() {
-                    on := !on
-                }
-            }
-
-            class Port {
-                var item: int := 0
-
-                @Trace
-                tran send(value: int) {
-                    item := value
-                }
-            }
-
-            @VerificationCase
-            class GuardedCall {
-                contains lamp: Lamp
-                var armed: bool := false
-
-                redefine tran {
-                    choice {
-                        armed := true
-                    } or {
-                        armed := false
-                    }
-                    if (armed) {
-                        inline lamp.toggle()
-                    }
-                }
-
-                prop {
-                    return AG true
-                }
-            }
-
-            @VerificationCase
-            class RunTimeArgument {
-                contains port: Port
-                var count: int := 0
-
-                redefine tran {
-                    choice {
-                        count := 1
-                    } or {
-                        count := 2
-                    }
-                    inline port.send(count)
-                }
-
-                prop {
-                    return AG true
-                }
-            }
-
-            @VerificationCase
-            class ConstantArgument {
-                contains port: Port
-                var count: int := 4
-
-                redefine tran {
-                    inline port.send(count)
-                }
-
-                prop {
-                    return AG true
-                }
-            }
-        """.trimIndent()
+        private val MODEL = testModel(ObservedCallConeTest::class.java, "model.semantifyr")
     }
 
 }

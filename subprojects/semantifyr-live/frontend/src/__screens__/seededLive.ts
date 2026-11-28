@@ -17,7 +17,7 @@ import { connectionConnected, INITIAL_CONNECTION, type ConnectionState } from '.
 import { failStep, finishStep, initializationOf, InitializationSteps, startStep, type InitializationState } from '../lib/stores/initialization'
 import { createSettingsStore, type Settings } from '../lib/stores/settings'
 import { constantStore, createStore } from '../lib/stores/store'
-import type { VerificationCaseState, VerificationState } from '../lib/verification/engine'
+import type { VerificationCaseState, VerificationState } from '../lib/verification/state'
 import { createDocumentTabs, type ReadOnlyDocument } from '../lib/workspace/documentTabs'
 import { documentKey, documentUri, type AddressProblem, type Catalog, type DocumentRecord, type Live } from '../lib/workspace/live'
 import type { SharedResults } from '../lib/workspace/sharedResults'
@@ -25,8 +25,7 @@ import type { QueuedVerification, RunTiming } from '../lib/workspace/verificatio
 import { createShellState, type ShellState } from '../shells/shellState'
 import { servedFlavors } from '../__tests__/fixtures/flavors'
 import { reportOf } from '../__tests__/fixtures/reports'
-import type { RestFixture } from '../__ui__/mock/fixtures'
-import restFixture from '../__ui__/mock/fixtures/rest.json'
+import { LIBRARIES } from '../__ui__/fake/defaults'
 
 export interface Seed {
   flavorId?: string
@@ -65,8 +64,6 @@ export interface Seeded {
 
 const BACKEND = 'http://live.example'
 
-const LIBRARY_LISTING = (restFixture as Pick<RestFixture, 'libraries'>).libraries
-
 export const CONNECTED = connectionConnected(INITIAL_CONNECTION, Date.now())
 
 function initialization(languageId: string, runningStep: string | null, failure: string | undefined): InitializationState {
@@ -93,7 +90,7 @@ function runtimeOf(flavor: LiveFlavor, connection: ConnectionState, steps: Initi
     initialization: createStore(steps),
     derivedDocuments: constantStore([]),
     modelOxsts: constantStore<DerivedDocument | null>(modelOxsts === undefined ? null : { id: 'oxsts', label: 'Semantifyr model', uri: 'file:///workspace/snippet.semantifyr', languageId: 'oxsts', text: modelOxsts }),
-    libraryDocuments: constantStore(libraryDocumentsOf(flavor.id, LIBRARY_LISTING)),
+    libraryDocuments: constantStore(libraryDocumentsOf(flavor.id, LIBRARIES)),
     api: new SemantifyrLiveApi(() => {
       return undefined
     }, () => {

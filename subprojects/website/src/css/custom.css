@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-/* Infima's look, taken from the tokens of the shared package; the dark selector outranks Infima's own dark rule */
+/* the dark selector outranks Infima's own dark rule */
 :root,
 html[data-theme='dark'] {
   --ifm-font-family-base: var(--font-sans);

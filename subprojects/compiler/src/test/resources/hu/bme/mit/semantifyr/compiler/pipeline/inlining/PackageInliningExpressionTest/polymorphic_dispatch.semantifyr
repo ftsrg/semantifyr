@@ -1,0 +1,30 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package inlining::tests::expr_poly
+
+class Base {
+    prop marker(): bool {
+        return false
+    }
+}
+class Child : Base {
+    var counter: int := 0
+    redefine prop marker(): bool {
+        return counter == 10
+    }
+}
+@VerificationCase
+class Testing {
+    contains bases: Base[0..*]
+    contains child: Child[1] subsets bases
+    redefine tran {
+        child.counter := 10
+    }
+    redefine prop {
+        return EF bases.marker()
+    }
+}

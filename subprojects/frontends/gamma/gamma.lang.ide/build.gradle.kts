@@ -5,16 +5,14 @@
  */
 
 plugins {
-    id("hu.bme.mit.semantifyr.gradle.conventions.application")
-    id("hu.bme.mit.semantifyr.gradle.xtext-ide")
+    id("hu.bme.mit.semantifyr.xtext-ide")
 }
 
 dependencies {
-    api(project(":lang-ide-common"))
-    api(project(":gamma.lang"))
     implementation(project(":gamma-frontend"))
+    implementation(project(":lang-ide-common"))
 
-    ideGenerated(project(":gamma.lang"))
+    testImplementation(project(":portfolios"))
 }
 
 application {
@@ -22,6 +20,5 @@ application {
 }
 
 tasks.withType<Test>().configureEach {
-    inputs.dir(layout.projectDirectory.dir("../models/examples")).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.dir(layout.projectDirectory.dir("../models/etc")).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.file(layout.projectDirectory.file("../models/smoke/smoke.gamma")).withPathSensitivity(PathSensitivity.RELATIVE)
 }

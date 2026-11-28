@@ -5,17 +5,21 @@
  */
 
 plugins {
-    id("hu.bme.mit.semantifyr.gradle.conventions.application")
+    id("hu.bme.mit.semantifyr.cli")
     kotlin("jvm")
 }
 
 dependencies {
     implementation(project(":cli-common"))
-    implementation(testFixtures(project(":verifier")))
-    implementation(libs.kotlinx.serialization.json)
+
+    testImplementation(libs.mordant.core)
 }
 
 application {
     mainClass = "hu.bme.mit.semantifyr.corpuscheck.CorpusCheckKt"
-    applicationName = "corpus-check"
+}
+
+tasks.register("pack") {
+    group = LifecycleBasePlugin.BUILD_GROUP
+    dependsOn(tasks.distZip)
 }

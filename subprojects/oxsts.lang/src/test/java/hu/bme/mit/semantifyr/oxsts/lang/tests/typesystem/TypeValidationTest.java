@@ -6,6 +6,8 @@
 
 package hu.bme.mit.semantifyr.oxsts.lang.tests.typesystem;
 
+import static hu.bme.mit.semantifyr.oxsts.lang.tests.utils.TestModels.testModel;
+
 import com.google.inject.Inject;
 import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts;
 import hu.bme.mit.semantifyr.oxsts.lang.tests.utils.OxstsPackageParseHelper;
@@ -164,27 +166,7 @@ public class TypeValidationTest {
         parsedPackage.assertHasValidationIssue(OxstsValidator.TYPE_MISMATCH, "compare");
     }
 
-    private static final String GAMMA_PORTS = """
-            package test
-            class Event { }
-            class Interface {
-                contains events: Event[0..*]
-                contains inputEvents: Event[0..*] subsets events
-                contains outputEvents: Event[0..*] subsets events
-            }
-            class Port {
-                contains interface: Interface[1]
-                refers outputEvents: Event[0..*]
-                var outputEvent: outputEvents[0..1] := nothing
-            }
-            class ProvidedPort : Port {
-                redefine refers outputEvents: Event[0..*] = interface.outputEvents
-            }
-            class PingPong : Interface {
-                contains ping: Event subsets outputEvents
-            }
-            class Other { }
-            """;
+    private static final String GAMMA_PORTS = testModel(TypeValidationTest.class, "gamma_ports.semantifyr");
 
     @Test
     void comparingUnrelatedFeaturesOfTheSameClassPasses() {
@@ -193,7 +175,7 @@ public class TypeValidationTest {
                 contains port: ProvidedPort {
                     redefine contains interface: PingPong
                 }
-                prop { return EF port.outputEvent == port.interface.ping }
+                redefine prop { return EF port.outputEvent == port.interface.ping }
             }
             """, CheckMode.ALL);
 
@@ -209,7 +191,7 @@ public class TypeValidationTest {
                     redefine contains interface: PingPong
                 }
                 contains other: Other
-                prop { return EF port.outputEvent == other }
+                redefine prop { return EF port.outputEvent == other }
             }
             """, CheckMode.ALL);
 
@@ -407,7 +389,7 @@ public class TypeValidationTest {
             class Holder {
                 var number: int := 0
                 redefine tran { number := number + 1 }
-                prop { return EF (if number > 0 then true else false) }
+                redefine prop { return EF (if number > 0 then true else false) }
             }
             """, CheckMode.ALL);
 
@@ -455,7 +437,7 @@ public class TypeValidationTest {
                 contains workers: Worker[0..*]
                 contains lead: Worker[1] subsets workers
                 var current: workers[0..1] := nothing
-                tran run(worker: Worker[0..1]) { inline worker.step() }
+                tran run(worker: Worker[0..1]) { inline worker?.step() }
                 redefine tran { inline run(current) }
             }
             """, CheckMode.ALL);
@@ -544,7 +526,7 @@ public class TypeValidationTest {
             class Holder {
                 var number: int := 0
                 redefine tran { number := 1 }
-                prop { return number }
+                redefine prop { return number }
             }
             """, CheckMode.ALL);
 
@@ -684,7 +666,7 @@ public class TypeValidationTest {
             class Holder {
                 var value: int := 0
                 redefine tran { value := 1 }
-                prop { return AG value }
+                redefine prop { return AG value }
             }
             """, CheckMode.ALL);
 
@@ -767,7 +749,7 @@ public class TypeValidationTest {
             package test
             class Holder {
                 var count: int := 0
-                prop {
+                redefine prop {
                     return EF count
                 }
             }

@@ -4,163 +4,122 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import com.github.gradle.node.npm.task.NpmTask
-import hu.bme.mit.semantifyr.gradle.conventions.registerRenderPictures
-import hu.bme.mit.semantifyr.gradle.conventions.semantifyrArtifact
-import hu.bme.mit.semantifyr.gradle.conventions.stampOnSuccess
+import com.github.gradle.node.pnpm.task.PnpmTask
+import hu.bme.mit.semantifyr.gradle.artifactsOf
+import hu.bme.mit.semantifyr.gradle.readsPackage
+import hu.bme.mit.semantifyr.gradle.registerPnpmCheck
+import hu.bme.mit.semantifyr.gradle.runsWithTheta
+import hu.bme.mit.semantifyr.gradle.semantifyrArtifact
 
 plugins {
-    id("hu.bme.mit.semantifyr.gradle.conventions.nodejs")
+    id("hu.bme.mit.semantifyr.nodejs")
 }
 
-val languageServers = configurations.dependencyScope("languageServers")
-val languageServersFiles = configurations.resolvable("languageServersFiles") {
-    extendsFrom(languageServers.get())
-    attributes(semantifyrArtifact("application-distribution"))
+val editorCommon = artifactsOf("npm-package", ":semantifyr-editor-common")
+val languageServers = artifactsOf("application-distribution", ":oxsts.lang.ide", ":gamma.lang.ide")
+val grammars = artifactsOf("textmate-grammar", ":oxsts.lang", ":gamma.lang")
+val icons = artifactsOf("vscode-icons", ":branding")
+
+val extensionVersion = version.toString()
+
+val cloneIcons = tasks.register<Sync>("cloneIcons") {
+    from(icons)
+    into("icons")
 }
-
-val editorCommon = configurations.dependencyScope("editorCommon")
-val editorCommonFiles = configurations.resolvable("editorCommonFiles") {
-    extendsFrom(editorCommon.get())
-    attributes(semantifyrArtifact("npm-package"))
-}
-
-val theta = configurations.dependencyScope("theta")
-val thetaFiles = configurations.resolvable("thetaFiles") {
-    extendsFrom(theta.get())
-    attributes(semantifyrArtifact("theta-xsts-cli"))
-}
-
-dependencies {
-    languageServers(project(":oxsts.lang.ide"))
-    languageServers(project(":gamma.lang.ide"))
-
-    editorCommon(project(":semantifyr-editor-common"))
-
-    theta(project(":theta-executor"))
-}
-
-val renderIcons = registerRenderPictures(
-    "renderIcons",
-    layout.projectDirectory.dir("icons"),
-    listOf(
-        "icon.png=semantifyr-logo@128",
-        "semantifyr-file-icon.png=semantifyr-logo@128+104",
-        "gamma-file-icon.png=gamma@128+104",
-    ),
-)
 
 val cloneDistribution = tasks.register<Sync>("cloneDistribution") {
-    from(languageServersFiles)
+    from(languageServers)
 
     into("bin")
 }
 
-tasks.npmInstall {
-    workingDir = rootProject.projectDir
+val cloneGrammars = tasks.register<Sync>("cloneGrammars") {
+    from(grammars)
+
+    into("syntaxes")
 }
 
-fun NpmTask.configureSharedInputs() {
-    inputs.dir(project.layout.projectDirectory.dir("src"))
-    inputs.file(project.layout.projectDirectory.file("esbuild.mjs"))
-    inputs.file(project.layout.projectDirectory.file("vitest.config.ts"))
-    inputs.file(project.layout.projectDirectory.file("eslint.config.js"))
-    inputs.file(project.layout.projectDirectory.file("tsconfig.json"))
-    inputs.file(project.layout.projectDirectory.file("package.json"))
-    inputs.file(rootProject.layout.projectDirectory.file("tsconfig.base.json"))
-    inputs.file(rootProject.layout.projectDirectory.file("eslint.config.base.js"))
-    inputs.file(rootProject.layout.projectDirectory.file("package.json"))
-    inputs.file(rootProject.layout.projectDirectory.file("package-lock.json"))
-    inputs.files(tasks.npmInstall)
-    inputs.files(editorCommonFiles)
+val cloneLicense = tasks.register("cloneLicense") {
+    val source = isolated.rootProject.projectDirectory.file("LICENSE")
+    val target = layout.projectDirectory.file("LICENSE")
+    inputs.file(source).withPathSensitivity(PathSensitivity.NONE)
+    outputs.file(target)
+    outputs.cacheIf {
+        true
+    }
+    doLast {
+        source.asFile.copyTo(target.asFile, overwrite = true)
+    }
 }
 
-val npmAssemble = tasks.register<NpmTask>("npmAssemble") {
+fun PnpmTask.configureSharedInputs() {
+    inputs.file(layout.projectDirectory.file("esbuild.mjs")).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.files(editorCommon).withPathSensitivity(PathSensitivity.RELATIVE)
+}
+
+registerPnpmCheck {
     configureSharedInputs()
-
-    npmCommand.set(listOf("run", "assemble"))
-
-    outputs.dir("dist")
 }
 
-val npmCheck = tasks.register<NpmTask>("npmCheck") {
+val vsixFile = layout.buildDirectory.file("semantifyr-$extensionVersion.vsix")
+
+val bundleExtension = tasks.register<PnpmTask>("bundleExtension") {
+    group = LifecycleBasePlugin.BUILD_GROUP
+
+    readsPackage()
     configureSharedInputs()
+    inputs.files(cloneDistribution).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.files(cloneGrammars).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.file(layout.projectDirectory.file("language-configuration.json")).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.files(cloneIcons).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.file(layout.projectDirectory.file("README.md")).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.file(layout.projectDirectory.file("CHANGELOG.md")).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.files(cloneLicense).withPathSensitivity(PathSensitivity.RELATIVE)
 
-    inputs.file(project(":oxsts.lang").layout.projectDirectory.file("src/main/java/hu/bme/mit/semantifyr/oxsts/lang/GenerateOxsts.mwe2")).withPathSensitivity(PathSensitivity.NONE)
-
-    npmCommand.set(listOf("run", "check"))
-
-    stampOnSuccess()
-}
-
-val thetaDirectory = layout.buildDirectory.dir("theta-xsts-cli")
-
-val cloneTheta = tasks.register<Sync>("cloneTheta") {
-    from(thetaFiles)
-    into(thetaDirectory)
-}
-
-val vsixFile = project.layout.buildDirectory.file("semantifyr-${project.version}.vsix")
-
-val bundleExtension = tasks.register<NpmTask>("bundleExtension") {
-    val version = project.version.toString()
-    inputs.property("version", version)
-
-    inputs.files(cloneDistribution)
-    inputs.dir(project.layout.projectDirectory.dir("src"))
-    inputs.dir(project.layout.projectDirectory.dir("syntaxes"))
-    inputs.file(project.layout.projectDirectory.file("esbuild.mjs"))
-    inputs.file(project.layout.projectDirectory.file("eslint.config.js"))
-    inputs.file(project.layout.projectDirectory.file("language-configuration.json"))
-    inputs.file(project.layout.projectDirectory.file("tsconfig.json"))
-    inputs.files(renderIcons)
-    inputs.file(project.layout.projectDirectory.file("README.md"))
-    inputs.file(project.layout.projectDirectory.file("CHANGELOG.md"))
-    inputs.file(rootProject.layout.projectDirectory.file("tsconfig.base.json"))
-    inputs.file(rootProject.layout.projectDirectory.file("eslint.config.base.js"))
-    inputs.file(rootProject.layout.projectDirectory.file("package.json"))
-    inputs.file(rootProject.layout.projectDirectory.file("package-lock.json"))
-    inputs.files(tasks.npmInstall)
-    inputs.files(editorCommonFiles)
-
-    npmCommand.set(listOf("run", "bundle", "--", version, "--no-git-tag-version", "--no-update-package-json"))
-    // both write dist, and the package must not take a development build written beside it
-    mustRunAfter(npmAssemble)
+    pnpmCommand = listOf("run", "bundle", "--", extensionVersion, "--no-git-tag-version", "--no-update-package-json")
 
     outputs.file(vsixFile)
+    outputs.cacheIf {
+        true
+    }
 }
 
-tasks.register<NpmTask>("endToEndTest") {
-    group = "verification"
+tasks.register<PnpmTask>("endToEndTest") {
+    group = LifecycleBasePlugin.VERIFICATION_GROUP
 
+    readsPackage()
     configureSharedInputs()
-    inputs.files(bundleExtension)
-    inputs.files(cloneTheta)
-    inputs.file(rootProject.layout.projectDirectory.file("oxsts-test-models/smoke/smoke.semantifyr"))
+    inputs.files(bundleExtension).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.file(isolated.rootProject.projectDirectory.file("oxsts-test-models/smoke/smoke.semantifyr")).withPathSensitivity(PathSensitivity.RELATIVE)
+    runsWithTheta()
 
-    npmCommand.set(listOf("run", "test:end-to-end"))
-    environment.put("SEMANTIFYR_VSIX", vsixFile.map {
-        it.asFile.absolutePath
-    })
-    environment.put("PATH", thetaDirectory.zip(providers.environmentVariable("PATH")) { directory, path ->
-        "${directory.asFile.absolutePath}${File.pathSeparator}$path"
-    })
-
-    stampOnSuccess()
+    pnpmCommand = listOf("run", "test:end-to-end")
+    environment.put(
+        "SEMANTIFYR_VSIX",
+        vsixFile.map {
+            it.asFile.absolutePath
+        },
+    )
 }
 
-tasks {
-    pack {
-        dependsOn(cloneDistribution, npmAssemble, bundleExtension)
-    }
+tasks.register("pack") {
+    group = LifecycleBasePlugin.BUILD_GROUP
+    dependsOn(bundleExtension)
+}
 
-    check {
-        dependsOn(npmCheck)
-    }
+tasks.register("continuousIntegration") {
+    group = LifecycleBasePlugin.VERIFICATION_GROUP
+    dependsOn(tasks.named("endToEndTest"))
+}
 
-    clean {
-        delete("dist", "build", "icons")
-    }
+tasks.named<Delete>("clean") {
+    delete(
+        "dist",
+        "icons",
+        "bin",
+        "syntaxes",
+        "LICENSE",
+    )
 }
 
 configurations.consumable("vscodeExtensionElements") {
@@ -168,4 +127,9 @@ configurations.consumable("vscodeExtensionElements") {
     outgoing.artifact(vsixFile) {
         builtBy(bundleExtension)
     }
+}
+
+configurations.consumable("languageConfigurationElements") {
+    attributes(semantifyrArtifact("language-configuration"))
+    outgoing.artifact(layout.projectDirectory.file("language-configuration.json"))
 }

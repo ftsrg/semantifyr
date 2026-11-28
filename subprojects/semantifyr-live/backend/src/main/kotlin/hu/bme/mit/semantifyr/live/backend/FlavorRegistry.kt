@@ -86,12 +86,12 @@ object FlavorRegistry {
             navigationCommands = oxstsNavigationCommands,
         ),
         Flavor(
-            id = "oxsts-with-sysmlv2-library",
+            id = "oxsts-with-sysml-library",
             displayName = "Semantifyr with the SysML v2 library",
             description = "SysML v2's semantics",
             language = Language.Oxsts,
             workspaceLayout = WorkspaceLayout.WithLibrary(
-                libraryRelativePath = Path.of("sysmlv2"),
+                libraryRelativePath = Path.of("sysml"),
                 workspaceTargetName = "Library",
             ),
             verificationCommand = "oxsts.case.verify",

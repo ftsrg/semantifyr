@@ -8,7 +8,6 @@ import type React from 'react';
 import { Fragment } from 'react';
 import CodeBlock from '@theme/CodeBlock';
 import Heading from '@theme/Heading';
-import { withCode } from '@site/src/lib/inlineCode';
 
 type Kind = 'package' | 'datatype' | 'class' | 'annotation';
 
@@ -64,7 +63,7 @@ function paragraphsOf(comment: string[]): string[] {
   });
 }
 
-// what a declaration shows is its text without the comments, which the page shows as prose
+// the page shows the comments as prose
 function withoutComments(lines: string[]): string {
   return lines.join('\n').replace(/^[ \t]*\/\*[\s\S]*?\*\/[ \t]*\n/gm, '').replace(/^[ \t]*\/\/.*\n/gm, '').trimEnd();
 }
@@ -74,7 +73,6 @@ function braceDepthOf(line: string): number {
   return (code.match(/\{/g)?.length ?? 0) - (code.match(/\}/g)?.length ?? 0);
 }
 
-// every top-level declaration of the library carries the comment before it, which the editors' hover also shows
 function parseLibrary(library: string): Declaration[] {
   const lines = library.replace(/\r\n/g, '\n').replace(/^\/\*[\s\S]*?SPDX-[\s\S]*?\*\/\s*/, '').split('\n');
   const declarations: Declaration[] = [];
@@ -124,6 +122,22 @@ function parseLibrary(library: string): Declaration[] {
     comment = null;
   }
   return declarations;
+}
+
+export function declarationOf(library: string, name: string): string {
+  const declaration = parseLibrary(library).find((candidate) => {
+    return candidate.name === name;
+  });
+  if (declaration === undefined) {
+    throw new Error(`standard.semantifyr declares no ${name}`);
+  }
+  return declaration.code;
+}
+
+function withCode(text: string): React.ReactNode[] {
+  return text.split('`').map((part, index) => {
+    return index % 2 === 1 ? <code key={index}>{part}</code> : part;
+  });
 }
 
 function idOf(heading: string): string {

@@ -20,7 +20,7 @@ class UninitializedIntegerBound {
         havoc(x)
     }
 
-    prop {
+    redefine prop {
         return AG x == 0
     }
 }
@@ -34,7 +34,7 @@ class UninitializedIntegerReach {
         havoc(x)
     }
 
-    prop {
+    redefine prop {
         return EF x == 7
     }
 }
@@ -48,7 +48,7 @@ class UninitializedBooleanBound {
         havoc(flag)
     }
 
-    prop {
+    redefine prop {
         return AG flag == false
     }
 }
@@ -62,7 +62,7 @@ class UninitializedBooleanReach {
         havoc(flag)
     }
 
-    prop {
+    redefine prop {
         return EF flag == true
     }
 }
@@ -76,7 +76,7 @@ class UninitializedEnumBound {
         havoc(light)
     }
 
-    prop {
+    redefine prop {
         return AG light == Light::Off
     }
 }
@@ -90,7 +90,7 @@ class UninitializedEnumReach {
         havoc(light)
     }
 
-    prop {
+    redefine prop {
         return EF light == Light::On
     }
 }
@@ -105,7 +105,7 @@ class InitOverwritesUninitialized {
         x := 3
     }
 
-    prop {
+    redefine prop {
         return AG x == 3
     }
 }
@@ -123,7 +123,7 @@ class ConditionalInitKeepsUninitialized {
         }
     }
 
-    prop {
+    redefine prop {
         return AG x == 3
     }
 }
@@ -142,7 +142,7 @@ class InitOverwritesDeclaration {
         x := x
     }
 
-    prop {
+    redefine prop {
         return AG x == 3
     }
 }
@@ -160,7 +160,7 @@ class InitOverwritesDeclarationViolated {
         x := 4
     }
 
-    prop {
+    redefine prop {
         return AG x == 3
     }
 }
@@ -180,7 +180,7 @@ class InitOverwritesDeclarationReach {
         x := x + 1
     }
 
-    prop {
+    redefine prop {
         return EF x == 1
     }
 }
@@ -199,7 +199,7 @@ class InitOverwritesDeclarationUnreachable {
         x := x + 1
     }
 
-    prop {
+    redefine prop {
         return EF x == 2
     }
 }
@@ -214,7 +214,7 @@ class BlockingInitInvariant {
         assume(false)
     }
 
-    prop {
+    redefine prop {
         return AG x == 1
     }
 }
@@ -228,7 +228,7 @@ class BlockingInitUnreachable {
         assume(false)
     }
 
-    prop {
+    redefine prop {
         return EF x == 0
     }
 }

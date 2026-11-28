@@ -4,60 +4,34 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import hu.bme.mit.semantifyr.gradle.conventions.readsServedExamples
-import hu.bme.mit.semantifyr.gradle.conventions.semantifyrArtifact
-
 plugins {
-    id("hu.bme.mit.semantifyr.gradle.conventions.jvm")
-    id("hu.bme.mit.semantifyr.gradle.conventions.theta")
-    id("hu.bme.mit.semantifyr.gradle.conventions.suites")
+    id("hu.bme.mit.semantifyr.theta")
+    id("hu.bme.mit.semantifyr.suites")
     kotlin("jvm")
     kotlin("plugin.serialization")
 }
 
 dependencies {
-    api(project(":portfolios"))
+    api(project(":sysml-wrapper"))
+    api(project(":verifier"))
 
-    implementation(project(":sysml-wrapper"))
     implementation(project(":logging"))
-    implementation(project(":utils"))
     implementation(libs.kotlinx.coroutines.core)
 
-    testFixturesApi(project(":portfolios"))
-    testFixturesApi(testFixtures(project(":portfolios")))
-    testFixturesApi(testFixtures(project(":verifier")))
     testFixturesImplementation(project(":logging"))
+    testFixturesImplementation(testFixtures(project(":verifier")))
+    testFixturesImplementation(libs.assertj.core)
     testFixturesImplementation(libs.kotlinx.serialization.json)
 }
 
-val syncSysmlLibrary = tasks.register<Sync>("syncSysmlLibrary") {
-    from(layout.projectDirectory.dir("../models/libraries"))
-    into(layout.buildDirectory.dir("libraries"))
-}
-
-// the corpus as the tests read it, each served model with its further cases appended
-val testSysmlCorpus = configurations.dependencyScope("testSysmlCorpus")
-val testSysmlCorpusFiles = configurations.resolvable("testSysmlCorpusFiles") {
-    extendsFrom(testSysmlCorpus.get())
-    attributes(semantifyrArtifact("sysml-corpus"))
-}
-
-dependencies {
-    testSysmlCorpus(project(":sysml-wrapper"))
-}
-
-val syncSysmlTestModels = tasks.register<Sync>("syncSysmlTestModels") {
-    from(testSysmlCorpusFiles)
-    into(layout.buildDirectory.dir("test-models"))
-}
+val librariesDirectory = layout.projectDirectory.dir("../models/libraries")
 
 tasks.processResources {
-    from(syncSysmlLibrary)
+    from(librariesDirectory)
 }
 
 tasks.withType<Test>().configureEach {
-    readsServedExamples()
-    inputs.files(syncSysmlTestModels)
-    inputs.dir(layout.projectDirectory.dir("../models/etc")).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.dir(layout.projectDirectory.dir("../models/tutorial")).withPathSensitivity(PathSensitivity.RELATIVE)
+    listOf("examples", "semantics", "tests").forEach {
+        inputs.dir(layout.projectDirectory.dir("../models/$it")).withPathSensitivity(PathSensitivity.RELATIVE)
+    }
 }

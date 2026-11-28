@@ -8,7 +8,6 @@ package hu.bme.mit.semantifyr.frontends.sysml
 
 import hu.bme.mit.semantifyr.frontends.sysml.testing.CorpusEntry
 import hu.bme.mit.semantifyr.frontends.sysml.testing.CorpusTier
-import hu.bme.mit.semantifyr.frontends.sysml.testing.SysMLCorpus
 import hu.bme.mit.semantifyr.frontends.sysml.testing.SysMLv2FrontendTestHelper
 import hu.bme.mit.semantifyr.portfolios.Portfolios
 import org.junit.jupiter.params.ParameterizedTest
@@ -21,7 +20,7 @@ class SysMLWitnessTests {
 
         @JvmStatic
         fun `Witnesses Re-verify Through All Backends`(): List<CorpusEntry> {
-            return SysMLCorpus.load().entries.filter {
+            return SysMLv2FrontendTestHelper.corpusEntries.filter {
                 it.case.tier != CorpusTier.Nightly
             }
         }

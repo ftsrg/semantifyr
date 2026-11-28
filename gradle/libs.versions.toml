@@ -3,7 +3,6 @@
 # SPDX-License-Identifier: EPL-2.0
 
 [versions]
-ecore = "2.43.0"
 junit = "6.1.3"
 assertj = "3.27.7"
 mockito = "5.24.0"
@@ -19,11 +18,12 @@ kotlin = "2.4.21"
 kotlinxCoroutines = "1.11.0"
 kotlinxSerialization = "1.12.0"
 cliKt = "5.1.0"
+mordant = "3.0.2"
 dockerJava = "3.7.1"
+commonsIo = "2.21.0"
 guice = "7.0.0"
 lsp4j = "1.0.0"
 node = "7.1.0"
-pnpm = "12.16.1"
 spotless = "8.10.4"
 ktlint = "1.8.0"
 palantirJavaFormat = "2.103.0"
@@ -31,38 +31,63 @@ sonarqube = "7.5.0.8588"
 ktor = "3.6.1"
 micrometer = "1.17.2"
 dokka = "2.2.0"
+theta = "8.6.0"
+z3 = "4.14.0"
+mathsat5 = "5.6.11-sosy1"
+cvc5 = "1.2.1-g8594a8e4dc"
+bitwuzla = "0.7.0-13.1-g595512ae"
+opensmt = "2.9.0-gef441e1c"
+gson = "2.13.2"
 
 [libraries]
-ecore = { group = "org.eclipse.emf", name = "org.eclipse.emf.ecore", version.ref = "ecore" }
-ecore-codegen = { group = "org.eclipse.emf", name = "org.eclipse.emf.codegen.ecore", version.ref = "ecore" }
+ecore = { group = "org.eclipse.emf", name = "org.eclipse.emf.ecore" }
+ecore-codegen = { group = "org.eclipse.emf", name = "org.eclipse.emf.codegen.ecore" }
+ecore-xmi = { group = "org.eclipse.emf", name = "org.eclipse.emf.ecore.xmi" }
+emf-common = { group = "org.eclipse.emf", name = "org.eclipse.emf.common" }
 junit-api = { group = "org.junit.jupiter", name = "junit-jupiter-api", version.ref = "junit" }
 junit-params = { group = "org.junit.jupiter", name = "junit-jupiter-params", version.ref = "junit" }
 assertj-core = { group = "org.assertj", name = "assertj-core", version.ref = "assertj" }
 mockito-core = { group = "org.mockito", name = "mockito-core", version.ref = "mockito" }
 mockito-junit = { group = "org.mockito", name = "mockito-junit-jupiter", version.ref = "mockito" }
 mockito-kotlin = { group = "org.mockito.kotlin", name = "mockito-kotlin", version.ref = "mockitoKotlin" }
+opentest4j = { group = "org.opentest4j", name = "opentest4j" }
 mwe-utils = { group = "org.eclipse.emf", name = "org.eclipse.emf.mwe.utils", version.ref = "mweUtils" }
 mwe2-launch = { group = "org.eclipse.emf", name = "org.eclipse.emf.mwe2.launch", version.ref = "mwe2" }
 mwe2-lib = { group = "org.eclipse.emf", name = "org.eclipse.emf.mwe2.lib", version.ref = "mwe2" }
+mwe2-runtime = { group = "org.eclipse.emf", name = "org.eclipse.emf.mwe2.runtime", version.ref = "mwe2" }
 reload4j = { group = "ch.qos.reload4j", name = "reload4j", version.ref = "reload4j" }
 slf4j-api = { group = "org.slf4j", name = "slf4j-api", version.ref = "slf4j" }
 slf4j-log4j = { group = "org.apache.logging.log4j", name = "log4j-slf4j2-impl", version.ref = "log4j" }
+log4j-api = { group = "org.apache.logging.log4j", name = "log4j-api", version.ref = "log4j" }
 log4j-core = { group = "org.apache.logging.log4j", name = "log4j-core", version.ref = "log4j" }
+xtext-xbase = { group = "org.eclipse.xtext", name = "org.eclipse.xtext.xbase", version.ref = "xtext" }
+xtext-xbase-lib = { group = "org.eclipse.xtext", name = "org.eclipse.xtext.xbase.lib", version.ref = "xtext" }
+xtext-util = { group = "org.eclipse.xtext", name = "org.eclipse.xtext.util", version.ref = "xtext" }
 xtext-bom = { group = "org.eclipse.xtext", name = "xtext-dev-bom", version.ref = "xtext" }
 xtext-core = { group = "org.eclipse.xtext", name = "org.eclipse.xtext", version.ref = "xtext" }
 xtext-ide = { group = "org.eclipse.xtext", name = "org.eclipse.xtext.ide", version.ref = "xtext" }
 xtext-generator-antlr = { group = "org.eclipse.xtext", name = "xtext-antlr-generator", version.ref = "xtextAntlrGenerator" }
 xtext-generator = { group = "org.eclipse.xtext", name = "org.eclipse.xtext.xtext.generator", version.ref = "xtext" }
 xtext-testing = { group = "org.eclipse.xtext", name = "org.eclipse.xtext.testing", version.ref = "xtext" }
-xtext-xbase = { group = "org.eclipse.xtext", name = "org.eclipse.xtext.xbase", version.ref = "xtext" }
+gson = { group = "com.google.code.gson", name = "gson", version.ref = "gson" }
+guava = { group = "com.google.guava", name = "guava" }
+antlr-runtime = { group = "org.antlr", name = "antlr-runtime" }
+eclipse-equinox-common = { group = "org.eclipse.platform", name = "org.eclipse.equinox.common" }
+commons-io = { group = "commons-io", name = "commons-io", version.ref = "commonsIo" }
 clikt = { group = "com.github.ajalt.clikt", name = "clikt", version.ref = "cliKt" }
+clikt-core = { group = "com.github.ajalt.clikt", name = "clikt-core", version.ref = "cliKt" }
+mordant-core = { group = "com.github.ajalt.mordant", name = "mordant-core", version.ref = "mordant" }
+kotlin-stdlib = { group = "org.jetbrains.kotlin", name = "kotlin-stdlib", version.ref = "kotlin" }
 kotlinx-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "kotlinxCoroutines" }
 kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "kotlinxCoroutines" }
+kotlinx-serialization-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-core", version.ref = "kotlinxSerialization" }
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinxSerialization" }
 guice = { group = "com.google.inject", name = "guice", version.ref = "guice" }
 guice-extensions-assistedinject = { group = "com.google.inject.extensions", name = "guice-assistedinject", version.ref = "guice" }
 docker-java-core = { group = "com.github.docker-java", name = "docker-java-core", version.ref = "dockerJava" }
-docker-java-transport = { group = "com.github.docker-java", name = "docker-java-transport-httpclient5", version.ref = "dockerJava" }
+docker-java-api = { group = "com.github.docker-java", name = "docker-java-api", version.ref = "dockerJava" }
+docker-java-transport = { group = "com.github.docker-java", name = "docker-java-transport", version.ref = "dockerJava" }
+docker-java-transport-httpclient5 = { group = "com.github.docker-java", name = "docker-java-transport-httpclient5", version.ref = "dockerJava" }
 lsp4j = { group = "org.eclipse.lsp4j", name = "org.eclipse.lsp4j", version.ref = "lsp4j" }
 lsp4j-jsonrpc = { group = "org.eclipse.lsp4j", name = "org.eclipse.lsp4j.jsonrpc", version.ref = "lsp4j" }
 ktor-server-core = { group = "io.ktor", name = "ktor-server-core", version.ref = "ktor" }
@@ -70,23 +95,35 @@ ktor-server-netty = { group = "io.ktor", name = "ktor-server-netty", version.ref
 ktor-server-websockets = { group = "io.ktor", name = "ktor-server-websockets", version.ref = "ktor" }
 ktor-server-auth = { group = "io.ktor", name = "ktor-server-auth", version.ref = "ktor" }
 ktor-server-cors = { group = "io.ktor", name = "ktor-server-cors", version.ref = "ktor" }
-ktor-server-host-common = { group = "io.ktor", name = "ktor-server-host-common", version.ref = "ktor" }
 ktor-server-content-negotiation = { group = "io.ktor", name = "ktor-server-content-negotiation", version.ref = "ktor" }
 ktor-server-rate-limit = { group = "io.ktor", name = "ktor-server-rate-limit", version.ref = "ktor" }
 ktor-server-metrics-micrometer = { group = "io.ktor", name = "ktor-server-metrics-micrometer", version.ref = "ktor" }
 ktor-serialization-kotlinx-json = { group = "io.ktor", name = "ktor-serialization-kotlinx-json", version.ref = "ktor" }
 ktor-client-content-negotiation = { group = "io.ktor", name = "ktor-client-content-negotiation", version.ref = "ktor" }
 ktor-client-cio = { group = "io.ktor", name = "ktor-client-cio", version.ref = "ktor" }
-ktor-client-websockets = { group = "io.ktor", name = "ktor-client-websockets", version.ref = "ktor" }
 ktor-server-test-host = { group = "io.ktor", name = "ktor-server-test-host", version.ref = "ktor" }
+ktor-client-core = { group = "io.ktor", name = "ktor-client-core", version.ref = "ktor" }
+ktor-http = { group = "io.ktor", name = "ktor-http", version.ref = "ktor" }
+ktor-serialization = { group = "io.ktor", name = "ktor-serialization", version.ref = "ktor" }
+ktor-utils = { group = "io.ktor", name = "ktor-utils", version.ref = "ktor" }
+ktor-websockets = { group = "io.ktor", name = "ktor-websockets", version.ref = "ktor" }
+micrometer-core = { group = "io.micrometer", name = "micrometer-core", version.ref = "micrometer" }
 micrometer-registry-prometheus = { group = "io.micrometer", name = "micrometer-registry-prometheus", version.ref = "micrometer" }
 node-plugin = { group = "com.github.node-gradle", name = "gradle-node-plugin", version.ref = "node" }
 spotless-plugin = { group = "com.diffplug.spotless", name = "spotless-plugin-gradle", version.ref = "spotless" }
 sonarqube-plugin = { group = "org.sonarqube", name = "org.sonarqube.gradle.plugin", version.ref = "sonarqube" }
 dokka-plugin = { group = "org.jetbrains.dokka", name = "dokka-gradle-plugin", version.ref = "dokka" }
+theta-xsts-cli = { group = "hu.bme.mit.ftsrg.theta", name = "theta-xsts-cli", version.ref = "theta" }
+theta-libz3legacy = { group = "hu.bme.mit.ftsrg.theta.lib", name = "libz3legacy", version.ref = "theta" }
+theta-libz3javalegacy = { group = "hu.bme.mit.ftsrg.theta.lib", name = "libz3javalegacy", version.ref = "theta" }
+javasmt-z3 = { group = "org.sosy-lab", name = "javasmt-solver-z3", version.ref = "z3" }
+javasmt-mathsat5 = { group = "org.sosy-lab", name = "javasmt-solver-mathsat5", version.ref = "mathsat5" }
+javasmt-cvc5 = { group = "org.sosy-lab", name = "javasmt-solver-cvc5", version.ref = "cvc5" }
+javasmt-bitwuzla = { group = "org.sosy-lab", name = "javasmt-solver-bitwuzla", version.ref = "bitwuzla" }
+javasmt-opensmt = { group = "org.sosy-lab", name = "javasmt-solver-opensmt", version.ref = "opensmt" }
 
 [bundles]
-junit-fixtures = ["junit-api", "junit-params"]
+junit = ["junit-api", "junit-params"]
 mockito = ["mockito-core", "mockito-junit", "mockito-kotlin"]
 ktor-server = [
     "ktor-server-core",
@@ -94,7 +131,6 @@ ktor-server = [
     "ktor-server-websockets",
     "ktor-server-auth",
     "ktor-server-cors",
-    "ktor-server-host-common",
     "ktor-server-content-negotiation",
     "ktor-server-rate-limit",
     "ktor-server-metrics-micrometer",
@@ -103,7 +139,6 @@ ktor-server = [
 ktor-client-test = [
     "ktor-client-content-negotiation",
     "ktor-client-cio",
-    "ktor-client-websockets",
     "ktor-server-test-host",
 ]
 
@@ -111,4 +146,3 @@ ktor-client-test = [
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 sonarqube = { id = "org.sonarqube", version.ref = "sonarqube" }
-dokka = { id = "org.jetbrains.dokka", version.ref = "dokka" }

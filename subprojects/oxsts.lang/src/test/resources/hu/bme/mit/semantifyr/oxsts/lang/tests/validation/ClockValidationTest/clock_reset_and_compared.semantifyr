@@ -1,0 +1,23 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package test
+
+class Timer {
+    refers limit: int = 5
+    var elapsed: clock := 0
+    redefine tran {
+        assume(elapsed <= limit)
+        assume(elapsed >= 1)
+        assume(elapsed == 2)
+        assume(3 >= elapsed)
+        assume(!(elapsed < 1))
+        assume(!(elapsed > 4))
+        assume(!(elapsed != 2))
+        elapsed := 0
+        assume(elapsed < 1)
+    }
+}

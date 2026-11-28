@@ -45,7 +45,6 @@ public class NamingUtil {
         return property.getName();
     }
 
-    // a class has one main, one init and one property, so an anonymous one is the class's own
     public static boolean isAnonymous(RedefinableDeclaration declaration) {
         return (declaration instanceof TransitionDeclaration || declaration instanceof PropertyDeclaration)
                 && Strings.isEmpty(declaration.getName());

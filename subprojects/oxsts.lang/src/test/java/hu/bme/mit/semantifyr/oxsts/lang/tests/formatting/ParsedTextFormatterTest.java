@@ -44,7 +44,7 @@ public class ParsedTextFormatterTest {
                 class Node {
                     var x: int := 0
 
-                    prop {
+                    redefine prop {
                         return x%1$sx
                     }
                 }
@@ -54,7 +54,7 @@ public class ParsedTextFormatterTest {
                 class Node {
                     var x: int := 0
 
-                    prop {
+                    redefine prop {
                         return x %1$s x
                     }
                 }
@@ -159,7 +159,7 @@ public class ParsedTextFormatterTest {
                         return nothing
                     }
 
-                    prop {
+                    redefine prop {
                         return AG ( !( values[0] > 0 ) )
                     }
                 }
@@ -179,7 +179,7 @@ public class ParsedTextFormatterTest {
                         return nothing
                     }
 
-                    prop {
+                    redefine prop {
                         return AG (!(values[0] > 0))
                     }
                 }
@@ -289,6 +289,18 @@ public class ParsedTextFormatterTest {
                 class First {
                 }
                 class Second {
+                }
+                """);
+    }
+
+    @Test
+    void fileWithoutAPackageLineStartsWithItsFirstDeclaration() {
+        assertFormatted("""
+
+                class First {
+                }
+                """, """
+                class First {
                 }
                 """);
     }

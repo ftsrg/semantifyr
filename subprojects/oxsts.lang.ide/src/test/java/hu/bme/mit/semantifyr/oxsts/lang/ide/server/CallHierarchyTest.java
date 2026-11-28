@@ -23,11 +23,8 @@ import org.junit.jupiter.api.Test;
 
 class CallHierarchyTest extends OxstsLanguageServerTest {
 
-    // The marker starts the name of the library transition.
     private final MarkedText lamps = MarkedText.of(MarkedText.markEvery(InlineModels.LAMP_LIBRARY, "toggle("));
 
-    // In source order, the markers start the call in reset, the case's main transition, each call in main and the call
-    // in lit's initializer.
     private final MarkedText garage = MarkedText.of("""
             package example::garage
 
@@ -56,7 +53,7 @@ class CallHierarchyTest extends OxstsLanguageServerTest {
 
                 var lit: bool := lamp.<|>isOn()
 
-                prop {
+                redefine prop {
                     return true
                 }
             }

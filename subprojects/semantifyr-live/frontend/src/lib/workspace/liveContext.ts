@@ -7,7 +7,7 @@
 import { createContext, useContext } from 'react'
 import type { LanguageRuntime } from '../language/types'
 import { useStore } from '../stores/useStore'
-import type { VerificationState } from '../verification/engine'
+import type { VerificationState } from '../verification/state'
 import type { Live } from './live'
 import { NO_VERIFICATION } from './verification'
 

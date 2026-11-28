@@ -20,6 +20,7 @@ import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.backend.execution.AvailabilityReport
 import hu.bme.mit.semantifyr.backend.execution.BackendExecutor
 import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
+import hu.bme.mit.semantifyr.backend.testModel
 import hu.bme.mit.semantifyr.backend.witness.Fraction
 import hu.bme.mit.semantifyr.backend.witness.InlinedWitness
 import hu.bme.mit.semantifyr.backend.witness.WitnessState
@@ -62,7 +63,6 @@ import org.mockito.kotlin.doAnswer
 import org.mockito.kotlin.mock
 import java.nio.file.Path
 import kotlin.coroutines.cancellation.CancellationException
-import kotlin.io.path.Path
 import kotlin.io.path.exists
 import kotlin.io.path.readText
 import kotlin.io.path.writeText
@@ -84,7 +84,8 @@ class SemantifyrVerifierImplTest {
     @Inject
     private lateinit var serializer: ISerializer
 
-    private val modelPath = Path("../../oxsts-test-models/simple/simple.semantifyr")
+    @TempDir
+    lateinit var modelDirectory: Path
 
     @Test
     suspend fun `successful portfolio verdict propagates to VerificationResult`(@TempDir output: Path) {
@@ -155,20 +156,20 @@ class SemantifyrVerifierImplTest {
         val result = build(portfolio, output).verify(loadFirstCase()).report.result
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.NotSupported)
-        assertThat(result.message).isEqualTo("scripted does not support simple.semantifyr:12: variables of type int (x)")
+        assertThat(result.message).isEqualTo("scripted does not support simple.semantifyr:11: variables of type int (x)")
     }
 
     @Test
     suspend fun `BackendUnsupportedException from the portfolio yields NotSupported`(@TempDir output: Path) {
         val portfolio = ScriptedPortfolio { _, _ ->
-            throw BackendUnsupportedException("engine cannot represent this model")
+            throw BackendUnsupportedException("backend cannot represent this model")
         }
 
         val result = build(portfolio, output)
             .verify(loadFirstCase()).report.result
 
         assertThat(result.verdict).isEqualTo(VerificationVerdict.NotSupported)
-        assertThat(result.message).contains("engine cannot represent")
+        assertThat(result.message).contains("backend cannot represent")
     }
 
     @Test
@@ -387,7 +388,7 @@ class SemantifyrVerifierImplTest {
             )
         }
         val case = loadFirstCase()
-        val witness = loadWitness(case, output.resolve("renamed.semantifyr"), rootName = "system")
+        val witness = loadWitness(case, output.resolve("renamed.semantifyr"), witness = "witness_with_system_root.semantifyr")
 
         val outcome = build(portfolio, output).verify(witness)
 
@@ -437,6 +438,8 @@ class SemantifyrVerifierImplTest {
     }
 
     private fun loadFirstCase(): VerificationCase {
+        val modelPath = modelDirectory.resolve("simple.semantifyr")
+        modelPath.writeText(testModel("simple.semantifyr"))
         val context = loader.loadStandaloneModel(modelPath)
         val classDeclaration = context.modelResources.asSequence()
             .flatMap {
@@ -457,35 +460,9 @@ class SemantifyrVerifierImplTest {
     private fun loadWitness(
         case: VerificationCase,
         witnessPath: Path,
-        rootName: String = "root",
+        witness: String = "witness.semantifyr",
     ): InlinedOxsts {
-        witnessPath.writeText(
-            """
-            witness of semantifyr::verification::simple::Incrementing
-
-            var step: int := 0
-
-            contains $rootName: semantifyr::verification::simple::Incrementing
-
-            init {
-                assume(step == 0)
-                inline $rootName.init()
-                assume($rootName.x == 1)
-                step := 1
-            }
-
-            tran {
-                assume(step == 1)
-                inline $rootName.main()
-                assume($rootName.x == 2)
-                step := 2
-            }
-
-            prop {
-                $rootName.prop()
-            }
-            """.trimIndent(),
-        )
+        witnessPath.writeText(testModel(witness))
         val resourceSet = case.classDeclaration.eResource().resourceSet
         val resource = resourceSet.getResource(URI.createFileURI(witnessPath.toAbsolutePath().toString()), true)
         EcoreUtil.resolveAll(resourceSet)

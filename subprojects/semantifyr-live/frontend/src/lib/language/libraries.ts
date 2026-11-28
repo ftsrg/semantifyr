@@ -18,9 +18,9 @@ export const SYSML_LIBRARY_PREFIX = 'file:///sysml-library/'
 // the served flavor whose session a language's semantic library is copied into
 const SEMANTIC_LIBRARY_OF: Readonly<Record<string, string>> = {
   'oxsts-with-gamma-library': 'oxsts-with-gamma-library',
-  'oxsts-with-sysmlv2-library': 'oxsts-with-sysmlv2-library',
+  'oxsts-with-sysml-library': 'oxsts-with-sysml-library',
   'gamma': 'gamma',
-  'sysml': 'oxsts-with-sysmlv2-library',
+  'sysml': 'oxsts-with-sysml-library',
 }
 
 // the file each library is known by while the server's listing is not there
@@ -32,7 +32,7 @@ const ENTRY_FILES: Readonly<Record<string, readonly { kind: LibraryKind, file: s
     { kind: 'library', file: 'standard.semantifyr' },
     { kind: 'semantic-library', file: 'Statecharts.semantifyr' },
   ],
-  'oxsts-with-sysmlv2-library': [
+  'oxsts-with-sysml-library': [
     { kind: 'library', file: 'standard.semantifyr' },
     { kind: 'semantic-library', file: 'States.semantifyr' },
   ],

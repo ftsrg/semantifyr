@@ -37,7 +37,7 @@ class WebSocketSyntaxErrorTest {
 
         @VerificationCase
         class CaseA {
-            prop {
+            redefine prop {
                 return true
             }
         }
@@ -48,7 +48,7 @@ class WebSocketSyntaxErrorTest {
 
         @VerificationCase
         class CaseA {
-            prop {
+            redefine prop {
                 return true
         }
     """.trimIndent()

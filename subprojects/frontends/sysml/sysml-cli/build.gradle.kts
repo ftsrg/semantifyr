@@ -5,19 +5,24 @@
  */
 
 plugins {
-    id("hu.bme.mit.semantifyr.gradle.conventions.cli")
-    id("hu.bme.mit.semantifyr.gradle.conventions.suites")
+    id("hu.bme.mit.semantifyr.distribution-test")
     kotlin("jvm")
 }
 
 dependencies {
-    implementation(project(":cli-common"))
-    implementation(project(":sysml-frontend"))
-    implementation(project(":sysml-wrapper"))
     implementation(project(":logging"))
+    implementation(project(":portfolios"))
+    implementation(project(":sysml-frontend"))
 
-    testFixturesApi(project(":cli-common"))
-    testFixturesApi(testFixtures(project(":cli-common")))
+    testFixturesApi(project(":verifier"))
+    testFixturesApi(libs.clikt)
+    testFixturesImplementation(project(":cli-common"))
+    testFixturesImplementation(project(":portfolios"))
+    testFixturesImplementation(libs.junit.api)
+    testFixturesImplementation(libs.mordant.core)
+
+    testImplementation(testFixtures(project(":cli-common")))
+    testImplementation(libs.mordant.core)
 }
 
 application {
@@ -25,29 +30,19 @@ application {
     applicationName = "semantifyr-sysml"
 }
 
-val rootDirectory = isolated.rootProject.projectDirectory
-
 distributions.main {
     contents {
         from(layout.projectDirectory.dir("../models/libraries/default")) {
             into("libraries/sysmlv2")
-        }
-        from(layout.projectDirectory.file("../models/tutorial/room.sysml")) {
-            into("models/smoke")
         }
     }
 }
 
 listOf(
     "test",
-    "integrationTest",
+    "endToEndTest",
 ).forEach {
     tasks.named(it) {
-        inputs.dir(layout.projectDirectory.dir("../models/tutorial"))
-            .withPropertyName("sysmlTutorialModels")
-            .withPathSensitivity(PathSensitivity.RELATIVE)
-        inputs.dir(rootDirectory.dir("oxsts-test-models/semantic"))
-            .withPropertyName("oxstsSemanticModels")
-            .withPathSensitivity(PathSensitivity.RELATIVE)
+        inputs.file(layout.projectDirectory.file("../models/smoke/smoke.sysml")).withPathSensitivity(PathSensitivity.RELATIVE)
     }
 }

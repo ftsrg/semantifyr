@@ -18,14 +18,15 @@
     "src"
   ],
   "scripts": {
-    "typecheck": "tsc",
+    "typecheck": "tsc --incremental --tsBuildInfoFile build/tsconfig.tsbuildinfo",
     "typecheck:watch": "tsc --watch",
-    "lint": "eslint",
-    "test": "vitest run",
+    "lint": "eslint --format json --output-file build/eslint.json || eslint",
+    "test": "vitest run --reporter=default --reporter=junit --outputFile.junit=build/test-results/unit.xml",
     "test:watch": "vitest",
-    "check": "npm run typecheck && npm run lint && npm run test"
+    "check": "pnpm run typecheck && pnpm run lint && pnpm run test"
   },
   "devDependencies": {
+    "@types/node": "^25.6.0",
     "@types/react": "^19.2.0",
     "vitest": "^5.0.5"
   },

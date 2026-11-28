@@ -10,7 +10,7 @@ import { servedExamples } from '@semantifyr/editor-common/examples'
 
 import { findExample } from '../../examples'
 import { presentationOf } from '../../lib/language/presentation'
-import type { LspClient } from '../../lib/verification/engine'
+import type { LspClient } from '../../lib/verification/runs'
 import { fixedFrame, frameColorMode, historyChangeOf, readAddress, resolveAddress } from '../../lib/workspace/address'
 import { exampleTitle } from '../../texts'
 import { fakeRegistry, fakeRuntime, testFlavors } from '../helpers/live'
@@ -62,7 +62,7 @@ describe('an address', () => {
 
   it('opens the flavour its library names, the example keeping its plain name', async () => {
     expect(await resolved('/language/crossroads?library=gamma')).toMatchObject({ flavor: { id: 'oxsts-with-gamma-library' }, example: { id: 'crossroads' }, problem: null })
-    expect(await resolved('/language/level-crossing?library=sysml')).toMatchObject({ flavor: { id: 'oxsts-with-sysmlv2-library' }, example: { id: 'level-crossing' } })
+    expect(await resolved('/language/level-crossing?library=sysml')).toMatchObject({ flavor: { id: 'oxsts-with-sysml-library' }, example: { id: 'level-crossing' } })
   })
 
   it('says which name it did not find and what it opened in its place', async () => {

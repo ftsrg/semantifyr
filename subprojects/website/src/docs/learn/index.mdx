@@ -1,22 +1,14 @@
 ---
-title: What Is Semantifyr
-description: Semantifyr, a framework for the declarative definition of engineering model semantics, an overview of how a model becomes a verdict and a trace, and the ways on to its frontends, its backends and the Semantifyr Language.
+title: Where to Start
+description: Where to start with Semantifyr, by what you want to do.
 ---
 
-import Architecture from '@site/src/components/Architecture';
+# Where to Start
 
-# What Is Semantifyr
+**Semantifyr** is a framework to declaratively define the semantics of engineering modeling languages. Where you start depends on what you want to do.
 
-**Semantifyr** is a framework to support the declarative definition of engineering model semantics. Where a verification tool usually translates each engineering language to a model checker by a translator of its own, Semantifyr has the execution semantics of a language written once, as a **semantic library** in its own language, the Semantifyr Language, and verifies every model of the language as an instance of that library. The same library verifies many models, a language can have variants of its library, and the model checkers, the backends, never need to know the engineering language.
-
-## Overview
-
-<Architecture />
-
-A [frontend](frontends/index.mdx) translates a model of its language, with the verification cases written in it, into a Semantifyr model, which instantiates the classes of the language's semantic library. Semantifyr compiles each case of it into a formal model, a transition system, in [three phases](language/compilation/index.mdx), and a [portfolio](backends/portfolios-and-verdicts.mdx) hands that to the [backends](backends/index.mdx), Theta, nuXmv, Spin and Uppaal. The verdict comes back, and where it rests on a run the backend found, the run comes back too: as the formal trace, back-annotated into a trace of the Semantifyr model, and turned by the frontend into a trace in the language of the model.
-
-## Where to Go Next
-
-- [Frontends](frontends/index.mdx): a model in SysML v2 or Gamma, the currently implemented frontends, and what each supports and assumes of its language.
-- [Backends](backends/index.mdx): the model checkers that verify the formal model, how a portfolio decides the verdict from their answers, and the witness behind it.
-- [Language](language/index.mdx): the Semantifyr Language, in which you write the semantics of a language that has no frontend.
+- **Try it without installing anything:** [Try in the Browser](start/live/index.md) verifies a model in Semantifyr Live.
+- **Verify a SysML v2 model:** see [Verifying SysML v2 Models](frontends/sysml-v2/verifying.md), or the [lesson](frontends/sysml-v2/lesson.md) that builds a room with a switch and a lamp.
+- **Verify a Gamma model:** see [Verifying Gamma Models](frontends/gamma/verifying.mdx), or the [lesson](frontends/gamma/lesson.md) that reads a level crossing.
+- **Define the semantics of your own language:** the [lessons](language/lessons/index.md) build a semantic library step by step, and the [language reference](language/reference/index.md) defines the Semantifyr Language.
+- **Work on your own machine:** [Install](start/install.md) the VS Code extension or the CLI, and a [backend](backends/index.mdx) to verify with.

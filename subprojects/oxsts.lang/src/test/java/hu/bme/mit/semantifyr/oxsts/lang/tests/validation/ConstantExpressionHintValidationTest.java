@@ -6,6 +6,7 @@
 
 package hu.bme.mit.semantifyr.oxsts.lang.tests.validation;
 
+import static hu.bme.mit.semantifyr.oxsts.lang.tests.utils.TestModels.testModel;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.google.inject.Inject;
@@ -107,31 +108,7 @@ public class ConstantExpressionHintValidationTest {
 
     @Test
     void literalsReferencesRangesAndNonConstantExpressionsAreNotHinted() {
-        var issues = constantHints("""
-                package test
-
-                enum LightColor {
-                    Red,
-                    Green
-                }
-
-                class Counter {
-                    refers size: int = 3
-                    refers offset: int = -3
-                    refers doubleSize: int = size * 2
-                    var color: LightColor := LightColor::Red
-                    var count: int := 0
-
-                    redefine tran {
-                        count := size
-                        count := count + 1
-                        color := LightColor::Green
-                        inline for (index in 0..2) {
-                            count := index
-                        }
-                    }
-                }
-                """);
+        var issues = constantHints(testModel(getClass(), "not_hinted.semantifyr"));
 
         assertThat(issues).isEmpty();
     }

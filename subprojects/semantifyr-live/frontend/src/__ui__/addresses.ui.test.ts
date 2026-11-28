@@ -62,9 +62,7 @@ describe('an address that names what Live does not have', () => {
   })
 
   test('opens a model of the fragment as a shared model', async ({ ui }) => {
-    ui.backend.answer('discover', () => {
-      return []
-    })
+    ui.backend.cases = []
     const model = await encodeCompressedBase64Url('package shared\n')
     const page = await ui.open(`/language#model=${model}`)
 

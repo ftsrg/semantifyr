@@ -1,0 +1,30 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+class Holder {
+    var position: Point := Point { x = 0 }
+    var previous: Point := Point { x = 0 }
+    var segment: Segment := Segment { color = Color::Red }
+    tran move(target: Point) {
+        position := target
+    }
+    prop isOrigin(point: Point): bool {
+        return point.x == 0 && point.y == 0
+    }
+    redefine tran {
+        position.x := position.x + 1
+        previous := position
+        segment.from.y := segment.to.y
+        segment.to := previous
+        havoc(previous)
+        var local: Point := position
+        local.y := 2
+        inline move(local)
+    }
+    redefine prop {
+        return EF (position == previous && segment.from != segment.to && isOrigin(segment.from) && segment.color == Color::Green)
+    }
+}

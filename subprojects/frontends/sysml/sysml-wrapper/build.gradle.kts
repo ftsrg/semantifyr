@@ -6,16 +6,13 @@
 
 import com.github.gradle.node.pnpm.task.PnpmTask
 import com.github.gradle.node.task.NodeTask
-import hu.bme.mit.semantifyr.gradle.conventions.AppendFurtherCases
-import hu.bme.mit.semantifyr.gradle.conventions.corpusModels
-import hu.bme.mit.semantifyr.gradle.conventions.oxstsFileExtension
-import hu.bme.mit.semantifyr.gradle.conventions.semantifyrArtifact
+import hu.bme.mit.semantifyr.gradle.pnpmVersionOf
+import hu.bme.mit.semantifyr.gradle.semantifyrArtifact
 import org.apache.tools.ant.taskdefs.condition.Os
 
 plugins {
-    id("hu.bme.mit.semantifyr.gradle.conventions.jvm")
-    id("hu.bme.mit.semantifyr.gradle.conventions.nodejs")
-    id("hu.bme.mit.semantifyr.gradle.conventions.suites")
+    id("hu.bme.mit.semantifyr.nodejs")
+    id("hu.bme.mit.semantifyr.suites")
     kotlin("jvm")
 }
 
@@ -24,32 +21,40 @@ dependencies {
     implementation(project(":logging"))
 }
 
-val sysmlCommit = "7fb52bf2146d9dbbd69102cb9be1d1faa7ce75a5" // feat: the SysML trace names the root instance root by convention instead of reading it from the report
+testing {
+    suites {
+        named<JvmTestSuite>("integrationTest") {
+            dependencies {
+                implementation(testFixtures(project(":oxsts.lang")))
+            }
+        }
+    }
+}
+
+val sysmlCommit = "569fe43143fe23f96eb668dc9e87af2d5b9cf8c7" // feat: a transition whose first names the entry action of its state is initial
 val sysmlUrl = "https://github.com/arminzavada/sysml-2ls.git"
-val sysmlDir = layout.projectDirectory.dir("sysml-2ls")
+val sysmlDirectory = layout.projectDirectory.dir("sysml-2ls")
 
 node {
-    nodeProjectDir = sysmlDir
-    // pnpm switches itself to the fork's packageManager, so the installed one must match it
-    pnpmVersion = providers.fileContents(sysmlDir.file("package.json")).asText.map {
-        Regex("\"packageManager\"\\s*:\\s*\"pnpm@([^\"+]+)").find(it)?.groupValues?.get(1)
-    }.orElse(libs.versions.pnpm)
+    nodeProjectDir = sysmlDirectory
+    pnpmVersion = pnpmVersionOf(sysmlDirectory.file("package.json")).orElse(pnpmVersionOf(isolated.rootProject.projectDirectory.file("package.json")))
 }
 
 val checkoutSysml = tasks.register<Exec>("checkoutSysml") {
     inputs.property("sysmlUrl", sysmlUrl)
     inputs.property("sysmlCommit", sysmlCommit)
-    inputs.dir("scripts")
-    outputs.dir(sysmlDir.dir(".git"))
+    inputs.dir("scripts").withPathSensitivity(PathSensitivity.RELATIVE)
+    outputs.dir(sysmlDirectory.dir(".git"))
 
     if (Os.isFamily(Os.FAMILY_WINDOWS)) {
-        commandLine("cmd.exe", "/d", "/c", "scripts\\checkout.cmd", sysmlDir.asFile.absolutePath, sysmlUrl, sysmlCommit)
+        commandLine("cmd.exe", "/d", "/c", "scripts\\checkout.cmd", sysmlDirectory.asFile.absolutePath, sysmlUrl, sysmlCommit)
     } else {
-        commandLine("scripts/checkout.sh", sysmlDir.asFile.absolutePath, sysmlUrl, sysmlCommit)
+        commandLine("scripts/checkout.sh", sysmlDirectory.asFile.absolutePath, sysmlUrl, sysmlCommit)
     }
 }
 
 tasks.pnpmInstall {
+    enabled = true
     // the checkout's working tree is not a declared output of checkoutSysml
     dependsOn(checkoutSysml)
     // every pnpm run records its run state here
@@ -58,7 +63,7 @@ tasks.pnpmInstall {
     }
 }
 
-val sysmlSourceFiles = fileTree(sysmlDir.dir("packages")) {
+val sysmlSourceFiles = fileTree(sysmlDirectory.dir("packages")) {
     include("**/src/**/*.ts")
     include("**/gen/**/*.ts")
     include("**/tsconfig.json")
@@ -70,127 +75,111 @@ val sysmlSourceFiles = fileTree(sysmlDir.dir("packages")) {
     exclude("**/dist/**")
 }
 
-val sysmlBuildOutputs = fileTree(sysmlDir.dir("packages")) {
-    exclude("**/node_modules/**")
-    include("**/lib/**")
-    include("**/dist/**")
-}
-
 val buildCli = tasks.register<PnpmTask>("buildCli") {
     // node_modules links back into the workspace packages, so it changes whenever they are built
     dependsOn(tasks.pnpmInstall)
-    inputs.file(sysmlDir.file("package.json"))
-    inputs.file(sysmlDir.file("tsconfig.json"))
-    inputs.files(sysmlSourceFiles)
-    outputs.file(sysmlDir.file("packages/syside-cli/dist/cli.cjs"))
+    inputs.file(sysmlDirectory.file("package.json")).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.file(sysmlDirectory.file("tsconfig.json")).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.files(sysmlSourceFiles).withPathSensitivity(PathSensitivity.RELATIVE)
+    outputs.file(sysmlDirectory.file("packages/syside-cli/dist/cli.cjs"))
 
-    pnpmCommand.set(listOf("run", "cli"))
+    pnpmCommand = listOf("run", "cli")
 }
 
 val bundleExtension = tasks.register<PnpmTask>("bundleExtension") {
     dependsOn(tasks.pnpmInstall)
     mustRunAfter(buildCli)
-    inputs.file(sysmlDir.file("package.json"))
-    inputs.file(sysmlDir.file("tsconfig.json"))
-    inputs.files(sysmlSourceFiles)
-    val vscodePackageDir = sysmlDir.dir("packages/syside-vscode")
-    outputs.files(fileTree(vscodePackageDir) { include("*.vsix") })
+    inputs.file(sysmlDirectory.file("package.json")).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.file(sysmlDirectory.file("tsconfig.json")).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.files(sysmlSourceFiles).withPathSensitivity(PathSensitivity.RELATIVE)
+    val vscodePackageDirectory = sysmlDirectory.dir("packages/syside-vscode")
+    outputs.files(
+        fileTree(vscodePackageDirectory) {
+            include("*.vsix")
+        },
+    )
 
-    // the vsix name carries the fork's version, and collectExtension must find only the current one
     doFirst {
-        vscodePackageDir.asFile.listFiles { file -> file.extension == "vsix" }?.forEach { it.delete() }
+        vscodePackageDirectory.asFile.listFiles { file ->
+            file.extension == "vsix"
+        }?.forEach {
+            it.delete()
+        }
     }
 
-    pnpmCommand.set(listOf("run", "vscode:package"))
+    pnpmCommand = listOf("run", "vscode:package")
 }
 
-val sysideVsix = layout.buildDirectory.file("vscode-extension/syside-vscode.vsix")
+val sysideVsixDirectory = layout.buildDirectory.dir("vscode-extension")
 
 val collectExtension = tasks.register<Sync>("collectExtension") {
     from(bundleExtension)
     rename(".*\\.vsix", "syside-vscode.vsix")
-    into(sysideVsix.map { it.asFile.parentFile })
+    into(sysideVsixDirectory)
 }
 
+val cliBundleDirectory = layout.buildDirectory.dir("cli-bundle")
+
 val bundleCli = tasks.register<Sync>("bundleCli") {
-    inputs.files(buildCli)
-    from(sysmlDir.file("packages/syside-cli/dist/cli.cjs"))
-    from(fileTree(sysmlDir.dir("SysML-v2-Release/sysml.library"))) {
+    from(buildCli)
+    from(sysmlDirectory.dir("SysML-v2-Release/sysml.library")) {
         include("**/*.sysml")
         include("**/*.kerml")
         into("sysml.library")
     }
-    into(project.layout.buildDirectory.dir("cli-bundle"))
+    into(cliBundleDirectory)
 }
 
-val sysmlConstructsDir = layout.buildDirectory.dir("sysml-constructs")
-
-// the website's table of SysML constructs comes from the translation's own registry
-val sysmlConstructs = tasks.register<NodeTask>("sysmlConstructs") {
-    inputs.files(bundleCli)
-    val targetFile = sysmlConstructsDir.map { it.file("constructs.tsv") }
-    outputs.file(targetFile)
-    script = layout.buildDirectory.file("cli-bundle/cli.cjs")
-    args = provider {
-        listOf(
-            "constructs",
-            "-o",
-            targetFile.get().asFile.absolutePath,
-        )
-    }
-}
-
-configurations.consumable("sysmlConstructsElements") {
-    attributes(semantifyrArtifact("sysml-constructs"))
-    outgoing.artifact(sysmlConstructsDir) {
-        builtBy(sysmlConstructs)
-    }
-}
-
-val assembleFork = tasks.register<PnpmTask>("assembleFork") {
+val assembleLanguageServer = tasks.register<PnpmTask>("assembleLanguageServer") {
     dependsOn(tasks.pnpmInstall)
     mustRunAfter(buildCli, bundleExtension)
-    inputs.file(sysmlDir.file("package.json"))
-    inputs.file(sysmlDir.file("tsconfig.json"))
-    inputs.files(sysmlSourceFiles)
-    outputs.dir(sysmlDir.dir("packages/syside-languageserver/lib"))
+    inputs.file(sysmlDirectory.file("package.json")).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.file(sysmlDirectory.file("tsconfig.json")).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.files(sysmlSourceFiles).withPathSensitivity(PathSensitivity.RELATIVE)
+    outputs.dir(sysmlDirectory.dir("packages/syside-languageserver/lib"))
 
-    pnpmCommand.set(listOf("-r", "assemble"))
+    pnpmCommand = listOf("-r", "assemble")
 }
 
-val languageServerDir = sysmlDir.dir("packages/syside-languageserver")
+val languageServerDirectory = sysmlDirectory.dir("packages/syside-languageserver")
 
 val bundleWorker = tasks.register<PnpmTask>("bundleWorker") {
     dependsOn(tasks.pnpmInstall)
-    inputs.files(assembleFork)
-    mustRunAfter(assembleFork)
-    inputs.files(sysmlSourceFiles)
-    inputs.file(languageServerDir.file("library/Verification.sysml"))
-    outputs.dir(languageServerDir.dir("dist/worker"))
+    inputs.files(assembleLanguageServer).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.files(sysmlSourceFiles).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.file(languageServerDirectory.file("library/Verification.sysml")).withPathSensitivity(PathSensitivity.RELATIVE)
+    outputs.dir(languageServerDirectory.dir("dist/worker"))
 
-    pnpmCommand.set(listOf("-F", "syside-languageserver", "bundle:worker"))
+    pnpmCommand = listOf("-F", "syside-languageserver", "bundle:worker")
 }
 
-val sysmlWorkerDir = layout.buildDirectory.dir("sysml-worker")
+val sysmlWorkerDirectory = layout.buildDirectory.dir("sysml-worker")
 
 val collectWorker = tasks.register<Sync>("collectWorker") {
     from(bundleWorker) {
-        exclude("library/.project", "library/.settings/**")
+        exclude(
+            "library/.project",
+            "library/.settings/**",
+        )
     }
-    from(languageServerDir.file("syntaxes/sysml.tmLanguage.json"))
-    into(sysmlWorkerDir)
+    from(languageServerDirectory.file("syntaxes/sysml.tmLanguage.json"))
+    into(sysmlWorkerDirectory)
 }
 
 configurations.consumable("sysmlWorkerElements") {
     attributes(semantifyrArtifact("sysml-worker"))
-    outgoing.artifact(sysmlWorkerDir) {
+    outgoing.artifact(sysmlWorkerDirectory) {
         builtBy(collectWorker)
     }
 }
 
 configurations.consumable("vscodeExtensionElements") {
     attributes(semantifyrArtifact("vscode-extension"))
-    outgoing.artifact(sysideVsix) {
+    outgoing.artifact(
+        sysideVsixDirectory.map {
+            it.file("syside-vscode.vsix")
+        },
+    ) {
         builtBy(collectExtension)
     }
 }
@@ -201,120 +190,47 @@ tasks.processResources {
     }
 }
 
-val compiledExamplesDir = layout.buildDirectory.dir("compiled-examples")
-val compiledCorpusDir = layout.buildDirectory.dir("compiled-corpus")
-val compiledTutorialDir = layout.buildDirectory.dir("compiled-tutorial")
-val examplesSourceDir = layout.projectDirectory.dir("../models/examples")
-val corpusDir = layout.buildDirectory.dir("corpus")
-val cliBundleDir = layout.buildDirectory.dir("cli-bundle")
-
-val appendFurtherCases = tasks.register<AppendFurtherCases>("appendFurtherCases") {
-    corpusDirectory.set(examplesSourceDir)
-    outputDirectory.set(corpusDir)
+val smokeSourceDirectory = layout.projectDirectory.dir("../models/smoke")
+val compiledSmokeDirectory = layout.buildDirectory.dir("compiled-smoke")
+val compiledSmokeFile = compiledSmokeDirectory.map {
+    it.file("smoke.semantifyr")
 }
 
-configurations.consumable("sysmlCorpusElements") {
-    attributes(semantifyrArtifact("sysml-corpus"))
-    outgoing.artifact(corpusDir) {
-        builtBy(appendFurtherCases)
+val compileSysmlSmoke = tasks.register<NodeTask>("compileSysmlSmoke") {
+    inputs.files(bundleCli).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.files(
+        fileTree(smokeSourceDirectory) {
+            include(
+                "**/*.sysml",
+                "**/*.kerml",
+            )
+        },
+    ).withPathSensitivity(PathSensitivity.RELATIVE)
+    outputs.file(compiledSmokeFile)
+    outputs.file(
+        compiledSmokeDirectory.map {
+            it.file("smoke.names.json")
+        },
+    )
+    outputs.cacheIf {
+        true
     }
-}
-
-// the CLI builds every SysML and KerML file under the model's directory as its workspace
-fun sysmlCompileTask(taskName: String, sourceDirectory: Provider<Directory>, workspace: FileCollection, name: String, targetDirectory: Provider<Directory>) = tasks.register<NodeTask>(taskName) {
-    inputs.files(bundleCli)
-    val sourceFile = sourceDirectory.map {
-        it.file("$name.sysml")
+    script = cliBundleDirectory.map {
+        it.file("cli.cjs")
     }
-    val targetFile = targetDirectory.map {
-        it.file("$name.$oxstsFileExtension")
-    }
-    inputs.files(workspace).withPathSensitivity(PathSensitivity.RELATIVE)
-    outputs.file(targetFile)
-    outputs.cacheIf { true }
-    script = cliBundleDir.map { it.file("cli.cjs") }
+    workingDir = layout.projectDirectory
     args = provider {
-        listOf(
-            "compile",
-            sourceFile.get().asFile.absolutePath,
-            cliBundleDir.get().dir("sysml.library").asFile.absolutePath,
-            "-o",
-            targetFile.get().asFile.absolutePath,
-        )
+        listOf("compile", smokeSourceDirectory.file("smoke.sysml").asFile.relativeTo(projectDir).invariantSeparatorsPath, cliBundleDirectory.get().dir("sysml.library").asFile.relativeTo(projectDir).invariantSeparatorsPath, "-o", compiledSmokeFile.get().asFile.relativeTo(projectDir).invariantSeparatorsPath)
     }
 }
 
-val examplesWorkspace = fileTree(examplesSourceDir) {
-    include("**/*.sysml", "**/*.kerml")
-}
-
-// every model on the default library, as live serves it: live shows the compiled served models, and the live backend's tests take others
-val compileSysmlExampleTasks = corpusModels(examplesSourceDir).filter {
-    !it.conformance
-}.map {
-    sysmlCompileTask("compileSysmlExample_${it.name}", provider { examplesSourceDir }, examplesWorkspace, it.name, compiledExamplesDir)
-}
-
-val tutorialSourceDir = layout.projectDirectory.dir("../models/tutorial")
-val tutorialWorkspace = fileTree(tutorialSourceDir) {
-    include("**/*.sysml", "**/*.kerml")
-}
-
-val compileSysmlExamples = tasks.register("compileSysmlExamples") {
-    inputs.files(compileSysmlExampleTasks)
-}
-
-configurations.consumable("compiledExamplesElements") {
-    attributes(semantifyrArtifact("compiled-examples"))
-    outgoing.artifact(compiledExamplesDir) {
-        builtBy(compileSysmlExamples)
-    }
-}
-
-// the tutorial's models are served on its page, and the load test sends them as live does
-val compileSysmlTutorialTasks = corpusModels(tutorialSourceDir).map {
-    sysmlCompileTask("compileSysmlTutorial_${it.name}", provider { tutorialSourceDir }, tutorialWorkspace, it.name, compiledTutorialDir)
-}
-
-val compileSysmlTutorial = tasks.register("compileSysmlTutorial") {
-    inputs.files(compileSysmlTutorialTasks)
-}
-
-configurations.consumable("compiledTutorialElements") {
-    attributes(semantifyrArtifact("compiled-tutorial"))
-    outgoing.artifact(compiledTutorialDir) {
-        builtBy(compileSysmlTutorial)
-    }
-}
-
-val corpusWorkspace = files(appendFurtherCases).asFileTree.matching {
-    include("**/*.sysml", "**/*.kerml")
-}
-
-// the models with further cases, compiled with them for the tests that take a further case
-val compileSysmlCorpusTasks = corpusModels(examplesSourceDir).filter {
-    examplesSourceDir.file("${it.name}.further-cases").asFile.isFile
-}.map {
-    sysmlCompileTask("compileSysmlCorpus_${it.name}", corpusDir, corpusWorkspace, it.name, compiledCorpusDir)
-}
-
-val compileSysmlCorpus = tasks.register("compileSysmlCorpus") {
-    inputs.files(compileSysmlCorpusTasks)
-}
-
-configurations.consumable("compiledCorpusElements") {
-    attributes(semantifyrArtifact("compiled-corpus"))
-    outgoing.artifact(compiledCorpusDir) {
-        builtBy(compileSysmlCorpus)
+configurations.consumable("compiledSmokeElements") {
+    attributes(semantifyrArtifact("compiled-smoke"))
+    outgoing.artifact(compiledSmokeFile) {
+        builtBy(compileSysmlSmoke)
     }
 }
 
 tasks.named("integrationTest") {
-    inputs.files(appendFurtherCases).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.files(
-        layout.projectDirectory.file("../models/etc/crossroads-green.trace.sysml"),
-        layout.projectDirectory.file("../models/etc/crossroads-green.report.json"),
-        layout.projectDirectory.file("../models/etc/crossroads-green.witness.semantifyr"),
-    ).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.dir(layout.projectDirectory.dir("../models/libraries/default")).withPathSensitivity(PathSensitivity.RELATIVE)
 }

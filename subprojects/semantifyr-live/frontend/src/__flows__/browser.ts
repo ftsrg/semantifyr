@@ -16,7 +16,7 @@ if (!url) {
 }
 export const LIVE_URL = url.replace(/\/$/, '')
 
-// the language servers start, SysML loads its standard library in the browser, and the engines verify; all of it may be slow on a shared runner
+// the language servers start, SysML loads its standard library in the browser, and the backends verify; all of it may be slow on a shared runner
 export const SLOW = 4 * 60 * 1000
 
 const FINISHED = /status-(passed|failed|inconclusive|error)\b/
@@ -61,7 +61,7 @@ export const test = base.extend<{ flow: Flow, browser: Browser }>({
   },
 })
 
-// every case of the model reaches a verdict, whichever engines the server has
+// every case of the model reaches a verdict, whichever backends the server has
 export async function verifyAll(cases: Locator, verifyButton: Locator): Promise<void> {
   await expect.poll(async () => {
     return cases.count()

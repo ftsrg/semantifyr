@@ -1,0 +1,23 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package flattening::size_from_binding
+
+class Item
+@VerificationCase
+class Host {
+    contains first: Item
+    var fixedItems: Item[0..2] := [first, first]
+    var index: int := 0
+    redefine tran {
+        var current: Item[0..1] := nothing
+        fixedItems[0] := nothing
+        fixedItems[index] := current
+    }
+    redefine prop {
+        return EF fixedItems[0] == nothing
+    }
+}

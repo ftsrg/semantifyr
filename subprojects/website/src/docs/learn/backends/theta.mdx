@@ -1,17 +1,32 @@
 ---
 title: Theta
 sidebar_position: 3
-backend: true
-description: The Theta backend, its exact verdicts, its Horn solving configuration that is trusted only for a proof, how it realizes time and the constructs it refuses before it runs.
+description: The Theta backend, what it needs, which of its verdicts are trusted, how it handles time, and what it refuses.
 ---
 
 # Theta
 
-[Theta](https://github.com/ftsrg/theta) verifies the XSTS translation of a case with unbounded integers, and on a model whose clock tests are all closed the verdicts of its configurations are exact, so a portfolio trusts every one of them there, except those of `chc`. That configuration is Horn solving: Theta encodes the case as constrained Horn clauses and solves them with its bundled Z3. It reports a violation without a trace, so a portfolio trusts it only for a verdict that needs no witness, an invariant that holds or a state that is unreachable; a violation it reports is not trusted and carries no witness. It needs `theta-xsts-cli` on `PATH`, or Docker. It realizes the [wait before every main step](../language/specification/classes-and-behaviour/time.md#the-wait-before-a-step) as a whole delay, a whole amount of time that every clock advances by. When every clock test of the model is [closed](../language/specification/classes-and-behaviour/time.md#closed-clock-tests), a run with whole delays reaches every state dense time does, up to the values of the clocks: a step waits a whole amount of at most one more than the largest clock bound, and a clock past its largest bound is held one above it, where every test of it reads the same, and its trace gives its true value. When one is not, a step that waits a fraction can reach a state no whole delay does, so the run declares itself under-approximating: a portfolio trusts a trace it finds, which is a run of the model, and not a proof. Before it runs, it reports a case Not supported when the case holds a construct listed below, naming each construct and its source line.
+[Theta](https://github.com/ftsrg/theta) is a model checking framework of the BME [Critical Systems Research Group](https://ftsrg.mit.bme.hu/en/). The backend transforms a case into XSTS, Theta's transition system language, and verifies it with unbounded integers.
+
+## Install
+
+Put `theta-xsts-cli` on `PATH`, or install Docker, which runs Theta's `ftsrg/theta-xsts-cli` image.
+
+## Verdicts
+
+On a model whose clock tests are all [closed](../language/reference/classes-and-behaviour/time.md#closed-clock-tests), every configuration's verdicts are exact, except those of `chc`. On any other model, a run is under-approximating: a portfolio trusts a trace it finds, not a proof.
+
+`chc` solves the case as constrained Horn clauses with Theta's bundled Z3. It reports a violation without a trace, so a portfolio trusts it only for a proof: an invariant that holds or a state that is unreachable.
+
+## Time
+
+Theta realizes the [wait before every main step](../language/reference/classes-and-behaviour/time.md#the-wait-before-a-step) as a whole delay, which every clock advances by. A step waits at most one more than the largest clock bound, and a clock past its largest bound is held one above it, where every test of it reads the same; the trace gives its true value. When every clock test is closed, whole delays reach every state that dense time does. When one is not, a step that waits a fraction can reach a state no whole delay does, which is why such a run is under-approximating.
 
 ## What the backend refuses
 
-- Variables of type `real`, `string` or `any`: XSTS has integer, boolean and enumeration variables only.
+The backend answers Not supported, naming each construct and its source line, when a case holds one of these:
+
+- Variables of type `real`, `string`, or `any`: XSTS has integer, boolean, and enumeration variables only.
 - Real literals: XSTS has no real numbers.
 - String literals: XSTS has no strings.
 - Array literals: the backend receives arrays split into one variable per slot and has no form for an array value.

@@ -7,6 +7,7 @@
 package hu.bme.mit.semantifyr.compiler.pipeline.optimization.passes
 
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.analyses.ConeOfInfluenceAnalysis
+import hu.bme.mit.semantifyr.oxsts.lang.tests.utils.TestModels.testModel
 import org.junit.jupiter.api.Test
 
 class DeadCodeRemovalPassTest : PassTestBase() {
@@ -46,47 +47,8 @@ class DeadCodeRemovalPassTest : PassTestBase() {
 
     @Test
     fun `two independent state machines - writes to the unobserved region are pruned`() = assertPassTransforms(
-        source = """
-            inlined oxsts of semantifyr::Anything
-            var stateA: int := 0
-            var stateB: int := 0
-            var event: int := 0
-            init {
-            }
-            tran {
-                havoc(event)
-                choice {
-                    assume(event == 1)
-                    stateA := 1
-                } or {
-                    assume(event == 2)
-                    stateB := 1
-                }
-            }
-            prop {
-                AG (stateA != 1)
-            }
-        """,
-        expectedSource = """
-            inlined oxsts of semantifyr::Anything
-            var stateA: int := 0
-            var stateB: int := 0
-            var event: int := 0
-            init {
-            }
-            tran {
-                havoc(event)
-                choice {
-                    assume(event == 1)
-                    stateA := 1
-                } or {
-                    assume(event == 2)
-                }
-            }
-            prop {
-                AG (stateA != 1)
-            }
-        """,
+        source = testModel(javaClass, "independent_state_machines.semantifyr"),
+        expectedSource = testModel(javaClass, "independent_state_machines_expected.semantifyr"),
         analysisClasses = listOf(ConeOfInfluenceAnalysis::class.java),
     ) {
         it.getInstance(DeadCodeRemovalPass::class.java)
@@ -161,50 +123,8 @@ class DeadCodeRemovalPassTest : PassTestBase() {
 
     @Test
     fun `region marker local variable keeps its writes and activates the guarded branches`() = assertPassTransforms(
-        source = """
-            inlined oxsts of semantifyr::Anything
-            var state: int := 0
-            init {
-            }
-            tran {
-                var anyRegionExecuted: bool := false
-                choice {
-                    assume(state == 0)
-                    state := 1
-                    anyRegionExecuted := true
-                } or {
-                    assume(state == 1)
-                    state := 0
-                    anyRegionExecuted := true
-                }
-                assume(anyRegionExecuted)
-            }
-            prop {
-                AG (state != 1)
-            }
-        """,
-        expectedSource = """
-            inlined oxsts of semantifyr::Anything
-            var state: int := 0
-            init {
-            }
-            tran {
-                var anyRegionExecuted: bool := false
-                choice {
-                    assume(state == 0)
-                    state := 1
-                    anyRegionExecuted := true
-                } or {
-                    assume(state == 1)
-                    state := 0
-                    anyRegionExecuted := true
-                }
-                assume(anyRegionExecuted)
-            }
-            prop {
-                AG (state != 1)
-            }
-        """,
+        source = testModel(javaClass, "region_marker_local.semantifyr"),
+        expectedSource = testModel(javaClass, "region_marker_local_expected.semantifyr"),
         analysisClasses = listOf(ConeOfInfluenceAnalysis::class.java),
     ) {
         it.getInstance(DeadCodeRemovalPass::class.java)

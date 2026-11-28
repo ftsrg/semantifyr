@@ -9,6 +9,7 @@ package hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns.expression
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationPattern
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.Worklist
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
+import hu.bme.mit.semantifyr.compiler.pipeline.utils.mayHaveNoValue
 import hu.bme.mit.semantifyr.oxsts.lang.utils.OxstsUtils
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ArithmeticBinaryOperator
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ArithmeticOp
@@ -27,6 +28,10 @@ internal fun Expression.isPure(): Boolean {
     return !OxstsUtils.isWriteExpression(this)
 }
 
+private fun Expression.isErasable(): Boolean {
+    return isPure() && !mayHaveNoValue()
+}
+
 class SelfArithmeticPattern : OptimizationPattern {
     override val rootTypes = setOf(ArithmeticBinaryOperator::class.java)
 
@@ -37,7 +42,7 @@ class SelfArithmeticPattern : OptimizationPattern {
         if (element.op != ArithmeticOp.SUB) {
             return false
         }
-        if (!element.left.isPure() || !element.right.isPure()) {
+        if (!element.left.isErasable() || !element.right.isErasable()) {
             return false
         }
         if (!element.left.structurallyEquals(element.right)) {
@@ -58,7 +63,7 @@ class SelfComparisonPattern : OptimizationPattern {
         if (element !is ComparisonOperator) {
             return false
         }
-        if (!element.left.isPure() || !element.right.isPure()) {
+        if (!element.left.isErasable() || !element.right.isErasable()) {
             return false
         }
         if (!element.left.structurallyEquals(element.right)) {

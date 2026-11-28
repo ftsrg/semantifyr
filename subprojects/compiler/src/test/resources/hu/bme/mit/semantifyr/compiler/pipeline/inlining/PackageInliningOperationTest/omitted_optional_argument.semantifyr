@@ -1,0 +1,24 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package inlining::tests
+
+class Worker {
+}
+@VerificationCase
+class Host {
+    contains worker: Worker[1]
+    var current: Worker[0..1] := worker
+    tran select(target: Worker[0..1]) {
+        current := target
+    }
+    redefine tran {
+        inline select()
+    }
+    redefine prop {
+        return EF current == nothing
+    }
+}

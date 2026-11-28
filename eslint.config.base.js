@@ -10,22 +10,23 @@ import tseslint from 'typescript-eslint';
 import pluginReact from 'eslint-plugin-react';
 import pluginReactHooks from 'eslint-plugin-react-hooks';
 
-export const sharedFiles = ['**/*.{js,mjs,cjs,ts,tsx,mts,cts}'];
-
-export const sharedIgnores = [
+const sharedIgnores = [
   '**/dist/',
   '**/build/',
   '**/node_modules/',
   '**/.gradle/',
 ];
 
-export const testFiles = ['**/__tests__/**', '**/*.test.{ts,tsx,js,jsx}', '**/*.spec.{ts,tsx,js,jsx}'];
+const testFiles = [
+  '**/__tests__/**',
+  '**/*.test.{ts,tsx,js,jsx}',
+];
 
-export function baseConfig({ tsconfigRootDir, files = sharedFiles, ignores = [], globalsSource = globals.node, react = false } = {}) {
+export function baseConfig({ tsconfigRootDir, ignores = [], react = false } = {}) {
   const blocks = [
-    { files },
+    { files: ['**/*.{js,mjs,cjs,ts,tsx,mts,cts}'] },
     { ignores: [...sharedIgnores, ...ignores] },
-    { languageOptions: { globals: globalsSource } },
+    { languageOptions: { globals: globals.node } },
     pluginJs.configs.recommended,
     ...tseslint.configs.strictTypeChecked,
     ...tseslint.configs.stylisticTypeChecked,

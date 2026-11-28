@@ -1,0 +1,25 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package test
+
+class Display {
+    var reading: real := 0.0
+    var label: string := ""
+    @Trace
+    tran show(value: real, text: string) {
+        reading := value
+        label := text
+    }
+}
+class Host {
+    var level: real := 0.5
+    var name: string := "a"
+    contains display: Display
+    redefine tran {
+        inline display.show(level, name)
+    }
+}

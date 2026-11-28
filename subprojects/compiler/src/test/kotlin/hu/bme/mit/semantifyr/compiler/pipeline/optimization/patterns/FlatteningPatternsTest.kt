@@ -6,6 +6,7 @@
 
 package hu.bme.mit.semantifyr.compiler.pipeline.optimization.patterns
 
+import hu.bme.mit.semantifyr.oxsts.lang.tests.utils.TestModels.testModel
 import org.junit.jupiter.api.Test
 
 class FlatteningPatternsTest : PatternTestBase() {
@@ -45,82 +46,14 @@ class FlatteningPatternsTest : PatternTestBase() {
     @Test
     fun `nested sequence inside a sequence is inlined`() = assertPatternTransforms(
         pattern = FlattenNestedSequencePattern(),
-        input = """
-            inlined oxsts of semantifyr::Anything
-            var first: int := 0
-            var second: int := 0
-            init {
-            }
-            tran {
-                first := 1
-                {
-                    second := 2
-                    first := 3
-                }
-                second := 4
-            }
-            prop {
-                AG true
-            }
-        """,
-        expected = """
-            inlined oxsts of semantifyr::Anything
-            var first: int := 0
-            var second: int := 0
-            init {
-            }
-            tran {
-                first := 1
-                second := 2
-                first := 3
-                second := 4
-            }
-            prop {
-                AG true
-            }
-        """,
+        input = testModel(javaClass, "nested_sequence.semantifyr"),
+        expected = testModel(javaClass, "nested_sequence_expected.semantifyr"),
     )
 
     @Test
     fun `choice branch whose only step is a choice is hoisted into the outer choice`() = assertPatternTransforms(
         pattern = FlattenNestedChoicePattern(),
-        input = """
-            inlined oxsts of semantifyr::Anything
-            var first: int := 0
-            init {
-            }
-            tran {
-                choice {
-                    choice {
-                        first := 1
-                    } or {
-                        first := 2
-                    }
-                } or {
-                    first := 3
-                }
-            }
-            prop {
-                AG true
-            }
-        """,
-        expected = """
-            inlined oxsts of semantifyr::Anything
-            var first: int := 0
-            init {
-            }
-            tran {
-                choice {
-                    first := 3
-                } or {
-                    first := 1
-                } or {
-                    first := 2
-                }
-            }
-            prop {
-                AG true
-            }
-        """,
+        input = testModel(javaClass, "nested_choice.semantifyr"),
+        expected = testModel(javaClass, "nested_choice_expected.semantifyr"),
     )
 }

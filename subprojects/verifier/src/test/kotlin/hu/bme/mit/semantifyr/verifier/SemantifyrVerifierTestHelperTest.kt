@@ -13,6 +13,7 @@ import hu.bme.mit.semantifyr.backend.BackendVerificationResult
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
 import hu.bme.mit.semantifyr.backend.execution.AvailabilityReport
 import hu.bme.mit.semantifyr.backend.execution.ExecutionEnvironment
+import hu.bme.mit.semantifyr.backend.testModel
 import hu.bme.mit.semantifyr.oxsts.lang.tests.InjectWithOxsts
 import hu.bme.mit.semantifyr.verifier.portfolio.ConcurrencyGate
 import hu.bme.mit.semantifyr.verifier.portfolio.PortfolioLeg
@@ -26,7 +27,7 @@ import org.junit.jupiter.params.provider.EnumSource
 import org.opentest4j.AssertionFailedError
 import org.opentest4j.TestAbortedException
 import java.nio.file.Path
-import kotlin.io.path.Path
+import kotlin.io.path.writeText
 
 @InjectWithOxsts
 class SemantifyrVerifierTestHelperTest {
@@ -37,7 +38,8 @@ class SemantifyrVerifierTestHelperTest {
     @TempDir
     lateinit var output: Path
 
-    private val simpleModel = Path("../../oxsts-test-models/simple/simple.semantifyr")
+    @TempDir
+    lateinit var modelDirectory: Path
 
     @ParameterizedTest
     @EnumSource(
@@ -88,7 +90,7 @@ class SemantifyrVerifierTestHelperTest {
 
     @Test
     fun `the witness cases are the passed reachabilities and the failed invariants`() {
-        val context = helper.semantifyrLoader.loadStandaloneModel(simpleModel)
+        val context = helper.semantifyrLoader.loadStandaloneModel(writeModel())
         val names = helper.collectVerificationCases(context, helper.casesExpectingWitness).map {
             it.qualifiedName.substringAfterLast("::")
         }
@@ -103,7 +105,7 @@ class SemantifyrVerifierTestHelperTest {
         caseName: String = "Incrementing",
         validationPortfolio: VerificationPortfolio? = null,
     ) {
-        val context = helper.semantifyrLoader.loadStandaloneModel(simpleModel)
+        val context = helper.semantifyrLoader.loadStandaloneModel(writeModel())
         val case = helper.collectVerificationCases(context).first {
             it.qualifiedName.endsWith("::$caseName")
         }
@@ -114,6 +116,12 @@ class SemantifyrVerifierTestHelperTest {
             outputDirectory = output,
             validationPortfolio = validationPortfolio,
         )
+    }
+
+    private fun writeModel(): Path {
+        val model = modelDirectory.resolve("cases.semantifyr")
+        model.writeText(testModel("cases.semantifyr"))
+        return model
     }
 
     private class FixedPortfolio(

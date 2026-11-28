@@ -7,6 +7,7 @@
 package hu.bme.mit.semantifyr.compiler.pipeline.optimization.analyses
 
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.eAllOfType
+import hu.bme.mit.semantifyr.oxsts.lang.tests.utils.TestModels.testModel
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssignmentOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ElementReference
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.HavocOperation
@@ -92,25 +93,7 @@ class ConeOfInfluenceAnalysisTest : AnalysisTestBase() {
     @Test
     fun `sibling assume guard makes the guard variable relevant`() {
         val (inlined, result) = runConeOfInfluence(
-            """
-                inlined oxsts of semantifyr::Anything
-                var observed: int := 0
-                var guard: int := 0
-                init {
-                }
-                tran {
-                    choice {
-                        assume(guard == 0)
-                        observed := 1
-                    } or {
-                        assume(guard != 0)
-                        observed := 2
-                    }
-                }
-                prop {
-                    AG (observed == 1)
-                }
-            """,
+            testModel(javaClass, "sibling_assume_guard.semantifyr"),
         )
 
         val observed = inlined.varNamed("observed")
@@ -124,26 +107,7 @@ class ConeOfInfluenceAnalysisTest : AnalysisTestBase() {
     @Test
     fun `guard of an if enclosing an assumption is relevant`() {
         val (inlined, result) = runConeOfInfluence(
-            """
-                inlined oxsts of semantifyr::Anything
-                var counter: int := 0
-                var observed: int := 0
-                init {
-                }
-                tran {
-                    choice {
-                        counter := counter + 1
-                    } or {
-                        if (counter <= 5) {
-                            assume(false)
-                        }
-                        observed := 1
-                    }
-                }
-                prop {
-                    AG (observed == 0)
-                }
-            """,
+            testModel(javaClass, "if_guard_enclosing_assumption.semantifyr"),
         )
 
         val counter = inlined.varNamed("counter")
@@ -220,26 +184,7 @@ class ConeOfInfluenceAnalysisTest : AnalysisTestBase() {
     @Test
     fun `state-machine-style guarded write stays in the cone`() {
         val (inlined, result) = runConeOfInfluence(
-            """
-                inlined oxsts of semantifyr::Anything
-                var activeState: int := -1
-                var inputEvent: int := 0
-                init {
-                    activeState := 0
-                }
-                tran {
-                    choice {
-                        assume(activeState == 0 && inputEvent == 1)
-                        activeState := 25
-                    } or {
-                        assume(activeState == 25 && inputEvent == 2)
-                        activeState := 0
-                    }
-                }
-                prop {
-                    AG (activeState != 25)
-                }
-            """,
+            testModel(javaClass, "guarded_write.semantifyr"),
         )
 
         val activeState = inlined.varNamed("activeState")
@@ -258,37 +203,7 @@ class ConeOfInfluenceAnalysisTest : AnalysisTestBase() {
     @Test
     fun `nested choice inside if inside choice propagates guards correctly`() {
         val (inlined, result) = runConeOfInfluence(
-            """
-                inlined oxsts of semantifyr::Anything
-                var observed: int := 0
-                var outerGuard: int := 0
-                var ifGuard: int := 0
-                var innerGuard: int := 0
-                init {
-                }
-                tran {
-                    choice {
-                        assume(outerGuard == 0)
-                        if (ifGuard == 1) {
-                            choice {
-                                assume(innerGuard == 1)
-                                observed := 1
-                            } or {
-                                assume(innerGuard == 2)
-                                observed := 2
-                            }
-                        } else {
-                            observed := 3
-                        }
-                    } or {
-                        assume(outerGuard != 0)
-                        observed := 4
-                    }
-                }
-                prop {
-                    AG (observed == 1)
-                }
-            """,
+            testModel(javaClass, "nested_choice_if_choice.semantifyr"),
         )
 
         val observed = inlined.varNamed("observed")
@@ -484,24 +399,7 @@ class ConeOfInfluenceAnalysisTest : AnalysisTestBase() {
     @Test
     fun `outer assume guarding inner writes pulls its reads into the cone`() {
         val (inlined, result) = runConeOfInfluence(
-            """
-                inlined oxsts of semantifyr::Anything
-                var observed: int := 0
-                var guard: int := 0
-                init {
-                }
-                tran {
-                    assume(guard == 1)
-                    choice {
-                        observed := 1
-                    } or {
-                        observed := 2
-                    }
-                }
-                prop {
-                    AG (observed == 1)
-                }
-            """,
+            testModel(javaClass, "outer_assume_guard.semantifyr"),
         )
 
         val guard = inlined.varNamed("guard")
@@ -513,25 +411,7 @@ class ConeOfInfluenceAnalysisTest : AnalysisTestBase() {
     @Test
     fun `writes to irrelevant variables in a sibling branch stay out of the cone`() {
         val (inlined, result) = runConeOfInfluence(
-            """
-                inlined oxsts of semantifyr::Anything
-                var observed: int := 0
-                var unrelated: int := 0
-                var siblingGuard: int := 0
-                init {
-                }
-                tran {
-                    choice {
-                        observed := 1
-                    } or {
-                        assume(siblingGuard == 7)
-                        unrelated := 5
-                    }
-                }
-                prop {
-                    AG (observed == 1)
-                }
-            """,
+            testModel(javaClass, "sibling_branch_writes.semantifyr"),
         )
 
         val unrelated = inlined.varNamed("unrelated")
@@ -605,24 +485,7 @@ class ConeOfInfluenceAnalysisTest : AnalysisTestBase() {
     @Test
     fun `nested if guards contribute variables to the cone`() {
         val (inlined, result) = runConeOfInfluence(
-            """
-                inlined oxsts of semantifyr::Anything
-                var value: int := 0
-                var outerGuard: int := 0
-                var innerGuard: int := 0
-                init {
-                }
-                tran {
-                    if (outerGuard == 0) {
-                        if (innerGuard == 0) {
-                            value := 1
-                        }
-                    }
-                }
-                prop {
-                    AG (value != 1)
-                }
-            """,
+            testModel(javaClass, "nested_if_guards.semantifyr"),
         )
         val value = inlined.varNamed("value")
         val outerGuard = inlined.varNamed("outerGuard")
@@ -662,29 +525,7 @@ class ConeOfInfluenceAnalysisTest : AnalysisTestBase() {
     @Test
     fun `a local flag assumed after the regions keeps every region's write relevant`() {
         val (inlined, result) = runConeOfInfluence(
-            """
-                inlined oxsts of semantifyr::Anything
-                var activeState: int := -1
-                init {
-                    activeState := 0
-                }
-                tran {
-                    var anyRegionExecuted: bool := false
-                    choice {
-                        assume(activeState == 0)
-                        activeState := 25
-                        anyRegionExecuted := true
-                    } or {
-                        assume(activeState == 25)
-                        activeState := 0
-                        anyRegionExecuted := true
-                    }
-                    assume(anyRegionExecuted)
-                }
-                prop {
-                    AG (activeState != 25)
-                }
-            """,
+            testModel(javaClass, "local_flag_after_regions.semantifyr"),
         )
 
         val activeState = inlined.varNamed("activeState")

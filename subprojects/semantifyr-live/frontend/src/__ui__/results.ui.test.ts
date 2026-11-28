@@ -9,12 +9,11 @@ import type { Page } from 'playwright'
 import { describe, expect } from 'vitest'
 
 import { editorKeysOf } from '../testBrowser'
+import { CAN_LIGHT, NEVER_LIT, PORTFOLIOS } from './fake/defaults'
+import type { CaseRequest } from './fake/session'
 import { casesListed, editor, results, statesOf, test, type Ui } from './harness'
-import type { CaseRequest } from './mock/session'
 
 const LEVEL_CROSSING = '/language/level-crossing?library=gamma'
-const BARRIER = '_BarrierDownWhileTrainInCrossing'
-const TWO_TRAINS = '_TwoTrainsCanBeInTheCrossing'
 
 interface Gate {
   passed: Promise<void>
@@ -49,7 +48,7 @@ class Held {
     }
   }
 
-  readonly verify = async (request: CaseRequest, recorded: () => VerificationCaseResult): Promise<VerificationCaseResult> => {
+  readonly verify = async (request: CaseRequest, stated: () => VerificationCaseResult): Promise<VerificationCaseResult> => {
     const name = request.caseId?.split('::').at(-1) ?? ''
     this.started.push(name)
     await Promise.race([
@@ -60,7 +59,7 @@ class Held {
         })
       }),
     ])
-    return recorded()
+    return stated()
   }
 }
 
@@ -87,7 +86,7 @@ describe('the rows', () => {
         return state === 'running' || state === 'queued'
       })
     }).toBe(true)
-    held.open(BARRIER, TWO_TRAINS)
+    held.open(NEVER_LIT, CAN_LIGHT)
 
     await expect.poll(async () => {
       return rowStates(page)
@@ -119,8 +118,8 @@ describe('the rows', () => {
   })
 
   test('show the reason the server gives for a broken run', async ({ ui }) => {
-    ui.backend.answer('verify', (_request, recorded) => {
-      return { ...recorded(), status: 'errored', message: 'The backend crashed', report: null, witnessUri: null }
+    ui.backend.answer('verify', (_request, stated) => {
+      return { ...stated(), status: 'errored', message: 'The backend crashed', report: null, witnessUri: null }
     })
     const page = await opened(ui)
 
@@ -129,7 +128,7 @@ describe('the rows', () => {
     await expect.poll(async () => {
       return rowStates(page)
     }).toEqual(['error', 'error'])
-    expect(await results(page).row(TWO_TRAINS).locator('.case-message').innerText()).toContain('The backend crashed')
+    expect(await results(page).row(CAN_LIGHT).locator('.case-message').innerText()).toContain('The backend crashed')
   })
 })
 
@@ -137,14 +136,14 @@ describe('a single run', () => {
   test('runs the case of its row alone and selects it', async ({ ui }) => {
     const page = await opened(ui)
 
-    await results(page).row(TWO_TRAINS).getByRole('button', { name: `Run ${TWO_TRAINS}` }).click()
+    await results(page).row(CAN_LIGHT).getByRole('button', { name: `Run ${CAN_LIGHT}` }).click()
 
     await expect.poll(async () => {
       return rowStates(page)
     }).toEqual(['not-run', 'passed'])
     expect(ui.backend.session().commands('oxsts.case.verify')).toHaveLength(1)
     await expect.poll(async () => {
-      return results(page).row(TWO_TRAINS).getAttribute('aria-selected')
+      return results(page).row(CAN_LIGHT).getAttribute('aria-selected')
     }).toBe('true')
   })
 
@@ -162,10 +161,10 @@ describe('a single run', () => {
       return statesOf(marks, 'verdict-glyph-')
     }).toEqual(['failed', 'not-run'])
     expect(ui.backend.session().commands('oxsts.case.verify')).toHaveLength(1)
-    await results(page).row(TWO_TRAINS).click()
+    await results(page).row(CAN_LIGHT).click()
     await marks.first().click()
     await expect.poll(async () => {
-      return results(page).row(BARRIER).getAttribute('aria-selected')
+      return results(page).row(NEVER_LIT).getAttribute('aria-selected')
     }).toBe('true')
     expect(ui.backend.session().commands('oxsts.case.verify')).toHaveLength(1)
   })
@@ -188,7 +187,7 @@ describe('the server\'s queue', () => {
     ui.backend.answer('verify', held.verify)
     const page = await opened(ui)
 
-    await results(page).row(BARRIER).getByRole('button', { name: `Run ${BARRIER}` }).click()
+    await results(page).row(NEVER_LIT).getByRole('button', { name: `Run ${NEVER_LIT}` }).click()
     await expect.poll(async () => {
       return rowStates(page)
     }).toEqual(['queued', 'not-run'])
@@ -197,7 +196,7 @@ describe('the server\'s queue', () => {
     await expect.poll(async () => {
       return rowStates(page)
     }).toEqual(['running', 'not-run'])
-    held.open(BARRIER)
+    held.open(NEVER_LIT)
   })
 })
 
@@ -209,14 +208,14 @@ describe('cancelling', () => {
     await results(page).verifyAll.click()
     await expect.poll(async () => {
       return [...held.started].sort()
-    }).toEqual([BARRIER, TWO_TRAINS])
+    }).toEqual([NEVER_LIT, CAN_LIGHT].sort())
 
-    await results(page).row(BARRIER).getByRole('button', { name: `Cancel ${BARRIER}` }).click()
+    await results(page).row(NEVER_LIT).getByRole('button', { name: `Cancel ${NEVER_LIT}` }).click()
 
     await expect.poll(async () => {
-      return results(page).row(BARRIER).locator('.case-message').innerText()
+      return results(page).row(NEVER_LIT).locator('.case-message').innerText()
     }).toContain('cancelled')
-    held.open(TWO_TRAINS)
+    held.open(CAN_LIGHT)
   })
 
   test('all with the Cancel button ends the run with nothing verified', async ({ ui }) => {
@@ -242,8 +241,8 @@ describe('the case list', () => {
     let edited: (cases: VerificationCaseSpecification[]) => VerificationCaseSpecification[] = (cases) => {
       return cases
     }
-    ui.backend.answer('discover', async (_request, recorded) => {
-      return edited(recorded())
+    ui.backend.answer('discover', async (_request, stated) => {
+      return edited(stated())
     })
     edited = (cases) => {
       const [barrier] = cases
@@ -256,7 +255,7 @@ describe('the case list', () => {
 
     await expect.poll(async () => {
       return results(page).rows.locator('.case-name').allInnerTexts()
-    }).toEqual([`${BARRIER}Renamed`, TWO_TRAINS])
+    }).toEqual([`${NEVER_LIT}Renamed`, CAN_LIGHT])
   })
 })
 
@@ -268,24 +267,24 @@ describe('the selection after a run', () => {
     await results(page).verifyAll.click()
     await expect.poll(async () => {
       return [...held.started].sort()
-    }).toEqual([BARRIER, TWO_TRAINS])
+    }).toEqual([NEVER_LIT, CAN_LIGHT].sort())
 
-    await results(page).row(TWO_TRAINS).click()
-    held.open(BARRIER, TWO_TRAINS)
+    await results(page).row(CAN_LIGHT).click()
+    held.open(NEVER_LIT, CAN_LIGHT)
 
     await expect.poll(async () => {
       return results(page).status.innerText()
     }).toContain('Done in')
-    expect(await results(page).row(TWO_TRAINS).getAttribute('aria-selected')).toBe('true')
+    expect(await results(page).row(CAN_LIGHT).getAttribute('aria-selected')).toBe('true')
   })
 })
 
 describe('Verify all', () => {
   test('a case run from its row while the language server initializes waits with its reason, and starts once the model\'s first diagnostics arrive', async ({ ui }) => {
     const diagnostics = gate()
-    ui.backend.answer('diagnostics', async (_request, recorded) => {
+    ui.backend.answer('diagnostics', async (_request, stated) => {
       await diagnostics.passed
-      return recorded()
+      return stated()
     })
     const page = await opened(ui)
     const status = page.locator('[data-testid=status-message]')
@@ -293,10 +292,10 @@ describe('Verify all', () => {
       return status.innerText()
     }).toBe('Initializing the Semantifyr language server')
 
-    await results(page).row(BARRIER).getByRole('button', { name: `Run ${BARRIER}` }).click()
+    await results(page).row(NEVER_LIT).getByRole('button', { name: `Run ${NEVER_LIT}` }).click()
     await expect.poll(async () => {
       return status.innerText()
-    }).toBe(`Verify ${BARRIER} waits: initializing the Semantifyr language server`)
+    }).toBe(`Verify ${NEVER_LIT} waits: initializing the Semantifyr language server`)
     expect(await rowStates(page)).toEqual(['queued', 'not-run'])
     diagnostics.open()
 
@@ -324,9 +323,9 @@ describe('Verify all', () => {
 
   test('pressed before the portfolios arrived runs with the portfolio the server names', async ({ ui }) => {
     const portfolios = gate()
-    ui.backend.rest('GET /api/portfolios', async (_request, recorded) => {
+    ui.backend.rest('GET /api/portfolios', async () => {
       await portfolios.passed
-      return recorded()
+      return { status: 200, body: PORTFOLIOS }
     })
     const page = await ui.open(LEVEL_CROSSING)
     await expect.poll(async () => {

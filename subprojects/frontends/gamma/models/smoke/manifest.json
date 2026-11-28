@@ -1,0 +1,11 @@
+{
+    "models": [
+        {
+            "file": "smoke.gamma",
+            "cases": [
+                { "name": "OnReachable", "verdict": "Passed", "tier": "Integration" },
+                { "name": "OffReachable", "verdict": "Passed", "tier": "Integration" }
+            ]
+        }
+    ]
+}

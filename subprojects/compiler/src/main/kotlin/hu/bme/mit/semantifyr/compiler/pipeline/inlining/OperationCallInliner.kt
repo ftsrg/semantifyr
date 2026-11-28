@@ -13,13 +13,16 @@ import hu.bme.mit.semantifyr.compiler.pipeline.artifact.CompilationPass
 import hu.bme.mit.semantifyr.compiler.pipeline.instantiation.Instance
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationStats
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.optimizers.NestedOperationOptimizer
+import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.checkInterrupted
 import hu.bme.mit.semantifyr.logging.info
 import hu.bme.mit.semantifyr.logging.loggerFactory
 import hu.bme.mit.semantifyr.oxsts.lang.utils.OperationVisitor
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssignmentOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssumptionOperation
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.BooleanOp
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ChoiceOperation
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ForOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.HavocOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.IfOperation
@@ -85,17 +88,17 @@ class OperationCallInliner @AssistedInject constructor(
 
     override fun visit(operation: LocalVarDeclarationOperation) {
         operation.expression?.let {
-            expressionCallInliner.process(it)
+            requirePresence(operation, expressionCallInliner.process(it))
         }
     }
 
     override fun visit(operation: ForOperation) {
-        expressionCallInliner.process(operation.rangeExpression)
+        requirePresence(operation, expressionCallInliner.process(operation.rangeExpression))
         processorQueue.addFirst(operation.body)
     }
 
     override fun visit(operation: IfOperation) {
-        expressionCallInliner.process(operation.guard)
+        requirePresence(operation, expressionCallInliner.process(operation.guard))
         processorQueue.addFirst(operation.body)
         if (operation.`else` != null) {
             processorQueue.addFirst(operation.`else`)
@@ -103,16 +106,34 @@ class OperationCallInliner @AssistedInject constructor(
     }
 
     override fun visit(operation: HavocOperation) {
-        expressionCallInliner.processWriteTarget(operation.reference)
+        requirePresence(operation, expressionCallInliner.processWriteTarget(operation.reference))
     }
 
     override fun visit(operation: AssumptionOperation) {
-        expressionCallInliner.process(operation.expression)
+        requirePresence(operation, expressionCallInliner.process(operation.expression))
     }
 
     override fun visit(operation: AssignmentOperation) {
-        expressionCallInliner.processWriteTarget(operation.reference)
-        expressionCallInliner.process(operation.expression)
+        val targetPresence = expressionCallInliner.processWriteTarget(operation.reference)
+        val valuePresence = expressionCallInliner.process(operation.expression)
+        requirePresence(operation, targetPresence, valuePresence)
+    }
+
+    // a read through a holder that holds nothing has no value, so the operation evaluating it blocks
+    private fun requirePresence(operation: Operation, vararg conditions: Expression?) {
+        val presence = conditions.filterNotNull().reduceOrNull { left, right ->
+            OxstsFactory.createBooleanOperator(BooleanOp.AND, left, right)
+        } ?: return
+        val assumption = OxstsFactory.createAssumptionOperation(presence)
+        val parent = operation.eContainer()
+        if (parent is SequenceOperation) {
+            parent.steps.add(parent.steps.indexOf(operation), assumption)
+            return
+        }
+        val sequence = OxstsFactory.createSequenceOperation()
+        EcoreUtil2.replace(operation, sequence)
+        sequence.steps += assumption
+        sequence.steps += operation
     }
 
     override fun visit(operation: InlineCall) {

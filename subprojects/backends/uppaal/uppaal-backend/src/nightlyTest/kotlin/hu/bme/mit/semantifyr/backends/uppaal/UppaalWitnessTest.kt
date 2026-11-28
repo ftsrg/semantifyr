@@ -10,7 +10,7 @@ import hu.bme.mit.semantifyr.backends.uppaal.verification.UppaalBackend
 import hu.bme.mit.semantifyr.backends.uppaal.verification.UppaalConfig
 import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup
 import hu.bme.mit.semantifyr.portfolios.Portfolios
-import hu.bme.mit.semantifyr.verifier.EngineVerdictPortfolio
+import hu.bme.mit.semantifyr.verifier.BackendVerdictPortfolio
 import hu.bme.mit.semantifyr.verifier.SemantifyrVerifierTestHelper
 import hu.bme.mit.semantifyr.verifier.VerificationCase
 import hu.bme.mit.semantifyr.verifier.assumeBackendAvailable
@@ -31,7 +31,7 @@ class UppaalWitnessTest {
         private val context by lazy {
             helper.semantifyrLoader
                 .startContext()
-                .loadModels(Path("build/test-models/semantic"))
+                .loadModels(Path("../../../../oxsts-test-models/semantic"))
                 .buildAndResolve()
         }
 
@@ -61,7 +61,7 @@ class UppaalWitnessTest {
         helper.checkTestModel(
             context,
             verificationCase,
-            verificationPortfolio = EngineVerdictPortfolio(UppaalBackend(), UppaalConfig.Default),
+            verificationPortfolio = BackendVerdictPortfolio(UppaalBackend(), UppaalConfig.Default),
             outputDirectory = SemantifyrVerifierTestHelper.testArtifactRoot(UppaalWitnessTest::class.java),
             validationPortfolio = Portfolios.AllAgree,
         )

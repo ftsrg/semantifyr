@@ -14,10 +14,7 @@ import hu.bme.mit.semantifyr.oxsts.lang.OxstsStandaloneSetup
 import hu.bme.mit.semantifyr.portfolios.Portfolios
 import hu.bme.mit.semantifyr.verifier.portfolio.VerificationPortfolio
 import org.eclipse.xtext.resource.FileExtensionProvider
-import java.nio.file.Path
 import kotlin.io.path.Path
-import kotlin.io.path.createDirectories
-import kotlin.io.path.writeText
 
 val testModels = Path("../../oxsts-test-models")
 val smokeDirectory = testModels.resolve("smoke")
@@ -41,29 +38,4 @@ suspend fun runCli(
     return command.test(arguments.toList()) {
         command.execute(it)
     }
-}
-
-fun writeSameStemModels(directory: Path): Path {
-    val models = directory.resolve("models")
-    for (name in listOf("first", "second")) {
-        models.resolve(name).createDirectories().resolve("model.semantifyr").writeText(
-            """
-            package $name
-
-            @VerificationCase
-            class Reach {
-                var counter: int := 0
-
-                redefine tran {
-                    counter := 1
-                }
-
-                prop {
-                    return EF counter == 1
-                }
-            }
-            """.trimIndent(),
-        )
-    }
-    return models
 }

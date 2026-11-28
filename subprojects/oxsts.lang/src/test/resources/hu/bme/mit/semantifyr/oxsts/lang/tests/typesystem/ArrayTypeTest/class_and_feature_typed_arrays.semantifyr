@@ -1,0 +1,34 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package test
+
+class Worker {
+    var done: bool := false
+    tran step() {
+        done := true
+    }
+    prop isDone(): bool {
+        return done
+    }
+}
+class Team {
+    contains workers: Worker[0..*]
+    contains first: Worker subsets workers
+    contains second: Worker subsets workers
+    var queue: Worker[2] := [first, second]
+    var picks: workers[1..2] := [first, second]
+    var index: int := 0
+    redefine tran {
+        queue[index] := second
+        picks := queue
+        havoc(picks)
+        inline queue[index].step()
+    }
+    redefine prop {
+        return EF (picks[0] == first && queue[1].isDone())
+    }
+}

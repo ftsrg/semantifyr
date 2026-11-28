@@ -9,7 +9,7 @@ import { describe, expect, it, onTestFinished } from 'vitest'
 import { page, server, userEvent } from 'vitest/browser'
 
 import type { ResolvedColorMode } from '../lib/util/colorMode'
-import type { VerificationCaseState, VerificationState } from '../lib/verification/engine'
+import type { VerificationCaseState, VerificationState } from '../lib/verification/state'
 import type { SharedResults } from '../lib/workspace/sharedResults'
 import { ShellRoot } from '../shells/ShellRoot'
 import { caseOf, finished, seedLive, type Seed } from './seededLive'

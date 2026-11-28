@@ -100,7 +100,7 @@ public class ClassMemberSyntaxTest {
     }
 
     @Test
-    void initAndTranWithoutRedefineAreTheClassOwn() {
+    void initAndTranParseWithoutRedefine() {
         var parsedPackage = parseHelper.parse("""
             package test
             class Host {
@@ -201,7 +201,7 @@ public class ClassMemberSyntaxTest {
             class Host {
                 var counter: int := 0
                 redefine tran { counter := counter + 1 }
-                prop { return AG (counter >= 0) }
+                redefine prop { return AG (counter >= 0) }
             }
             """);
         parsedPackage.assertNoResourceErrors();

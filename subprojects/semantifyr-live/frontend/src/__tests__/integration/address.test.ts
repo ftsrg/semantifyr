@@ -7,7 +7,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { encodeCompressedBase64Url } from '@semantifyr/editor-common'
 
-import type { LspClient } from '../../lib/verification/engine'
+import type { LspClient } from '../../lib/verification/runs'
 import { servedFlavors } from '../fixtures/flavors'
 import { createTestLive, type TestLive } from '../helpers/live'
 

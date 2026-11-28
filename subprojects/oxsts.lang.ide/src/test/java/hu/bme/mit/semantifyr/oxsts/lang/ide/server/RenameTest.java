@@ -6,6 +6,7 @@
 
 package hu.bme.mit.semantifyr.oxsts.lang.ide.server;
 
+import static hu.bme.mit.semantifyr.oxsts.lang.tests.utils.TestModels.testModel;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -52,25 +53,7 @@ class RenameTest extends OxstsLanguageServerTest {
     void renameOfARedefinitionInTheModelRenamesTheRedefinedTransitionInALibrary() throws Exception {
         var library = MarkedText.of(MarkedText.markEvery(InlineModels.LAMP_LIBRARY, "toggle("));
         var libraryUri = addLibraryFile(InlineModels.LAMP_LIBRARY_FILE_NAME, library.text());
-        var model = MarkedText.of("""
-                package example::garage
-
-                import example::library
-
-                class GarageLamp : Lamp {
-                    redefine tran <|>toggle() {
-                        self.on := false
-                    }
-                }
-
-                class Garage {
-                    contains lamp: GarageLamp[1]
-
-                    redefine tran {
-                        inline lamp.<|>toggle()
-                    }
-                }
-                """);
+        var model = MarkedText.of(MarkedText.markEvery(testModel(getClass(), "garage.semantifyr"), "toggle("));
         var document = openModel(model.text());
 
         var edit = rename(document, model.positions().getFirst(), "flip");

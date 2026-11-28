@@ -4,19 +4,14 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import hu.bme.mit.semantifyr.gradle.conventions.readsServedExamples
-
 plugins {
-    id("hu.bme.mit.semantifyr.gradle.conventions.jvm")
-    id("hu.bme.mit.semantifyr.gradle.conventions.theta")
-    id("hu.bme.mit.semantifyr.gradle.conventions.suites")
+    id("hu.bme.mit.semantifyr.suites")
     kotlin("jvm")
     kotlin("plugin.serialization")
 }
 
 dependencies {
     implementation(project(":logging"))
-    implementation(libs.kotlinx.coroutines.core)
 
     api(project(":verifier"))
     api(project(":theta-backend"))
@@ -27,10 +22,4 @@ dependencies {
     testImplementation(libs.kotlinx.coroutines.core)
     testImplementation(libs.kotlinx.coroutines.test)
 
-    testFixturesApi(libs.kotlinx.serialization.json)
-}
-
-tasks.named<Test>("integrationTest") {
-    readsServedExamples()
-    inputs.dir(rootProject.layout.projectDirectory.dir("oxsts-test-models/tutorial")).withPathSensitivity(PathSensitivity.RELATIVE)
 }

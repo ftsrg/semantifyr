@@ -1,27 +1,150 @@
 ---
 title: How a Semantifyr Model Compiles
-sidebar_label: Overview
-sidebar_position: 0
-hide_table_of_contents: true
-description: How the compiler turns a Semantifyr model into the transition system a backend checks, in three phases, instantiation, inlining and flattening.
+description: How the compiler turns a class into the flat model a backend checks, by instantiating it, inlining its model, and flattening the result.
 ---
 
 import CodeBlock from '@theme/CodeBlock';
-import PhaseChain from '@site/src/components/Phases/PhaseChain';
 import room from '@oxsts-phases-models/room.semantifyr';
+import { InstanceTree } from '@site/src/components/LessonFigures';
 
 # How a Semantifyr Model Compiles
 
-A Semantifyr model, written by hand or translated from another language by a [frontend](../../frontends/index.mdx), describes a system by its structure: classes whose instances contain instances of other classes, and transitions that call other transitions. What a [backend](../../backends/index.mdx) checks is a transition system: variables, an initial transition, one transition the system takes again and again, and a property over the variables. The compiler turns the one into the other, for one verification case at a time, in three phases.
+A Semantifyr model describes a system by its structure: instances that contain other instances, and transitions that call other transitions. A [backend](../../backends/index.mdx) checks a flat model: variables, an `init` transition, a main transition, and a property, without classes or instances. The compiler turns a class into such a model.
 
-<PhaseChain />
+It takes three phases. [Instantiation](#instantiation) puts one instance of the class into the universe of the global features, and inflates it into an instance tree. [Inlining](#inlining) expands the `init`, the main transition, and the property of that instance into one of each, replacing every call and inline operation with what it stands for. Last, the compiler [flattens](#flattening) the inlined model into a flat model.
 
-1. [Instantiation](instantiation.mdx) builds the instance tree: from the case down, an instance for every containment of multiplicity one.
-2. [Inlining](inlining.mdx) replaces every call by its body, as the class of the instance it is called on defines it, until the case is one transition over instance paths such as `root.hall.top.on`.
-3. [Flattening](flattening.mdx) turns every variable of every instance into one variable of the model and leaves no instance: the transition system.
+The compiler evaluates every compile-time expression during these phases, separately for each instance, and leaves the rest to the backend ([Compile Time and Run Time](../reference/index.md#compile-time-and-run-time)). Any class can be compiled. A verification case is a class that is compiled and then verified.
 
-The three pages step through what the compiler does with this one model, `room.semantifyr` below. Every model they show is the compiler's own output, written when the site is built and shown whole; only the instance tree and instantiation's walk through it are drawn by hand, since the compiler keeps the tree in memory.
+This page follows one model. Its verification case, `BothLampsCanBeOn`, asks whether both lamps of a hall can be on at the same time:
 
 <CodeBlock language="oxsts" title="room.semantifyr">{room}</CodeBlock>
 
-The command line writes the same files for any model: `semantifyr compile --artifacts=debug` keeps the model after each phase and after every single step in the case's directory, as [the command line's page](../../reference/command-line.mdx) describes.
+## Instantiation
+
+Instantiation creates the instances of the model. It always starts from one class, the root class, and any class can be the root class.
+
+The universe holds one instance of the root class, the root instance, as a feature named `root`. Beside it are the [global features](../reference/classes-and-behaviour/features.md#global-features), the ones declared outside any class, which every class can use by name.
+
+Next, the compiler inflates the root instance: it creates the parts of each instance, and the parts of those parts, until none is left. Each `contains` of [multiplicity](../reference/classes-and-behaviour/features.md#multiplicities) `[1]` creates one instance of its type. If a subclass redefines a containment with a more specific type, the instance has that type. A containment marked [`@Shared`](../reference/library-and-output/standard-library.md#shared) creates a single instance, shared by every instance that holds it.
+
+In the room model, the root gets a `hall`, and the hall gets its `top` and `bottom` lamps. `root.hall.top` is a `Lamp`, and `root.hall.bottom` is a `Spot`, because `Hall` redefines `bottom`. Both lamps share one fuse:
+
+<InstanceTree />
+
+No other feature creates instances. A `contains` of any other multiplicity holds the instances of the features that [subset](../reference/classes-and-behaviour/features.md#subsets) it. A `refers` gets its instances from its binding or its subsetters, and a `derived refers` from its opposite. So a `Shelf` has exactly two items:
+
+```oxsts
+class Item
+
+class Shelf {
+  contains items: Item[0..*] // holds first and second
+  contains first: Item subsets items
+  contains second: Item subsets items
+}
+```
+
+## Inlining
+
+Inlining expands the model of the instance tree. It starts from the `init`, the main transition, and the property of the root instance, and replaces every compile-time construct with what it stands for. What remains is one `init`, one main transition, and one property over the instances of the tree.
+
+An [`inline` call](../reference/classes-and-behaviour/inline-operations.md#inline-call) is replaced by the body of the called transition, and a [property call](../reference/classes-and-behaviour/properties.md#calling-a-property) by the expression the property returns. The body comes from the class of the called instance, so a [redefinition](../reference/classes-and-behaviour/classes.md#redefining-members) replaces what it redefines. The names in the body become paths from the root instance, such as `hall.top.on`.
+
+An [`inline if`](../reference/classes-and-behaviour/inline-operations.md#inline-if) keeps the branch its condition selects, and an `inline for` repeats its body for each instance or value of its range. A call through a [feature-typed variable](../reference/classes-and-behaviour/variables.md#feature-typed-variables) becomes a `choice`, with one branch for each instance the variable can hold. A [bound feature](../reference/classes-and-behaviour/features.md#feature-binding) used as a value is replaced by its value.
+
+Each instance gets its own result, so two instances of one class can behave differently. When the compiler compares instances with `==`, it compares sets: the two sides are equal when they hold the same instances, and `nothing` is the empty set.
+
+In the room model, the main transition of `BothLampsCanBeOn` only calls the main transition of its hall:
+
+```oxsts
+// hide-start
+class Fuse {
+  var ok: bool := true
+}
+
+class Lamp {
+  @Shared
+  contains fuse: Fuse
+
+  var on: bool := false
+
+  tran toggle() {
+    assume(fuse.ok)
+    on := !on
+  }
+}
+
+class Spot : Lamp {
+  redefine tran toggle() {
+    assume(fuse.ok)
+    on := true
+  }
+}
+
+class Room {
+  contains top: Lamp
+  contains bottom: Lamp
+
+  var last: Lamp[0..1] := nothing
+
+  redefine tran {
+    choice {
+      assume(last != top)
+      inline top.toggle()
+      last := top
+    } or {
+      assume(last != bottom)
+      inline bottom.toggle()
+      last := bottom
+    }
+  }
+}
+
+class Hall : Room {
+  redefine contains bottom: Spot
+}
+
+class BothLampsCanBeOn {
+  contains hall: Hall
+
+// hide-end
+  redefine tran {
+    inline hall.main()
+  }
+// hide-start
+}
+// hide-end
+```
+
+After inlining, the call is replaced by the main transition of the hall, and its calls by the bodies of `toggle`. The bottom lamp is a `Spot`, so its branch gets the body of `Spot`:
+
+```oxsts continue
+// hide-start
+class InlinedBothLampsCanBeOn {
+  contains hall: Hall
+
+// hide-end
+  redefine tran {
+    choice {
+      assume(hall.last != hall.top)
+      assume(hall.top.fuse.ok)
+      hall.top.on := !hall.top.on
+      hall.last := hall.top
+    } or {
+      assume(hall.last != hall.bottom)
+      assume(hall.bottom.fuse.ok)
+      hall.bottom.on := true
+      hall.last := hall.bottom
+    }
+  }
+// hide-start
+}
+// hide-end
+```
+
+After inlining, the [verification property](../reference/classes-and-behaviour/properties.md#the-verification-property) must have `AG` or `EF` at its root, or compiling it is an error.
+
+## Flattening
+
+Finally, the compiler flattens the inlined model into a model without instances. This is the model a backend receives. Before model checking, the backend checks what it supports on this flat model, so a model that it cannot handle, such as one with a string variable, is refused.
+
+To check the intermediate phases yourself, run `semantifyr compile --artifacts=debug`.

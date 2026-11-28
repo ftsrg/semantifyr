@@ -6,6 +6,7 @@
 
 package hu.bme.mit.semantifyr.oxsts.lang.tests.typesystem;
 
+import static hu.bme.mit.semantifyr.oxsts.lang.tests.utils.TestModels.testModel;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.google.inject.Inject;
@@ -41,32 +42,8 @@ public class RecordValidationTest {
 
     @Test
     void recordFieldsAreReadWrittenComparedAndHavoced() {
-        var parsedPackage = parseHelper.parse(RECORDS + """
-            class Holder {
-                var position: Point := Point { x = 0 }
-                var previous: Point := Point { x = 0 }
-                var segment: Segment := Segment { color = Color::Red }
-                tran move(target: Point) {
-                    position := target
-                }
-                prop isOrigin(point: Point): bool {
-                    return point.x == 0 && point.y == 0
-                }
-                redefine tran {
-                    position.x := position.x + 1
-                    previous := position
-                    segment.from.y := segment.to.y
-                    segment.to := previous
-                    havoc(previous)
-                    var local: Point := position
-                    local.y := 2
-                    inline move(local)
-                }
-                prop {
-                    return EF (position == previous && segment.from != segment.to && isOrigin(segment.from) && segment.color == Color::Green)
-                }
-            }
-            """, CheckMode.ALL);
+        var parsedPackage =
+                parseHelper.parse(RECORDS + testModel(getClass(), "record_fields.semantifyr"), CheckMode.ALL);
 
         parsedPackage.assertNoResourceErrors();
         parsedPackage.assertNoValidationErrors();
@@ -74,26 +51,7 @@ public class RecordValidationTest {
 
     @Test
     void recordParameterTakesOnlyARecordOfItsType() {
-        var parsedPackage = parseHelper.parse("""
-            package test
-            record Point {
-                var x: int := 0
-            }
-            record Size {
-                var x: int := 0
-            }
-            class Holder {
-                var position: Point := Point { x = 1 }
-                var size: Size := Size { x = 1 }
-                var sum: int := 0
-                tran add(point: Point) { sum := sum + point.x }
-                redefine tran {
-                    inline add(position)
-                    inline add(Point { x = 2 })
-                    inline add(size)
-                }
-            }
-            """, CheckMode.ALL);
+        var parsedPackage = parseHelper.parse(testModel(getClass(), "record_parameter.semantifyr"), CheckMode.ALL);
 
         parsedPackage.assertNoResourceErrors();
         assertThat(parsedPackage.getIssues())
@@ -101,7 +59,7 @@ public class RecordValidationTest {
                 .singleElement()
                 .satisfies(issue -> {
                     assertThat(issue.getCode()).isEqualTo(OxstsValidator.TYPE_MISMATCH);
-                    assertThat(issue.getLineNumber()).isEqualTo(16);
+                    assertThat(issue.getLineNumber()).isEqualTo(25);
                 });
     }
 
@@ -164,7 +122,7 @@ public class RecordValidationTest {
             class Holder {
                 var position: Point := Point { x = 0 }
                 var previous: Point := Point { x = 0 }
-                prop { return EF position < previous }
+                redefine prop { return EF position < previous }
             }
             """, CheckMode.ALL);
 
@@ -176,7 +134,7 @@ public class RecordValidationTest {
         var parsedPackage = parseHelper.parse(RECORDS + """
             class Holder {
                 var position: Point := Point { x = 0 }
-                prop { return EF position != nothing }
+                redefine prop { return EF position != nothing }
             }
             """, CheckMode.ALL);
 
@@ -188,7 +146,7 @@ public class RecordValidationTest {
         var parsedPackage = parseHelper.parse(RECORDS + """
             class Holder {
                 var position: Point := Point { x = 0 }
-                prop { return EF position == 1 }
+                redefine prop { return EF position == 1 }
             }
             """, CheckMode.ALL);
 
@@ -309,34 +267,8 @@ public class RecordValidationTest {
 
     @Test
     void recordLiteralsAreAcceptedWhereRecordValuesAre() {
-        var parsedPackage = parseHelper.parse(RECORDS + """
-            record Box {
-                var corner: Point := Point { x = 1 }
-                var size: int := 1
-            }
-            class Holder {
-                var position: Point := Point { x = 1 }
-                var segment: Segment := Segment { from = Point { x = 0, y = 1 }, to = Point { x = 2 } }
-                var box: Box := Box { size = 1 }
-                tran move(target: Point) {
-                    position := target
-                }
-                prop isAt(point: Point): bool {
-                    return position == point
-                }
-                redefine tran {
-                    position := Point { x = position.x + 1, y = position.y }
-                    var local: Point := Point { x = segment.to.x }
-                    inline move(Point { x = local.y })
-                    segment := Segment { from = position, to = local, color = Color::Green }
-                    box := Box { size = 2 }
-                    position := if position.x > 3 then Point { x = 0 } else position
-                }
-                prop {
-                    return EF (position != Point { x = 3, y = 0 } && isAt(Point { x = 1 }) && Point { x = 1 }.x == 1)
-                }
-            }
-            """, CheckMode.ALL);
+        var parsedPackage =
+                parseHelper.parse(RECORDS + testModel(getClass(), "record_literals.semantifyr"), CheckMode.ALL);
 
         parsedPackage.assertNoResourceErrors();
         parsedPackage.assertNoValidationErrors();
@@ -508,7 +440,7 @@ public class RecordValidationTest {
         var parsedPackage = parseHelper.parse(RECORDS + """
             class Holder {
                 var position: Point := Point { x = 0 }
-                prop { return EF position < Point { x = 1 } }
+                redefine prop { return EF position < Point { x = 1 } }
             }
             """, CheckMode.ALL);
 

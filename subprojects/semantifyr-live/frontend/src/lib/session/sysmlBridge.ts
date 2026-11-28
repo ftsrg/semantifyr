@@ -16,13 +16,13 @@ import {
   type WitnessValidationResult,
 } from '@semantifyr/editor-common'
 
-import { SemantifyrLiveMethods, type ReadDocumentParams, type ReadDocumentResult, type VerificationsChangedParams } from '../api/lspExtensions.ts'
-import type { CancellationToken, LspClient } from '../verification/engine'
+import { SemantifyrLiveMethods, type ReadDocumentParams, type ReadDocumentResult, type VerificationsChangedParams } from '../api/lspExtensions'
+import type { CancellationToken, LspClient } from '../verification/runs'
 import type { ProblemEntry } from './problems'
 import { OXSTS_EXTENSION } from '../workspace/files'
 
 export const SYSML_FLAVOR_ID = 'sysml'
-export const SYSML_OXSTS_FLAVOR_ID = 'oxsts-with-sysmlv2-library'
+export const SYSML_OXSTS_FLAVOR_ID = 'oxsts-with-sysml-library'
 export const SYSML_OXSTS_URI = `file:///workspace/snippet${OXSTS_EXTENSION}`
 export const SYSML_HIDDEN_LANGUAGE_ID = 'sysml-mapped-oxsts'
 

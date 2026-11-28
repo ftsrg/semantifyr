@@ -1,0 +1,69 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package inlining::tests::uncalled_tracer_removal
+
+class Port {
+    var item: int := 0
+
+    @Trace
+    tran send(value: int) {
+        item := value
+    }
+}
+
+abstract class Node {
+    abstract prop isActive(): bool
+}
+
+class State : Node {
+    var active: bool := false
+
+    redefine prop isActive(): bool {
+        return active
+    }
+}
+
+class Entry : Node {
+    redefine prop isActive(): bool {
+        return false
+    }
+}
+
+class Transition {
+    refers from: Node[1]
+    contains port: Port
+
+    @Trace
+    tran fire() {
+        assume(from.isActive())
+        inline port.send(1)
+    }
+}
+
+@VerificationCase
+class Machine {
+    contains start: Entry
+    contains idle: State
+    contains initial: Transition {
+        redefine refers from: Node[1] = start
+    }
+    contains step: Transition {
+        redefine refers from: Node[1] = idle
+    }
+
+    redefine tran {
+        choice {
+            inline initial.fire()
+        } or {
+            inline step.fire()
+        }
+    }
+
+    redefine prop {
+        return AG (initial.port.item + step.port.item >= 0)
+    }
+}

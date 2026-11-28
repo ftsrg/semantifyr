@@ -11,7 +11,6 @@ import hu.bme.mit.semantifyr.compiler.pipeline.context.CreatedCompilationContext
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.RedefinitionAwareReferenceResolver
 import hu.bme.mit.semantifyr.compiler.pipeline.instantiation.InstanceNames
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
-import hu.bme.mit.semantifyr.compiler.pipeline.utils.sourceError
 import hu.bme.mit.semantifyr.oxsts.lang.library.builtin.BuiltinSymbolResolver
 import hu.bme.mit.semantifyr.oxsts.lang.utils.SelfContainedResource
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ClassDeclaration
@@ -81,19 +80,7 @@ class InlinedOxstsModelCreator @Inject constructor(
     }
 
     private fun createPropertyDeclaration(inlinedOxsts: InlinedOxsts): PropertyDeclaration {
-        val resolved = redefinitionAwareReferenceResolver.resolveOrNull(inlinedOxsts.rootFeature, "prop")
-        if (resolved != null && resolved !is PropertyDeclaration) {
-            sourceError(
-                resolved,
-                "Expected an element named 'prop' to be a property declaration, found ${resolved::class.simpleName}. Verification cases identify their property by the name 'prop'.",
-            )
-        }
-
-        if (resolved == null) {
-            return OxstsFactory.createPropertyDeclaration().also {
-                it.expression = OxstsFactory.createLiteralBoolean(true)
-            }
-        }
+        val property = redefinitionAwareReferenceResolver.resolve(inlinedOxsts.rootFeature, builtinSymbolResolver.anythingProperty(inlinedOxsts))
 
         return OxstsFactory.createPropertyDeclaration().also {
             it.expression = OxstsFactory.createCallSuffixExpression().also {
@@ -101,7 +88,7 @@ class InlinedOxstsModelCreator @Inject constructor(
                     it.primary = OxstsFactory.createElementReference().also {
                         it.element = inlinedOxsts.rootFeature
                     }
-                    it.member = resolved
+                    it.member = property
                 }
             }
         }

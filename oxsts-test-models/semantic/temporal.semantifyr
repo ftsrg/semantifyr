@@ -16,7 +16,7 @@ class EFReach {
         x := x + 1
     }
 
-    prop {
+    redefine prop {
         return EF x == 5
     }
 }
@@ -31,7 +31,7 @@ class EFBoundedByGuard {
         x := x + 1
     }
 
-    prop {
+    redefine prop {
         return AG x <= 5
     }
 }
@@ -45,7 +45,7 @@ class AGInvariant {
         x := 1 - x
     }
 
-    prop {
+    redefine prop {
         return AG (x == 0 || x == 1)
     }
 }
@@ -59,7 +59,7 @@ class AGEndpoint1Reach {
         x := 1 - x
     }
 
-    prop {
+    redefine prop {
         return EF x == 1
     }
 }
@@ -73,7 +73,7 @@ class AGEndpoint0Reach {
         x := 1 - x
     }
 
-    prop {
+    redefine prop {
         return EF x == 0
     }
 }
@@ -93,7 +93,7 @@ class AGDisjunction {
         }
     }
 
-    prop {
+    redefine prop {
         return AG (x == 0 || x == 1 || x == 2 || x == 3)
     }
 }
@@ -112,7 +112,7 @@ class EFAGBound {
         }
     }
 
-    prop {
+    redefine prop {
         return AG (x >= 0 && x <= 3)
     }
 }
@@ -126,7 +126,7 @@ class AGViolated {
         x := 1 - x
     }
 
-    prop {
+    redefine prop {
         return AG x == 0
     }
 }
@@ -140,7 +140,7 @@ class EFUnreachable {
         x := 1 - x
     }
 
-    prop {
+    redefine prop {
         return EF x == 2
     }
 }

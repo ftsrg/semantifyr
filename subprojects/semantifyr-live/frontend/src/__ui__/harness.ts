@@ -12,7 +12,7 @@ import { servedExamples, type ExampleLanguage, type ServedExample } from '@seman
 import { compiledLabel, LANGUAGES, PRODUCT_NAME } from '../texts'
 import { launchTestBrowser } from '../testBrowser'
 import { keepEvidence, recordEvidence } from './evidence'
-import { MockBackend } from './mock/backend'
+import { FakeBackend } from './fake/backend'
 
 export const LIVE_URL = inject('liveUrl')
 
@@ -41,7 +41,7 @@ export interface OpenOptions {
 }
 
 export interface Ui {
-  backend: MockBackend
+  backend: FakeBackend
   open: (address: string, options?: OpenOptions) => Promise<Page>
   host: (markup: string, options?: OpenOptions) => Promise<Page>
   context: () => BrowserContext
@@ -61,7 +61,7 @@ export const test = base.extend<{ ui: Ui, browser: Browser }>({
     { scope: 'worker' },
   ],
   ui: async ({ browser, task }, provide) => {
-    const backend = new MockBackend()
+    const backend = new FakeBackend()
     const pageErrors: string[] = []
     let context: BrowserContext | null = null
     const contextFor = async (options: OpenOptions): Promise<BrowserContext> => {
@@ -119,7 +119,7 @@ export const test = base.extend<{ ui: Ui, browser: Browser }>({
     })
     const problems = [
       ...backend.problems.map((problem) => {
-        return `mock backend: ${problem}`
+        return `fake backend: ${problem}`
       }),
       ...pageErrors.map((error) => {
         return `uncaught in the page: ${error}`
@@ -130,7 +130,7 @@ export const test = base.extend<{ ui: Ui, browser: Browser }>({
       await keepEvidence(opened, 'ui', `${task.file.name.replace(/^.*\//, '')} ${task.name}`, task.result?.state === 'fail' || problems.length > 0)
       await opened.close()
     }
-    expect(problems, 'the mock backend answered everything and nothing was uncaught in the page').toEqual([])
+    expect(problems, 'the fake backend answered everything and nothing was uncaught in the page').toEqual([])
   },
 })
 

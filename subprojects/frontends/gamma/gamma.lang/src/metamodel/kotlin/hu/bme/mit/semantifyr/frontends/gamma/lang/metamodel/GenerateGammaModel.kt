@@ -6,7 +6,7 @@
 
 package hu.bme.mit.semantifyr.frontends.gamma.lang.metamodel
 
-import hu.bme.mit.semantifyr.oxsts.model.metamodel.generateModel
+import hu.bme.mit.semantifyr.metamodel.generateModel
 import java.io.File
 
 fun main(args: Array<String>) {

@@ -1,0 +1,22 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+@VerificationCase
+class Host {
+    contains first: Worker[1]
+    contains second: Worker[1]
+    var current: Worker[0..1] := nothing
+    var seen: bool := false
+    tran observe(worker: Worker[0..1]) {
+        seen := worker.done
+    }
+    redefine tran {
+        inline observe(current)
+    }
+    redefine prop {
+        return EF seen
+    }
+}

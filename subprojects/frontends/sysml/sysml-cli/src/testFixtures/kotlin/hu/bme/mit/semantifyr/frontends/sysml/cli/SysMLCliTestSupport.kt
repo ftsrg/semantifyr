@@ -15,22 +15,21 @@ import hu.bme.mit.semantifyr.verifier.portfolio.VerificationPortfolio
 import org.eclipse.xtext.resource.FileExtensionProvider
 import kotlin.io.path.Path
 
-val tutorialModel = Path("../models/tutorial/room.sysml")
-val semanticModels = Path("../../../../oxsts-test-models/semantic")
+val smokeModel = Path("../models/smoke/smoke.sysml")
 
-private val injector by lazy {
+val oxstsInjector by lazy {
     OxstsStandaloneSetup().createInjectorAndDoEMFRegistration()
 }
 
 val oxstsExtensions by lazy {
-    injector.getInstance(FileExtensionProvider::class.java).fileExtensions
+    oxstsInjector.getInstance(FileExtensionProvider::class.java).fileExtensions
 }
 
 suspend fun runSysMLCli(
     vararg arguments: String,
     portfolios: List<VerificationPortfolio> = Portfolios.all,
 ): CliktCommandTestResult {
-    val command = injector.getInstance(SemantifyrSysMLCommand::class.java)
+    val command = oxstsInjector.getInstance(SemantifyrSysMLCommand::class.java)
     command.registeredSubcommands().filterIsInstance<SysMLVerifyCommand>().single().portfolios = portfolios
     return command.test(arguments.toList()) {
         command.execute(it)

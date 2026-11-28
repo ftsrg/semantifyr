@@ -1,0 +1,24 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package test
+
+interface Alarm {
+    out event error
+}
+
+statechart Monitor [
+    port Error : provides Alarm
+] {
+    timeout Busy
+    region Main {
+        initial MainInitial
+        state Busy
+        state Error
+    }
+    transition from MainInitial to Busy
+    transition from Busy to Error when timeout Busy / raise Error.error;
+}

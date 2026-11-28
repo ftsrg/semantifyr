@@ -6,34 +6,16 @@
 
 package hu.bme.mit.semantifyr.compiler.pipeline.inlining
 
+import hu.bme.mit.semantifyr.oxsts.lang.tests.utils.TestModels.testModel
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
 
 class RuntimeMemberDispatchTest : InliningTestBase() {
 
-    private val worker = """
-        package inlining::tests
-        class Part {
-            var done: bool := false
-            tran step() {
-                done := true
-            }
-            prop isDone(): bool {
-                return done
-            }
-        }
-        class Worker {
-            var done: bool := false
-            var slot: int := 0
-            contains part: Part[1]
-        }
-        class Other {
-            var done: bool := false
-        }
-    """
+    private val worker = testModel(javaClass, "worker.semantifyr")
 
     @Test
-    fun `a read through a feature-typed variable in a transition dispatches over the instances of the feature`() {
+    fun `a read through a feature-typed variable in a transition blocks the operation when the variable holds nothing`() {
         assertInlinedModel(
             "Host",
             worker + """
@@ -48,7 +30,7 @@ class RuntimeMemberDispatchTest : InliningTestBase() {
                     redefine tran {
                         seen := current.done
                     }
-                    prop {
+                    redefine prop {
                         return EF seen
                     }
                 }
@@ -58,6 +40,7 @@ class RuntimeMemberDispatchTest : InliningTestBase() {
                 }
 
                 tran {
+                    assume(root.current != nothing)
                     root.seen := if root.current == root.first then root.first.done else root.second.done
                 }
 
@@ -69,7 +52,7 @@ class RuntimeMemberDispatchTest : InliningTestBase() {
     }
 
     @Test
-    fun `a read through a class-typed variable in a property dispatches over the instances of the class`() {
+    fun `a read through a class-typed variable in a property takes the last candidate when the variable holds nothing`() {
         assertInlinedModel(
             "Host",
             worker + """
@@ -79,7 +62,7 @@ class RuntimeMemberDispatchTest : InliningTestBase() {
                     contains second: Worker[1]
                     contains other: Other[1]
                     var current: Worker[0..1] := nothing
-                    prop {
+                    redefine prop {
                         return EF current.done
                     }
                 }
@@ -111,7 +94,7 @@ class RuntimeMemberDispatchTest : InliningTestBase() {
                     prop isDoneOf(worker: Worker[0..1]): bool {
                         return worker.done
                     }
-                    prop {
+                    redefine prop {
                         return EF isDoneOf(current)
                     }
                 }
@@ -131,33 +114,17 @@ class RuntimeMemberDispatchTest : InliningTestBase() {
     }
 
     @Test
-    fun `a read through a class-typed parameter of a transition dispatches over the instances of the class`() {
+    fun `a read through a class-typed parameter of a transition blocks the operation when the argument is nothing`() {
         assertInlinedModel(
             "Host",
-            worker + """
-                @VerificationCase
-                class Host {
-                    contains first: Worker[1]
-                    contains second: Worker[1]
-                    var current: Worker[0..1] := nothing
-                    var seen: bool := false
-                    tran observe(worker: Worker[0..1]) {
-                        seen := worker.done
-                    }
-                    redefine tran {
-                        inline observe(current)
-                    }
-                    prop {
-                        return EF seen
-                    }
-                }
-            """,
+            worker + testModel(javaClass, "class_typed_transition_parameter.semantifyr"),
             $$$$"""
                 init {
                 }
 
                 tran {
                     var 'worker$$$local0': inlining::tests::Worker[0..1] := root.current
+                    assume('worker$$$local0' != nothing)
                     root.seen := if 'worker$$$local0' == root.first then root.first.done else root.second.done
                 }
 
@@ -182,7 +149,7 @@ class RuntimeMemberDispatchTest : InliningTestBase() {
                     redefine tran {
                         seen := current.part.done
                     }
-                    prop {
+                    redefine prop {
                         return EF current.part.done
                     }
                 }
@@ -192,6 +159,7 @@ class RuntimeMemberDispatchTest : InliningTestBase() {
                 }
 
                 tran {
+                    assume(root.current != nothing)
                     root.seen := if root.current == root.first then root.first.part.done else root.second.part.done
                 }
 
@@ -215,7 +183,7 @@ class RuntimeMemberDispatchTest : InliningTestBase() {
                     redefine tran {
                         inline current.part.step()
                     }
-                    prop {
+                    redefine prop {
                         return EF current.part.isDone()
                     }
                 }
@@ -255,7 +223,7 @@ class RuntimeMemberDispatchTest : InliningTestBase() {
                     redefine tran {
                         flags[current.slot] := true
                     }
-                    prop {
+                    redefine prop {
                         return EF flags[1]
                     }
                 }
@@ -265,6 +233,7 @@ class RuntimeMemberDispatchTest : InliningTestBase() {
                 }
 
                 tran {
+                    assume(root.current != nothing)
                     root.flags[if root.current == root.first then root.first.slot else root.second.slot] := true
                 }
 
@@ -279,25 +248,7 @@ class RuntimeMemberDispatchTest : InliningTestBase() {
     fun `a read through a runtime for loop variable dispatches over the instances of the range`() {
         assertInlinedModel(
             "Host",
-            worker + """
-                @VerificationCase
-                class Host {
-                    contains workers: Worker[0..*]
-                    contains first: Worker[1] subsets workers
-                    contains second: Worker[1] subsets workers
-                    var count: int := 0
-                    redefine tran {
-                        for (worker in workers) {
-                            if (worker.done) {
-                                count := count + 1
-                            }
-                        }
-                    }
-                    prop {
-                        return EF count == 2
-                    }
-                }
-            """,
+            worker + testModel(javaClass, "runtime_for_read.semantifyr"),
             """
                 init {
                 }
@@ -332,7 +283,7 @@ class RuntimeMemberDispatchTest : InliningTestBase() {
                             inline part.step()
                         }
                     }
-                    prop {
+                    redefine prop {
                         return EF (first.done && second.done)
                     }
                 }
@@ -375,7 +326,7 @@ class RuntimeMemberDispatchTest : InliningTestBase() {
                             inline worker.part.step()
                         }
                     }
-                    prop {
+                    redefine prop {
                         return EF (first.part.done && second.part.done)
                     }
                 }
@@ -413,7 +364,7 @@ class RuntimeMemberDispatchTest : InliningTestBase() {
                     contains first: Worker[1]
                     contains second: Worker[1]
                     var queue: Worker[2] := [first, second]
-                    prop {
+                    redefine prop {
                         return EF queue[1].done
                     }
                 }
@@ -433,6 +384,70 @@ class RuntimeMemberDispatchTest : InliningTestBase() {
     }
 
     @Test
+    fun `an optional call through a variable drops the call when the variable holds nothing`() {
+        assertInlinedModel(
+            "Host",
+            worker + """
+                @VerificationCase
+                class Host {
+                    contains first: Part[1]
+                    contains second: Part[1]
+                    var current: Part[0..1] := nothing
+                    redefine tran {
+                        inline current?.step()
+                    }
+                    redefine prop {
+                        return EF first.done
+                    }
+                }
+            """,
+            """
+                init {
+                }
+
+                tran {
+                    choice {
+                        assume(root.current == root.first)
+                        root.first.done := true
+                    } or {
+                        assume(root.current == root.second)
+                        root.second.done := true
+                    } or {
+                        assume(root.current == nothing)
+                    }
+                }
+
+                prop {
+                    EF root.first.done
+                }
+            """,
+        )
+    }
+
+    @Test
+    fun `a read inside a dispatched branch requires its holder only when the dispatch takes the branch`() {
+        assertInlinedModel(
+            "Host",
+            worker + testModel(javaClass, "read_inside_dispatched_branch.semantifyr"),
+            """
+                init {
+                }
+
+                tran {
+                    for (pair in [root.first, root.second]) {
+                        assume(if pair == root.first then root.first.partner != nothing else root.second.partner != nothing)
+                        root.seen := if pair == root.first then if root.first.partner == root.first.part then root.first.part.done else root.second.part.done else if root.second.partner == root.first.part then root.first.part.done else root.second.part.done
+                    }
+                }
+
+                prop {
+                    EF root.seen
+                }
+            """,
+        )
+    }
+
+    @Test
     fun `a write through a variable fails at its source`() {
         assertThatThrownBy {
             assertInlinedModel(
@@ -445,7 +460,7 @@ class RuntimeMemberDispatchTest : InliningTestBase() {
                         redefine tran {
                             current.done := true
                         }
-                        prop {
+                        redefine prop {
                             return EF first.done
                         }
                     }

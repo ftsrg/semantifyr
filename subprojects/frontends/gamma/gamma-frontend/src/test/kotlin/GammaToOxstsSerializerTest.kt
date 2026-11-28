@@ -360,29 +360,7 @@ class GammaToOxstsSerializerTest {
 
     @Test
     fun `every time value is written in the greatest unit all of them are a whole number of`() {
-        val lines = oxstsLines(
-            """
-                package test
-                statechart Machine {
-                    timeout short
-                    timeout long
-                    region Main {
-                        initial MainInitial
-                        state Idle {
-                            entry / set short := 1500 ms; set long := 2 s;
-                        }
-                    }
-                    transition from MainInitial to Idle
-                }
-                adapter Ticking of component machine : Machine {
-                    clock ticker (rate = 3 s)
-                    when ticker / run
-                    queue messages (priority = 1, capacity = 1) {
-                        ticker
-                    }
-                }
-            """.trimIndent(),
-        )
+        val lines = oxstsLines(model("TimeValues.gamma"))
 
         assertThat(lines).containsSequence(
             "contains _short: Timeout subsets timeouts {",
@@ -428,27 +406,7 @@ class GammaToOxstsSerializerTest {
 
     @Test
     fun `a state contains its entry and exit actions`() {
-        val lines = oxstsLines(
-            """
-                package test
-                interface Control {
-                    out event done
-                }
-                statechart Machine [
-                    port control : provides Control
-                ] {
-                    var count : integer := 0
-                    region Main {
-                        initial MainInitial
-                        state Idle {
-                            entry / count := 1;
-                            exit / raise control.done;
-                        }
-                    }
-                    transition from MainInitial to Idle
-                }
-            """.trimIndent(),
-        )
+        val lines = oxstsLines(model("EntryAndExitActions.gamma"))
 
         assertThat(lines).containsSequence(
             "contains _Idle: State subsets states {",
@@ -556,33 +514,7 @@ class GammaToOxstsSerializerTest {
 
     @Test
     fun `a transition across regions lies in its source's region and names its target from the lowest region holding both`() {
-        val lines = oxstsLines(
-            """
-                package test
-                interface Control {
-                    in event start
-                }
-                statechart Machine [
-                    port control : provides Control
-                ] {
-                    region Main {
-                        initial MainInitial
-                        state Outside
-                        state Parent {
-                            region Left {
-                                initial LeftInitial
-                                state First
-                                state Second
-                            }
-                        }
-                    }
-                    transition from MainInitial to Outside
-                    transition from LeftInitial to First
-                    transition from Outside to Second when control.start
-                    transition from First to Outside when control.start
-                }
-            """.trimIndent(),
-        )
+        val lines = oxstsLines(model("CrossRegionTransitions.gamma"))
 
         assertThat(lines).containsSequence(
             "contains transition_Outside_to_Second: Transition subsets transitions {",
@@ -849,35 +781,63 @@ class GammaToOxstsSerializerTest {
         )
     }
 
+    private fun constrainedLines(): List<String> {
+        return oxstsLines(model("SchedulingConstraints.gamma"))
+    }
+
+    private fun caseLines(lines: List<String>, name: String): List<String> {
+        val caseLines = lines.dropWhile {
+            it != "class $name : GammaVerificationCase {"
+        }
+        assertThat(caseLines).describedAs(name).isNotEmpty
+        return caseLines.takeWhile {
+            !it.startsWith("redefine contains propertyExpression:")
+        }
+    }
+
     @Test
-    fun `a state atom names the state by its containment path in the instance`() {
-        val lines = oxstsLines(
+    fun `the scheduling constraint of the component a case names reaches that case in the model's time unit`() {
+        val lines = constrainedLines()
+
+        assertThat(caseLines(lines, "_MachineIdleReachable")).containsSequence(
+            "contains scheduling: SchedulingConstraint subsets schedulingConstraint {",
+            "redefine refers minimumPeriod: int = 1",
+            "redefine refers maximumPeriod: int = 2",
+            "}",
+        )
+    }
+
+    @Test
+    fun `the scheduling constraint of a part of a composite or of the component under an adapter reaches no case`() {
+        val lines = constrainedLines()
+
+        assertThat(caseLines(lines, "_SystemIdleReachable")).noneMatch {
+            it.contains("SchedulingConstraint")
+        }
+        assertThat(caseLines(lines, "_BufferedIdleReachable")).noneMatch {
+            it.contains("SchedulingConstraint")
+        }
+    }
+
+    @Test
+    fun `a case of a component without a scheduling constraint holds none, so time passes freely`() {
+        val lines = systemLines(
+            system,
             """
-                package test
-                statechart Machine {
-                    region Main {
-                        initial MainInitial
-                        state Outer {
-                            region Inner {
-                                initial InnerInitial
-                                state Nested
-                            }
-                        }
-                    }
-                    transition from MainInitial to Outer
-                    transition from InnerInitial to Nested
-                }
-                sync System {
-                    component machine : Machine
-                }
-                verification case NestedReachable of System {
-                    EF state machine.Inner.Nested
-                }
-                verification case OwnStateReachable of Machine {
-                    EF state Inner.Nested
+                verification case LeaderIdleReachable of System {
+                    EF state leader.Main.Idle
                 }
             """.trimIndent(),
         )
+
+        assertThat(lines).noneMatch {
+            it.contains("SchedulingConstraint")
+        }
+    }
+
+    @Test
+    fun `a state atom names the state by its containment path in the instance`() {
+        val lines = oxstsLines(model("StateAtoms.gamma"))
 
         assertThat(lines).contains("redefine refers state: State = component._machine._Main._Outer._Inner._Nested")
         assertThat(lines).contains("redefine refers state: State = component._Main._Outer._Inner._Nested")
@@ -893,35 +853,7 @@ class GammaToOxstsSerializerTest {
         )
     }
 
-    private val historyStatechart = """
-        package test
-        interface Control {
-            in event start
-            in event stop
-        }
-        statechart Machine [
-            port control : provides Control
-        ] {
-            region Main {
-                initial MainInitial
-                state Working {
-                    region Progress {
-                        initial ProgressInitial
-                        shallow history History
-                        state First
-                        state Second
-                    }
-                }
-                state Paused
-            }
-            transition from MainInitial to Working
-            transition from ProgressInitial to First
-            transition from History to Second
-            transition from First to Second when control.start
-            transition from Working to Paused when control.stop
-            transition from Paused to History when control.stop
-        }
-    """.trimIndent()
+    private val historyStatechart = model("History.gamma")
 
     @Test
     fun `a shallow history node is contained in its region with its transition's target beside the entry transition`() {
@@ -952,33 +884,7 @@ class GammaToOxstsSerializerTest {
         )
     }
 
-    private val cascadeSystem = """
-        package test
-        interface Control {
-            in event start
-        }
-        statechart Worker [
-            port control : provides Control
-        ] {
-            region Main {
-                initial MainInitial
-                state Idle
-            }
-            transition from MainInitial to Idle
-        }
-        cascade Repeated [
-            port control : provides Control
-        ] {
-            component first : Worker
-            component second : Worker
-            bind control -> first.control
-            execute first, second, first
-        }
-        cascade Declared {
-            component first : Worker
-            component second : Worker
-        }
-    """.trimIndent()
+    private val cascadeSystem = model("Cascades.gamma")
 
     @Test
     fun `a cascade composite contains one execution step per entry of its execution list in order`() {
@@ -1018,31 +924,7 @@ class GammaToOxstsSerializerTest {
         )
     }
 
-    private val parameterStatechart = """
-        package test
-        type Point : record {
-            x : integer,
-            y : integer
-        }
-        interface Measurements {
-            in event sample(value : integer, valid : boolean)
-            in persistent event level(value : integer)
-            in event moved(position : Point)
-            out event reading(value : integer)
-        }
-        statechart Probe [
-            port measure : provides Measurements
-        ] {
-            var kept : integer
-            region Main {
-                initial MainInitial
-                state Waiting
-                state Holding
-            }
-            transition from MainInitial to Waiting
-            transition from Waiting to Holding when measure.sample [ measure.sample::valid ] / kept := measure.sample::value; raise measure.reading(kept + 1);
-        }
-    """.trimIndent()
+    private val parameterStatechart = model("Parameters.gamma")
 
     @Test
     fun `an event contains one shared parameter per declared parameter of its type`() {
@@ -1118,34 +1000,7 @@ class GammaToOxstsSerializerTest {
         )
     }
 
-    private val recordStatechart = """
-        package test
-        type Point : record {
-            x : integer,
-            y : integer
-        }
-        type Box : record {
-            corner : Point,
-            open : boolean
-        }
-        interface Control {
-            in event start
-        }
-        statechart Plotter [
-            port control : provides Control
-        ] {
-            var position : Point := #Point { x := 3 }
-            var copy : Point
-            var box : Box := #Box { corner := #Point { y := -2 }, open := true }
-            region Main {
-                initial MainInitial
-                state Start
-                state Done
-            }
-            transition from MainInitial to Start
-            transition from Start to Done when control.start [ box.corner.x > 4 ] / box.corner.x := 5; copy := position;
-        }
-    """.trimIndent()
+    private val recordStatechart = model("Records.gamma")
 
     @Test
     fun `a record type is an OXSTS record with field defaults`() {
@@ -1373,34 +1228,7 @@ class GammaToOxstsSerializerTest {
         )
     }
 
-    private val inoutStatechart = """
-        package test
-        interface Duplex {
-            inout event ping
-        }
-        statechart Caller [
-            port line : provides Duplex
-        ] {
-            region Main {
-                initial MainInitial
-                state Idle
-                state Calling
-            }
-            transition from MainInitial to Idle
-            transition from Idle to Calling when line.ping / raise line.ping;
-        }
-        statechart Callee [
-            port line : requires Duplex
-        ] {
-            region Main {
-                initial MainInitial
-                state Idle
-                state Calling
-            }
-            transition from MainInitial to Idle
-            transition from Idle to Calling when line.ping / raise line.ping;
-        }
-    """.trimIndent()
+    private val inoutStatechart = model("InoutEvents.gamma")
 
     @Test
     fun `an inout event is an input and an output event with a shared declaration each`() {
@@ -1456,27 +1284,7 @@ class GammaToOxstsSerializerTest {
 
     @Test
     fun `a raise atom on a bound port of a composite names the event on the instance port the binding reaches`() {
-        val lines = oxstsLines(
-            """
-                package test
-                interface Control {
-                    out event done
-                }
-                statechart Machine [
-                    port control : provides Control
-                ] {
-                }
-                sync System [
-                    port output : provides Control
-                ] {
-                    component machine : Machine
-                    bind output -> machine.control
-                }
-                verification case Raised of System {
-                    EF raise output.done
-                }
-            """.trimIndent(),
-        )
+        val lines = oxstsLines(model("BoundPortRaise.gamma"))
 
         assertThat(lines).containsSequence(
             "redefine contains body: IsEventRaisedExpression {",
@@ -1488,26 +1296,7 @@ class GammaToOxstsSerializerTest {
 
     @Test
     fun `a port shadowed by a state of the same name is reached through the statechart`() {
-        val lines = oxstsLines(
-            """
-                package test
-                interface Alarm {
-                    out event error
-                }
-                statechart Monitor [
-                    port Error : provides Alarm
-                ] {
-                    timeout Busy
-                    region Main {
-                        initial MainInitial
-                        state Busy
-                        state Error
-                    }
-                    transition from MainInitial to Busy
-                    transition from Busy to Error when timeout Busy / raise Error.error;
-                }
-            """.trimIndent(),
-        )
+        val lines = oxstsLines(model("ShadowedPort.gamma"))
 
         assertThat(lines).containsSequence(
             "redefine contains trigger: TimeoutTrigger {",
@@ -1552,48 +1341,7 @@ class GammaToOxstsSerializerTest {
     }
 
     private fun asynchronousLines(): List<String> {
-        return oxstsLines(
-            """
-                package test
-                interface Signals {
-                    in event first(value : integer)
-                    in event second
-                }
-                interface Replies {
-                    out event done
-                }
-                @Asynchronous
-                statechart Sender [
-                    port signals : provides Signals,
-                    port replies : provides Replies
-                ] {
-                }
-                statechart Receiver [
-                    port signals : provides Signals,
-                    port replies : requires Replies
-                ] {
-                }
-                adapter Buffered of component receiver : Receiver {
-                    clock ticker (rate = 3 ms)
-                    when ticker / run
-                    queue low (priority = 1, capacity = 2) {
-                        replies.any, ticker
-                    }
-                    queue high (priority = 2, capacity = 1) {
-                        signals.any
-                    }
-                }
-                scheduled-async System [
-                    port signals : provides Signals
-                ] {
-                    component sender : Sender
-                    component buffered : Buffered
-                    bind signals -> sender.signals
-                    channel [ sender.replies ] -o)- [ buffered.replies ]
-                    execute sender, buffered, buffered
-                }
-            """.trimIndent(),
-        )
+        return oxstsLines(model("Asynchronous.gamma"))
     }
 
     @Test
@@ -1686,29 +1434,7 @@ class GammaToOxstsSerializerTest {
 
     @Test
     fun `a reset message resets the wrapped component in place of a run and a queue reset replaces both`() {
-        val lines = oxstsLines(
-            """
-                package test
-                interface Signals {
-                    in event first
-                    in event second
-                    in event third
-                }
-                statechart Receiver [
-                    port signals : provides Signals
-                ] {
-                }
-                adapter Buffered of component receiver : Receiver {
-                    when signals.first / run
-                    when signals.second / reset
-                    when signals.third / reset
-                    when signals.third / reset-queue
-                    queue messages (priority = 1, capacity = 2) {
-                        signals.any
-                    }
-                }
-            """.trimIndent(),
-        )
+        val lines = oxstsLines(model("ResetMessages.gamma"))
 
         assertThat(lines).contains(
             "contains message_signals_first: StoredMessage subsets runningMessages {",
@@ -1760,31 +1486,7 @@ class GammaToOxstsSerializerTest {
 
     @Test
     fun `an output reaching several queues is dispatched to each and reset by the last dispatch only`() {
-        val lines = oxstsLines(
-            """
-                package test
-                interface Signals {
-                    out event first(value : integer)
-                }
-                @Asynchronous
-                statechart Sender [
-                    port signals : provides Signals
-                ] {
-                }
-                @Asynchronous
-                statechart Receiver [
-                    port signals : requires Signals
-                ] {
-                }
-                async System {
-                    component sender : Sender
-                    component left : Receiver
-                    component right : Receiver
-                    channel [ sender.signals ] -o)- [ left.signals ]
-                    channel [ sender.signals ] -o)- [ right.signals ]
-                }
-            """.trimIndent(),
-        )
+        val lines = oxstsLines(model("OutputToSeveralQueues.gamma"))
 
         assertThat(lines).containsSequence(
             "contains dispatch_System_sender_signals_first_to_left_signals: MessageDispatch subsets dispatches {",
@@ -1898,6 +1600,10 @@ class GammaToOxstsSerializerTest {
     }
 
     companion object {
+        private fun model(name: String): String {
+            return checkNotNull(javaClass.getResource("GammaToOxstsSerializerTest/$name")).readText()
+        }
+
         @JvmStatic
         fun unmappedConstructs(): Stream<Arguments> {
             return Stream.of(
@@ -1954,33 +1660,7 @@ class GammaToOxstsSerializerTest {
                 ),
                 Arguments.of(
                     "a transition from 'Left' to 'Right' between orthogonal regions",
-                    """
-                        package test
-                        interface Control {
-                            in event start
-                        }
-                        statechart Machine [
-                            port control : provides Control
-                        ] {
-                            region Main {
-                                initial MainInitial
-                                state Outer {
-                                    region First {
-                                        initial FirstInitial
-                                        state Left
-                                    }
-                                    region Second {
-                                        initial SecondInitial
-                                        state Right
-                                    }
-                                }
-                            }
-                            transition from MainInitial to Outer
-                            transition from FirstInitial to Left
-                            transition from SecondInitial to Right
-                            transition from Left to Right when control.start
-                        }
-                    """.trimIndent(),
+                    model("OrthogonalRegionTransition.gamma"),
                 ),
                 Arguments.of(
                     "an anonymous record type",
@@ -2014,28 +1694,7 @@ class GammaToOxstsSerializerTest {
                 ),
                 Arguments.of(
                     "the asynchronous composite 'Inner' inside the asynchronous composite 'Outer'",
-                    """
-                        package test
-                        interface Signals {
-                            in event first
-                        }
-                        statechart Receiver [
-                            port signals : provides Signals
-                        ] {
-                        }
-                        adapter Buffered of component receiver : Receiver {
-                            when any / run
-                            queue messages (priority = 1, capacity = 1) {
-                                signals.any
-                            }
-                        }
-                        async Inner {
-                            component buffered : Buffered
-                        }
-                        async Outer {
-                            component inner : Inner
-                        }
-                    """.trimIndent(),
+                    model("NestedAsynchronousComposite.gamma"),
                 ),
                 Arguments.of(
                     "the value of timeout 'delay' other than a constant",
@@ -2056,26 +1715,7 @@ class GammaToOxstsSerializerTest {
                 ),
                 Arguments.of(
                     "the queue 'messages' of 'Ticking' storing messages of the environment and clock ticks",
-                    """
-                        package test
-                        interface Signals {
-                            in event first
-                        }
-                        statechart Receiver [
-                            port signals : provides Signals
-                        ] {
-                        }
-                        adapter Ticking of component receiver : Receiver {
-                            clock ticker (rate = 1 s)
-                            when ticker / run
-                            queue messages (priority = 1, capacity = 1) {
-                                ticker, signals.any
-                            }
-                        }
-                        verification case Ticks of Ticking {
-                            EF true
-                        }
-                    """.trimIndent(),
+                    model("EnvironmentAndClockQueue.gamma"),
                 ),
             )
         }
@@ -2104,35 +1744,7 @@ class GammaToOxstsSerializerTest {
                 ),
                 Arguments.of(
                     "a transition from 'Right' to the history node 'History' from an orthogonal region of its parent state",
-                    """
-                        package test
-                        interface Control {
-                            in event start
-                        }
-                        statechart Machine [
-                            port control : provides Control
-                        ] {
-                            region Main {
-                                initial MainInitial
-                                state Outer {
-                                    region First {
-                                        initial FirstInitial
-                                        shallow history History
-                                        state Left
-                                    }
-                                    region Second {
-                                        initial SecondInitial
-                                        state Right
-                                    }
-                                }
-                            }
-                            transition from MainInitial to Outer
-                            transition from FirstInitial to Left
-                            transition from History to Left
-                            transition from SecondInitial to Right
-                            transition from Right to History when control.start
-                        }
-                    """.trimIndent(),
+                    model("HistoryFromOrthogonalRegion.gamma"),
                 ),
                 Arguments.of(
                     "a channel from the instance 'machine' to itself",

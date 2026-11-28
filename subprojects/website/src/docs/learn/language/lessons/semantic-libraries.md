@@ -1,7 +1,7 @@
 ---
 title: 'Semantic Libraries'
 sidebar_position: 2
-description: The second lesson of the Semantifyr Language. Write the traffic lights and a pedestrian light as data on a small statechart library that says once how a statechart runs, add a crosswalk to the junction, and find what the obvious guard leaves open.
+description: Write the traffic lights as data on a small statechart library, add a crosswalk to the junction, and find what its guard leaves open.
 ---
 
 import LiveEmbed from '@site/src/components/LiveEmbed';
@@ -39,19 +39,19 @@ A library is a handful of ordinary classes. In ours, a state is an object, and a
 
 <LiveEmbed example={step1} show={['State', 'Statechart']} />
 
-A `Statechart` [contains](../specification/classes-and-behaviour/features.md#contains) any number of states, `[0..*]`. Each `State` knows the statechart that contains it through its [`container`](../specification/classes-and-behaviour/features.md#container) feature, and [`opposite`](../specification/classes-and-behaviour/features.md#opposite) ties the two directions together. The type of `activeState` is a feature, `states`, so the variable holds one of this statechart's states, or `nothing` ([feature-typed variables](../specification/classes-and-behaviour/variables.md#feature-typed-variables)). A state is active when `activeState` holds it, and activating a state assigns it to `activeState`. The statechart's `init` activates its initial state once, before the first step. In every step, [`inline for choice`](../specification/classes-and-behaviour/inline-operations.md#inline-for-choice) fires one of the transitions that can fire, or the statechart stays as it is.
+A `Statechart` [contains](../reference/classes-and-behaviour/features.md#contains) any number of states, `[0..*]`. Each `State` knows the statechart that contains it through its [`container`](../reference/classes-and-behaviour/features.md#container) feature, and [`opposite`](../reference/classes-and-behaviour/features.md#opposite) ties the two directions together. The type of `activeState` is a feature, `states`, so the variable holds one of this statechart's states, or `nothing` ([feature-typed variables](../reference/classes-and-behaviour/variables.md#feature-typed-variables)). A state is active when `activeState` holds it, and activating a state assigns it to `activeState`. The statechart's `init` activates its initial state once, before the first step. In every step, [`inline for choice`](../reference/classes-and-behaviour/inline-operations.md#inline-for-choice) fires one of the transitions that can fire, or the statechart stays as it is.
 
 A transition is an object too:
 
 <LiveEmbed example={step1} show={['Transition']} />
 
-It [refers](../specification/classes-and-behaviour/features.md#refers) to the state it leaves and the state it enters, without owning them. Its main transition can be taken only while its source is active, and it activates its target. `inline` puts the body of the called transition in its place. `@Trace` makes the *Calls* view of a trace list each transition that fires.
+It [refers](../reference/classes-and-behaviour/features.md#refers) to the state it leaves and the state it enters, without owning them. Its main transition can be taken only while its source is active, and it activates its target. [`inline`](../reference/classes-and-behaviour/inline-operations.md#inline-call) puts the body of the called transition in its place. [`@Trace`](../reference/library-and-output/standard-library.md#trace) makes the *Calls* view of a trace list each transition that fires.
 
 With these three classes, a traffic light is data:
 
 <LiveEmbed example={step1} show={['TrafficLight', 'LightCanTurnGreen']} />
 
-The light [extends](../specification/classes-and-behaviour/classes.md#inheritance) `Statechart`. Its three states [subset](../specification/classes-and-behaviour/features.md#subsets) the inherited `states`, so they are states of the light, and its three transitions subset `transitions`. The nested block of a transition [redefines](../specification/classes-and-behaviour/features.md#redefine-and-redefines) the references it inherits: `redefine refers from: State = red` [binds](../specification/classes-and-behaviour/features.md#feature-binding) the source of this transition to the light's red state when the model is compiled. The light has no sensor yet, so it turns green whenever it likes.
+The light [extends](../reference/classes-and-behaviour/classes.md#inheritance) `Statechart`. Its three states [subset](../reference/classes-and-behaviour/features.md#subsets) the inherited `states`, so they are states of the light, and its three transitions subset `transitions`. The nested block of a transition [redefines](../reference/classes-and-behaviour/features.md#redefine-and-redefines) the references it inherits: `redefine refers from: State = red` [binds](../reference/classes-and-behaviour/features.md#feature-binding) the source of this transition to the light's red state at compile time. The light has no sensor yet, so it turns green whenever it likes.
 
 Press **Open** on the block and verify all: `LightCanTurnGreen` passes, <CaseVerdict example={step1} name="LightCanTurnGreen" />, and the *Calls* view of its trace shows `redToGreen` firing.
 
@@ -68,7 +68,7 @@ A traffic light of the running example turns green only for a waiting car, and o
 
 <LiveEmbed example={step3} show={['Condition', 'Sensor', 'State']} />
 
-`Condition` is an [abstract class](../specification/classes-and-behaviour/classes.md#abstract-classes): it says that a condition can be active, and leaves it to its subclasses to say when. A transition refers to any number of guards, and [`inline for`](../specification/classes-and-behaviour/inline-operations.md#inline-for-sequence) assumes each of them before the transition fires:
+`Condition` is an [abstract class](../reference/classes-and-behaviour/classes.md#abstract-classes): it says that a condition can be active, and leaves it to its subclasses to say when. A transition refers to any number of guards, and [`inline for`](../reference/classes-and-behaviour/inline-operations.md#inline-for-sequence) assumes each of them before the transition fires:
 
 <LiveEmbed example={step3} show={['Transition']} />
 
@@ -86,7 +86,7 @@ The junction holds two traffic lights and their sensors, and fills in what each 
 
 The north and the east light are two instances of `TrafficLight`, each with its own states, transitions and active state. A light contained in the junction does nothing unless the junction calls it: the junction's `init` starts both lights, and its main transition lets the environment set both sensors and then steps one of the lights.
 
-Open <LiveLink example={step3}>the junction on the library</LiveLink> and verify all. The requirements of the first lesson hold as they did on its model: <CaseVerdict example={step3} name="NorthCanTurnGreen" />, <CaseVerdict example={step3} name="NeverBothGreen" /> and <CaseVerdict example={step3} name="NorthGreenOnlyWhileEastRed" />. In the *Calls* view of `NorthCanTurnGreen`, a transition is named by its path, such as `root.north.redToGreen`, which tells the two lights apart.
+Open <LiveLink example={step3}>the junction on the library</LiveLink> and verify all. The requirements of the first lesson hold as they did on its model: <CaseVerdict example={step3} name="NorthCanTurnGreen" />, <CaseVerdict example={step3} name="NeverBothGreen" /> and <CaseVerdict example={step3} name="NorthGreenOnlyWhileEastRed" />. In the *Calls* view of `NorthCanTurnGreen`, a transition is named by its path from the [root instance](../compilation/index.mdx#instantiation), such as `root.north.redToGreen`, which tells the two lights apart.
 
 ## The crosswalk
 
@@ -100,7 +100,7 @@ Before you verify, decide whether `WalkOnlyWhileEastRed` holds. The pedestrians 
 
 The problem is in the model, and the library and the traffic light can stay as they are. Find and fix it!
 
-When it is fixed, every case of the junction passes: <CaseVerdict example={final} name="NorthCanTurnGreen" />, <CaseVerdict example={final} name="NeverBothGreen" />, <CaseVerdict example={final} name="NorthGreenOnlyWhileEastRed" />, <CaseVerdict example={final} name="PedestriansCanWalk" /> and <CaseVerdict example={final} name="WalkOnlyWhileEastRed" />. Compare your repair with <LiveLink example={final}>the final state of this lesson</LiveLink>.
+When it is fixed, every case of the junction passes, <CaseVerdict example={final} name="WalkOnlyWhileEastRed" /> among them. Compare your repair with <LiveLink example={final}>the final state of this lesson</LiveLink>.
 
 A guard is checked only at the moment its transition fires, and not afterwards. The pedestrians started to walk while the east light was red. After that, nothing kept the east light red, since it waited only for the north light:
 

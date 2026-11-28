@@ -1,54 +1,148 @@
 ---
 title: Gamma Traces
 sidebar_label: Traces
-sidebar_position: 3
-description: The form of trace.get, the Gamma execution trace a case's run is written as, and what it shows of the run.
+sidebar_position: 5
+description: How the run of a case is represented as a Gamma execution trace.
 ---
-
-import CodeBlock from '@theme/CodeBlock';
-import trace from '@gamma-reference-trace/crossroads-ACanBeGreen.trace.get';
 
 # Gamma Traces
 
-`semantifyr-gamma verify`, the VS Code extension and Live's Gamma language write the run of a [Gamma](index.mdx) verification case as a Gamma execution trace, `trace.get`, from the case's [report](../../reference/artifacts.mdx#the-report) and next to its [`witness.semantifyr`](../../language/specification/library-and-output/inlined-models.md#witnesses). The trace is a `.get` file of its own in Gamma's execution trace syntax, with three extensions: its header names a verification case, it asserts the transitions that fired, and an `elapse` may be a fraction of milliseconds. Every name in it is a cross-reference into the model, so the Gamma language checks a trace like any other Gamma file.
+`semantifyr-gamma verify`, the VS Code extension, and Live show the run of a case as a Gamma execution trace, `trace.get`, which any Gamma tool reads next to the model.
 
-## Form
+The trace of `BarrierDownWhileTrainInCrossing` from the [lesson](lesson.md):
 
-The reference trace, of the case `ACanBeGreen` among the further cases of the Crossroads example, which the Gamma frontend's tests generate from its `report.json` and compare whole:
+```gamma
+import LevelCrossing
 
-<CodeBlock language="gamma">{trace.replace(/^\/\*[\s\S]*?\*\/\s*/, '')}</CodeBlock>
+trace BarrierDownWhileTrainInCrossingTrace of BarrierDownWhileTrainInCrossing
 
-- `import` names the case's package by its qualified name, as a Gamma model imports a package.
-- `trace <name> of <case>` names the traced verification case; the traced component is the case's component, in whose scope every name of the trace resolves, as in the case's property.
-- Instances are named from the traced component down, `controller` here, nested ones as `outer->inner`; an element of the traced component itself is named without an instance, `state Main.Idle`.
-- The first step is initialization: the `reset` act, the outputs the entry actions raised and the state reached.
+step {
+    act {
+        reset
+    }
+    assert {
+        state trackA.Main.Free;
+        state trackB.Main.Free;
+        state controller.Main.Idle;
+        state barrier.Main.Up;
+    }
+}
+step {
+    act {
+        raise trackASensors.approach
+        raise trackASensors.near
+        raise trackASensors.enter
+        raise trackASensors.leave
+        raise trackBSensors.approach
+        raise trackBSensors.near
+        raise trackBSensors.enter
+        schedule component
+    }
+    assert {
+        transition trackA from Free to Approaching;
+        raise trackA.controller.trainApproaching;
+        transition trackB from Free to Approaching;
+        raise trackB.controller.trainApproaching;
+        state trackA.Main.Approaching;
+        state trackB.Main.Approaching;
+        state controller.Main.Idle;
+        state barrier.Main.Up;
+    }
+}
+step {
+    act {
+        raise trackASensors.approach
+        raise trackASensors.near
+        raise trackASensors.enter
+        raise trackASensors.leave
+        raise trackBSensors.near
+        raise trackBSensors.enter
+        schedule component
+    }
+    assert {
+        transition trackA from Approaching to Near;
+        transition trackB from Approaching to Near;
+        transition controller from Idle to TrainPresent when trackA.trainApproaching;
+        raise controller.barrier.lower;
+        state trackA.Main.Near;
+        state trackB.Main.Near;
+        state controller.Main.TrainPresent;
+        state barrier.Main.Up;
+    }
+}
+step {
+    act {
+        raise trackASensors.approach
+        raise trackASensors.enter
+        raise trackASensors.leave
+        raise trackBSensors.enter
+        schedule component
+    }
+    assert {
+        transition trackA from Near to InCrossing;
+        transition trackB from Near to InCrossing;
+        transition barrier from Up to Down;
+        state trackA.Main.InCrossing;
+        state trackB.Main.InCrossing;
+        state controller.Main.TrainPresent;
+        state barrier.Main.Down;
+    }
+}
+step {
+    act {
+        raise trackASensors.approach
+        raise trackASensors.leave
+        schedule component
+    }
+    assert {
+        transition trackA from InCrossing to Free;
+        raise trackA.controller.trainLeft;
+        state trackA.Main.Free;
+        state trackB.Main.InCrossing;
+        state controller.Main.TrainPresent;
+        state barrier.Main.Down;
+    }
+}
+step {
+    act {
+        raise trackASensors.approach
+        schedule component
+    }
+    assert {
+        transition trackA from Free to Approaching;
+        raise trackA.controller.trainApproaching;
+        transition controller from TrainPresent to Idle when trackA.trainLeft;
+        raise controller.barrier.lift;
+        state trackA.Main.Approaching;
+        state trackB.Main.InCrossing;
+        state controller.Main.Idle;
+        state barrier.Main.Down;
+    }
+}
+step {
+    act {
+        raise trackASensors.near
+        raise trackASensors.enter
+        raise trackASensors.leave
+        schedule component
+    }
+    assert {
+        transition trackA from Approaching to Near;
+        transition controller from Idle to TrainPresent when trackA.trainApproaching;
+        raise controller.barrier.lower;
+        transition barrier from Down to Up;
+        state trackA.Main.Near;
+        state trackB.Main.InCrossing;
+        state controller.Main.TrainPresent;
+        state barrier.Main.Up;
+    }
+}
+```
 
-Acts:
+- `import` names the case's package, and `trace <name> of <case>` names the traced case; every name resolves in the scope of the case's component.
+- Instances are named from the traced component down, nested ones as `outer->inner`.
+- The first step is initialization: the `reset` act, the outputs the entry actions raised, and the state reached.
+- A step's acts are what the environment did: `raise <port>.<event>` raises an input event, `elapse <milliseconds>` is the time that passed before the step, and `schedule component` runs the component for one step.
+- A step's asserts are what followed: the active `state` of every region, the `variable` values, the output events an instance raised, and every fired `transition`, with `when <trigger>` where another transition shares its source and target.
 
-- `raise <port>.<event>`: the environment raises an input event of a port of the traced component; an act names no instance.
-- `elapse <milliseconds>`: the time that passed before the step, exact, so an amount that is not a whole number of milliseconds carries a denominator, `elapse 2000/3`; a step that waited no time has no `elapse`.
-- `schedule component`: the component takes one step.
-
-Asserts, each closed by `;`:
-
-- `state <instance>.<region>.<state>`: a state is active.
-- `variable <instance>.<variable> = <value>`: a statechart variable has a value.
-- `raise <instance>.<port>.<event>`: an instance raised an output event of its port, `raise <port>.<event>` the traced component itself.
-- `transition <instance> from <state> to <state>`: a transition fired, followed by `when <trigger>` when another transition shares its source and target; a transition with an `@(id)` is named `transition <instance>.<id>`.
-
-The validator checks that an act raises an input event and an assert an output event of its port, that a fired transition exists and is unambiguous, and that a value matches its variable's type; scoping checks that every name belongs to the instance it follows.
-
-## What the trace shows
-
-The trace has one `step` per step of the run. The Gamma semantic library marks four transitions with `@Trace`: `Transition::fire`, `Port::raiseInputEvent(event)`, `Port::receiveInputMessage(event)` and `Port::setOutputEvent(event)`, which the trace shows as:
-
-- a fired `Transition::fire` as a `transition` assert;
-- `Port::raiseInputEvent`, and `Port::receiveInputMessage`, the environment's message to an adapter's queue, as a `raise` act on the port of the traced component the inner port is bound to, and `Port::setOutputEvent` as a `raise` assert on the port of the instance that raised it, as the called transition says;
-- the active state of every region and the value of every statechart variable in the run as `state` and `variable` asserts;
-- the time that passed before the step, from the report, as an `elapse` in milliseconds before `schedule`.
-
-Input events are traced because the library resets them within the step, so no state between steps shows them. Output events are traced because the optimizer removes outputs that nothing reads.
-
-Not in the trace: negations of the output events not raised, timers and port variables; the values of event parameters, so a raise of an event with parameters is written without its arguments; the values of record-typed variables; the messages an adapter's queues hold and its clocks; the last state a shallow history node holds, which is not an active state; and the firing of a transition into a history node without an `@(id)`, which the `from`/`to` form cannot name, so only the states it entered show it.
-
-The VS Code extension's language server opens a `.get` trace like any Gamma file, and Live's Gamma language shows the trace in the *Gamma trace* view of the trace under the cases.
+The trace differs from Gamma's own: its header names a verification case, where Gamma's names a component; the `transition` assert is Semantifyr's own; an `elapse` of a fraction of a millisecond is written over its denominator, as in `elapse 2000/3`, where Gamma's takes whole milliseconds; and it asserts nothing of an event that was not raised, where Gamma's back-annotation negates each. The values of event parameters are planned for the trace, and the `assign` act, `schedule` of an instance, and a final cycle are not supported.

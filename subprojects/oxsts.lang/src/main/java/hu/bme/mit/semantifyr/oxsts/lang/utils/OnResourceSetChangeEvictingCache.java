@@ -23,9 +23,7 @@ import org.eclipse.xtext.util.IResourceScopeCache;
 import org.eclipse.xtext.util.NonRecursiveEContentAdapter;
 import org.eclipse.xtext.util.concurrent.IUnitOfWork;
 
-/**
- * A cache implementation that stores its values in the scope of a resource set. The values will be discarded as soon as the contents of the resource set changes, except that a change inside a {@link SelfContainedResource} discards only that resource's values.
- */
+// unlike Xtext's OnChangeEvictingCache, a change inside a SelfContainedResource discards only that resource's values
 @Singleton
 public class OnResourceSetChangeEvictingCache implements IResourceScopeCache {
 
@@ -85,10 +83,6 @@ public class OnResourceSetChangeEvictingCache implements IResourceScopeCache {
         return new CacheAdapter();
     }
 
-    /**
-     * The transaction will be executed. While it is running, any semantic state change in the given
-     * resource will be ignored and the cache will not be cleared.
-     */
     public <Result, Param extends Resource> Result execWithoutCacheClear(
             Param resource, IUnitOfWork<Result, Param> transaction) throws WrappedException {
         var cacheAdapter = getOrCreate(resource.getResourceSet());

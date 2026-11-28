@@ -11,25 +11,7 @@ import { OXSTS_EXTENSION } from './lib/workspace/files';
 import { SYSML_FLAVOR_INFO } from './lib/session/sysmlBridge';
 import { BLANK_MODEL, compiledDescription, compiledLabel } from './texts';
 
-const importedOxsts = import.meta.glob('./snippets/imported/tutorial/*.semantifyr', {
-  query: '?raw',
-  import: 'default',
-  eager: true,
-});
-
-const importedGamma = import.meta.glob('./snippets/imported/gamma/*', {
-  query: '?raw',
-  import: 'default',
-  eager: true,
-});
-
-const importedSysmlv2 = import.meta.glob('./snippets/imported/sysmlv2/*', {
-  query: '?raw',
-  import: 'default',
-  eager: true,
-});
-
-const importedDescriptions = import.meta.glob('./snippets/imported/descriptions/*.description', {
+const importedExamples = import.meta.glob('/build/imported/snippets/{sysml,gamma,oxsts}/*', {
   query: '?raw',
   import: 'default',
   eager: true,
@@ -49,38 +31,25 @@ export interface LiveFlavor extends FlavorInfo {
   examples: LiveExample[];
 }
 
-const IMPORTED: Readonly<Record<ExampleLanguage, { directory: string, files: Record<string, unknown> }>> = {
-  oxsts: { directory: 'tutorial', files: importedOxsts },
-  gamma: { directory: 'gamma', files: importedGamma },
-  sysml: { directory: 'sysmlv2', files: importedSysmlv2 },
-};
-
 function importedText(files: Record<string, unknown>, path: string): string | null {
   const text = files[path];
   return typeof text === 'string' ? text : null;
 }
 
-// a model without a comment at its top has no description file
-export function descriptionOf(descriptions: Record<string, unknown>, fileName: string): string | null {
-  return importedText(descriptions, `./snippets/imported/descriptions/${fileName}.description`)?.trim() ?? null;
-}
-
 function sourceExamples(language: ExampleLanguage, flavor: string): LiveExample[] {
-  const { directory, files } = IMPORTED[language];
   return servedExamplesOf(language).flatMap((served) => {
-    const code = importedText(files, `./snippets/imported/${directory}/${fileNameOf(served)}`);
-    return code === null ? [] : [{ id: served.id, flavor, label: served.label, description: descriptionOf(importedDescriptions, fileNameOf(served)), code, served }];
+    const code = importedText(importedExamples, `/build/imported/snippets/${language}/${fileNameOf(served)}`);
+    return code === null ? [] : [{ id: served.id, flavor, label: served.label, description: served.description ?? null, code, served }];
   });
 }
 
 // the library flavors show the compiled OXSTS of the examples live's menu lists for the library's language
 function compiledExamples(language: ExampleLanguage, flavor: string): LiveExample[] {
-  const { directory, files } = IMPORTED[language];
   return servedExamplesOf(language).filter((served) => {
     return served.hidden !== true;
   }).flatMap((served) => {
     const name = fileNameOf(served);
-    const code = importedText(files, `./snippets/imported/${directory}/${name.slice(0, name.lastIndexOf('.'))}${OXSTS_EXTENSION}`);
+    const code = importedText(importedExamples, `/build/imported/snippets/${language}/${name.slice(0, name.lastIndexOf('.'))}${OXSTS_EXTENSION}`);
     return code === null ? [] : [{ id: served.id, flavor, label: compiledLabel(served.label, presentationOf(language).name), description: compiledDescription(presentationOf(language).name), code, served }];
   });
 }
@@ -98,9 +67,9 @@ const BUNDLED_EXAMPLES: Readonly<Record<string, LiveExample[]>> = {
     ...compiledExamples('gamma', 'oxsts-with-gamma-library'),
     blank('oxsts-with-gamma-library'),
   ],
-  'oxsts-with-sysmlv2-library': [
-    ...compiledExamples('sysml', 'oxsts-with-sysmlv2-library'),
-    blank('oxsts-with-sysmlv2-library'),
+  'oxsts-with-sysml-library': [
+    ...compiledExamples('sysml', 'oxsts-with-sysml-library'),
+    blank('oxsts-with-sysml-library'),
   ],
   'gamma': [
     ...sourceExamples('gamma', 'gamma'),
@@ -121,6 +90,10 @@ export function listedExamples(flavor: { examples: readonly LiveExample[] }): Li
   return flavor.examples.filter((example) => {
     return example.served !== null && example.served.hidden !== true;
   });
+}
+
+export function defaultExampleOf(flavor: { examples: readonly LiveExample[] }): LiveExample | undefined {
+  return listedExamples(flavor)[0] ?? flavor.examples[0];
 }
 
 function withExamples(info: FlavorInfo): LiveFlavor {

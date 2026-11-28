@@ -35,7 +35,6 @@ public class OxstsFoldingRangeService extends FoldingRangeService {
                 .toList();
     }
 
-    // The closing brace stays visible, so a block ending on the line where its sibling starts (`} or {`) folds too.
     @Override
     protected FoldingRange toFoldingRange(Document document, org.eclipse.xtext.ide.editor.folding.FoldingRange range) {
         var result = super.toFoldingRange(document, range);

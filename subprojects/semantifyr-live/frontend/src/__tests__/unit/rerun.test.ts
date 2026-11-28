@@ -6,11 +6,13 @@
 
 import { describe, expect, it } from 'vitest'
 import {
-  markEdited,
   runAllVerifications,
   type LspClient,
+} from '../../lib/verification/runs'
+import {
+  markEdited,
   type VerificationState,
-} from '../../lib/verification/engine'
+} from '../../lib/verification/state'
 import { sampleCase } from '../fixtures/cases'
 import { failedResult, passedResult, sampleReport } from '../fixtures/verification-results'
 

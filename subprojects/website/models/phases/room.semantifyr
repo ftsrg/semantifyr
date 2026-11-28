@@ -1,0 +1,62 @@
+class Fuse {
+    var ok: bool := true
+}
+
+class Lamp {
+    @Shared
+    contains fuse: Fuse
+
+    var on: bool := false
+
+    tran toggle() {
+        assume(fuse.ok)
+        on := !on
+    }
+
+    prop isOn(): bool {
+        return on
+    }
+}
+
+class Spot : Lamp {
+    redefine tran toggle() {
+        assume(fuse.ok)
+        on := true
+    }
+}
+
+class Room {
+    contains top: Lamp
+    contains bottom: Lamp
+
+    var last: Lamp[0..1] := nothing
+
+    redefine tran {
+        choice {
+            assume(last != top)
+            inline top.toggle()
+            last := top
+        } or {
+            assume(last != bottom)
+            inline bottom.toggle()
+            last := bottom
+        }
+    }
+}
+
+class Hall : Room {
+    redefine contains bottom: Spot
+}
+
+@VerificationCase
+class BothLampsCanBeOn {
+    contains hall: Hall
+
+    redefine tran {
+        inline hall.main()
+    }
+
+    redefine prop {
+        return EF hall.top.isOn() && hall.bottom.isOn()
+    }
+}

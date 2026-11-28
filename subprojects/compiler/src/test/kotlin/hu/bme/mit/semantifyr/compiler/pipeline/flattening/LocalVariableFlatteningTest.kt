@@ -29,7 +29,7 @@ class LocalVariableFlatteningTest : FlatteningTestBase() {
                         assume(counter < 3)
                         counter := counter + delta
                     }
-                    prop {
+                    redefine prop {
                         return EF counter == 2
                     }
                 }

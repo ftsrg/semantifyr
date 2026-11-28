@@ -1,0 +1,87 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package SchedulingConstraints
+
+statechart Fixed {
+    timeout beat
+    timeout delay
+    var steps : integer := 0
+    scheduling-constraint {
+        minimum-orchestrating-period : 1 s
+        maximum-orchestrating-period : 1 s
+    }
+
+    region Counter {
+        initial CounterInitial
+        state Counting {
+            entry / set beat := 500 ms;
+        }
+    }
+
+    region Main {
+        initial MainInitial
+        state Waiting {
+            entry / set delay := 2500 ms;
+        }
+        state Done
+    }
+
+    transition from CounterInitial to Counting
+    transition from Counting to Counting when timeout beat [steps < 4] / steps := steps + 1;
+    transition from MainInitial to Waiting
+    transition from Waiting to Done when timeout delay
+}
+
+statechart Ranged {
+    timeout beat
+    timeout delay
+    var steps : integer := 0
+    scheduling-constraint {
+        minimum-orchestrating-period : 1 s
+        maximum-orchestrating-period : 2 s
+    }
+
+    region Counter {
+        initial CounterInitial
+        state Counting {
+            entry / set beat := 500 ms;
+        }
+    }
+
+    region Main {
+        initial MainInitial
+        state Waiting {
+            entry / set delay := 2500 ms;
+        }
+        state Done
+    }
+
+    transition from CounterInitial to Counting
+    transition from Counting to Counting when timeout beat [steps < 4] / steps := steps + 1;
+    transition from MainInitial to Waiting
+    transition from Waiting to Done when timeout delay
+}
+
+verification case AFixedPeriodBringsTheThirdStepAfterTheTimeout of Fixed {
+    AG (not (variable steps = 3) or state Main.Done)
+}
+
+verification case AFixedPeriodBringingTheSecondStepAfterTheTimeoutUnreachable of Fixed {
+    EF (state Main.Done and variable steps = 2)
+}
+
+verification case APeriodRangeBringsTheFirstStepBeforeTheTimeout of Ranged {
+    AG (not (variable steps = 1) or state Main.Waiting)
+}
+
+verification case APeriodRangeLetsTheSecondStepComeAfterTheTimeout of Ranged {
+    EF (state Main.Done and variable steps = 2)
+}
+
+verification case APeriodRangeBringingTheThirdStepBeforeTheTimeoutUnreachable of Ranged {
+    EF (state Main.Waiting and variable steps = 3)
+}

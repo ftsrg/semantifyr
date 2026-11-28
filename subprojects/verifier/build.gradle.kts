@@ -5,8 +5,7 @@
  */
 
 plugins {
-    id("hu.bme.mit.semantifyr.gradle.conventions.jvm")
-    id("hu.bme.mit.semantifyr.gradle.conventions.theta")
+    id("hu.bme.mit.semantifyr.jvm")
     kotlin("jvm")
     kotlin("plugin.serialization")
 }
@@ -15,19 +14,17 @@ dependencies {
     api(project(":backend"))
 
     implementation(project(":logging"))
-    implementation(libs.guice.extensions.assistedinject)
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.serialization.json)
 
-    testImplementation(libs.kotlinx.coroutines.core)
+    testImplementation(testFixtures(project(":backend")))
+    testImplementation(testFixtures(project(":oxsts.lang")))
     testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.opentest4j)
 
-    testFixturesApi(testFixtures(project(":backend")))
-    testFixturesImplementation(libs.kotlinx.coroutines.core)
+    testFixturesApi(libs.junit.params)
     testFixturesImplementation(project(":logging"))
-    testFixturesImplementation(libs.kotlinx.serialization.json)
-}
-
-tasks.test {
-    inputs.dir(rootProject.layout.projectDirectory.dir("oxsts-test-models/witness")).withPathSensitivity(PathSensitivity.RELATIVE)
+    testFixturesImplementation(libs.assertj.core)
+    testFixturesImplementation(libs.junit.api)
+    testFixturesImplementation(libs.kotlinx.coroutines.core)
 }

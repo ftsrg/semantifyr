@@ -1,0 +1,39 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package inlining::tests
+
+class Item {
+    var hits: int := 0
+    tran act() {
+        hits := hits + 1
+    }
+}
+class SpecialItem : Item {
+    var special: int := 0
+    redefine tran act() {
+        special := special + 1
+    }
+}
+class Pair {
+    contains original: Item[1]
+    tran run() {
+        inline original.act()
+    }
+}
+class RenamedPair : Pair {
+    contains replacement: SpecialItem[1] redefines original
+}
+@VerificationCase
+class Host {
+    contains pair: RenamedPair[1]
+    redefine tran {
+        inline pair.run()
+    }
+    redefine prop {
+        return AG true
+    }
+}

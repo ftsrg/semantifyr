@@ -1,0 +1,23 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+inlined oxsts of semantifyr::Anything
+var values: int[2] := [1, 2]
+var others: int[2] := [3, 4]
+var flag: bool := false
+var index: int := 0
+var seen: int := 0
+var same: bool := false
+init {
+}
+tran {
+    values := if flag then others else [5, 6]
+    same := (if flag then values else others) == others
+    seen := (if flag then values else others)[index]
+}
+prop {
+    AG true
+}

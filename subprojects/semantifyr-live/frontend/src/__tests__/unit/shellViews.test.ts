@@ -15,7 +15,7 @@ import { fileUriOfLibrary, isLibraryFileUri, libraryUriOf } from '../../lib/sess
 import { connectionConnected, connectionLost, INITIAL_CONNECTION } from '../../lib/stores/connection'
 import { finishStep, initializationOf, InitializationSteps, startStep } from '../../lib/stores/initialization'
 import { createDemandStore } from '../../lib/stores/store'
-import type { VerificationCaseState, VerificationState } from '../../lib/verification/engine'
+import type { VerificationCaseState, VerificationState } from '../../lib/verification/state'
 import { caseRowOf, countsOf, countsPhrase } from '../../lib/workspace/caseRows'
 import { connectionView } from '../../lib/workspace/connectionView'
 import { createDocumentTabs } from '../../lib/workspace/documentTabs'

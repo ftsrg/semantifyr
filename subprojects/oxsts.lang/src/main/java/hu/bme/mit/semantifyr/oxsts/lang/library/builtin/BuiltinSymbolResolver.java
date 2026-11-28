@@ -35,6 +35,7 @@ public class BuiltinSymbolResolver {
     public static final QualifiedName ANYTHING_NAME = BuiltinLibrary.BUILTIN_LIBRARY_NAME.append("Anything");
     public static final String ANYTHING_INIT_NAME = "init";
     public static final String ANYTHING_MAIN_NAME = "main";
+    public static final String ANYTHING_PROPERTY_NAME = "prop";
 
     public static final QualifiedName ANY_NAME = BuiltinLibrary.BUILTIN_LIBRARY_NAME.append("any");
     public static final QualifiedName BOOL_NAME = BuiltinLibrary.BUILTIN_LIBRARY_NAME.append("bool");
@@ -129,6 +130,10 @@ public class BuiltinSymbolResolver {
 
     public TransitionDeclaration anythingMainTransition(EObject context) {
         return findInAnything(context, TransitionDeclaration.class, ANYTHING_MAIN_NAME);
+    }
+
+    public PropertyDeclaration anythingProperty(EObject context) {
+        return findInAnything(context, PropertyDeclaration.class, ANYTHING_PROPERTY_NAME);
     }
 
     public boolean isBuiltin(EObject eObject) {

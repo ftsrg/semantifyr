@@ -4,105 +4,78 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import hu.bme.mit.semantifyr.gradle.conventions.corpusModels
-import hu.bme.mit.semantifyr.gradle.conventions.semantifyrArtifact
+import hu.bme.mit.semantifyr.gradle.artifactsOf
 
 plugins {
-    id("hu.bme.mit.semantifyr.gradle.conventions.formatting")
-    id("hu.bme.mit.semantifyr.gradle.conventions.pack")
+    base
+    id("hu.bme.mit.semantifyr.formatting")
 }
 
-val vscodeExtensions = configurations.dependencyScope("vscodeExtensions")
-val vscodeExtensionsFiles = configurations.resolvable("vscodeExtensionsFiles") {
-    extendsFrom(vscodeExtensions.get())
-    attributes(semantifyrArtifact("vscode-extension"))
-}
-
-val theta = configurations.dependencyScope("theta")
-val thetaFiles = configurations.resolvable("thetaFiles") {
-    extendsFrom(theta.get())
-    attributes(semantifyrArtifact("theta-xsts-cli"))
-}
-
-dependencies {
-    vscodeExtensions(project(":semantifyr-vscode"))
-    vscodeExtensions(project(":sysml-wrapper"))
-
-    theta(project(":theta-executor"))
-}
+val vscodeExtensions = artifactsOf("vscode-extension", ":semantifyr-vscode", ":sysml-wrapper")
+val theta = artifactsOf("theta-xsts-cli", ":theta-executor")
+val gammaLibrary = isolated.rootProject.projectDirectory.dir("subprojects/frontends/gamma/models/libraries/default")
+val sysmlLibrary = isolated.rootProject.projectDirectory.dir("subprojects/frontends/sysml/models/libraries/default")
+val gammaExamples = isolated.rootProject.projectDirectory.dir("subprojects/frontends/gamma/models/examples")
+val sysmlExamples = isolated.rootProject.projectDirectory.dir("subprojects/frontends/sysml/models/examples")
+val oxstsTutorial = artifactsOf("oxsts-tutorial", ":website")
+val oxstsExamples = isolated.rootProject.projectDirectory.dir("subprojects/website/models/examples")
 
 val cloneDistribution = tasks.register<Sync>("cloneDistribution") {
-    from(vscodeExtensionsFiles)
+    from(vscodeExtensions)
 
     into("extensions")
 }
 
 val cloneTheta = tasks.register<Sync>("cloneTheta") {
-    from(thetaFiles)
+    from(theta)
 
     into("theta-xsts-cli")
 }
 
 val cloneGammaLibrary = tasks.register<Sync>("cloneGammaLibrary") {
-    from(rootProject.layout.projectDirectory.dir("subprojects/frontends/gamma/models/libraries/default"))
+    from(gammaLibrary)
     into("examples/gamma/Library")
 }
 
-val cloneSysMLLibrary = tasks.register<Sync>("cloneSysMLLibrary") {
-    from(rootProject.layout.projectDirectory.dir("subprojects/frontends/sysml/models/libraries/default"))
+val cloneSysmlLibrary = tasks.register<Sync>("cloneSysmlLibrary") {
+    from(sysmlLibrary)
     into("examples/sysml/Library")
 }
 
-val cloneLibraries = tasks.register("cloneLibraries") {
-    dependsOn(cloneGammaLibrary)
-    dependsOn(cloneSysMLLibrary)
-}
-
-val cloneGammaTestModels = tasks.register<Sync>("cloneGammaTestModels") {
-    from(rootProject.layout.projectDirectory.dir("subprojects/frontends/gamma/models/examples")) {
+val cloneGammaExamples = tasks.register<Sync>("cloneGammaExamples") {
+    from(gammaExamples) {
         include("*.gamma")
     }
-    into("examples/gamma/TestModels")
+    into("examples/gamma/models")
 }
 
-val sysmlCorpusDir = rootProject.layout.projectDirectory.dir("subprojects/frontends/sysml/models/examples")
-
-val cloneSysMLTestModels = tasks.register<Sync>("cloneSysMLTestModels") {
-    from(sysmlCorpusDir) {
-        // the corpus models share its isStateActive and eventually
-        include("Verification.sysml")
-        include(
-            corpusModels(sysmlCorpusDir).map {
-                it.file
-            },
-        )
+val cloneSysmlExamples = tasks.register<Sync>("cloneSysmlExamples") {
+    from(sysmlExamples) {
+        include("*.sysml")
     }
-    into("examples/sysml/TestModels")
+    into("examples/sysml/models")
 }
 
-val cloneTutorialModels = tasks.register<Sync>("cloneTutorialModels") {
-    from(rootProject.layout.projectDirectory.dir("oxsts-test-models/tutorial"))
-    into("examples/tutorial/")
-}
-
-val cloneTestModels = tasks.register("cloneTestModels") {
-    dependsOn(cloneGammaTestModels)
-    dependsOn(cloneSysMLTestModels)
-    dependsOn(cloneTutorialModels)
-}
-
-val prepareDockerBuild = tasks.register("prepareDockerBuild") {
-    dependsOn(cloneDistribution)
-    dependsOn(cloneTheta)
-    dependsOn(cloneLibraries)
-    dependsOn(cloneTestModels)
+val cloneExampleModels = tasks.register<Sync>("cloneExampleModels") {
+    from(oxstsExamples) {
+        include("*.semantifyr")
+    }
+    into("examples/semantifyr")
 }
 
 val vscodeServerImageContext = tasks.register<Tar>("vscodeServerImageContext") {
     archiveFileName = "vscode-server-image-context.tar.gz"
     compression = Compression.GZIP
     useFileSystemPermissions()
-    dependsOn(prepareDockerBuild)
+    dependsOn(
+        cloneDistribution,
+        cloneTheta,
+        cloneGammaLibrary,
+        cloneSysmlLibrary,
+        cloneGammaExamples,
+        cloneSysmlExamples,
+        cloneExampleModels,
+    )
     from(layout.projectDirectory) {
         include("Dockerfile")
         include("jupyter_server_config.py")
@@ -112,6 +85,7 @@ val vscodeServerImageContext = tasks.register<Tar>("vscodeServerImageContext") {
     }
 }
 
-tasks.pack {
+tasks.register("pack") {
+    group = LifecycleBasePlugin.BUILD_GROUP
     dependsOn(vscodeServerImageContext)
 }

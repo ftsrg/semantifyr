@@ -8,7 +8,7 @@ import { formatSeconds } from '@semantifyr/editor-common'
 
 import type { ConnectionState } from '../stores/connection'
 import { areCasesKnown, currentStep, isInitialized, type InitializationState, type InitializationStep } from '../stores/initialization'
-import type { RunningInterval, VerificationCaseState, VerificationState } from '../verification/engine'
+import type { RunningInterval, VerificationCaseState, VerificationState } from '../verification/state'
 import { caseRowOf, countsOf, countsPhrase, waitedPhrase } from './caseRows'
 import type { CatalogStatus } from './live'
 import type { QueuedVerification, RunTiming } from './verification'

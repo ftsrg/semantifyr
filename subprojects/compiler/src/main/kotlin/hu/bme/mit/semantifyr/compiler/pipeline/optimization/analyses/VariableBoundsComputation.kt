@@ -431,7 +431,7 @@ class VariableBoundsComputation(
         }
     }
 
-    // an engine that stops on a value outside a variable's limit goes on only with values within it
+    // a backend that stops on a value outside a variable's limit goes on only with values within it
     private fun limited(variable: VariableDeclaration, range: IntegerRange): IntegerRange {
         val bound = limit(variable)
         return range.intersect(bound) ?: bound

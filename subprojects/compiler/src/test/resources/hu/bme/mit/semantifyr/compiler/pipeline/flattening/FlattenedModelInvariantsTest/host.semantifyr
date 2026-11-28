@@ -1,0 +1,42 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package flattening::invariants
+
+enum Mode {
+    Idle,
+    Busy
+}
+
+class Job {
+    var done: bool := false
+
+    tran finish() {
+        done := true
+    }
+}
+
+@VerificationCase
+class Host {
+    contains first: Job
+    contains second: Job
+    var current: Job := first
+    var mode: Mode := Mode::Idle
+    var unused: int := 0
+
+    redefine tran {
+        choice {
+            current := second
+        } or {
+            mode := Mode::Busy
+        }
+        inline current.finish()
+    }
+
+    redefine prop {
+        return EF (mode == Mode::Busy && second.done)
+    }
+}

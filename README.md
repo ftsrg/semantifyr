@@ -9,53 +9,44 @@
 [![License: EPL-2.0](https://img.shields.io/badge/License-EPL_2.0-blue.svg)](https://www.eclipse.org/legal/epl-2.0/)
 [![REUSE status](https://api.reuse.software/badge/github.com/ftsrg/semantifyr)](https://api.reuse.software/info/github.com/ftsrg/semantifyr)
 
-# Semantifyr
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="subprojects/branding/logo-full-dark.svg">
+  <img src="subprojects/branding/logo-full-light.svg" alt="Semantifyr" width="400">
+</picture>
 
-A framework to support the declarative definition of engineering model semantics.
+Semantifyr is a framework to declaratively define the semantics of engineering modeling languages. A language's semantics is written once, as a library in the [Semantifyr Language](https://semantifyr.org/learn/language/), and its models are verified through that library. Currently it has frontends for the [SysML v2](https://semantifyr.org/learn/frontends/sysml-v2/) and [Gamma](https://semantifyr.org/learn/frontends/gamma/) languages, and it verifies models with
+- [Theta](https://semantifyr.org/learn/backends/theta/), a configurable model checking framework,
+- [nuXmv](https://semantifyr.org/learn/backends/nuxmv/), a symbolic model checker,
+- [Spin](https://semantifyr.org/learn/backends/spin/), a model checker for concurrent software, or
+- [Uppaal](https://semantifyr.org/learn/backends/uppaal/), a model checker for timed automata.
 
-Semantifyr lets you define what a modeling language means once, as a semantic library written in its own language, the Semantifyr Language, and then verify the models of that language with established model checkers. SysML v2 and Gamma are its frontends: a model of either is compiled through its semantic library to a transition system, checked by Theta, nuXmv, Spin or Uppaal, and the trace of a case comes back in the language of the model.
+## [Semantifyr Live](https://live.semantifyr.org)
 
-## Try it
-
-[Semantifyr Live](https://live.semantifyr.org) verifies SysML v2, Gamma and Semantifyr models in the browser, with nothing to install.
-
-## Install
-
-Semantifyr has three launchers, `semantifyr` for the Semantifyr Language, `semantifyr-sysml` for SysML v2 and `semantifyr-gamma` for Gamma, each with the Theta backend inside, which runs on Linux x64, and a VS Code extension for the Semantifyr Language and Gamma. They need Java 25; `semantifyr-sysml` also needs Node.js 22. nuXmv, Spin and Uppaal are used when they are on `PATH`.
-
-No release is published yet. Until the first one, build a launcher with `./gradlew :semantifyr-cli:installDist`, `:sysml-cli:installDist` or `:gamma-cli:installDist`, and the extension with `./gradlew :semantifyr-vscode:bundleExtension`; the [website](https://semantifyr.org/learn/install/) says where each lands.
-
-## Use
-
-    semantifyr-sysml verify model.sysml
-    semantifyr-gamma verify model.gamma
-    semantifyr verify model.semantifyr
-
-Each case gets a verdict and a report; `--help` lists the options, and `portfolios` the strategies for the backend runs.
+Visit [https://live.semantifyr.org](https://live.semantifyr.org) to verify SysML v2, Gamma, and Semantifyr models in the browser.
 
 ## Learn
 
-The [website](https://semantifyr.org/) has the tutorials, the command line, the backends and the specification of the Semantifyr Language.
+- [Tutorials](https://semantifyr.org/learn/language/lessons/)
+- [Command line](https://semantifyr.org/learn/command-line/)
+- [Language reference](https://semantifyr.org/learn/language/reference/)
 
-## Status
+## Install
 
-Semantifyr is a research prototype of a PhD project at the Budapest University of Technology and Economics. Its version is 0.1.0: commands, options and the language may still change between releases.
+### From the latest release
 
-## Build from source
+- **VS Code**: install [Semantifyr](https://marketplace.visualstudio.com/items?itemName=ftsrg.semantifyr) from the Visual Studio Marketplace or [Open VSX](https://open-vsx.org/extension/ftsrg/semantifyr) to edit and verify Semantifyr and Gamma models.
+- **Command line**: download `semantifyr`, `semantifyr-sysml`, or `semantifyr-gamma` from the [latest release](https://github.com/ftsrg/semantifyr/releases/latest), unzip it, and run `bin/semantifyr verify <model>`.
 
-Use Java 25. `./gradlew build` builds and tests the project, and `./gradlew pack` builds the packages. Gradle provides Theta, and a test that needs nuXmv, Spin or Uppaal is skipped when that backend is not on `PATH`.
+The [install page](https://semantifyr.org/learn/install/) lists the requirements and the backends.
 
-## Benchmarks
+### Build from source
 
-A benchmark runs only on Linux with [BenchExec](https://github.com/sosy-lab/benchexec)'s `runexec`, which measures every process through cgroups v2:
+Requirements: 
+- Java 25
 
-    python3 -m venv ~/.local/benchexec
-    ~/.local/benchexec/bin/pip install 'benchexec[systemd]==3.35'
+Build with `./gradlew build`.
 
-The `systemd` extra lets `runexec` create its cgroups through the user's systemd instance, which needs the `cpu`, `memory` and `pids` controllers delegated to the user (`cat /sys/fs/cgroup/user.slice/user-$(id -u).slice/user@$(id -u).service/cgroup.subtree_control`); BenchExec's [installation guide](https://github.com/sosy-lab/benchexec/blob/main/doc/INSTALL.md#setting-up-cgroups) describes the delegation. A module's `benchmark` task runs a benchmark by its class name, with `runexec` on `PATH` or named by `-Prunexec`, writes its run to `build/benchmark/<class>/<start>.json` and then runs the benchmark's analysis; with written files after the class name, it runs only the analysis over them:
-
-    ./gradlew :compiler:benchmark --args=CompilationPhasesBenchmark -Prunexec=$HOME/.local/benchexec/bin/runexec
-    ./gradlew :compiler:benchmark --args="CompilationPhasesBenchmark build/benchmark/CompilationPhasesBenchmark/<start>.json"
+`./gradlew pack` builds the CLIs in [`semantifyr-cli`](subprojects/semantifyr-cli), [`sysml-cli`](subprojects/frontends/sysml/sysml-cli), and [`gamma-cli`](subprojects/frontends/gamma/gamma-cli), and the extension in [`semantifyr-vscode`](subprojects/semantifyr-vscode).
 
 ## Contributing
 
@@ -63,13 +54,24 @@ See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Citing
 
-To cite Semantifyr, cite the paper that introduced its approach, as [CITATION.cff](CITATION.cff) gives it:
+To cite Semantifyr, please cite the following paper.
 
-Ármin Zavada, Kristóf Marussy and Vince Molnár. From Transpilers to Semantic Libraries: Formal Verification With Pluggable Semantics. In MODELS Companion '24, ACM, 2024. [doi:10.1145/3652620.3686251](https://doi.org/10.1145/3652620.3686251)
+```bibtex
+@inproceedings{zavada2024transpilers,
+    author    = {Zavada, {\'A}rmin and Marussy, Krist{\'o}f and Moln{\'a}r, Vince},
+    title     = {From Transpilers to Semantic Libraries: Formal Verification With Pluggable Semantics},
+    booktitle = {Proceedings of the ACM/IEEE 27th International Conference on Model Driven Engineering Languages and Systems (MODELS Companion '24)},
+    publisher = {ACM},
+    year      = {2024},
+    doi       = {10.1145/3652620.3686251},
+}
+```
+
+The [publications page](https://semantifyr.org/publications/) lists the papers on Semantifyr.
 
 ## License
 
-Copyright (c) 2023-2026 [The Semantifyr Authors](CONTRIBUTORS.md). Semantifyr is available under the [Eclipse Public License 2.0](https://www.eclipse.org/legal/epl-2.0/). It follows the [REUSE Specification](https://reuse.software/): every file carries its copyright and license in its header, and the license texts are in [LICENSES](LICENSES).
+Copyright (c) 2023-2026 [The Semantifyr Authors](CONTRIBUTORS.md). Semantifyr is available under the [Eclipse Public License - v 2.0](https://www.eclipse.org/legal/epl-2.0/). It follows the [REUSE Specification](https://reuse.software/): every file carries its copyright and license in its header, and the license texts are in [LICENSES](LICENSES).
 
 ## Support
 

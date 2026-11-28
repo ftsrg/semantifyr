@@ -11,7 +11,6 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.ComparisonOperator;
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.Expression;
 import java.util.List;
 
-// the operator reads with the clock on its left
 public record ClockTest(
         ComparisonOperator comparison,
         Expression clock,

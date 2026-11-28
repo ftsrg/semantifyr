@@ -1,0 +1,25 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package test
+
+interface Control {
+    out event done
+}
+
+statechart Machine [
+    port control : provides Control
+] {
+    var count : integer := 0
+    region Main {
+        initial MainInitial
+        state Idle {
+            entry / count := 1;
+            exit / raise control.done;
+        }
+    }
+    transition from MainInitial to Idle
+}

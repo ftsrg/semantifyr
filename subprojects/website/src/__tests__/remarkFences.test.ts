@@ -5,10 +5,9 @@
  */
 
 import type { Code, Root, RootContent } from 'mdast';
-import type { MdxJsxFlowElement } from 'mdast-util-mdx-jsx';
 import { describe, expect, it } from 'vitest';
 
-import remarkFences from '../plugins/remarkFences';
+import remarkFences, { fencesOf } from '../plugins/remarkFences';
 
 function fence(meta: string, value: string): Code {
   return { type: 'code', lang: 'oxsts', meta, value };
@@ -20,13 +19,17 @@ function transformed(...children: RootContent[]): Root {
   return root;
 }
 
-function fences(root: Root): Record<string, string | null>[] {
-  return root.children.filter((child): child is MdxJsxFlowElement => {
-    return child.type === 'mdxJsxFlowElement';
-  }).map((element) => {
-    return Object.fromEntries(element.attributes.map((attribute) => {
-      return [attribute.type === 'mdxJsxAttribute' ? attribute.name : '', attribute.value as string | null];
-    }));
+function shown(root: Root): string[] {
+  return root.children.filter((child): child is Code => {
+    return child.type === 'code';
+  }).map((code) => {
+    return code.value;
+  });
+}
+
+function models(...children: RootContent[]): string[] {
+  return fencesOf({ type: 'root', children }).map((found) => {
+    return found.model;
   });
 }
 
@@ -39,104 +42,59 @@ var value: int := 0
 // hide-end`;
 
 describe('remarkFences', () => {
-  it('leaves a fence that shows its whole model a code block, and adds no import', () => {
-    const plain = fence('', 'class Counter {\n}');
-    const root = transformed(plain);
+  it('leaves a fence that shows its whole model a code block, without its words', () => {
+    const root = transformed(fence('issue=OXSTS.DUPLICATE_NAME', 'class Counter {\n}'));
 
-    expect(root.children).toEqual([plain]);
+    expect(root.children).toEqual([{ type: 'code', lang: 'oxsts', meta: null, value: 'class Counter {\n}' }]);
   });
 
-  it('shows the lines between no markers, and keeps every line but the markers in the model, which opens at the lines shown', () => {
-    const root = transformed(fence('', COUNTER));
+  it('shows the lines between no markers, and keeps every line but the markers in the model', () => {
+    const counter = fence('', COUNTER);
+    const root = transformed(counter);
 
-    expect(fences(root)).toEqual([
-      {
-        model: 'class Counter {\nvar value: int := 0\n}',
-        shown: 'var value: int := 0',
-        lines: '2-2',
-      },
-    ]);
-    expect(root.children[0]).toMatchObject({ type: 'mdxjsEsm', value: 'import SemantifyrFence from "@site/src/components/Fence"' });
+    expect(shown(root)).toEqual(['var value: int := 0']);
+    expect(models(counter)).toEqual(['class Counter {\nvar value: int := 0\n}']);
   });
 
-  it('continues the previous fence or a checkpoint with a blank line between, and counts the lines in the whole model', () => {
-    const root = transformed(
-      fence('checkpoint=colors', 'enum Color {\n  Red\n}'),
+  it('continues the previous fence, its chain included, with a blank line between', () => {
+    const chain = [
+      fence('', 'enum Color {\n  Red\n}'),
       fence('continue', 'class Light {\n}'),
-      fence('continue=colors', 'class Lamp {\n}'),
-    );
+      fence('continue', 'class Lamp {\n}'),
+    ];
 
-    expect(fences(root)).toEqual([
-      {
-        model: 'enum Color {\n  Red\n}\n\nclass Light {\n}',
-        shown: 'class Light {\n}',
-        lines: '5-6',
-      },
-      {
-        model: 'enum Color {\n  Red\n}\n\nclass Lamp {\n}',
-        shown: 'class Lamp {\n}',
-        lines: '5-6',
-      },
+    expect(shown(transformed(...chain))).toEqual([
+      'enum Color {\n  Red\n}',
+      'class Light {\n}',
+      'class Lamp {\n}',
+    ]);
+    expect(models(...chain)).toEqual([
+      'enum Color {\n  Red\n}',
+      'enum Color {\n  Red\n}\n\nclass Light {\n}',
+      'enum Color {\n  Red\n}\n\nclass Light {\n}\n\nclass Lamp {\n}',
     ]);
   });
 
   it('shows nothing of a hidden fence, which a later fence continues', () => {
-    const root = transformed(
+    const chain = [
       fence('hidden', 'class Item'),
       fence('continue', 'class Box {\n  contains item: Item\n}'),
-    );
+    ];
 
-    expect(root.children.filter((child) => {
-      return child.type === 'code';
-    })).toEqual([]);
-    expect(fences(root)).toMatchObject([
-      {
-        model: 'class Item\n\nclass Box {\n  contains item: Item\n}',
-        lines: '3-5',
-      },
-    ]);
+    expect(shown(transformed(...chain))).toEqual(['class Box {\n  contains item: Item\n}']);
+    expect(models(...chain)[1]).toBe('class Item\n\nclass Box {\n  contains item: Item\n}');
   });
 
-  it('leaves out the blank lines at the edges of what is shown from the lines it opens at', () => {
+  it('leaves out the blank lines at the edges of what is shown', () => {
     const root = transformed(fence('', '// hide-start\nclass Item\n// hide-end\n\nclass Box\n'));
 
-    expect(fences(root)[0]).toMatchObject({ lines: '3-3' });
+    expect(shown(root)).toEqual(['class Box']);
   });
 
-  it('embeds a fence that is run or edited, and links one that is opened', () => {
-    const root = transformed(
-      fence('run', '@VerificationCase\nclass Reaches {\n}'),
-      fence('edit open', 'class Counter {\n}'),
-    );
-
-    expect(fences(root)).toEqual([
-      {
-        model: '@VerificationCase\nclass Reaches {\n}',
-        shown: '@VerificationCase\nclass Reaches {\n}',
-        embed: 'run',
-      },
-      {
-        model: 'class Counter {\n}',
-        shown: 'class Counter {\n}',
-        embed: 'edit',
-        open: null,
-      },
-    ]);
-  });
-
-  it('runs a fence whose model holds a verification case, and edits every other', () => {
+  it('fails the page on an unknown word, an unpaired marker and a chain to nothing', () => {
     expect(() => {
-      return transformed(fence('run', 'class Counter {\n}'));
-    }).toThrow('A fence that is run holds a verification case');
-    expect(() => {
-      return transformed(fence('checkpoint=case', '@VerificationCase\nclass Reaches {\n}'), fence('edit continue=case', 'class Counter {\n}'));
-    }).toThrow('A fence with a verification case is run, not edited');
-  });
-
-  it('fails the page on an unknown word, an unpaired marker, a chain to nothing and a checkpoint set twice', () => {
-    expect(() => {
-      return transformed(fence('runn', 'class A'));
-    }).toThrow('unknown word runn');
+      return transformed(fence('hiden', 'class A'));
+    }).toThrow('unknown word hiden');
     expect(() => {
       return transformed(fence('', '// hide-start\nclass A'));
     }).toThrow('unpaired // hide-start');
@@ -146,12 +104,6 @@ describe('remarkFences', () => {
     expect(() => {
       return transformed(fence('continue', 'class A'));
     }).toThrow('continues no earlier fence');
-    expect(() => {
-      return transformed(fence('continue=colors', 'class A'));
-    }).toThrow('continues no checkpoint colors');
-    expect(() => {
-      return transformed(fence('checkpoint=a', 'class A'), fence('checkpoint=a', 'class B'));
-    }).toThrow('The checkpoint a is set twice');
   });
 
   it('reads the fence test\'s issue word and a fence nested in another element, and no fence of another language', () => {
@@ -161,19 +113,14 @@ describe('remarkFences', () => {
       sysml,
     );
 
-    expect(root.children[1]).toMatchObject({ type: 'blockquote', children: [{ type: 'mdxJsxFlowElement', name: 'SemantifyrFence' }] });
-    expect(root.children[2]).toEqual(sysml);
+    expect(root.children[0]).toMatchObject({ type: 'blockquote', children: [{ type: 'code', value: 'class A' }] });
+    expect(root.children[1]).toEqual(sysml);
   });
 
   it('shows the lines in a hidden class without the indentation the model gives them', () => {
-    const root = transformed(fence('', '// hide-start\nclass Counter {\n// hide-end\n  var value: int := 0\n\n  tran step() {\n  }\n// hide-start\n}\n// hide-end'));
+    const counter = fence('', '// hide-start\nclass Counter {\n// hide-end\n  var value: int := 0\n\n  tran step() {\n  }\n// hide-start\n}\n// hide-end');
 
-    expect(fences(root)).toEqual([
-      {
-        model: 'class Counter {\n  var value: int := 0\n\n  tran step() {\n  }\n}',
-        shown: 'var value: int := 0\n\ntran step() {\n}',
-        lines: '2-5',
-      },
-    ]);
+    expect(shown(transformed(counter))).toEqual(['var value: int := 0\n\ntran step() {\n}']);
+    expect(models(counter)).toEqual(['class Counter {\n  var value: int := 0\n\n  tran step() {\n  }\n}']);
   });
 });

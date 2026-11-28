@@ -9,7 +9,7 @@ import type { VerdictStatus } from '@semantifyr/editor-common/marks'
 import { verdictOfStatus } from '@semantifyr/editor-common/terms'
 
 import { CASE_MESSAGES, VERDICT_WORDS } from '../../texts'
-import type { VerificationCaseState } from '../verification/engine'
+import type { VerificationCaseState } from '../verification/state'
 
 export type ValidationMark =
   | 'validation-queued'

@@ -6,6 +6,7 @@
 
 package hu.bme.mit.semantifyr.oxsts.lang.tests.validation;
 
+import static hu.bme.mit.semantifyr.oxsts.lang.tests.utils.TestModels.testModel;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.google.inject.Inject;
@@ -24,26 +25,8 @@ public class AnnotationTargetValidationTest {
 
     @Test
     void builtinAnnotationsOnTheirTargetsPass() {
-        var parsedPackage = parseHelper.parse("""
-            package test
-            class Item { }
-            @VerificationCase
-            @Tag("slow")
-            class Case {
-                @Shared
-                contains item: Item
-                @Control
-                @NonOptimizable
-                var count: int := 0
-                @Trace
-                tran step() {
-                    count := count + 1
-                }
-                prop {
-                    return AG count >= 0
-                }
-            }
-            """, CheckMode.ALL);
+        var parsedPackage =
+                parseHelper.parse(testModel(getClass(), "annotations_on_targets.semantifyr"), CheckMode.ALL);
 
         parsedPackage.assertNoResourceErrors();
         parsedPackage.assertNoValidationIssues();
@@ -51,25 +34,8 @@ public class AnnotationTargetValidationTest {
 
     @Test
     void builtinAnnotationsOffTheirTargetsAreRejected() {
-        var parsedPackage = parseHelper.parse("""
-            package test
-            class Item { }
-            @Control
-            class Holder {
-                @VerificationCase
-                var count: int := 0
-                @Shared
-                refers other: Item[0..1]
-                @Trace
-                prop positive(): bool {
-                    return count > 0
-                }
-                @Tag("slow")
-                tran step() {
-                    count := count + 1
-                }
-            }
-            """, CheckMode.ALL);
+        var parsedPackage =
+                parseHelper.parse(testModel(getClass(), "annotations_off_targets.semantifyr"), CheckMode.ALL);
 
         parsedPackage.assertNoResourceErrors();
         assertThat(parsedPackage.getIssues())
@@ -80,11 +46,11 @@ public class AnnotationTargetValidationTest {
                     return issue.getCode() + "@" + issue.getLineNumber();
                 })
                 .containsExactlyInAnyOrder(
-                        OxstsValidator.INCORRECT_ANNOTATION_TARGET + "@3",
-                        OxstsValidator.INCORRECT_ANNOTATION_TARGET + "@5",
-                        OxstsValidator.INCORRECT_ANNOTATION_TARGET + "@7",
-                        OxstsValidator.INCORRECT_ANNOTATION_TARGET + "@9",
-                        OxstsValidator.INCORRECT_ANNOTATION_TARGET + "@13");
+                        OxstsValidator.INCORRECT_ANNOTATION_TARGET + "@11",
+                        OxstsValidator.INCORRECT_ANNOTATION_TARGET + "@13",
+                        OxstsValidator.INCORRECT_ANNOTATION_TARGET + "@15",
+                        OxstsValidator.INCORRECT_ANNOTATION_TARGET + "@17",
+                        OxstsValidator.INCORRECT_ANNOTATION_TARGET + "@21");
         parsedPackage.assertHasValidationIssue(
                 OxstsValidator.INCORRECT_ANNOTATION_TARGET, "@Shared applies to containment features only");
     }

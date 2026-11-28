@@ -1,20 +1,33 @@
 ---
 title: nuXmv
 sidebar_position: 4
-backend: true
-description: The nuXmv backend, its exact verdicts, which a portfolio trusts, its configurations, how it realizes time and the constructs it refuses before it runs.
+description: The nuXmv backend, what it needs, which of its verdicts are trusted, how it handles time, and what it refuses.
 ---
 
 # nuXmv
 
-[nuXmv](https://nuxmv.fbk.eu/) verifies the SMV translation of a case with unbounded integers, and its verdicts are exact, so a portfolio trusts every one of them; its `bdd-invar` configuration needs bounded integers. It needs `nuXmv` on `PATH`. It realizes the [wait before every main step](../language/specification/classes-and-behaviour/time.md#the-wait-before-a-step) over dense time: each clock is a real that the step's delay advances, so a model with clocks keeps its exact verdicts. Before it runs, it reports a case Not supported when the case holds a construct listed below, naming each construct and its source line.
+[nuXmv](https://nuxmv.fbk.eu/) is a symbolic model checker of Fondazione Bruno Kessler. The backend transforms a case into SMV, nuXmv's input language, and verifies it with unbounded integers.
+
+## Install
+
+[Download nuXmv](https://nuxmv.fbk.eu/download.html) and put its `bin` folder on `PATH`, so that `nuXmv` runs.
+
+## Verdicts
+
+Its verdicts are exact, so a portfolio trusts every one of them.
+
+## Time
+
+nuXmv realizes the [wait before every main step](../language/reference/classes-and-behaviour/time.md#the-wait-before-a-step) over dense time: each clock is a real that the step's delay advances, so a model with clocks keeps its exact verdicts.
 
 ## What the backend refuses
 
-- Variables of type `real`, `string` or `any`: the SMV translation declares integer, boolean and enumeration variables only.
-- For-operations: the SMV translation has no loop.
+The backend answers Not supported, naming each construct and its source line, when a case holds one of these:
+
+- Variables of type `real`, `string`, or `any`: the SMV transformation declares integer, boolean, and enumeration variables only.
+- For-operations: the SMV transformation has no loop.
 - String literals: SMV has no strings.
 - Array literals: the backend receives arrays split into one variable per slot and has no form for an array value.
 - Array indexing: the backend receives arrays split into one variable per slot and has no form for indexing.
-- Integer variables, in the `bdd-invar` configuration only: the translation declares every integer unbounded, and nuXmv cannot build its binary decision diagrams over unbounded integers.
-- Clocks, in the `bdd-invar` configuration only: the translation declares every clock real, and nuXmv cannot build its binary decision diagrams over reals.
+- Integer variables, in the `bdd-invar` configuration only: the transformation declares every integer unbounded, and nuXmv cannot build its binary decision diagrams over unbounded integers.
+- Clocks, in the `bdd-invar` configuration only: the transformation declares every clock real, and nuXmv cannot build its binary decision diagrams over reals.

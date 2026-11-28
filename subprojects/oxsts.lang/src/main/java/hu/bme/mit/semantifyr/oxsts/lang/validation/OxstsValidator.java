@@ -23,8 +23,10 @@ import hu.bme.mit.semantifyr.oxsts.lang.semantics.RedefinitionHandler;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.clock.ClockTestAnalysis;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.ConstantExpressionEvaluatorProvider;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.EvaluationFailureException;
+import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.IntegerEvaluation;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.MetaConstantExpressionEvaluatorProvider;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.RangeEvaluation;
+import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.RealEvaluation;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.modality.ExpressionModalityEvaluatorProvider;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.modality.Modality;
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.typesystem.ExpressionTypeEvaluatorProvider;
@@ -40,7 +42,6 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.eclipse.emf.ecore.EObject;
@@ -144,6 +145,7 @@ public class OxstsValidator extends AbstractOxstsValidator {
     public static final String REDEFINED_NOT_FOUND_ISSUE = ISSUE_PREFIX + "REDEFINED_NOT_FOUND";
     public static final String DUPLICATE_REDEFINITION = ISSUE_PREFIX + "DUPLICATE_REDEFINITION";
     public static final String MEMBER_NOT_IN_ABSTRACT_CLASS = ISSUE_PREFIX + "MEMBER_NOT_IN_ABSTRACT_CLASS";
+    public static final String ANONYMOUS_ABSTRACT_MEMBER = ISSUE_PREFIX + "ANONYMOUS_ABSTRACT_MEMBER";
     public static final String ELEMENT_SHADOWED = ISSUE_PREFIX + "ELEMENT_SHADOWED";
     public static final String INVALID_CALL_ARGUMENTS_COUND = ISSUE_PREFIX + "INVALID_CALL_ARGUMENTS_COUNT";
     public static final String PARAMETER_BOUND_TWICE = ISSUE_PREFIX + "PARAMETER_BOUND_TWICE";
@@ -153,7 +155,6 @@ public class OxstsValidator extends AbstractOxstsValidator {
     public static final String ABSTRACT_CLASS_INHERITED_MEMBERS_NOT_REDEFINED =
             ISSUE_PREFIX + "ABSTRACT_CLASS_INHERITED_MEMBERS_NOT_REDEFINED";
     // only the commented-out check of a feature's abstract members raises it
-    @InternalIssue
     public static final String ABSTRACT_FEATURE_INHERITED_MEMBERS_NOT_REDEFINED =
             ISSUE_PREFIX + "ABSTRACT_FEATURE_INHERITED_MEMBERS_NOT_REDEFINED";
 
@@ -161,12 +162,14 @@ public class OxstsValidator extends AbstractOxstsValidator {
     public static final String INCORRECT_ASSIGNMENT = ISSUE_PREFIX + "INCORRECT_ASSIGNMENT";
     public static final String INCORRECT_CALLED_ELEMENT = ISSUE_PREFIX + "INCORRECT_CALLED_ELEMENT";
     public static final String CALL_THROUGH_MANY_VALUED_FEATURE = ISSUE_PREFIX + "CALL_THROUGH_MANY_VALUED_FEATURE";
+    public static final String INCORRECT_CALL_HOLDER_MULTIPLICITY = ISSUE_PREFIX + "INCORRECT_CALL_HOLDER_MULTIPLICITY";
     public static final String SELF_OUTSIDE_CLASS = ISSUE_PREFIX + "SELF_OUTSIDE_CLASS";
     public static final String VARIABLE_WITH_IMPLICIT_TYPE = ISSUE_PREFIX + "VARIABLE_WITH_IMPLICIT_TYPE";
     public static final String UNSUPPORTED_FEATURE = ISSUE_PREFIX + "UNSUPPORTED_FEATURE";
     public static final String EXPRESSION_MODALITY_TOO_HIGH = ISSUE_PREFIX + "EXPRESSION_MODALITY_TOO_HIGH";
     public static final String COULD_BE_INLINE = ISSUE_PREFIX + "COULD_BE_INLINE";
     public static final String CONSTANT_EXPRESSION = ISSUE_PREFIX + "CONSTANT_EXPRESSION";
+    public static final String DIVISION_BY_ZERO = ISSUE_PREFIX + "DIVISION_BY_ZERO";
     public static final String TYPE_MISMATCH = ISSUE_PREFIX + "TYPE_MISMATCH";
     public static final String INVALID_CAST = ISSUE_PREFIX + "INVALID_CAST";
     public static final String MULTIPLE_INHERITANCE = ISSUE_PREFIX + "MULTIPLE_INHERITANCE";
@@ -176,7 +179,6 @@ public class OxstsValidator extends AbstractOxstsValidator {
     public static final String MISPLACED_TEMPORAL_OPERATOR = ISSUE_PREFIX + "MISPLACED_TEMPORAL_OPERATOR";
     public static final String MISSING_INITIALIZER = ISSUE_PREFIX + "MISSING_INITIALIZER";
     public static final String ABSTRACT_VERIFICATION_CASE = ISSUE_PREFIX + "ABSTRACT_VERIFICATION_CASE";
-    public static final String MISSING_PROPERTY = ISSUE_PREFIX + "MISSING_PROPERTY";
     public static final String INCORRECT_ANNOTATION_TARGET = ISSUE_PREFIX + "INCORRECT_ANNOTATION_TARGET";
     public static final String AMBIGUOUS_REFERENCE = ISSUE_PREFIX + "AMBIGUOUS_REFERENCE";
     public static final String DECLARED_IN_ANOTHER_FILE = ISSUE_PREFIX + "DECLARED_IN_ANOTHER_FILE";
@@ -238,6 +240,18 @@ public class OxstsValidator extends AbstractOxstsValidator {
                     OxstsPackage.Literals.NAMED_ELEMENT__NAME,
                     0,
                     MEMBER_NOT_IN_ABSTRACT_CLASS);
+        }
+    }
+
+    // an abstract member cannot redefine, so an anonymous one would shadow the concrete one of Anything
+    @Check
+    public void checkAnonymousAbstractMember(RedefinableDeclaration redefinableDeclaration) {
+        if (NamingUtil.isAnonymous(redefinableDeclaration) && OxstsUtils.isMemberAbstract(redefinableDeclaration)) {
+            acceptError(
+                    "'" + NamingUtil.getName(redefinableDeclaration)
+                            + "' cannot be abstract, since an abstract member cannot redefine the concrete one every class inherits.",
+                    redefinableDeclaration,
+                    ANONYMOUS_ABSTRACT_MEMBER);
         }
     }
 
@@ -314,28 +328,6 @@ public class OxstsValidator extends AbstractOxstsValidator {
                     0,
                     ABSTRACT_VERIFICATION_CASE);
         }
-    }
-
-    @Check
-    public void checkVerificationCaseHasProperty(ClassDeclaration classDeclaration) {
-        if (classDeclaration.isAbstract() || !builtinAnnotationHandler.isVerificationCase(classDeclaration)) {
-            return;
-        }
-        for (var member : domainMemberCollectionProvider
-                .getMemberCollection(classDeclaration)
-                .getDeclarations()) {
-            if (member instanceof PropertyDeclaration && "prop".equals(NamingUtil.getName(member))) {
-                return;
-            }
-        }
-        acceptError(
-                "Verification case '"
-                        + NamingUtil.getName(classDeclaration)
-                        + "' has no property to check; declare or inherit one, such as `prop { return AG ... }`.",
-                classDeclaration,
-                OxstsPackage.Literals.NAMED_ELEMENT__NAME,
-                0,
-                MISSING_PROPERTY);
     }
 
     //    @Check
@@ -444,17 +436,18 @@ public class OxstsValidator extends AbstractOxstsValidator {
     @Check
     public void checkShadowedNames(NamedElement namedElement) {
         if (namedElement instanceof RedefinableDeclaration redefinableDeclaration
-                && (redefinableDeclaration.isRedefine() || NamingUtil.isAnonymous(redefinableDeclaration))) {
+                && redefinableDeclaration.isRedefine()) {
             return;
         }
 
-        if (!(namedElement.eContainer() instanceof DomainDeclaration parentDomain)) {
+        var name = NamingUtil.getName(namedElement);
+        if (name == null || !(namedElement.eContainer() instanceof DomainDeclaration parentDomain)) {
             return;
         }
         var declarations =
                 domainMemberCollectionProvider.getParentCollection(parentDomain).getDeclarations();
 
-        if (declarations.stream().anyMatch(d -> Objects.equals(NamingUtil.getName(d), namedElement.getName()))) {
+        if (declarations.stream().anyMatch(d -> name.equals(NamingUtil.getName(d)))) {
             acceptWarning(
                     "Name shadows another element.",
                     namedElement,
@@ -1580,6 +1573,80 @@ public class OxstsValidator extends AbstractOxstsValidator {
     }
 
     @Check
+    public void checkInlineCallHolderMultiplicity(CallSuffixExpression callSuffixExpression) {
+        if (!(callSuffixExpression.eContainer() instanceof InlineCall inlineCall)
+                || inlineCall.getCallExpression() != callSuffixExpression
+                || !(callSuffixExpression.getPrimary() instanceof NavigationSuffixExpression navigation)
+                || navigation.getMember() == null
+                || navigation.getMember().eIsProxy()) {
+            return;
+        }
+        var holder = navigation.getPrimary();
+        EObject member = null;
+        if (holder instanceof ElementReference reference) {
+            member = reference.getElement();
+        } else if (holder instanceof NavigationSuffixExpression holderNavigation) {
+            member = holderNavigation.getMember();
+        }
+        TypeSpecification typeSpecification = null;
+        if (member instanceof FeatureDeclaration feature) {
+            typeSpecification = feature.getTypeSpecification();
+        } else if (member instanceof VariableDeclaration variable && !OxstsUtils.isLoopVariable(variable)) {
+            typeSpecification = variable.getTypeSpecification();
+        } else if (member instanceof ParameterDeclaration parameter) {
+            typeSpecification = parameter.getTypeSpecification();
+        }
+        if (typeSpecification == null) {
+            return;
+        }
+        RangeEvaluation range;
+        try {
+            range = multiplicityRangeEvaluator.evaluate(typeSpecification);
+        } catch (RuntimeException e) {
+            return;
+        }
+        var upperBound = range.getUpperBound();
+        if (member instanceof FeatureDeclaration && (upperBound == RangeEvaluation.INFINITY || upperBound > 1)) {
+            // checkCallThroughSingleValuedFeature reports it
+            return;
+        }
+        var expected = navigation.isOptional() ? RangeEvaluation.OPTIONAL : RangeEvaluation.ONE;
+        if (range.getLowerBound() == expected.getLowerBound() && upperBound == expected.getUpperBound()) {
+            return;
+        }
+        var operator = navigation.isOptional() ? "?." : ".";
+        var expectedText = navigation.isOptional() ? "[0..1]" : "[1]";
+        var hint = range.getLowerBound() == 0 && upperBound == 1
+                ? "; call with '?.', which drops the call when the holder is absent"
+                : range.getLowerBound() == 1 && upperBound == 1 ? "; call with '.'" : "";
+        acceptError(
+                "An inline call with '"
+                        + operator
+                        + "' needs a holder of multiplicity "
+                        + expectedText
+                        + ", and '"
+                        + NamingUtil.getName((NamedElement) member)
+                        + "' is "
+                        + multiplicityText(typeSpecification, range)
+                        + hint
+                        + ".",
+                navigation,
+                INCORRECT_CALL_HOLDER_MULTIPLICITY);
+    }
+
+    private static String multiplicityText(TypeSpecification typeSpecification, RangeEvaluation range) {
+        var multiplicity = typeSpecification.getMultiplicity();
+        if (multiplicity == null) {
+            return "[1]";
+        }
+        var node = NodeModelUtils.findActualNodeFor(multiplicity);
+        if (node == null) {
+            return "[" + range.getLowerBound() + ".." + range.getUpperBound() + "]";
+        }
+        return NodeModelUtils.getTokenText(node);
+    }
+
+    @Check
     public void checkSelfInsideClass(SelfReference selfReference) {
         if (selfReference.getClass_() == null
                 && EcoreUtil2.getContainerOfType(selfReference, ClassDeclaration.class) == null
@@ -1804,6 +1871,22 @@ public class OxstsValidator extends AbstractOxstsValidator {
     public void checkArithmeticBinaryOperandTypes(ArithmeticBinaryOperator operator) {
         requireNumeric(operator.getLeft(), "left arithmetic operand must be numeric");
         requireNumeric(operator.getRight(), "right arithmetic operand must be numeric");
+    }
+
+    @Check
+    public void checkConstantDivisor(ArithmeticBinaryOperator operator) {
+        if (operator.getOp() != ArithmeticOp.DIV || evaluateModalitySafely(operator.getRight()) != Modality.CONSTANT) {
+            return;
+        }
+        try {
+            var divisor = constantExpressionEvaluatorProvider.evaluate(operator.getRight());
+            if (divisor instanceof IntegerEvaluation(int integer) && integer == 0
+                    || divisor instanceof RealEvaluation(double real) && real == 0.0) {
+                acceptError("The divisor is zero.", operator.getRight(), DIVISION_BY_ZERO);
+            }
+        } catch (EvaluationFailureException e) {
+            // a divisor that does not evaluate is assumed nonzero when the model runs
+        }
     }
 
     @Check
@@ -2371,7 +2454,7 @@ public class OxstsValidator extends AbstractOxstsValidator {
         }
         if (expression.eContainer() instanceof CallSuffixExpression call
                 && call.getPrimary() == expression
-                && !expression.isOptional()) {
+                && (!expression.isOptional() || call.eContainer() instanceof InlineCall)) {
             return;
         }
         if (expression.getMember() instanceof VariableDeclaration member
@@ -2400,7 +2483,7 @@ public class OxstsValidator extends AbstractOxstsValidator {
             acceptError(
                     "Optional navigation '?.' through variable '"
                             + variable.getName()
-                            + "' is not yet supported by the compiler; a read or a call with '.' dispatches over the instances the variable may hold.",
+                            + "' is not yet supported by the compiler; a read or a property call with '.' dispatches over the instances the variable may hold.",
                     expression,
                     UNSUPPORTED_FEATURE);
         }

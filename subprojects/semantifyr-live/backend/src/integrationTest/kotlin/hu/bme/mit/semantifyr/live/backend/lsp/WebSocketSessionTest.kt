@@ -69,7 +69,7 @@ class WebSocketSessionTest {
 
         @VerificationCase
         class CaseA {
-            prop {
+            redefine prop {
                 return true
             }
         }
@@ -303,7 +303,7 @@ class WebSocketSessionTest {
                     level := to
                 }
 
-                tran {
+                redefine tran {
                     inline dim(1, 0)
                 }
             }

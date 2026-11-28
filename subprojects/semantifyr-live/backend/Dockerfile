@@ -16,7 +16,6 @@ COPY build/shipped-theta-xsts-cli /opt/theta-xsts-cli
 
 ENV PATH="/opt/theta-xsts-cli:${PATH}"
 
-ENV SEMANTIFYR_LIVE_LSP_BINARIES_DIR=/opt/semantifyr/staging/lsp
 ENV SEMANTIFYR_LIVE_SEMANTIC_LIBRARIES_DIR=/opt/semantifyr/staging/semantic-libraries
 ENV SEMANTIFYR_LIVE_WEB_ROOT_DIR=/opt/semantifyr/staging/web
 ENV SEMANTIFYR_LIVE_PORT=8080

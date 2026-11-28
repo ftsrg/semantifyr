@@ -10,7 +10,6 @@ import hu.bme.mit.semantifyr.cli.SMOKE_CASE
 import hu.bme.mit.semantifyr.cli.runCli
 import hu.bme.mit.semantifyr.cli.smokeModel
 import hu.bme.mit.semantifyr.cli.testModels
-import hu.bme.mit.semantifyr.cli.writeSameStemModels
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.Test
@@ -23,6 +22,7 @@ import kotlin.io.path.isWritable
 import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.name
 import kotlin.io.path.readText
+import kotlin.io.path.toPath
 
 class CompileCommandTest {
 
@@ -98,7 +98,7 @@ class CompileCommandTest {
 
     @Test
     suspend fun `cases of models sharing a file stem get their own files and directories`(@TempDir directory: Path) {
-        val models = writeSameStemModels(directory)
+        val models = checkNotNull(javaClass.getResource("CompileCommandTest/same_stem")).toURI().toPath()
         val output = directory.resolve("inlined")
         val artifacts = directory.resolve("artifacts")
 

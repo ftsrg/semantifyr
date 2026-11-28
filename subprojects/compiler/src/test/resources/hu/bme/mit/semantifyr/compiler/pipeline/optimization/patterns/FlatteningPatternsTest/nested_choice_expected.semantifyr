@@ -1,0 +1,22 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+inlined oxsts of semantifyr::Anything
+var first: int := 0
+init {
+}
+tran {
+    choice {
+        first := 3
+    } or {
+        first := 1
+    } or {
+        first := 2
+    }
+}
+prop {
+    AG true
+}

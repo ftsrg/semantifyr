@@ -47,7 +47,6 @@ class ApiRoutesHandler @Inject constructor(
                         startedAt = serverStatus.startedAt,
                         version = BuildInfo.version,
                         commit = BuildInfo.commit,
-                        buildTime = BuildInfo.buildTime,
                         activeSessions = sessionManager.activeSessionsCount,
                         maxSessions = sessionManager.maxSessions,
                     ),

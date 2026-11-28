@@ -1,73 +1,31 @@
 ---
 title: Try in the Command Line
-sidebar_label: Try in the Command Line
 slug: /learn/command-line
 sidebar_position: 3
-description: Verify the cases of a Semantifyr model with the semantifyr command, read their verdicts and find the witness of a failed case on disk.
+description: Verify the cases of a Semantifyr, SysML v2, or Gamma model on the command line.
 ---
-
-import CodeBlock from '@theme/CodeBlock';
-import CaseVerdict from '@site/src/components/CaseVerdict';
-import levelCrossing from '@served-examples/oxsts/level-crossing';
 
 # Try in the Command Line
 
-`semantifyr` verifies the cases of a Semantifyr model on your machine, with every installed backend, by hand or in scripts and CI. This page verifies the level crossing in the Semantifyr Language. [Install](install.md#the-command-line) builds the command, `bin/semantifyr` of its distribution, and [Command Line](../reference/command-line.mdx) lists its options; a SysML v2 or a Gamma model is verified by its frontend's launcher, [`semantifyr-sysml`](../frontends/sysml-v2/verifying.md#verifying-locally) or [`semantifyr-gamma`](../frontends/gamma/verifying.mdx#verifying-locally).
+The CLIs verify the cases of a model on your machine: `semantifyr` for Semantifyr models, `semantifyr-sysml` for SysML v2, and `semantifyr-gamma` for Gamma. To install them, see [Install](install.md#the-command-line).
 
-## The Model
-
-Save the model as `level-crossing.semantifyr` in an empty directory, `/tmp/level-crossing` on this page:
-
-<CodeBlock language="oxsts" title="level-crossing.semantifyr">{levelCrossing.text}</CodeBlock>
-
-In that directory, list its cases:
+A Semantifyr model:
 
 ```bash
-semantifyr list level-crossing.semantifyr
+semantifyr verify model.semantifyr
 ```
 
-```text
-Found 2 verification case(s):
-  example::levelcrossing::BarrierDownWhileTrainInCrossing
-  example::levelcrossing::TwoTrainsCanBeInTheCrossing
-```
-
-## Verifying
-
-Verify every case, with the artifacts in `artifacts/`:
+A SysML v2 model:
 
 ```bash
-semantifyr verify level-crossing.semantifyr --artifact-directory artifacts
+semantifyr-sysml verify model.sysml
 ```
 
-```text
-Verifying example::levelcrossing::BarrierDownWhileTrainInCrossing ...
-  FAILED (2.203420429s)
-  report: /tmp/level-crossing/artifacts/level-crossing.example.levelcrossing.BarrierDownWhileTr-e3f8b4e8/report.json
-Verifying example::levelcrossing::TwoTrainsCanBeInTheCrossing ...
-  PASSED (500.711637ms)
-  report: /tmp/level-crossing/artifacts/level-crossing.example.levelcrossing.TwoTrainsCanBeInTheCrossing/report.json
-```
-
-Each case ran on the default `smart` portfolio, and the command exited with status 5, since a case failed ([exit codes](../reference/command-line.mdx#exit-codes)). The cases end with these verdicts:
-
-- <CaseVerdict example={levelCrossing} name="BarrierDownWhileTrainInCrossing" />
-- <CaseVerdict example={levelCrossing} name="TwoTrainsCanBeInTheCrossing" />
-
-## The Witness
-
-The failed case's directory, its name cut short with a hash as [the case directory](../reference/artifacts.mdx#the-case-directory) gives, holds a directory for each [stage](../backends/portfolios-and-verdicts.mdx#stages) of `smart` that ran, on a machine with all four backends and fewer processors than their sixteen configurations, here the first stage alone:
+A Gamma model:
 
 ```bash
-ls -1 artifacts/level-crossing.example.levelcrossing.BarrierDownWhileTr-e3f8b4e8
+semantifyr-gamma verify model.gamma
 ```
 
-```text
-first
-mapping.json
-pipeline
-report.json
-witness.semantifyr
-```
+Each case prints its verdict and where its report and witness are written; see [Artifacts](../backends/artifacts.mdx). `--help` after any command lists its options.
 
-Beside the compiled models under `pipeline/`, each backend run has a directory of its own in its stage's directory, such as `first/theta-bmc`; `report.json` holds the verdict and the run that breaks the case, and `witness.semantifyr` is the [witness](../language/specification/library-and-output/inlined-models.md#witnesses) derived from it. [Artifacts](../reference/artifacts.mdx) describes each file.

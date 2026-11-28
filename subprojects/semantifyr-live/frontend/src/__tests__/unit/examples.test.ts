@@ -7,7 +7,6 @@
 import { describe, expect, it } from 'vitest';
 import { servedExamplesOf } from '@semantifyr/editor-common/examples';
 import {
-  descriptionOf,
   findExample,
   findFlavor,
   listedExamples,
@@ -25,7 +24,7 @@ describe('liveFlavors', () => {
     })).toEqual([
       'oxsts',
       'oxsts-with-gamma-library',
-      'oxsts-with-sysmlv2-library',
+      'oxsts-with-sysml-library',
       'gamma',
       'sysml',
     ]);
@@ -88,7 +87,7 @@ describe('liveFlavors', () => {
 
 describe('the registry\'s examples', () => {
   it('a library offers the compiled form of each example its language\'s menu lists', () => {
-    for (const [flavorId, language] of [['oxsts-with-sysmlv2-library', 'sysml'], ['oxsts-with-gamma-library', 'gamma']] as const) {
+    for (const [flavorId, language] of [['oxsts-with-sysml-library', 'sysml'], ['oxsts-with-gamma-library', 'gamma']] as const) {
       const compiled = listedExamples(findFlavor(servedLiveFlavors, flavorId)!).map((example) => {
         return example.id;
       });
@@ -108,15 +107,6 @@ describe('the registry\'s examples', () => {
     expect(listedExamples(sysml).map((example) => {
       return example.id;
     })).not.toContain('room');
-  });
-
-  it('shows no description for a model whose file has no comment at its top', () => {
-    const descriptions = {
-      './snippets/imported/descriptions/lights.semantifyr.description': ' Two lights at a crossing.\n',
-    };
-
-    expect(descriptionOf(descriptions, 'lights.semantifyr')).toBe('Two lights at a crossing.');
-    expect(descriptionOf(descriptions, 'bare.semantifyr')).toBeNull();
   });
 });
 

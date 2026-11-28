@@ -319,8 +319,8 @@ class State : TransitionTarget {
             inline if (parentState != top) {
                 inline parentState.parentRegion.exitOrthogonalRegions()
             }
-            inline parentState.exitOwn()
-            inline parentState.exitAncestorsUpTo(top)
+            inline parentState?.exitOwn()
+            inline parentState?.exitAncestorsUpTo(top)
         }
     }
 
@@ -340,11 +340,11 @@ class State : TransitionTarget {
 
     tran enterAncestorsFrom(top: State) {
         inline if (self != top) {
-            inline parentState.enterAncestorsFrom(top)
+            inline parentState?.enterAncestorsFrom(top)
             inline if (parentState != top) {
                 inline parentState.parentRegion.activateOrthogonalRegions()
             }
-            inline parentState.enterOwn()
+            inline parentState?.enterOwn()
         }
     }
 
@@ -490,8 +490,8 @@ class ShallowHistory : TransitionTarget {
     }
 
     redefine tran enterFrom(top: State) {
-        inline parentState.enterAncestorsFrom(top)
-        inline parentState.enterOwn()
+        inline parentState?.enterAncestorsFrom(top)
+        inline parentState?.enterOwn()
         inline for (region in parentState.regions) {
             inline if (region == parentRegion) {
                 inline enterRegion()

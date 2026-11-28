@@ -81,14 +81,8 @@ services:
     volumes:
       - ./datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml:ro
       - ./dashboards.yaml:/etc/grafana/provisioning/dashboards/dashboards.yaml:ro
-      - ./production-overview.json:/etc/grafana/dashboards/production/overview.json:ro
-      - ./production-sessions.json:/etc/grafana/dashboards/production/sessions.json:ro
-      - ./production-verifications.json:/etc/grafana/dashboards/production/verifications.json:ro
-      - ./production-resources.json:/etc/grafana/dashboards/production/resources.json:ro
-      - ./staging-overview.json:/etc/grafana/dashboards/staging/overview.json:ro
-      - ./staging-sessions.json:/etc/grafana/dashboards/staging/sessions.json:ro
-      - ./staging-verifications.json:/etc/grafana/dashboards/staging/verifications.json:ro
-      - ./staging-resources.json:/etc/grafana/dashboards/staging/resources.json:ro
+      - ./dashboards/production:/etc/grafana/dashboards/production:ro
+      - ./dashboards/staging:/etc/grafana/dashboards/staging:ro
       - ./host-and-monitoring.json:/etc/grafana/dashboards/host/host-and-monitoring.json:ro
       - grafana:/var/lib/grafana
     mem_limit: 512m

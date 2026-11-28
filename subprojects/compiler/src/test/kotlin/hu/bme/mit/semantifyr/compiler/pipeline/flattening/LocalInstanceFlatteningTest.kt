@@ -6,66 +6,18 @@
 
 package hu.bme.mit.semantifyr.compiler.pipeline.flattening
 
+import hu.bme.mit.semantifyr.oxsts.lang.tests.utils.TestModels.testModel
 import org.junit.jupiter.api.Test
 
 class LocalInstanceFlatteningTest : FlatteningTestBase() {
 
-    private val workers = """
-        package flattening::local_instances
-        class Worker {
-            var done: bool := false
-            tran finish() {
-                done := true
-            }
-        }
-        class Other {
-            var done: bool := false
-            tran finish() {
-                done := true
-            }
-        }
-        class Pool {
-            contains workers: Worker[0..*]
-            contains first: Worker subsets workers
-            contains second: Worker subsets workers
-            contains spare: Worker
-            tran pickOne() {
-                var picked: workers := first
-                havoc(picked)
-                inline picked.finish()
-            }
-            tran pickTwo() {
-                var picks: workers[2] := [first, first]
-                havoc(picks)
-                inline picks[0].finish()
-                inline picks[1].finish()
-            }
-        }
-    """
+    private val workers = testModel(javaClass, "workers.semantifyr")
 
     @Test
     fun `a havoc of a class-typed local chooses among the instances of its class`() {
         assertFlattenedModel(
             "Host",
-            workers + """
-                @VerificationCase
-                class Host {
-                    contains first: Worker
-                    contains second: Worker
-                    contains other: Other
-                    var outside: bool := false
-                    redefine tran {
-                        var picked: Worker := first
-                        havoc(picked)
-                        if (picked != first && picked != second) {
-                            outside := true
-                        }
-                    }
-                    prop {
-                        return AG !outside
-                    }
-                }
-            """,
+            workers + testModel(javaClass, "havoc_of_class_typed_local.semantifyr"),
             $$$$"""
                 init {
                 }
@@ -93,25 +45,7 @@ class LocalInstanceFlatteningTest : FlatteningTestBase() {
     fun `only an optional class-typed local may hold nothing`() {
         assertFlattenedModel(
             "Host",
-            workers + """
-                @VerificationCase
-                class Host {
-                    contains first: Worker
-                    var empty: bool := false
-                    redefine tran {
-                        var optional: Worker[0..1] := first
-                        havoc(optional)
-                        var required: Worker := first
-                        havoc(required)
-                        if (optional == nothing || required == nothing) {
-                            empty := true
-                        }
-                    }
-                    prop {
-                        return EF empty
-                    }
-                }
-            """,
+            workers + testModel(javaClass, "optional_class_typed_local.semantifyr"),
             $$$$"""
                 init {
                 }
@@ -143,25 +77,7 @@ class LocalInstanceFlatteningTest : FlatteningTestBase() {
     fun `a call through an assigned class-typed local dispatches to the instance it holds`() {
         assertFlattenedModel(
             "Host",
-            workers + """
-                @VerificationCase
-                class Host {
-                    contains first: Worker
-                    contains second: Worker
-                    var flip: bool := false
-                    redefine tran {
-                        var picked: Worker := first
-                        if (flip) {
-                            picked := second
-                        }
-                        flip := true
-                        inline picked.finish()
-                    }
-                    prop {
-                        return EF second.done
-                    }
-                }
-            """,
+            workers + testModel(javaClass, "call_through_assigned_local.semantifyr"),
             $$$$"""
                 init {
                 }
@@ -199,7 +115,7 @@ class LocalInstanceFlatteningTest : FlatteningTestBase() {
                     redefine tran {
                         inline pool.pickOne()
                     }
-                    prop {
+                    redefine prop {
                         return AG !pool.spare.done
                     }
                 }
@@ -244,7 +160,7 @@ class LocalInstanceFlatteningTest : FlatteningTestBase() {
                         var queue: Worker[2] := [first, second]
                         inline queue[1].finish()
                     }
-                    prop {
+                    redefine prop {
                         return EF second.done
                     }
                 }
@@ -283,7 +199,7 @@ class LocalInstanceFlatteningTest : FlatteningTestBase() {
                     redefine tran {
                         inline pool.pickTwo()
                     }
-                    prop {
+                    redefine prop {
                         return AG !pool.spare.done
                     }
                 }

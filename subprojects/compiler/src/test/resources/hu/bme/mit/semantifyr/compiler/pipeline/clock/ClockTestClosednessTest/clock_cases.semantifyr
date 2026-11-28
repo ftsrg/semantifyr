@@ -1,0 +1,188 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package clock::tests::optimization
+
+class Timer {
+    var elapsed: clock := 0
+
+    tran restart() {
+        elapsed := 0
+    }
+}
+
+@VerificationCase
+class ClosedBounds {
+    var elapsed: clock := 0
+    var late: bool := false
+
+    redefine tran {
+        choice {
+            assume(elapsed <= 5)
+        } or {
+            assume(elapsed >= 6)
+            late := true
+            elapsed := 0
+        }
+    }
+
+    redefine prop {
+        return EF late
+    }
+}
+
+@VerificationCase
+class StrictBounds {
+    var elapsed: clock := 0
+    var hit: bool := false
+
+    redefine tran {
+        assume(elapsed <= 1)
+        choice {
+            assume(elapsed > 0 && elapsed < 1)
+            hit := true
+        } or {
+        }
+    }
+
+    redefine prop {
+        return EF hit
+    }
+}
+
+@VerificationCase
+class NegatedBounds {
+    var elapsed: clock := 0
+    var hit: bool := false
+
+    redefine tran {
+        assume(elapsed <= 6)
+        choice {
+            assume(!(elapsed <= 5))
+            hit := true
+        } or {
+            assume(!(elapsed < 5))
+            hit := true
+        } or {
+        }
+    }
+
+    redefine prop {
+        return EF hit
+    }
+}
+
+@VerificationCase
+class Equalities {
+    var elapsed: clock := 0
+    var hit: bool := false
+
+    redefine tran {
+        assume(elapsed <= 3)
+        choice {
+            assume(elapsed == 3)
+            hit := true
+        } or {
+            assume(elapsed != 0)
+            hit := true
+        } or {
+        }
+    }
+
+    redefine prop {
+        return EF hit
+    }
+}
+
+@VerificationCase
+class GuardedTest {
+    var elapsed: clock := 0
+    var hit: bool := false
+
+    redefine tran {
+        assume(elapsed <= 2)
+        if (elapsed >= 2) {
+            hit := true
+        }
+    }
+
+    redefine prop {
+        return EF hit
+    }
+}
+
+@VerificationCase
+class StoredTest {
+    var elapsed: clock := 0
+    var late: bool := false
+
+    redefine tran {
+        assume(elapsed <= 2)
+        late := elapsed >= 2
+    }
+
+    redefine prop {
+        return EF late
+    }
+}
+
+@VerificationCase
+class ConditionalValue {
+    var elapsed: clock := 0
+    var count: int := 0
+
+    redefine tran {
+        assume(elapsed <= 2)
+        count := if (elapsed >= 2) then 1 else 0
+    }
+
+    redefine prop {
+        return EF count == 1
+    }
+}
+
+@VerificationCase
+class StrictTestAfterReset {
+    var elapsed: clock := 0
+    var late: bool := false
+
+    redefine tran {
+        assume(elapsed <= 2)
+        elapsed := 0
+        choice {
+            assume(elapsed > 0)
+            late := true
+        } or {
+        }
+    }
+
+    redefine prop {
+        return AG !late
+    }
+}
+
+@VerificationCase
+class ClockThroughReference {
+    contains first: Timer
+    contains second: Timer
+    var current: Timer := first
+    var hit: bool := false
+
+    redefine tran {
+        assume(second.elapsed <= 2)
+        inline current.restart()
+        current := second
+        choice {
+            assume(current.elapsed > 1)
+            hit := true
+        } or {
+        }
+    }
+
+    redefine prop {
+        return EF hit
+    }
+}

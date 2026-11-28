@@ -30,8 +30,11 @@ data class GammaCorpusEntry(
 object GammaCorpus {
     val corpus: Path = Path("..", "models", "corpus")
 
-    // the served examples and their test models, as the build copies them for the tests
-    val examples: Path = Path("build", "test-models")
+    val examples: Path = Path("..", "models", "examples")
+
+    val smoke: Path = Path("..", "models", "smoke")
+
+    val tests: Path = Path("..", "models", "tests")
 
     fun load(directory: Path): List<GammaCorpusEntry> {
         return CaseManifest.load(directory).models.flatMap { model ->

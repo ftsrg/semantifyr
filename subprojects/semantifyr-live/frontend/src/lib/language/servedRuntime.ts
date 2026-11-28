@@ -28,7 +28,7 @@ import {
 } from '../stores/initialization'
 import { constantStore, createStore, type ReadableStore } from '../stores/store'
 import type { ResolvedColorMode } from '../util/colorMode'
-import type { LspClient } from '../verification/engine'
+import type { LspClient } from '../verification/runs'
 import type { DerivedDocument, LanguageRuntime, LibraryDocument } from './types'
 
 const RECONNECT_BACKOFF_MS = [

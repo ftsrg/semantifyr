@@ -6,7 +6,7 @@
 
 import type { Range } from '@semantifyr/editor-common'
 
-import { findExample, liveFlavors, type LiveExample, type LiveFlavor } from '../../examples'
+import { defaultExampleOf, findExample, liveFlavors, type LiveExample, type LiveFlavor } from '../../examples'
 import { readAddress, resolveAddress, type InitialDocument } from './address'
 import { createApi, type LiveServerApi } from '../api/rest'
 import type { PortfolioInfo } from '../api/types'
@@ -19,7 +19,7 @@ import { failStep, initializationOf, InitializationSteps, type InitializationSta
 import type { Settings } from '../stores/settings'
 import { createStore, type ReadableStore, type Store } from '../stores/store'
 import type { ResolvedColorMode } from '../util/colorMode'
-import type { VerificationState } from '../verification/engine'
+import type { VerificationState } from '../verification/state'
 import { createDocumentTabs, type DocumentTabs } from './documentTabs'
 import { flavorOfFile, type DocumentFile, type OpenedFile } from './files'
 import type { SharedResults } from './sharedResults'
@@ -522,7 +522,7 @@ export function createLive(options: LiveOptions): Live {
     },
     selectModel: (flavorId, exampleId) => {
       const flavor = catalog.get().registry?.flavorOf(flavorId)
-      const example = flavor ? findExample(flavor, exampleId) ?? flavor.examples[0] : undefined
+      const example = flavor ? findExample(flavor, exampleId) ?? defaultExampleOf(flavor) : undefined
       if (!flavor || !example) {
         return
       }

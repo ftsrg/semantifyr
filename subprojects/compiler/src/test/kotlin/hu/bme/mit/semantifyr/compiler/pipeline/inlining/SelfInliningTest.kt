@@ -6,6 +6,7 @@
 
 package hu.bme.mit.semantifyr.compiler.pipeline.inlining
 
+import hu.bme.mit.semantifyr.oxsts.lang.tests.utils.TestModels.testModel
 import org.junit.jupiter.api.Test
 
 class SelfInliningTest : InliningTestBase() {
@@ -14,36 +15,7 @@ class SelfInliningTest : InliningTestBase() {
     fun `self passed as an argument binds the calling instance`() {
         assertInlinedModel(
             "Host",
-            """
-                package inlining::tests
-                class Group {
-                    var registered: int := 0
-                    tran register(member: Member) {
-                        registered := registered + 1
-                        member.joined := true
-                    }
-                }
-                class Member {
-                    var joined: bool := false
-                    refers group: Group
-                    redefine init {
-                        inline group.register(self)
-                    }
-                }
-                @VerificationCase
-                class Host {
-                    contains office: Group
-                    contains member: Member {
-                        redefine refers group: Group = office
-                    }
-                    redefine init {
-                        inline member.init()
-                    }
-                    prop {
-                        return AG member.joined
-                    }
-                }
-            """,
+            testModel(javaClass, "self_argument.semantifyr"),
             """
                 init {
                     root.office.registered := root.office.registered + 1

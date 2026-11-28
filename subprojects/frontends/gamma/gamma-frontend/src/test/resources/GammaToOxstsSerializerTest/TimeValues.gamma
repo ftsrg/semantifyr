@@ -1,0 +1,27 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package test
+
+statechart Machine {
+    timeout short
+    timeout long
+    region Main {
+        initial MainInitial
+        state Idle {
+            entry / set short := 1500 ms; set long := 2 s;
+        }
+    }
+    transition from MainInitial to Idle
+}
+
+adapter Ticking of component machine : Machine {
+    clock ticker (rate = 3 s)
+    when ticker / run
+    queue messages (priority = 1, capacity = 1) {
+        ticker
+    }
+}

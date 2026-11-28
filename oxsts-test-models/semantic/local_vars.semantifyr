@@ -19,7 +19,7 @@ class LocalVariableAccumulateReach {
         total := total + part
     }
 
-    prop {
+    redefine prop {
         return EF total == 3
     }
 }
@@ -37,7 +37,7 @@ class LocalVariableAccumulateBound {
         total := total + part
     }
 
-    prop {
+    redefine prop {
         return AG total <= 3
     }
 }
@@ -55,7 +55,7 @@ class LocalVariableHavocReach {
         x := x + delta
     }
 
-    prop {
+    redefine prop {
         return EF x == 3
     }
 }
@@ -73,7 +73,7 @@ class LocalVariableHavocBound {
         x := x + delta
     }
 
-    prop {
+    redefine prop {
         return AG (x >= 0 && x <= 3)
     }
 }
@@ -89,7 +89,7 @@ class LocalVariableNotPersistedBound {
         total := total + cache
     }
 
-    prop {
+    redefine prop {
         return AG total >= 0
     }
 }
@@ -106,7 +106,7 @@ class LocalVariableUninitializedReach {
         x := delta
     }
 
-    prop {
+    redefine prop {
         return EF x == 3
     }
 }
@@ -123,7 +123,7 @@ class LocalVariableUninitializedBound {
         x := delta
     }
 
-    prop {
+    redefine prop {
         return AG x <= 1
     }
 }
@@ -141,7 +141,7 @@ class LocalVariableAccumulateViolated {
         total := total + part
     }
 
-    prop {
+    redefine prop {
         return AG total <= 2
     }
 }

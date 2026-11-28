@@ -1,0 +1,27 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+inlined oxsts of semantifyr::Anything
+var counter: int := 0
+var color: test::colors::Color := test::colors::Color::Red
+init {
+    counter := 1
+}
+tran {
+    choice {
+        counter := 1
+    } or {
+        color := test::colors::Color::Green
+    }
+    if (counter < 3) {
+        counter := 1
+    } else {
+        counter := 2
+    }
+}
+prop {
+    AG counter < 3
+}

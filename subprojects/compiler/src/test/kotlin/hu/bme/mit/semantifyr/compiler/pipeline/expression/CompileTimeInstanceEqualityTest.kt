@@ -48,7 +48,7 @@ class CompileTimeInstanceEqualityTest : InliningTestBase() {
                 refers secondOfPair: Item[1] subsets pair = second
                 refers firstOfPair: Item[1] subsets pair = first
                 refers comparison: bool = $comparison
-                prop {
+                redefine prop {
                     return AG true
                 }
             }

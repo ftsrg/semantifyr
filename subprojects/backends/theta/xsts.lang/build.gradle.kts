@@ -5,7 +5,14 @@
  */
 
 plugins {
-    id("hu.bme.mit.semantifyr.gradle.xtext")
+    id("hu.bme.mit.semantifyr.xtext")
+}
+
+dependencies {
+    api(libs.guava)
+
+    implementation(libs.reload4j)
+    implementation(libs.xtext.xbase.lib)
 }
 
 xtext {

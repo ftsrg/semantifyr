@@ -58,7 +58,7 @@ class RecordFlatteningTest : FlatteningTestBase() {
                 class Host {
                     var position: Point := Point { x = 2 }
                     var segment: Segment := Segment { color = Color::Green }
-                    prop {
+                    redefine prop {
                         return AG position.x == segment.from.x
                     }
                 }
@@ -94,7 +94,7 @@ class RecordFlatteningTest : FlatteningTestBase() {
                         previous := position
                         havoc(position)
                     }
-                    prop {
+                    redefine prop {
                         return AG position != previous
                     }
                 }
@@ -119,7 +119,7 @@ class RecordFlatteningTest : FlatteningTestBase() {
                 class Host {
                     var segment: Segment := Segment { color = Color::Green }
                     var otherSegment: Segment := Segment { color = Color::Green }
-                    prop {
+                    redefine prop {
                         return AG segment == otherSegment
                     }
                 }
@@ -145,7 +145,7 @@ class RecordFlatteningTest : FlatteningTestBase() {
                         copy.x := copy.x + 1
                         position := copy
                     }
-                    prop {
+                    redefine prop {
                         return AG position.x >= 0
                     }
                 }
@@ -172,7 +172,7 @@ class RecordFlatteningTest : FlatteningTestBase() {
                         var fresh: Point := Point { x = 4 }
                         position := fresh
                     }
-                    prop {
+                    redefine prop {
                         return AG position.y == 7
                     }
                 }
@@ -201,7 +201,7 @@ class RecordFlatteningTest : FlatteningTestBase() {
                     redefine tran {
                         inline move(previous)
                     }
-                    prop {
+                    redefine prop {
                         return AG position == previous
                     }
                 }
@@ -227,7 +227,7 @@ class RecordFlatteningTest : FlatteningTestBase() {
                 @VerificationCase
                 class Host {
                     var segment: Segment := Segment { color = Color::Green }
-                    prop {
+                    redefine prop {
                         return AG segment.to.y == 7
                     }
                 }
@@ -253,7 +253,7 @@ class RecordFlatteningTest : FlatteningTestBase() {
                     redefine tran {
                         position := Point { x = offset + 1 }
                     }
-                    prop {
+                    redefine prop {
                         return AG position.x >= 0
                     }
                 }
@@ -280,7 +280,7 @@ class RecordFlatteningTest : FlatteningTestBase() {
                         var local: Point := Point { x = position.y }
                         position := local
                     }
-                    prop {
+                    redefine prop {
                         return AG position.x >= 0
                     }
                 }
@@ -304,7 +304,7 @@ class RecordFlatteningTest : FlatteningTestBase() {
                 class Host {
                     var position: Point := Point { x = 0 }
                     var segment: Segment := Segment { color = Color::Green }
-                    prop {
+                    redefine prop {
                         return AG (position != Point { x = 1, y = 2 } || segment == Segment { from = position, to = Point { x = 3 } })
                     }
                 }
@@ -337,7 +337,7 @@ class RecordFlatteningTest : FlatteningTestBase() {
                 class Host {
                     var defaultLine: Line := Line { from = Point { x = 1, y = 1 } }
                     var initializedLine: Line := Line { to = Point { x = 3 } }
-                    prop {
+                    redefine prop {
                         return AG defaultLine.from.x == initializedLine.to.x
                     }
                 }
@@ -369,7 +369,7 @@ class RecordFlatteningTest : FlatteningTestBase() {
                     redefine tran {
                         inline moveTo(Point { x = last + 1 })
                     }
-                    prop {
+                    redefine prop {
                         return AG position.x == last
                     }
                 }
@@ -401,7 +401,7 @@ class RecordFlatteningTest : FlatteningTestBase() {
                     redefine tran {
                         position := if flag then Point { x = 1 } else position
                     }
-                    prop {
+                    redefine prop {
                         return AG position.x >= 0
                     }
                 }
@@ -429,7 +429,7 @@ class RecordFlatteningTest : FlatteningTestBase() {
                     redefine tran {
                         position := Point { x = next(), y = Point { x = next() }.x }
                     }
-                    prop {
+                    redefine prop {
                         return AG position.x >= 0
                     }
                 }
@@ -455,7 +455,7 @@ class RecordFlatteningTest : FlatteningTestBase() {
                         position := Point { x = position.y, y = position.x }
                         previous := if previous.x > 0 then position else previous
                     }
-                    prop {
+                    redefine prop {
                         return AG position.x >= 0
                     }
                 }

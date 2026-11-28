@@ -22,13 +22,10 @@ public class UriUtils {
                 || uri.authority() != prefix.authority()
                 || uri.device() != prefix.device()
                 || uri.hasAbsolutePath() != prefix.hasAbsolutePath()) {
-            // Totally different uris
             return false;
         }
 
         if (uri.segmentCount() < prefix.segmentCount()) {
-            // since prefix ends with an empty, for uri to start with it, it must have at least as
-            // many segments
             return false;
         }
 
@@ -43,7 +40,6 @@ public class UriUtils {
         return true;
     }
 
-    // file:/a and file:///a name the same file, the second carries an empty authority
     public static boolean isSameFile(URI uri, URI other) {
         return uri.isFile()
                 && other.isFile()

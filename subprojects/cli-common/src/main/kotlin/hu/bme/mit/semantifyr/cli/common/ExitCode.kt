@@ -9,21 +9,20 @@ package hu.bme.mit.semantifyr.cli.common
 import com.github.ajalt.clikt.core.CliktError
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
 
-// the website's command-line page is generated from these codes and meanings; scripts rely on them
 enum class ExitCode(
     val code: Int,
     val meaning: String,
 ) {
-    Success(0, "Every selected case passed, or the command completed."),
-    Internal(1, "Internal error: an unexpected exception, or the launcher could not start Java."),
-    Usage(2, "Usage error: an unknown command or option, a missing or invalid value, conflicting options, an unknown portfolio."),
-    Input(3, "Input error: a model or library path does not exist, is not readable, or is not a model file of the launcher (`.semantifyr`, `.sem` or `.oxsts` for the Semantifyr Language, `.sysml` for SysML v2, `.gamma` or `.gcd` for Gamma) or, where a directory is allowed, a directory holding one, or the case selection names or matches no case."),
-    Compilation(4, "Compilation error: the model does not parse, validate or translate, or a case does not compile."),
+    Success(0, "Every case passed, or the command completed."),
+    Internal(1, "Internal error, or Java could not start."),
+    Usage(2, "Usage error: bad command, option, value, or portfolio."),
+    Input(3, "Input error: a bad model or library path, or no case selected."),
+    Compilation(4, "Compilation error: the model does not parse, validate, or transform."),
     Failed(5, "Failed: a property does not hold."),
-    Undecided(6, "Inconclusive or NotSupported: a backend could not decide a case."),
+    Undecided(6, "Inconclusive or not supported."),
     Timeout(7, "Timeout."),
-    Errored(8, "Errored: a backend failed, or the portfolio has no available backend."),
-    Output(10, "Output error: the artifact directory cannot be created or written."),
+    Errored(8, "Errored: a backend failed or is unavailable."),
+    Output(10, "Output error: the artifact directory is not writable."),
     ;
 
     companion object {

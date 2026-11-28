@@ -4,39 +4,47 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
+import hu.bme.mit.semantifyr.gradle.semantifyrArtifact
+
 plugins {
-    id("hu.bme.mit.semantifyr.gradle.xtext")
+    id("hu.bme.mit.semantifyr.xtext")
     kotlin("jvm")
 }
 
 val metamodel = sourceSets.create("metamodel")
 
 dependencies {
-    add(metamodel.implementationConfigurationName, project(":oxsts.model")) {
-        capabilities {
-            requireFeature("metamodel")
-        }
-    }
+    api(libs.guava)
 
-    testRuntimeOnly(libs.slf4j.log4j)
+    implementation(libs.slf4j.api)
+    implementation(libs.xtext.xbase.lib)
+
+    testFixturesApi(libs.junit.api)
+    testFixturesApi(libs.xtext.testing)
+
+    add(metamodel.implementationConfigurationName, project(":metamodel-builder"))
 }
 
-val emfGenDirectory = layout.projectDirectory.dir("src/main/emf-gen")
+val emfGeneratedDirectory = layout.projectDirectory.dir("src/main/emf-gen")
 val modelDirectory = layout.projectDirectory.dir("model")
 
 val generateEPackage = tasks.register<JavaExec>("generateEPackage") {
     classpath(metamodel.runtimeClasspath)
-    mainClass.set("hu.bme.mit.semantifyr.frontends.gamma.lang.metamodel.GenerateGammaModelKt")
+    mainClass = "hu.bme.mit.semantifyr.frontends.gamma.lang.metamodel.GenerateGammaModelKt"
 
-    outputs.dir(emfGenDirectory)
+    outputs.dir(emfGeneratedDirectory)
     outputs.file(modelDirectory.file("gamma.ecore"))
     outputs.file(modelDirectory.file("gamma.genmodel"))
+    outputs.cacheIf {
+        true
+    }
 
-    args(emfGenDirectory.asFile.path, modelDirectory.asFile.path)
+    val projectDirectory = layout.projectDirectory.asFile
+    args(emfGeneratedDirectory.asFile.relativeTo(projectDirectory).path, modelDirectory.asFile.relativeTo(projectDirectory).path)
 }
 
 sourceSets.main {
-    java.srcDir(files(emfGenDirectory).builtBy(generateEPackage))
+    java.srcDir(files(emfGeneratedDirectory).builtBy(generateEPackage))
 }
 
 xtext {
@@ -44,16 +52,28 @@ xtext {
     xtextFile = "src/main/java/hu/bme/mit/semantifyr/frontends/gamma/lang/Gamma.xtext"
 }
 
-tasks.named("generateXtextLanguage") {
+val textMateDirectory = layout.buildDirectory.dir("generated/textmate")
+
+val generateXtextLanguage = tasks.named("generateXtextLanguage") {
     inputs.files(generateEPackage).withPathSensitivity(PathSensitivity.RELATIVE)
+    outputs.dir(textMateDirectory)
+}
+
+configurations.consumable("textMateGrammarElements") {
+    attributes(semantifyrArtifact("textmate-grammar"))
+    outgoing.artifact(
+        textMateDirectory.map {
+            it.file("gamma.tmLanguage.json")
+        },
+    ) {
+        builtBy(generateXtextLanguage)
+    }
 }
 
 tasks.clean {
-    delete(emfGenDirectory)
+    delete(emfGeneratedDirectory)
 }
 
 tasks.named("test") {
-    inputs.dir(layout.projectDirectory.dir("../models/corpus"))
-        .withPropertyName("gammaCorpus")
-        .withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.dir(layout.projectDirectory.dir("../models/corpus")).withPathSensitivity(PathSensitivity.RELATIVE)
 }

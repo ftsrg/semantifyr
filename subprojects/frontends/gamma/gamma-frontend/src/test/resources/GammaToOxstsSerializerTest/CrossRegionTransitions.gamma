@@ -1,0 +1,31 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package test
+
+interface Control {
+    in event start
+}
+
+statechart Machine [
+    port control : provides Control
+] {
+    region Main {
+        initial MainInitial
+        state Outside
+        state Parent {
+            region Left {
+                initial LeftInitial
+                state First
+                state Second
+            }
+        }
+    }
+    transition from MainInitial to Outside
+    transition from LeftInitial to First
+    transition from Outside to Second when control.start
+    transition from First to Outside when control.start
+}

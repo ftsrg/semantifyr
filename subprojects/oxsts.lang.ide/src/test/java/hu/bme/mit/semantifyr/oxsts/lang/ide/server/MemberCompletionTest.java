@@ -6,6 +6,7 @@
 
 package hu.bme.mit.semantifyr.oxsts.lang.ide.server;
 
+import static hu.bme.mit.semantifyr.oxsts.lang.tests.utils.TestModels.testModel;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import hu.bme.mit.semantifyr.oxsts.lang.ide.MarkedText;
@@ -19,58 +20,7 @@ class MemberCompletionTest extends OxstsLanguageServerTest {
 
     @Test
     void completionAfterADotInAnInlineCallOffersTheTransitionsOfTheFeatureType() throws Exception {
-        var model = MarkedText.of("""
-                package example::trafficlights
-
-                enum LightColor {
-                    Red,
-                    Yellow,
-                    Green
-                }
-
-                class TrafficLight {
-                    var color: LightColor := LightColor::Red
-
-                    tran assumeColor(color: LightColor) {
-                        assume (self.color == color)
-                    }
-
-                    tran setColor(color: LightColor) {
-                        self.color := color
-                    }
-
-                    redefine tran {
-                        choice {
-                            inline assumeColor(LightColor::Red)
-                            inline setColor(LightColor::Green)
-                        } or {
-                            inline assumeColor(LightColor::Green)
-                            inline setColor(LightColor::Yellow)
-                        } or {
-                            inline assumeColor(LightColor::Yellow)
-                            inline setColor(LightColor::Red)
-                        }
-                    }
-
-                    prop isColor(color: LightColor): bool {
-                        return self.color == color
-                    }
-                }
-
-                @VerificationCase
-                @Tag("expect-pass")
-                class GreenColorIsReachable {
-                    contains light: TrafficLight[1]
-
-                    redefine tran {
-                        inline light.<|>main()
-                    }
-
-                    prop {
-                        return EF (light.color == LightColor::Green)
-                    }
-                }
-                """);
+        var model = MarkedText.of(MarkedText.markEvery(testModel(getClass(), "traffic_lights.semantifyr"), "main()"));
         var document = openModel(model.text());
 
         var completion = languageServer

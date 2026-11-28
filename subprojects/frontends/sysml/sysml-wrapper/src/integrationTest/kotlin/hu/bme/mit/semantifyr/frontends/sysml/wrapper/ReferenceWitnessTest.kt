@@ -30,14 +30,14 @@ class ReferenceWitnessTest {
     @Test
     fun `the crossroads reference witness reparses against the compiled crossroads model`() {
         val workspace = temporaryDirectory.resolve("workspace").createDirectories()
-        val model = CORPUS.resolve(MODEL).copyTo(workspace.resolve(MODEL))
-        CORPUS.resolve(VERIFICATION).copyTo(workspace.resolve(VERIFICATION))
+        val model = RESOURCES.resolve(MODEL).copyTo(workspace.resolve(MODEL))
+        RESOURCES.resolve(VERIFICATION).copyTo(workspace.resolve(VERIFICATION))
         val compiled = SysMLv2Compiler(temporaryDirectory.resolve("cache")).compile(model, temporaryDirectory.resolve("crossroads.semantifyr"))
 
         val context = loader.startContext()
             .loadLibraries(MODELS.resolve("libraries").resolve("default"))
             .loadModel(compiled)
-            .loadModel(MODELS.resolve("etc").resolve(WITNESS))
+            .loadModel(RESOURCES.resolve(WITNESS))
             .buildAndResolve()
 
         val witness = context.modelResources.last().contents.single() as InlinedOxsts
@@ -48,8 +48,8 @@ class ReferenceWitnessTest {
     companion object {
         private val MODELS = Path("..", "models")
 
-        // the reference case is a further case of crossroads, which the build appends to the model
-        private val CORPUS = Path("build", "corpus")
+        // the crossroads model carries its further cases, the reference case among them
+        private val RESOURCES = Path("src", "integrationTest", "resources", "ReferenceWitnessTest")
         private const val MODEL = "crossroads.sysml"
         private const val VERIFICATION = "Verification.sysml"
         private const val WITNESS = "crossroads-green.witness.semantifyr"

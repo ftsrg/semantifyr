@@ -12,6 +12,8 @@ import hu.bme.mit.semantifyr.compiler.pipeline.artifact.CompilationArtifactManag
 import hu.bme.mit.semantifyr.compiler.pipeline.artifact.CompilationPass
 import hu.bme.mit.semantifyr.compiler.pipeline.expression.CompileTimeExpressionEvaluatorProvider
 import hu.bme.mit.semantifyr.compiler.pipeline.instantiation.Instance
+import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
+import hu.bme.mit.semantifyr.compiler.pipeline.utils.copy
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.eAllOfType
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.sourceError
 import hu.bme.mit.semantifyr.oxsts.lang.semantics.expression.EvaluationFailureException
@@ -25,6 +27,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.AG
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ArithmeticBinaryOperator
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ArithmeticUnaryOperator
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ArrayLiteral
+import hu.bme.mit.semantifyr.oxsts.model.oxsts.BooleanOp
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.BooleanOperator
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.CallSuffixExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.CastExpression
@@ -47,6 +50,7 @@ import hu.bme.mit.semantifyr.oxsts.model.oxsts.RangeExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.RecordDeclaration
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.RecordLiteral
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.SelfReference
+import org.eclipse.emf.ecore.EObject
 import org.eclipse.xtext.EcoreUtil2
 
 class ExpressionCallInliner @AssistedInject constructor(
@@ -60,17 +64,114 @@ class ExpressionCallInliner @AssistedInject constructor(
 ) : ExpressionVisitor<Unit>() {
 
     private val processorQueue = ArrayDeque<Expression>()
+    private val dispatches = mutableMapOf<EObject, MutableList<Dispatch>>()
 
-    fun process(expression: Expression) {
+    // returns the condition under which every holder the expression reads through is present, null when it needs none
+    fun process(expression: Expression): Expression? {
+        val container = expression.eContainer()
+        val containingFeature = expression.eContainingFeature()
+        check(!containingFeature.isMany) {
+            "A processed expression is held by a single-valued feature"
+        }
+        dispatches.clear()
         visit(expression)
         processAll()
+        return presenceConditionOf(container.eGet(containingFeature) as EObject)
     }
 
-    fun processWriteTarget(target: Expression) {
+    fun processWriteTarget(target: Expression): Expression? {
         if (expressionCallExpander.isThroughRuntimeHolder(target, instance)) {
             sourceError(target, "Writing through a variable is not supported.")
         }
-        process(target)
+        return process(target)
+    }
+
+    private fun presenceConditionOf(element: EObject): Expression? {
+        val elementDispatches = dispatches[element].orEmpty()
+        val conditions = mutableListOf<Expression>()
+        for (dispatch in elementDispatches) {
+            val holderPresence = dispatch.holderPresence ?: continue
+            presenceConditionOf(holderPresence)?.let {
+                conditions += it
+            }
+            conditions += holderPresence
+        }
+        val lastDispatch = elementDispatches.lastOrNull()
+        val rest = if (lastDispatch != null && lastDispatch.branchCount > 1) {
+            branchPresenceConditionOf(element as Expression, lastDispatch.branchCount)
+        } else {
+            conjunctionOrNull(
+                element.eContents().mapNotNull {
+                    presenceConditionOf(it)
+                },
+            )
+        }
+        rest?.let {
+            conditions += it
+        }
+        return conjunctionOrNull(conditions)
+    }
+
+    // a branch's holders are needed only when the dispatch takes the branch
+    private fun branchPresenceConditionOf(dispatched: Expression, branchCount: Int): Expression? {
+        val guards = mutableListOf<Expression>()
+        val branches = mutableListOf<Expression>()
+        var current = dispatched
+        repeat(branchCount - 1) {
+            val conditional = current as? IfThenElse ?: error("A dispatch over $branchCount candidates is not a chain of conditionals")
+            guards += conditional.guard
+            branches += conditional.then
+            current = conditional.`else`
+        }
+        branches += current
+
+        val guardConditions = guards.mapNotNull {
+            presenceConditionOf(it)
+        }
+        val branchConditions = branches.map {
+            presenceConditionOf(it)
+        }
+        if (branchConditions.all { it == null }) {
+            return conjunctionOrNull(guardConditions)
+        }
+        var chained = branchConditions.last() ?: OxstsFactory.createLiteralBoolean(true)
+        for (index in guards.indices.reversed()) {
+            val branchCondition = branchConditions[index] ?: OxstsFactory.createLiteralBoolean(true)
+            val elseCondition = chained
+            chained = OxstsFactory.createIfThenElse().also {
+                it.guard = guards[index].copy()
+                it.then = branchCondition
+                it.`else` = elseCondition
+            }
+        }
+        return conjunctionOrNull(guardConditions + chained)
+    }
+
+    private fun conjunctionOrNull(conditions: List<Expression>): Expression? {
+        return conditions.reduceOrNull { left, right ->
+            OxstsFactory.createBooleanOperator(BooleanOp.AND, left, right)
+        }
+    }
+
+    private fun replace(expression: Expression, replacement: Expression) {
+        EcoreUtil2.replace(expression, replacement)
+        val replacedDispatches = dispatches.remove(expression) ?: return
+        dispatches.getOrPut(replacement) {
+            mutableListOf()
+        }.addAll(0, replacedDispatches)
+    }
+
+    private fun recordDispatch(expanded: ExpandedExpression) {
+        val dispatch = expanded.dispatch ?: return
+        if (dispatch.holderPresence == null && dispatch.branchCount == 1) {
+            return
+        }
+        dispatches.getOrPut(expanded.expression) {
+            mutableListOf()
+        } += dispatch
+        dispatch.holderPresence?.let {
+            processorQueue.addFirst(it)
+        }
     }
 
     private fun processAll() {
@@ -172,9 +273,10 @@ class ExpressionCallInliner @AssistedInject constructor(
     }
 
     override fun visit(expression: CallSuffixExpression) {
-        val inlined = expressionCallExpander.expandCall(expression, instance)
-        EcoreUtil2.replace(expression, inlined)
-        processorQueue.addFirst(inlined)
+        val expanded = expressionCallExpander.expandCall(expression, instance)
+        replace(expression, expanded.expression)
+        recordDispatch(expanded)
+        processorQueue.addFirst(expanded.expression)
 
         compilationArtifactManager.commitStep(CompilationPass.ExpressionCallInlining)
     }
@@ -188,8 +290,9 @@ class ExpressionCallInliner @AssistedInject constructor(
 
     private fun dispatchMemberRead(expression: Expression): Boolean {
         val dispatched = expressionCallExpander.dispatchMemberReadOrNull(expression, instance) ?: return false
-        EcoreUtil2.replace(expression, dispatched)
-        processorQueue.addFirst(dispatched)
+        replace(expression, dispatched.expression)
+        recordDispatch(dispatched)
+        processorQueue.addFirst(dispatched.expression)
         compilationArtifactManager.commitStep(CompilationPass.ExpressionCallInlining)
         return true
     }
@@ -201,7 +304,7 @@ class ExpressionCallInliner @AssistedInject constructor(
         checkCastIsNarrowing(expression, bodyType, castType)
 
         processorQueue.addFirst(expression.body)
-        EcoreUtil2.replace(expression, expression.body)
+        replace(expression, expression.body)
     }
 
     private fun checkCastIsNarrowing(
@@ -229,7 +332,7 @@ class ExpressionCallInliner @AssistedInject constructor(
             } else {
                 expression.`else`
             }
-            EcoreUtil2.replace(expression, taken)
+            replace(expression, taken)
             processorQueue.addFirst(taken)
             return
         }
@@ -257,7 +360,7 @@ class ExpressionCallInliner @AssistedInject constructor(
 
     private fun rewriteFeatureReference(expression: Expression) {
         val rewritten = expressionCallExpander.expandFeatureReferenceOrNull(expression, instance) ?: return
-        EcoreUtil2.replace(expression, rewritten)
+        replace(expression, rewritten)
         compilationArtifactManager.commitStep(CompilationPass.ExpressionCallInlining)
     }
 

@@ -7,6 +7,7 @@
 package hu.bme.mit.semantifyr.compiler.pipeline.optimization.passes
 
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.analyses.ReachingDefinitionsAnalysis
+import hu.bme.mit.semantifyr.oxsts.lang.tests.utils.TestModels.testModel
 import org.junit.jupiter.api.Test
 
 class CopyPropagationPassTest : PassTestBase() {
@@ -78,42 +79,8 @@ class CopyPropagationPassTest : PassTestBase() {
 
     @Test
     fun `multiple reaching definitions prevent propagation`() = assertPassTransforms(
-        source = """
-            inlined oxsts of semantifyr::Anything
-            var source: int := 0
-            var copy: int := 0
-            init {
-            }
-            tran {
-                choice {
-                    source := 1
-                } or {
-                    source := 2
-                }
-                copy := source
-            }
-            prop {
-                AG true
-            }
-        """,
-        expectedSource = """
-            inlined oxsts of semantifyr::Anything
-            var source: int := 0
-            var copy: int := 0
-            init {
-            }
-            tran {
-                choice {
-                    source := 1
-                } or {
-                    source := 2
-                }
-                copy := source
-            }
-            prop {
-                AG true
-            }
-        """,
+        source = testModel(javaClass, "multiple_reaching_definitions.semantifyr"),
+        expectedSource = testModel(javaClass, "multiple_reaching_definitions_expected.semantifyr"),
         analysisClasses = listOf(ReachingDefinitionsAnalysis::class.java),
     ) {
         it.getInstance(CopyPropagationPass::class.java)
@@ -471,42 +438,8 @@ class CopyPropagationPassTest : PassTestBase() {
 
     @Test
     fun `a copy is not propagated when a branch between the copy and the read writes its source`() = assertPassTransforms(
-        source = """
-            inlined oxsts of semantifyr::Anything
-            var source: int := 0
-            var copy: int := 0
-            init {
-            }
-            tran {
-                copy := source
-                choice {
-                    source := 1
-                } or {
-                }
-                assume(copy == 0)
-            }
-            prop {
-                AG true
-            }
-        """,
-        expectedSource = """
-            inlined oxsts of semantifyr::Anything
-            var source: int := 0
-            var copy: int := 0
-            init {
-            }
-            tran {
-                copy := source
-                choice {
-                    source := 1
-                } or {
-                }
-                assume(copy == 0)
-            }
-            prop {
-                AG true
-            }
-        """,
+        source = testModel(javaClass, "branch_writes_copy_source.semantifyr"),
+        expectedSource = testModel(javaClass, "branch_writes_copy_source_expected.semantifyr"),
         analysisClasses = listOf(ReachingDefinitionsAnalysis::class.java),
     ) {
         it.getInstance(CopyPropagationPass::class.java)

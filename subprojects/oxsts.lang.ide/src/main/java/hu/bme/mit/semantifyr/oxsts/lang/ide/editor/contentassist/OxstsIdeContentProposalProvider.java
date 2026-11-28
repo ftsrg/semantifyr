@@ -228,7 +228,6 @@ public class OxstsIdeContentProposalProvider extends IdeContentProposalProvider 
         };
     }
 
-    // A loop variable has no type specification and ranges over instances as often as over values.
     private boolean isInstance(TypeSpecification typeSpecification) {
         if (typeSpecification == null) {
             return true;

@@ -10,6 +10,7 @@ import hu.bme.mit.semantifyr.compiler.pipeline.context.FlattenedCompilationConte
 import hu.bme.mit.semantifyr.compiler.pipeline.inlining.LocalVarNames
 import hu.bme.mit.semantifyr.compiler.pipeline.instantiation.InstanceNames.INSTANCE_NAME_SEPARATOR
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.eAllOfType
+import hu.bme.mit.semantifyr.oxsts.lang.tests.utils.TestModels.testModel
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.IndexingSuffixExpression
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.LiteralInteger
 import org.assertj.core.api.Assertions.assertThat
@@ -64,24 +65,7 @@ class ArraySizeFromBindingFlatteningTest : FlatteningTestBase() {
     fun `each instance holds as many slots as its binding gives, the last written value filling the rest`() {
         val flattened = flatten(
             "Host",
-            store + """
-                @VerificationCase
-                class Host {
-                    contains one: Store {
-                        redefine refers capacity: int = 1
-                    }
-                    contains three: Store {
-                        redefine refers capacity: int = 3
-                    }
-                    redefine tran {
-                        inline one.put(1)
-                        inline three.put(2)
-                    }
-                    prop {
-                        return AG one.slots[0] != 5
-                    }
-                }
-            """,
+            store + testModel(javaClass, "slots_per_binding.semantifyr"),
         )
 
         assertThat(flattened.slotNames("one")).containsExactly(member("root", "one", "slots") + "_0")
@@ -101,33 +85,7 @@ class ArraySizeFromBindingFlatteningTest : FlatteningTestBase() {
     fun `a range with a bound from a binding holds as many slots as its upper bound`() {
         val flattened = flatten(
             "Host",
-            """
-                package flattening::size_from_binding
-                class Item
-                class Port {
-                    refers capacity: int
-                    contains first: Item
-                    var items: Item[0..capacity] := [nothing, ...]
-                    var values: int[1..capacity] := [1, 2, ...]
-                    tran accept(index: int) {
-                        items[index] := first
-                        items := [items[1], nothing]
-                    }
-                }
-                @VerificationCase
-                class Host {
-                    contains port: Port {
-                        redefine refers capacity: int = 2
-                    }
-                    var index: int := 0
-                    redefine tran {
-                        inline port.accept(index)
-                    }
-                    prop {
-                        return AG port.values[1] == 2
-                    }
-                }
-            """,
+            testModel(javaClass, "range_bound_from_binding.semantifyr"),
         )
 
         val items = member("root", "port", "items")
@@ -152,7 +110,7 @@ class ArraySizeFromBindingFlatteningTest : FlatteningTestBase() {
                         inline none.put(1)
                         count := count + 1
                     }
-                    prop {
+                    redefine prop {
                         return AG count >= 0
                     }
                 }
@@ -178,7 +136,7 @@ class ArraySizeFromBindingFlatteningTest : FlatteningTestBase() {
                         redefine tran {
                             first := none.slots[0]
                         }
-                        prop {
+                        redefine prop {
                             return AG first >= 0
                         }
                     }
@@ -201,7 +159,7 @@ class ArraySizeFromBindingFlatteningTest : FlatteningTestBase() {
                         redefine tran {
                             pair.slots := [1, 2, 3]
                         }
-                        prop {
+                        redefine prop {
                             return AG pair.slots[0] >= 0
                         }
                     }
@@ -224,7 +182,7 @@ class ArraySizeFromBindingFlatteningTest : FlatteningTestBase() {
                     same := store.slots == [5]
                     same := [5] != store.slots
                 }
-                prop {
+                redefine prop {
                     return AG !same
                 }
             }
@@ -254,7 +212,7 @@ class ArraySizeFromBindingFlatteningTest : FlatteningTestBase() {
                 redefine tran {
                     %s
                 }
-                prop {
+                redefine prop {
                     return AG !same
                 }
             }
@@ -283,7 +241,7 @@ class ArraySizeFromBindingFlatteningTest : FlatteningTestBase() {
                         contains pair: Store {
                             redefine refers capacity: int = 2
                         }
-                        prop {
+                        redefine prop {
                             return AG pair.slots[0] == 1
                         }
                     }
@@ -303,7 +261,7 @@ class ArraySizeFromBindingFlatteningTest : FlatteningTestBase() {
                         contains pair: Store {
                             redefine refers capacity: int = 2
                         }
-                        prop {
+                        redefine prop {
                             return AG pair.slots[2] == 7
                         }
                     }
@@ -323,7 +281,7 @@ class ArraySizeFromBindingFlatteningTest : FlatteningTestBase() {
                         contains broken: Store {
                             redefine refers capacity: int = -1
                         }
-                        prop {
+                        redefine prop {
                             return AG true
                         }
                     }
@@ -336,38 +294,7 @@ class ArraySizeFromBindingFlatteningTest : FlatteningTestBase() {
     fun `a class-typed array sized from a binding holds an instance per slot`() {
         val flattened = flatten(
             "Host",
-            """
-                package flattening::size_from_binding
-                class Job {
-                    var done: bool := false
-                    tran finish() {
-                        done := true
-                    }
-                }
-                class Queue {
-                    refers capacity: int
-                    contains first: Job
-                    contains second: Job
-                    var jobs: Job[capacity] := [first, second, ...]
-                    tran run(index: int) {
-                        inline jobs[index].finish()
-                    }
-                }
-                @VerificationCase
-                class Host {
-                    contains queue: Queue {
-                        redefine refers capacity: int = 3
-                    }
-                    var index: int := 0
-                    redefine tran {
-                        havoc(queue.jobs)
-                        inline queue.run(index)
-                    }
-                    prop {
-                        return EF queue.jobs[2] == queue.second
-                    }
-                }
-            """,
+            testModel(javaClass, "class_typed_array.semantifyr"),
         )
 
         val jobs = member("root", "queue", "jobs")
@@ -382,38 +309,7 @@ class ArraySizeFromBindingFlatteningTest : FlatteningTestBase() {
     fun `a slot of an array of records is named by its slot and then its field`() {
         val flattened = flatten(
             "Host",
-            """
-                package flattening::size_from_binding
-                record Message {
-                    var kind: int := 0
-                    var urgent: bool := false
-                }
-                class Store {
-                    refers capacity: int
-                    var messages: Message[capacity] := [Message { kind = 1 }, ...]
-                    var value: Message := Message { kind = 2 }
-                    tran move(index: int) {
-                        messages[index].kind := 3
-                        messages[index] := value
-                        value := messages[0]
-                        messages[index] := messages[index + 1]
-                        messages[messages[0].kind] := Message { urgent = true }
-                    }
-                }
-                @VerificationCase
-                class Host {
-                    contains store: Store {
-                        redefine refers capacity: int = 3
-                    }
-                    var index: int := 0
-                    redefine tran {
-                        inline store.move(index)
-                    }
-                    prop {
-                        return AG !store.messages[2].urgent
-                    }
-                }
-            """,
+            testModel(javaClass, "array_of_records.semantifyr"),
         )
 
         val urgent = flattened.variableNamed(member("root", "store", "messages") + "${RecordFlatteningPass.FIELD_SEPARATOR}urgent_2")
@@ -453,7 +349,7 @@ class ArraySizeFromBindingFlatteningTest : FlatteningTestBase() {
                 redefine tran {
                     %s
                 }
-                prop {
+                redefine prop {
                     return AG !store.hasHead(item)
                 }
             }
@@ -469,24 +365,7 @@ class ArraySizeFromBindingFlatteningTest : FlatteningTestBase() {
     fun `a slot of an array whose lower bound is none takes nothing by assignment at an index`() {
         val flattened = flatten(
             "Host",
-            """
-                package flattening::size_from_binding
-                class Item
-                @VerificationCase
-                class Host {
-                    contains first: Item
-                    var fixedItems: Item[0..2] := [first, first]
-                    var index: int := 0
-                    redefine tran {
-                        var current: Item[0..1] := nothing
-                        fixedItems[0] := nothing
-                        fixedItems[index] := current
-                    }
-                    prop {
-                        return EF fixedItems[0] == nothing
-                    }
-                }
-            """,
+            testModel(javaClass, "lower_bound_none.semantifyr"),
         )
 
         val main = serialize(flattened.inlinedOxsts.mainTransition)
@@ -515,7 +394,7 @@ class ArraySizeFromBindingFlatteningTest : FlatteningTestBase() {
                 redefine tran {
                     inline store.step()
                 }
-                prop {
+                redefine prop {
                     return AG !store.same
                 }
             }
@@ -548,7 +427,7 @@ class ArraySizeFromBindingFlatteningTest : FlatteningTestBase() {
                         contains store: Store {
                             redefine refers capacity: int = 1
                         }
-                        prop {
+                        redefine prop {
                             return AG true
                         }
                     }
@@ -561,26 +440,7 @@ class ArraySizeFromBindingFlatteningTest : FlatteningTestBase() {
     fun `an initial value longer than the size stands at a size of none`() {
         val flattened = flatten(
             "Host",
-            """
-                package flattening::size_from_binding
-                class Store {
-                    refers capacity: int
-                    var slots: int[capacity] := [1, 2, 3, ...]
-                }
-                @VerificationCase
-                class Host {
-                    contains store: Store {
-                        redefine refers capacity: int = 0
-                    }
-                    var count: int := 0
-                    redefine tran {
-                        count := count + 1
-                    }
-                    prop {
-                        return AG count >= 0
-                    }
-                }
-            """,
+            testModel(javaClass, "initial_value_longer_than_size.semantifyr"),
         )
 
         assertThat(flattened.slotNames("store")).isEmpty()

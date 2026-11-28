@@ -6,7 +6,7 @@ name: Deploy Observability
 on:
   push:
     branches: [ "main" ]
-    paths: [ "deploy/observability/**", "deploy/edge/deploy.sh" ]
+    paths: [ "deploy/observability/**", ".github/scripts/deploy-compose-project.sh" ]
   workflow_dispatch:
 permissions: {}
 jobs:
@@ -21,33 +21,29 @@ jobs:
     environment: live-fured
     steps:
       - name: Checkout code
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Make the dashboards of each environment
         run: |
           release="$RUNNER_TEMP/release"
           mkdir "$release"
-          cp deploy/observability/* deploy/edge/deploy.sh "$release"
+          cp deploy/observability/* "$release"
+          cp .github/scripts/deploy-compose-project.sh "$release/deploy.sh"
           rm "$release"/env.example "$release"/live-*
+          mkdir -p "$release/dashboards/production" "$release/dashboards/staging"
           for source in deploy/observability/live-*.json; do
             name=${source##*/live-}
-            sed -e 's/@instance@/semantifyr-live/g' -e 's/@environment@/production/g' "$source" > "$release/production-$name"
-            sed -e 's/@instance@/semantifyr-live-staging/g' -e 's/@environment@/staging/g' "$source" > "$release/staging-$name"
+            sed -e 's/@instance@/semantifyr-live/g' -e 's/@environment@/production/g' "$source" > "$release/dashboards/production/$name"
+            sed -e 's/@instance@/semantifyr-live-staging/g' -e 's/@environment@/staging/g' "$source" > "$release/dashboards/staging/$name"
           done
       - name: Check the dashboards
-        run: jq empty "$RUNNER_TEMP"/release/*.json
+        run: jq empty "$RUNNER_TEMP"/release/*.json "$RUNNER_TEMP"/release/dashboards/*/*.json
       - name: Configure SSH
-        env:
-          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
-          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
-          DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
-          DEPLOY_PORT: ${{ vars.DEPLOY_PORT }}
-          DEPLOY_USER: ${{ vars.DEPLOY_USER }}
-        run: |
-          install -d -m 700 ~/.ssh
-          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/deploy
-          chmod 600 ~/.ssh/deploy
-          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
-          printf 'Host live\n  HostName %s\n  Port %s\n  User %s\n  IdentityFile ~/.ssh/deploy\n' \
-            "$DEPLOY_HOST" "$DEPLOY_PORT" "$DEPLOY_USER" > ~/.ssh/config
+        uses: ./.github/actions/ssh
+        with:
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          known-hosts: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+          host: ${{ vars.DEPLOY_HOST }}
+          port: ${{ vars.DEPLOY_PORT }}
+          user: ${{ vars.DEPLOY_USER }}
       - name: Deploy
-        run: tar -C "$RUNNER_TEMP/release" -cz . | ssh live observability
+        run: tar -C "$RUNNER_TEMP/release" -cz . | ssh fured observability

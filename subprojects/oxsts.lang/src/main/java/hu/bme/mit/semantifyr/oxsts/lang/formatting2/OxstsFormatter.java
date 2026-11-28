@@ -61,7 +61,9 @@ public class OxstsFormatter extends AbstractJavaFormatter {
     }
 
     protected void formatDeclaration(EObject declaration, IFormattableDocument document) {
-        if (startsPackageSection(declaration)) {
+        if (startsFile(previousHiddenRegion(declaration))) {
+            document.set(previousHiddenRegion(declaration), this::noSpace);
+        } else if (startsPackageSection(declaration)) {
             document.set(previousHiddenRegion(declaration), this::blankLine);
         } else if (startsBlock(declaration)) {
             document.set(previousHiddenRegion(declaration), this::newLine);
@@ -72,6 +74,12 @@ public class OxstsFormatter extends AbstractJavaFormatter {
         formatCurlyBrackets(declaration, document);
         document.prepend(regionFor(declaration).keyword("("), this::noSpace);
         formatCallBrackets(declaration, document);
+    }
+
+    protected boolean startsFile(IHiddenRegion hiddenRegion) {
+        return hiddenRegion != null
+                && hiddenRegion.getPreviousSemanticRegion() == null
+                && !hiddenRegion.containsComment();
     }
 
     protected boolean startsPackageSection(EObject declaration) {
@@ -295,6 +303,8 @@ public class OxstsFormatter extends AbstractJavaFormatter {
         formatTypeColon(featureDeclaration, document);
 
         document.append(regionFor(featureDeclaration).keyword("redefine"), this::oneSpace);
+        document.append(regionFor(featureDeclaration).keyword("global"), this::oneSpace);
+        document.append(regionFor(featureDeclaration).keyword("derived"), this::oneSpace);
         document.append(
                 regionFor(featureDeclaration).feature(OxstsPackage.Literals.FEATURE_DECLARATION__KIND), this::oneSpace);
         document.surround(regionFor(featureDeclaration).keyword("subsets"), this::oneSpace);

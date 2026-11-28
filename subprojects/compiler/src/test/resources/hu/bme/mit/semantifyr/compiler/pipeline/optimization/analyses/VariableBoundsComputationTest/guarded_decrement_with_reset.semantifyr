@@ -1,0 +1,23 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+inlined oxsts of semantifyr::Anything
+var timer: int := 0
+init {
+    timer := 3
+}
+tran {
+    choice {
+        if (timer > 0) {
+            timer := timer - 1
+        }
+    } or {
+        timer := 3
+    }
+}
+prop {
+    AG (timer >= 0)
+}

@@ -17,7 +17,7 @@ class CounterReachesThree {
         }
     }
 
-    prop {
+    redefine prop {
         return EF x == 3
     }
 }

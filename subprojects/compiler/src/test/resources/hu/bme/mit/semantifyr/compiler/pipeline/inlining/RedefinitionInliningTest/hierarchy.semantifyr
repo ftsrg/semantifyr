@@ -1,0 +1,30 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package inlining::tests
+
+class Base {
+    tran act() {
+    }
+}
+class Child : Base {
+    var count: int := 0
+    redefine tran act() {
+        count := 10
+    }
+}
+class Middle : Base {
+    var middleCount: int := 0
+    redefine tran act() {
+        middleCount := 1
+    }
+}
+class Leaf : Middle {
+    var leafCount: int := 0
+    redefine tran act() {
+        leafCount := 2
+    }
+}

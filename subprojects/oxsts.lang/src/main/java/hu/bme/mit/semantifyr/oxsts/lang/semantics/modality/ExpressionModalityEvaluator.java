@@ -170,28 +170,19 @@ public class ExpressionModalityEvaluator extends ExpressionEvaluator<Modality> {
             return Modality.RUNTIME;
         }
         return switch (element) {
-            // Constant - no context needed at all.
             case EnumLiteral ignored -> Modality.CONSTANT;
             case EnumDeclaration ignored -> Modality.CONSTANT;
             case DataTypeDeclaration ignored -> Modality.CONSTANT;
-            // Compile-time - needs an instance context but no runtime state.
             case FeatureDeclaration ignored -> Modality.COMPILE_TIME;
             case ClassDeclaration ignored -> Modality.COMPILE_TIME;
             case RecordDeclaration ignored -> Modality.COMPILE_TIME;
-            // Parameters: optimistic. A parameter's effective modality is
-            // the modality of the argument at the call site, which we
-            // validate separately. Treating them as COMPILE_TIME lets
-            // parametric compile-time calls pass the body-level check.
+            // FIXME: this is not always the case!
             case ParameterDeclaration ignored -> Modality.COMPILE_TIME;
             // `inline for` substitutes its loop variable before the body is evaluated.
             case VariableDeclaration variable
             when variable.eContainer() instanceof InlineForOperation forOperation
                     && forOperation.getLoopVariable() == variable -> Modality.COMPILE_TIME;
-            // Runtime - reading state that only exists when the model executes.
             case VariableDeclaration ignored -> Modality.RUNTIME;
-            // Calls resolve through CallSuffixExpression; a direct reference
-            // to a transition / property declaration (without a call) is
-            // unusual. Treat conservatively.
             case TransitionDeclaration ignored -> Modality.RUNTIME;
             case PropertyDeclaration ignored -> Modality.RUNTIME;
             default -> Modality.RUNTIME;

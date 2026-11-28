@@ -7,6 +7,7 @@
 package hu.bme.mit.semantifyr.compiler.pipeline.optimization.analyses
 
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.eAllOfType
+import hu.bme.mit.semantifyr.oxsts.lang.tests.utils.TestModels.testModel
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.InlinedOxsts
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 import org.assertj.core.api.Assertions.assertThat
@@ -220,24 +221,7 @@ class ConstantValueAnalysisTest : AnalysisTestBase() {
     @Test
     fun `a declaration that init must overwrite and only tran reads leaves the variable constant`() {
         val (inlined, result) = runConstantValue(
-            """
-                inlined oxsts of semantifyr::Anything
-                var overwritten: int := 0
-                var copy: int := 3
-                init {
-                    choice {
-                        overwritten := 3
-                    } or {
-                        overwritten := 3
-                    }
-                }
-                tran {
-                    copy := overwritten
-                }
-                prop {
-                    AG (copy == 3)
-                }
-            """,
+            testModel(javaClass, "init_overwritten_declaration.semantifyr"),
         )
 
         assertThat(result.isConstant(inlined.varNamed("overwritten"))).isTrue

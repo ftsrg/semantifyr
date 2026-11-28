@@ -7,6 +7,7 @@
 package hu.bme.mit.semantifyr.compiler.pipeline.optimization.analyses
 
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.eAllOfType
+import hu.bme.mit.semantifyr.oxsts.lang.tests.utils.TestModels.testModel
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssignmentOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssumptionOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ComparisonOperator
@@ -139,24 +140,7 @@ class ReachingDefinitionsAnalysisTest : AnalysisTestBase() {
     @Test
     fun `tran read of variable with init choice writing on every branch does not see the initializer`() {
         val (inlined, result) = runReachingDefinitions(
-            """
-                inlined oxsts of semantifyr::Anything
-                var current: int := -1
-                var copy: int := 0
-                init {
-                    choice {
-                        current := 0
-                    } or {
-                        current := 1
-                    }
-                }
-                tran {
-                    copy := current
-                }
-                prop {
-                    AG true
-                }
-            """,
+            testModel(javaClass, "init_choice_writing_every_branch.semantifyr"),
         )
 
         val current = inlined.varNamed("current")
@@ -231,24 +215,7 @@ class ReachingDefinitionsAnalysisTest : AnalysisTestBase() {
     @Test
     fun `init if with both branches writing the variable is a must-write`() {
         val (inlined, result) = runReachingDefinitions(
-            """
-                inlined oxsts of semantifyr::Anything
-                var source: int := 0
-                var copy: int := 0
-                init {
-                    if (true) {
-                        source := 1
-                    } else {
-                        source := 2
-                    }
-                }
-                tran {
-                    copy := source
-                }
-                prop {
-                    AG true
-                }
-            """,
+            testModel(javaClass, "init_if_writing_both_branches.semantifyr"),
         )
 
         val source = inlined.varNamed("source")

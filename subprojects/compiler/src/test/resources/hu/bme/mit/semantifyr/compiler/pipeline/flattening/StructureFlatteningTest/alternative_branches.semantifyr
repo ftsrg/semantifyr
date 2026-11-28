@@ -1,0 +1,25 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package flattening::tests
+
+@VerificationCase
+class Host {
+    var counter: int := 0
+    redefine init {
+        counter := 1
+    } or {
+        counter := 2
+    }
+    redefine tran {
+        counter := counter + 1
+    } or {
+        counter := counter - 1
+    }
+    redefine prop {
+        return AG true
+    }
+}

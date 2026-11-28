@@ -1,0 +1,41 @@
+# SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+#
+# SPDX-License-Identifier: EPL-2.0
+
+name: frontend-tests
+description: Puts corpus-check on the PATH and the frontend's launcher in LAUNCHER.
+inputs:
+  frontend:
+    description: The frontend, gamma or sysml.
+    required: true
+runs:
+  using: composite
+  steps:
+    - name: Set up the toolchain
+      uses: ./.github/actions/toolchain
+      with:
+        gradle: 'false'
+    - name: Install the backends
+      uses: ./.github/actions/backends
+    - name: Download the launcher
+      uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+      with:
+        name: ${{ inputs.frontend }}-cli
+        path: ${{ runner.temp }}/downloads
+    - name: Download the frontend test harness
+      uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+      with:
+        name: frontend-tests
+        path: ${{ runner.temp }}/downloads
+    - name: Unpack them
+      shell: sh
+      env:
+        FRONTEND: ${{ inputs.frontend }}
+      run: |
+        cd "$RUNNER_TEMP"
+        mkdir frontend-tests
+        tar -xzf downloads/frontend-tests.tar.gz -C frontend-tests
+        unzip -q frontend-tests/corpus-check/build/distributions/corpus-check-*.zip -d harness
+        unzip -q downloads/semantifyr-"$FRONTEND"-*.zip -d launcher
+        echo "$RUNNER_TEMP"/harness/corpus-check-*/bin >> "$GITHUB_PATH"
+        echo "LAUNCHER=$(echo "$RUNNER_TEMP"/launcher/semantifyr-"$FRONTEND"-*/bin/semantifyr-"$FRONTEND")" >> "$GITHUB_ENV"

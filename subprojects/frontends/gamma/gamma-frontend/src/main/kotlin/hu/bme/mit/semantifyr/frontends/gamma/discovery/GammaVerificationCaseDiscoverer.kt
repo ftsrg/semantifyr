@@ -28,7 +28,6 @@ class GammaVerificationCaseDiscoverer @Inject constructor(
 
     private fun qualifiedNameOf(declaration: VerificationCaseDeclaration): String {
         val qualifiedName = qualifiedNameProvider.getFullyQualifiedName(declaration) ?: error("Cannot compute qualified name for verification case '${declaration.name}'")
-        // the name is a directory of the verify run, so it avoids the colons of the Gamma qualified name
         return qualifiedName.toString(".")
     }
 

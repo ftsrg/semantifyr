@@ -10,7 +10,7 @@ import com.google.inject.Inject
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.VariableDeclaration
 import org.eclipse.emf.ecore.EObject
 
-// the translation declares integers unbounded and clocks real, and BDDs need finite domains
+// the transformation declares integers unbounded and clocks real, and BDDs need finite domains
 class NuxmvBddCapabilityChecker @Inject constructor(
     nuxmvVariableTransformer: NuxmvVariableTransformer,
 ) : NuxmvCapabilityChecker(nuxmvVariableTransformer) {

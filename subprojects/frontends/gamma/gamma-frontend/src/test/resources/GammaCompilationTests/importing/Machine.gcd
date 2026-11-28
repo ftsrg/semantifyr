@@ -1,0 +1,25 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Semantifyr Authors
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+package test::machine
+
+import library::control
+
+statechart Machine [
+    port Control : provides Control
+] {
+    region Main {
+        initial MainInitial
+        state Idle
+        state Busy
+    }
+    transition from MainInitial to Idle
+    transition from Idle to Busy when Control.start
+}
+
+verification case BusyReachable of Machine {
+    EF state Main.Busy
+}

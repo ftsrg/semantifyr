@@ -1,0 +1,69 @@
+---
+title: Gamma Semantic Decisions
+sidebar_label: Semantic Decisions
+sidebar_position: 4
+description: What the Gamma semantic library decides where Gamma leaves a choice, and where it differs from Gamma.
+---
+
+# Gamma Semantic Decisions
+
+The Gamma frontend gives a model the meaning Gamma gives it, as the Gamma semantic library writes it in the Semantifyr Language, except in the differences it declares at the end of this page. The sections below state what the library assumes where Gamma leaves a choice or where the library simplifies, and those differences.
+
+## The Step
+
+A verification runs the component of its case in steps, from the state its `init` reaches. Before each step time passes, as the [Semantifyr Language's time](../../language/reference/classes-and-behaviour/time.md) has it and the component's scheduling constraint bounds it, and then the step does four things in order:
+
+1. Every timeout of the component, at any depth, that has not expired expires or stays, as the next section states.
+2. The output events raised in the step before are cleared.
+3. The environment raises any of the component's input events, each with any value of its parameters, or none.
+4. The component runs once, as its kind of composition runs its parts.
+
+## Time
+
+A model counts time in one unit: the greatest common divisor in milliseconds of every constant time value in the model and the packages it reaches, the periods of scheduling constraints included, or one millisecond when it has none.
+
+Without a scheduling constraint any amount of time passes before every step, zero and fractions included. A statechart, a synchronous composite and a cascade composite may hold one scheduling constraint, in Gamma's words, `scheduling-constraint { minimum-orchestrating-period : 1 s maximum-orchestrating-period : 1 s }`, both periods in `ms` or `s` and the maximum not below the minimum. A case that verifies the component then takes its first step no sooner than the minimum and no later than the maximum after the start, and every later step likewise after the one before it, as Gamma's analysis under that constraint does. The constraint of a component that another one runs, a part of a composite or the component under an adapter, bounds nothing, and an asynchronous component takes none.
+
+A timeout is a clock with a flag that says whether it has expired. A timeout that was never set has expired from the start. Setting a timeout starts its clock from zero and clears the flag, and a timeout trigger reads the flag alone. When a step starts, a timeout that has not expired stays while its clock is below its value, expires once the clock is above it, and does either one exactly at it, as a cycle of Gamma's analysis over dense time sees it. So a timeout of 500 ms has expired in the first step that comes more than half a second after it was set, may have in one that comes exactly then, and stays expired until it is set again.
+
+## Events
+
+An output event raised in a step stays raised until the next step starts, so a case's property sees it in the state after the step. An input event lasts for the step it arrives in. An asynchronous adapter is the exception, as the next section states.
+
+## Asynchronous Composition
+
+An asynchronous component takes part in the step with three differences: the environment puts messages into its queues instead of raising its input events, the output events of its adapters are not cleared when the step starts, and its run is a turn of its adapters.
+
+### Turns
+
+An asynchronous composite gives one of its adapters a turn in a step, any one of them; a scheduled asynchronous composite gives a turn to every entry of its execution list, in its order; an adapter that is the case's component has one turn in a step. In its turn an adapter takes one message from its queues and does what its control specification names for it: it runs the wrapped component once, resets it, clears queues, or does nothing. A message taken without a run leaves its event raised until the component's next run, unless a reset clears it, so that run sees it together with the event of the message that runs it. A turn of an adapter whose queues are empty does nothing, so a step may run no component; such a step is still a step, time passes in it, and a property over every state and one over some state both count the state after it.
+
+### Queues and the Environment
+
+A message waits in its queue until a turn takes it. The environment puts messages only into the queues that store messages of the system's ports alone, in every step up to the queue's capacity, each one of any event the queue stores with any values of its parameters, or none, and never into a full queue. Into a queue below another queue of its adapter in priority it puts a message only while that queue and the queues above it hold fewer messages than the adapter has turns in a step, as Gamma's analysis does.
+
+### Clocks
+
+A clock counts the time that passes and ticks exactly once every rate: no step waits past its next tick. When the asynchronous component's schedule starts, after time has passed and before any adapter takes its message, a clock that has reached its rate may tick: it starts counting from zero again and puts a tick into each queue that stores it, so a tick can be taken in the step it is put in. A step at the tick's instant may come before the tick, which then comes in a later step at the same instant, as the tick and a cycle interleave in Gamma's analysis over dense time.
+
+### Events of an Adapter
+
+An adapter clears the wrapped component's output events when it runs the component. An output bound to a port of the system, which a case's property can see, stays raised until the adapter runs or resets the component again. An output that a channel carries into a queue is put into the queue in the adapter's turn and reset there. An output of a provided port whose interface has `out` events alone, the one kind of port that may be both on a channel and bound to a port of the system, is not reset there when it is bound: it stays raised and is put into that queue again at every later turn of its adapter, a turn for each entry of an execution list that names the adapter, until the adapter runs or resets the component.
+
+### Reset
+
+A queue reset on the same message takes the place of the `reset` control function. The reset leaves the timeouts, which the states it enters set, the queues and the clocks as they are.
+
+## What a Verdict Covers
+
+Every test the library makes of a timeout, a clock or a scheduling constraint is a [closed clock test](../../language/reference/classes-and-behaviour/time.md#closed-clock-tests), so a run of a timed model is a run over dense time on every backend, and a proof of it is trusted from every backend configuration that is exact, Theta's included, as [the backends' pages](../../backends/index.mdx) say. Apart from the [deviations](#declared-differences), the asynchronous composition keeps the runs of Gamma's analysis with the optimization of the environment's queues switched off, the environment's bound on a queue of lower priority included, since that bound is Gamma's own. A failed `AG` and a passed `EF` rest on one run the library found, which Gamma admits too unless a deviation is involved in it: then the run may be one Gamma excludes.
+
+## Declared Differences
+
+Every other supported construct behaves as it does in Gamma.
+
+- **Time passing**, an abstraction: Gamma's analysis without a scheduling constraint, over dense time on Uppaal, also brings a cycle within the model's greatest time value, and the library does not. The bound changes no verdict, since a longer wait shows a component nothing more once every timeout it set has expired.
+- **A written priority under priority off**, a deviation: the library ignores the priority, and the validator warns that it has no effect, where Gamma's transformation honours it.
+- **Queues as written**, a deviation: Gamma's default analysis shrinks a queue the environment fills to the smaller of its capacity and the adapter's turns in a step, and gives an adapter at the root that it can simplify no queue. The library keeps every queue as written, as Gamma does with that optimization switched off.
+- **An output event reaching several queues**, a deviation: every queue receives the event with its parameter values, where Gamma's transformation resets the parameters after the first queue, so a later queue receives default values, and of several simple channels from one port serves only the first.
+- **Verification cases**, a deviation: a case names its component in its header and holds its property as its body, where Gamma keeps properties in a separate property file. The atoms of a property resolve in the component's scope, without a named instance and without `self`.

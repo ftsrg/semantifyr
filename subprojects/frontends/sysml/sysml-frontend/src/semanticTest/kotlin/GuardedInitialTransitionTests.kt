@@ -13,20 +13,23 @@ import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
 import java.nio.file.Path
+import kotlin.io.path.Path
 
 class GuardedInitialTransitionTests {
     companion object {
         private val helper = SysMLv2FrontendTestHelper()
         private val artifactRoot = SysMLv2FrontendTestHelper.testArtifactRoot(GuardedInitialTransitionTests::class.java)
 
+        private val fixture = Path("src", "semanticTest", "resources", "GuardedInitialTransitionTests")
+
         private val MODEL: Path by lazy {
-            SysMLv2FrontendTestHelper.guardedInitialTransitionModel(artifactRoot.resolve("workspace"))
+            SysMLv2FrontendTestHelper.guardedInitialTransitionModel(fixture, artifactRoot.resolve("workspace"))
         }
 
         @JvmStatic
         fun `Guarded Initial Transition Cases Should Pass`(): List<Arguments> {
             return SysMLv2Variant.entries.flatMap { variant ->
-                SysMLv2FrontendTestHelper.guardedInitialTransitionEntries(variant).map {
+                SysMLv2FrontendTestHelper.guardedInitialTransitionEntries(fixture, variant).map {
                     Arguments.of(variant, it)
                 }
             }

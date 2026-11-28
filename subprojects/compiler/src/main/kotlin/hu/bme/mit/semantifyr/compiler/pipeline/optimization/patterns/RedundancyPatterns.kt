@@ -10,6 +10,7 @@ import hu.bme.mit.semantifyr.compiler.pipeline.optimization.CompositeOptimizatio
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.OptimizationPattern
 import hu.bme.mit.semantifyr.compiler.pipeline.optimization.Worklist
 import hu.bme.mit.semantifyr.compiler.pipeline.utils.OxstsFactory
+import hu.bme.mit.semantifyr.compiler.pipeline.utils.mayHaveNoValue
 import hu.bme.mit.semantifyr.oxsts.lang.utils.OxstsUtils
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.AssumptionOperation
 import hu.bme.mit.semantifyr.oxsts.model.oxsts.ChoiceOperation
@@ -84,7 +85,7 @@ class RemoveEmptyForPattern : OptimizationPattern {
         if (element !is ForOperation) {
             return false
         }
-        if (element.body.steps.isNotEmpty()) {
+        if (element.body.steps.isNotEmpty() || element.rangeExpression.mayHaveNoValue()) {
             return false
         }
         val parent = element.eContainer() ?: return false
@@ -107,6 +108,9 @@ class RemoveEmptyIfBodyPattern : OptimizationPattern {
         val parent = element.eContainer() ?: return false
 
         if (element.`else` == null) {
+            if (element.guard.mayHaveNoValue()) {
+                return false
+            }
             EcoreUtil2.remove(element)
             worklist.add(parent)
         } else {

@@ -9,6 +9,7 @@ package hu.bme.mit.semantifyr.verifier.witness
 import com.google.inject.Inject
 import com.google.inject.Injector
 import hu.bme.mit.semantifyr.backend.VerificationVerdict
+import hu.bme.mit.semantifyr.backend.testModel
 import hu.bme.mit.semantifyr.backend.witness.Fraction
 import hu.bme.mit.semantifyr.backend.witness.InlinedWitness
 import hu.bme.mit.semantifyr.backend.witness.WitnessClockValue
@@ -86,7 +87,7 @@ class BackAnnotationFidelityTest {
 
     @Test
     fun `a step's calls list only the calls that fired in it`(@TempDir output: Path) {
-        val case = loadText("tracing.semantifyr", TRACING_MODEL, TRACING_CASE)
+        val case = load("tracing.semantifyr", TRACING_CASE)
 
         val compilation = compile(case, output)
         val model = compilation.inlinedOxsts
@@ -118,7 +119,7 @@ class BackAnnotationFidelityTest {
 
     @Test
     fun `an array is reported and back-annotated slot by slot, each slot with its array, a slot the run does not show left out`(@TempDir output: Path) {
-        val case = loadText("arrays.semantifyr", ARRAYS_MODEL, ARRAY_SLOTS_CASE)
+        val case = load("arrays.semantifyr", ARRAY_SLOTS_CASE)
         val slots = (0..2).map {
             flattenedName("root", "slots_$it")
         }
@@ -158,7 +159,7 @@ class BackAnnotationFidelityTest {
 
     @Test
     fun `record field values reach the report and the back-annotated witness by field path`(@TempDir output: Path) {
-        val case = loadText("records.semantifyr", RECORDS_MODEL, CONTAINED_RECORD_CASE)
+        val case = load("records.semantifyr", CONTAINED_RECORD_CASE)
         val positionX = flattenedName("root", "robot", "position") + "${RecordFlatteningPass.FIELD_SEPARATOR}x"
 
         val compilation = compile(case, output)
@@ -180,7 +181,7 @@ class BackAnnotationFidelityTest {
 
     @Test
     fun `class-typed array slots back-annotate to the instance path they hold`(@TempDir output: Path) {
-        val case = loadText("arrays.semantifyr", ARRAYS_MODEL, CLASS_TYPED_ARRAY_CASE)
+        val case = load("arrays.semantifyr", CLASS_TYPED_ARRAY_CASE)
         val slots = (0..1).map {
             flattenedName("root", "queue_$it")
         }
@@ -210,7 +211,7 @@ class BackAnnotationFidelityTest {
 
     @Test
     fun `a run's trace holds its states, steps and calls, and its witness model starts at the initialized step and assumes each state by feature paths`(@TempDir output: Path) {
-        val case = loadText("tracing.semantifyr", TRACING_MODEL, TRACING_CASE)
+        val case = load("tracing.semantifyr", TRACING_CASE)
 
         val compilation = compile(case, output)
         val model = compilation.inlinedOxsts
@@ -270,7 +271,7 @@ class BackAnnotationFidelityTest {
 
     @Test
     fun `the report lists the observed transitions and the type of every variable a state holds`(@TempDir output: Path) {
-        val case = loadText("tracing.semantifyr", TRACING_MODEL, TRACING_CASE)
+        val case = load("tracing.semantifyr", TRACING_CASE)
 
         val compilation = compile(case, output)
         val model = compilation.inlinedOxsts
@@ -298,7 +299,7 @@ class BackAnnotationFidelityTest {
 
     @Test
     fun `a slot of an array of records is held under the slot's key as an object of its kept fields and back-annotates field by field`(@TempDir output: Path) {
-        val case = loadText("records.semantifyr", RECORDS_MODEL, RECORD_ARRAY_CASE)
+        val case = load("records.semantifyr", RECORD_ARRAY_CASE)
         val readings = flattenedName("root", "store", "readings") + RecordFlatteningPass.FIELD_SEPARATOR
 
         val compilation = compile(case, output)
@@ -337,7 +338,7 @@ class BackAnnotationFidelityTest {
 
     @Test
     fun `a call with a run-time argument reports the value of its last run in the step and not in the states`(@TempDir output: Path) {
-        val case = loadText("run_time_argument.semantifyr", RUN_TIME_ARGUMENT_MODEL, "semantifyr::verification::report::run_time_argument::RunTimeArgumentReach")
+        val case = load("run_time_argument.semantifyr", "semantifyr::verification::report::run_time_argument::RunTimeArgumentReach")
         val item = flattenedName("root", "port", "item")
         val tracer = TransitionTracerNames.tracerName(0)
         val argument = TransitionTracerNames.argumentName(0, "value")
@@ -368,7 +369,7 @@ class BackAnnotationFidelityTest {
 
     @Test
     fun `the witness model of a result with clocks assumes the scaled time and clock values after each step`(@TempDir output: Path) {
-        val case = loadText("timed.semantifyr", TIMED_MODEL, TIMED_CASE)
+        val case = load("timed.semantifyr", TIMED_CASE)
 
         val compilation = compile(case, output)
         val model = compilation.inlinedOxsts
@@ -394,7 +395,7 @@ class BackAnnotationFidelityTest {
 
     @Test
     fun `the report names a variable and a parameter typed by a feature by the feature's qualified name`(@TempDir output: Path) {
-        val case = loadText("feature_typed.semantifyr", FEATURE_TYPED_MODEL, "semantifyr::verification::report::feature_typed::FeatureTypedPick")
+        val case = load("feature_typed.semantifyr", "semantifyr::verification::report::feature_typed::FeatureTypedPick")
         val current = flattenedName("root", "scheduler", "current")
         val tracer = TransitionTracerNames.tracerName(0)
 
@@ -430,7 +431,7 @@ class BackAnnotationFidelityTest {
 
     @Test
     fun `a variable of a package-level global is reported and assumed by its path`(@TempDir output: Path) {
-        val case = loadText("globals.semantifyr", GLOBALS_MODEL, "semantifyr::verification::report::globals::GlobalTickReach")
+        val case = load("globals.semantifyr", "semantifyr::verification::report::globals::GlobalTickReach")
 
         val compilation = compile(case, output)
         val model = compilation.inlinedOxsts
@@ -455,7 +456,7 @@ class BackAnnotationFidelityTest {
 
     @Test
     fun `a variable of the verification case itself is reported and assumed under the root instance`(@TempDir output: Path) {
-        val case = loadText("branches.semantifyr", CHOICE_MODEL, "semantifyr::verification::report::branches::ChoiceBranchReach")
+        val case = load("branches.semantifyr", "semantifyr::verification::report::branches::ChoiceBranchReach")
         val branch = flattenedName("root", "branch")
 
         val compilation = compile(case, output)
@@ -476,7 +477,7 @@ class BackAnnotationFidelityTest {
 
     @Test
     fun `the calls of a step are nested as they called each other and in run order`(@TempDir output: Path) {
-        val case = loadText("nested_calls.semantifyr", NESTED_CALLS_MODEL, NESTED_CALLS_CASE)
+        val case = load("nested_calls.semantifyr", NESTED_CALLS_CASE)
 
         val compilation = compile(case, output)
         val model = compilation.inlinedOxsts
@@ -504,7 +505,7 @@ class BackAnnotationFidelityTest {
 
     @Test
     fun `a call that ran without the call enclosing it fails the trace`(@TempDir output: Path) {
-        val case = loadText("nested_calls.semantifyr", NESTED_CALLS_MODEL, NESTED_CALLS_CASE)
+        val case = load("nested_calls.semantifyr", NESTED_CALLS_CASE)
 
         val compilation = compile(case, output)
         val model = compilation.inlinedOxsts
@@ -527,7 +528,7 @@ class BackAnnotationFidelityTest {
 
     @Test
     fun `the witness model of a failed verdict holds the negated property and of a passed one the property itself`(@TempDir output: Path) {
-        val case = loadText("tracing.semantifyr", TRACING_MODEL, TRACING_CASE)
+        val case = load("tracing.semantifyr", TRACING_CASE)
 
         val compilation = compile(case, output)
         val model = compilation.inlinedOxsts
@@ -544,7 +545,7 @@ class BackAnnotationFidelityTest {
 
     @Test
     fun `a time scale beyond what a witness model can hold fails the witness model`(@TempDir output: Path) {
-        val case = loadText("timed.semantifyr", TIMED_MODEL, TIMED_CASE)
+        val case = load("timed.semantifyr", TIMED_CASE)
         val tiny = Fraction.of(BigInteger.ONE, BigInteger.TWO.pow(40))
         val trace = ReportTrace(
             transitions = emptyList(),
@@ -578,7 +579,7 @@ class BackAnnotationFidelityTest {
 
     @Test
     fun `a report that holds no value for a clock of the verified model fails the witness model`(@TempDir output: Path) {
-        val case = loadText("timed.semantifyr", TIMED_MODEL, TIMED_CASE)
+        val case = load("timed.semantifyr", TIMED_CASE)
         val trace = timedTrace(
             ReportState(emptyMap()),
         )
@@ -592,7 +593,7 @@ class BackAnnotationFidelityTest {
 
     @Test
     fun `a report that names a variable the verified model does not hold fails the witness model`(@TempDir output: Path) {
-        val case = loadText("timed.semantifyr", TIMED_MODEL, TIMED_CASE)
+        val case = load("timed.semantifyr", TIMED_CASE)
         val trace = timedTrace(
             ReportState(
                 mapOf(
@@ -611,7 +612,7 @@ class BackAnnotationFidelityTest {
 
     @Test
     fun `a reference to no instance is null, to several an array of paths, and a call is made on one instance`(@TempDir output: Path) {
-        val case = loadText("tracing.semantifyr", TRACING_MODEL, TRACING_CASE)
+        val case = load("tracing.semantifyr", TRACING_CASE)
         val compilation = compile(case, output)
         val converter = injector.getInstance(ReportValueConverter::class.java)
         val lamps = compilation.rootInstance.treeSequence().filter {
@@ -665,13 +666,12 @@ class BackAnnotationFidelityTest {
         )
     }
 
-    private fun loadText(
+    private fun load(
         fileName: String,
-        text: String,
         qualifiedName: String,
     ): VerificationCase {
         val path = models.resolve(fileName)
-        path.writeText(text)
+        path.writeText(testModel(fileName))
         val context = loader.loadStandaloneModel(path)
         return discoverer.findByQualifiedName(context, qualifiedName)
     }
@@ -747,334 +747,5 @@ class BackAnnotationFidelityTest {
         private const val CLASS_TYPED_ARRAY_CASE = "semantifyr::verification::report::arrays::ClassTypedArrayDispatchReach"
         private const val CONTAINED_RECORD_CASE = "semantifyr::verification::report::records::ContainedRecordReach"
         private const val RECORD_ARRAY_CASE = "semantifyr::verification::report::records::RecordArrayRuntimeIndexReach"
-
-        private val TRACING_MODEL = """
-            package semantifyr::verification::report::tracing
-
-            class Lamp {
-                var on: bool := false
-
-                @Trace
-                tran toggle(partner: Lamp) {
-                    on := !on
-                }
-            }
-
-            class Room {
-                contains lamp: Lamp
-            }
-
-            @VerificationCase
-            class TracedChoiceBranchReach {
-                contains kitchen: Room
-                contains hall: Room
-
-                redefine tran {
-                    choice {
-                        inline kitchen.lamp.toggle(hall.lamp)
-                    } or {
-                        inline hall.lamp.toggle(kitchen.lamp)
-                    }
-                }
-
-                prop {
-                    return EF (kitchen.lamp.on && !hall.lamp.on)
-                }
-            }
-        """.trimIndent()
-
-        private val ARRAYS_MODEL = """
-            package semantifyr::verification::report::arrays
-
-            class Job {
-                var done: bool := false
-
-                tran finish() {
-                    done := true
-                }
-            }
-
-            @VerificationCase
-            class ArraySlotIndependenceReach {
-                var slots: int[3] := [0, 0, 0]
-
-                redefine tran {
-                    choice {
-                        slots[0] := slots[0] + 1
-                    } or {
-                        slots[1] := slots[1] + 1
-                    } or {
-                        slots[2] := slots[2] + 1
-                    }
-                }
-
-                prop {
-                    return EF (slots[0] == 1 && slots[1] == 1 && slots[2] == 1)
-                }
-            }
-
-            @VerificationCase
-            class ClassTypedArrayDispatchReach {
-                contains first: Job
-                contains second: Job
-                var queue: Job[2] := [first, second]
-                var index: int := 0
-
-                redefine tran {
-                    choice {
-                        inline queue[index].finish()
-                    } or {
-                        assume(index < 1)
-                        index := index + 1
-                    }
-                }
-
-                prop {
-                    return EF (second.done && !first.done)
-                }
-            }
-        """.trimIndent()
-
-        private val RECORDS_MODEL = """
-            package semantifyr::verification::report::records
-
-            record Point {
-                var x: int := 0
-                var y: int := 0
-            }
-
-            record Reading {
-                var value: int := 0
-                var valid: bool := false
-            }
-
-            class Robot {
-                var position: Point := Point { x = 0 }
-
-                tran step() {
-                    assume(position.x < 3)
-                    position.x := position.x + 1
-                }
-            }
-
-            @VerificationCase
-            class ContainedRecordReach {
-                contains robot: Robot
-
-                redefine tran {
-                    inline robot.step()
-                }
-
-                prop {
-                    return EF robot.position.x == 3
-                }
-            }
-
-            class ReadingStore {
-                refers capacity: int
-                var readings: Reading[capacity] := [Reading { value = 0 }, ...]
-
-                tran bump(index: int) {
-                    inline if (capacity > 0) {
-                        readings[index].value := readings[index].value + 1
-                        readings[index].valid := true
-                    }
-                }
-            }
-
-            @VerificationCase
-            class RecordArrayRuntimeIndexReach {
-                contains store: ReadingStore {
-                    redefine refers capacity: int = 3
-                }
-                contains none: ReadingStore {
-                    redefine refers capacity: int = 0
-                }
-                var index: int := 0
-
-                redefine tran {
-                    havoc(index)
-                    assume(0 <= index && index < 3)
-                    inline store.bump(index)
-                    inline none.bump(index)
-                }
-
-                prop {
-                    return EF (store.readings[2].value == 2 && store.readings[2].valid && !store.readings[0].valid)
-                }
-            }
-        """.trimIndent()
-
-        private val GLOBALS_MODEL = """
-            package semantifyr::verification::report::globals
-
-            class GlobalCounter {
-                var tick: int := 0
-            }
-
-            global containment counter: GlobalCounter[1]
-
-            @VerificationCase
-            class GlobalTickReach {
-                redefine tran {
-                    assume(counter.tick < 3)
-                    counter.tick := counter.tick + 1
-                }
-
-                prop {
-                    return EF counter.tick == 3
-                }
-            }
-        """.trimIndent()
-
-        private val CHOICE_MODEL = """
-            package semantifyr::verification::report::branches
-
-            @VerificationCase
-            class ChoiceBranchReach {
-                var branch: int := 0
-
-                redefine tran {
-                    choice {
-                        branch := 1
-                    } or {
-                        branch := 2
-                    }
-                }
-
-                prop {
-                    return EF branch == 1
-                }
-            }
-        """.trimIndent()
-
-        private val NESTED_CALLS_MODEL = """
-            package semantifyr::verification::report::nested_calls
-
-            class Lamp {
-                var on: bool := false
-
-                @Trace
-                tran toggle() {
-                    on := !on
-                }
-            }
-
-            class Panel {
-                contains first: Lamp
-                contains second: Lamp
-
-                @Trace
-                tran press() {
-                    inline second.toggle()
-                    inline first.toggle()
-                }
-            }
-
-            @VerificationCase
-            class PanelPress {
-                contains panel: Panel
-
-                redefine tran {
-                    inline panel.press()
-                }
-
-                prop {
-                    return EF (panel.first.on)
-                }
-            }
-        """.trimIndent()
-
-        private val RUN_TIME_ARGUMENT_MODEL = """
-            package semantifyr::verification::report::run_time_argument
-
-            class Port {
-                var item: int := 0
-
-                @Trace
-                tran send(value: int) {
-                    item := value
-                }
-            }
-
-            @VerificationCase
-            class RunTimeArgumentReach {
-                contains port: Port
-                var count: int := 0
-
-                redefine tran {
-                    choice {
-                        count := 1
-                    } or {
-                        count := 2
-                    }
-                    inline port.send(count)
-                }
-
-                prop {
-                    return EF (port.item == 2)
-                }
-            }
-        """.trimIndent()
-
-        private val FEATURE_TYPED_MODEL = """
-            package semantifyr::verification::report::feature_typed
-
-            class Job {
-                var done: bool := false
-            }
-
-            class Scheduler {
-                contains jobs: Job[0..*]
-                contains first: Job subsets jobs
-                contains second: Job subsets jobs
-                var current: jobs := first
-
-                @Trace
-                tran pick(job: jobs) {
-                    current := job
-                }
-            }
-
-            @VerificationCase
-            class FeatureTypedPick {
-                contains scheduler: Scheduler
-
-                redefine tran {
-                    inline scheduler.pick(scheduler.second)
-                }
-
-                prop {
-                    return EF (scheduler.current == scheduler.second)
-                }
-            }
-        """.trimIndent()
-
-        private val TIMED_MODEL = """
-            package semantifyr::verification::report::timed
-
-            class Timer {
-                var elapsed: clock := 0
-                var fired: bool := false
-
-                tran fire() {
-                    assume(elapsed >= 2)
-                    fired := true
-                }
-            }
-
-            @VerificationCase
-            class TimerFires {
-                contains timer: Timer
-
-                redefine tran {
-                    inline timer.fire()
-                }
-
-                prop {
-                    return EF (timer.fired)
-                }
-            }
-        """.trimIndent()
     }
 }

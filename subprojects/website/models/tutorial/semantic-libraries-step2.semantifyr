@@ -1,0 +1,98 @@
+/**
+ * A small statechart library of states and transitions, a traffic light and a pedestrian light written as data on it.
+ */
+
+class State {
+    container parent: Statechart opposite states
+
+    prop isActive(): bool {
+        return parent.activeState == self
+    }
+
+    tran activate() {
+        parent.activeState := self
+    }
+}
+
+class Transition {
+    refers from: State
+    refers to: State
+
+    @Trace
+    redefine tran {
+        assume(from.isActive())
+        inline to.activate()
+    }
+}
+
+class Statechart {
+    contains states: State[0..*] opposite parent
+    contains transitions: Transition[0..*]
+    refers initial: State
+
+    var activeState: states[0..1] := nothing
+
+    redefine init {
+        inline initial.activate()
+    }
+
+    redefine tran {
+        choice {
+            inline for choice (transition in transitions) {
+                inline transition.main()
+            }
+        } or {
+        }
+    }
+}
+
+class TrafficLight : Statechart {
+    contains red: State subsets states
+    contains yellow: State subsets states
+    contains green: State subsets states
+
+    redefine refers initial: State = red
+
+    contains redToGreen: Transition subsets transitions {
+        redefine refers from: State = red
+        redefine refers to: State = green
+    }
+    contains greenToYellow: Transition subsets transitions {
+        redefine refers from: State = green
+        redefine refers to: State = yellow
+    }
+    contains yellowToRed: Transition subsets transitions {
+        redefine refers from: State = yellow
+        redefine refers to: State = red
+    }
+}
+
+class PedestrianLight : Statechart {
+    contains stop: State subsets states
+    contains walk: State subsets states
+
+    redefine refers initial: State = stop
+
+    contains stopToWalk: Transition subsets transitions {
+        redefine refers from: State = stop
+        redefine refers to: State = walk
+    }
+    contains walkToStop: Transition subsets transitions {
+        redefine refers from: State = walk
+        redefine refers to: State = stop
+    }
+}
+
+@VerificationCase
+class LightCanTurnGreen : TrafficLight {
+    redefine prop {
+        return EF green.isActive()
+    }
+}
+
+@VerificationCase
+class PedestriansCanWalk : PedestrianLight {
+    redefine prop {
+        return EF walk.isActive()
+    }
+}
