@@ -1,3 +1,8 @@
+// SPDX-FileCopyrightText: The contributors to the Gamma project
+// SPDX-FileCopyrightText: 2023-2026 The Semantifyr Authors
+//
+// SPDX-License-Identifier: EPL-1.0
+
 doc
 /*
  * Two traffic lights at a crossroads, cycled by one controller and interrupted by the police.

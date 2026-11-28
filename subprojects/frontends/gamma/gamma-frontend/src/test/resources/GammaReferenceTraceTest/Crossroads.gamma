@@ -1,3 +1,9 @@
+/*
+ * SPDX-FileCopyrightText: The contributors to the Gamma project
+ *
+ * SPDX-License-Identifier: EPL-1.0
+ */
+
 /**
  * Two traffic lights at a crossroads, cycled by one controller and interrupted by the police.
  * On a timer, the controller toggles each light from yellow to red, to green and back to yellow, so that the two roads get green in turn.

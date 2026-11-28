@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2023-2026 The Semantifyr Authors
+//
+// SPDX-License-Identifier: EPL-2.0
+
 item def EngageAutonomous;
 item def DisengageAutonomous;
 item def PowerOff;
