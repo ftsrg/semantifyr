@@ -12,7 +12,6 @@ import hu.bme.mit.semantifyr.gradle.commitHash
 import hu.bme.mit.semantifyr.gradle.oxstsFileExtension
 import hu.bme.mit.semantifyr.gradle.prependToPath
 import hu.bme.mit.semantifyr.gradle.readsPackage
-import hu.bme.mit.semantifyr.gradle.registerBrandingAssets
 import hu.bme.mit.semantifyr.gradle.registerPnpmCheck
 import hu.bme.mit.semantifyr.gradle.semantifyrArtifact
 import hu.bme.mit.semantifyr.gradle.servedExamples
@@ -26,6 +25,7 @@ plugins {
 val editorCommon = artifactsOf("npm-package", ":semantifyr-editor-common")
 val gammaCli = artifactsOf("application-distribution", ":gamma-cli")
 val sysmlCli = artifactsOf("application-distribution", ":sysml-cli")
+val webBranding = artifactsOf("web-branding", ":branding")
 val sysmlWorker = artifactsOf("sysml-worker", ":sysml-wrapper")
 val grammars = artifactsOf("textmate-grammar", ":oxsts.lang", ":gamma.lang")
 val languageConfiguration = artifactsOf("language-configuration", ":semantifyr-vscode")
@@ -147,7 +147,10 @@ val cloneSysmlWorker = tasks.register<Sync>("cloneSysmlWorker") {
     into(layout.buildDirectory.dir("sysml-worker"))
 }
 
-val cloneBrandingAssets = registerBrandingAssets(publicDirectory)
+val cloneBrandingAssets = tasks.register<Sync>("cloneBrandingAssets") {
+    from(webBranding)
+    into(publicDirectory)
+}
 
 fun PnpmTask.configureSharedInputs() {
     inputs.files(editorCommon).withPathSensitivity(PathSensitivity.RELATIVE)

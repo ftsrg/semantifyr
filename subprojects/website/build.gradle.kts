@@ -9,7 +9,6 @@ import groovy.json.JsonSlurper
 import hu.bme.mit.semantifyr.gradle.artifactsOf
 import hu.bme.mit.semantifyr.gradle.readsPackage
 import hu.bme.mit.semantifyr.gradle.readsWorkspace
-import hu.bme.mit.semantifyr.gradle.registerBrandingAssets
 import hu.bme.mit.semantifyr.gradle.registerPnpmCheck
 import hu.bme.mit.semantifyr.gradle.semantifyrArtifact
 import hu.bme.mit.semantifyr.gradle.servedExampleSources
@@ -26,6 +25,7 @@ val editorCommon = artifactsOf("npm-package", ":semantifyr-editor-common")
 val sysmlWorker = artifactsOf("sysml-worker", ":sysml-wrapper")
 val grammars = artifactsOf("textmate-grammar", ":oxsts.lang", ":gamma.lang")
 val liveScreenshots = artifactsOf("screenshots", ":semantifyr-live-frontend")
+val webBranding = artifactsOf("web-branding", ":branding")
 
 val tutorialDirectory = layout.projectDirectory.dir("models/tutorial")
 
@@ -85,7 +85,10 @@ val sourceAliasDirectories = (JsonSlurper().parseText(providers.fileContents(sou
 
 val importedBrandingDirectory = layout.projectDirectory.dir("static-imported-branding")
 
-val cloneBrandingAssets = registerBrandingAssets(importedBrandingDirectory.dir("img"))
+val cloneBrandingAssets = tasks.register<Sync>("cloneBrandingAssets") {
+    from(webBranding)
+    into(importedBrandingDirectory.dir("img"))
+}
 
 val cloneGrammars = tasks.register<Sync>("cloneGrammars") {
     from(grammars)

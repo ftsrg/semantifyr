@@ -8,7 +8,6 @@ import com.github.gradle.node.pnpm.task.PnpmTask
 import hu.bme.mit.semantifyr.gradle.artifactsOf
 import hu.bme.mit.semantifyr.gradle.readsPackage
 import hu.bme.mit.semantifyr.gradle.registerPnpmCheck
-import hu.bme.mit.semantifyr.gradle.registerRenderPictures
 import hu.bme.mit.semantifyr.gradle.runsWithTheta
 import hu.bme.mit.semantifyr.gradle.semantifyrArtifact
 
@@ -19,20 +18,14 @@ plugins {
 val editorCommon = artifactsOf("npm-package", ":semantifyr-editor-common")
 val languageServers = artifactsOf("application-distribution", ":oxsts.lang.ide", ":gamma.lang.ide")
 val grammars = artifactsOf("textmate-grammar", ":oxsts.lang", ":gamma.lang")
+val icons = artifactsOf("vscode-icons", ":branding")
 
 val extensionVersion = version.toString()
 
-val renderIcons = registerRenderPictures(
-    "renderIcons",
-    provider {
-        layout.projectDirectory.dir("icons")
-    },
-    listOf(
-        "icon.png=logo@128",
-        "semantifyr-file-icon.png=logo@128+104",
-        "gamma-file-icon.png=gamma@128+104",
-    ),
-)
+val cloneIcons = tasks.register<Sync>("cloneIcons") {
+    from(icons)
+    into("icons")
+}
 
 val cloneDistribution = tasks.register<Sync>("cloneDistribution") {
     from(languageServers)
@@ -78,7 +71,7 @@ val bundleExtension = tasks.register<PnpmTask>("bundleExtension") {
     inputs.files(cloneDistribution).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(cloneGrammars).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.file(layout.projectDirectory.file("language-configuration.json")).withPathSensitivity(PathSensitivity.RELATIVE)
-    inputs.files(renderIcons).withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.files(cloneIcons).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.file(layout.projectDirectory.file("README.md")).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.file(layout.projectDirectory.file("CHANGELOG.md")).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(cloneLicense).withPathSensitivity(PathSensitivity.RELATIVE)

@@ -85,6 +85,7 @@ include(
     "cli-common",
     "corpus-check",
     "semantifyr-cli",
+    "branding",
     "semantifyr-editor-common",
     "metamodel-builder",
     "oxsts.model",

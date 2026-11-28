@@ -10,8 +10,8 @@
 [![REUSE status](https://api.reuse.software/badge/github.com/ftsrg/semantifyr)](https://api.reuse.software/info/github.com/ftsrg/semantifyr)
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="branding/logo-full-dark.svg">
-  <img src="branding/logo-full-light.svg" alt="Semantifyr" width="400">
+  <source media="(prefers-color-scheme: dark)" srcset="subprojects/branding/logo-full-dark.svg">
+  <img src="subprojects/branding/logo-full-light.svg" alt="Semantifyr" width="400">
 </picture>
 
 Semantifyr is a framework to declaratively define the semantics of engineering modeling languages. A language's semantics is written once, as a library in the [Semantifyr Language](https://semantifyr.org/learn/language/), and its models are verified through that library. Currently it has frontends for the [SysML v2](https://semantifyr.org/learn/frontends/sysml-v2/) and [Gamma](https://semantifyr.org/learn/frontends/gamma/) languages, and it verifies models with
