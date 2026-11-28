@@ -46,22 +46,21 @@ val cloneGammaExamples = tasks.register<Sync>("cloneGammaExamples") {
     from(gammaExamples) {
         include("*.gamma")
     }
-    into("examples/gamma/TestModels")
+    into("examples/gamma/models")
 }
 
 val cloneSysmlExamples = tasks.register<Sync>("cloneSysmlExamples") {
     from(sysmlExamples) {
         include("*.sysml")
     }
-    into("examples/sysml/TestModels")
+    into("examples/sysml/models")
 }
 
-val cloneTutorialModels = tasks.register<Sync>("cloneTutorialModels") {
-    from(oxstsTutorial)
+val cloneExampleModels = tasks.register<Sync>("cloneExampleModels") {
     from(oxstsExamples) {
         include("*.semantifyr")
     }
-    into("examples/tutorial/")
+    into("examples/semantifyr")
 }
 
 val vscodeServerImageContext = tasks.register<Tar>("vscodeServerImageContext") {
