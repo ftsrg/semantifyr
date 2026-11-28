@@ -10,6 +10,7 @@ import hu.bme.mit.semantifyr.gradle.ExampleDescriptions
 import hu.bme.mit.semantifyr.gradle.artifactsOf
 import hu.bme.mit.semantifyr.gradle.commitHash
 import hu.bme.mit.semantifyr.gradle.oxstsFileExtension
+import hu.bme.mit.semantifyr.gradle.prependToPath
 import hu.bme.mit.semantifyr.gradle.readsPackage
 import hu.bme.mit.semantifyr.gradle.registerBrandingAssets
 import hu.bme.mit.semantifyr.gradle.registerPnpmCheck
@@ -17,7 +18,6 @@ import hu.bme.mit.semantifyr.gradle.semantifyrArtifact
 import hu.bme.mit.semantifyr.gradle.servedExamples
 import org.apache.tools.ant.taskdefs.condition.Os
 import org.gradle.api.file.RegularFile
-import java.io.File
 
 plugins {
     id("hu.bme.mit.semantifyr.nodejs")
@@ -98,11 +98,7 @@ fun Exec.runsWithNode() {
     dependsOn(tasks.nodeSetup)
     inputs.property("nodeVersion", node.version)
     doFirst {
-        // Windows names the variable Path
-        val pathVariable = environment.keys.firstOrNull {
-            it.equals("PATH", ignoreCase = true)
-        } ?: "PATH"
-        environment(pathVariable, "${nodeBinDirectory.get().asFile.absolutePath}${File.pathSeparator}${environment[pathVariable]}")
+        prependToPath(nodeBinDirectory.get().asFile)
     }
 }
 

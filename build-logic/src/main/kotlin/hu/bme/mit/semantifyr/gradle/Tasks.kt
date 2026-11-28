@@ -18,19 +18,31 @@ fun <T> T.runsWithTheta() where T : Task, T : ProcessForkOptions {
     val thetaDirectory = project.artifactsOf("theta-xsts-cli", ":theta-executor")
     inputs.files(thetaDirectory).withPathSensitivity(PathSensitivity.RELATIVE)
     doFirst {
-        environment("PATH", "${thetaDirectory.singleFile.absolutePath}${File.pathSeparator}${System.getenv("PATH")}")
+        prependToPath(thetaDirectory.singleFile)
     }
 }
 
 fun PnpmTask.runsWithTheta() {
     val thetaDirectory = project.artifactsOf("theta-xsts-cli", ":theta-executor")
     inputs.files(thetaDirectory).withPathSensitivity(PathSensitivity.RELATIVE)
-    environment.put(
-        "PATH",
-        thetaDirectory.elements.zip(providers.environmentVariable("PATH")) { directories, path ->
-            "${directories.single().asFile.absolutePath}${File.pathSeparator}$path"
+    environment.putAll(
+        thetaDirectory.elements.map { directories ->
+            val variables = System.getenv()
+            val pathVariable = pathVariableOf(variables)
+            mapOf(pathVariable to "${directories.single().asFile.absolutePath}${File.pathSeparator}${variables[pathVariable]}")
         },
     )
+}
+
+fun ProcessForkOptions.prependToPath(directory: File) {
+    val pathVariable = pathVariableOf(environment)
+    environment(pathVariable, "${directory.absolutePath}${File.pathSeparator}${environment[pathVariable]}")
+}
+
+private fun pathVariableOf(variables: Map<String, *>): String {
+    return variables.keys.firstOrNull {
+        it.equals("PATH", ignoreCase = true)
+    } ?: "PATH"
 }
 
 fun Project.commitHash(): Provider<String> {
